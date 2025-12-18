@@ -66,42 +66,43 @@ BLOCK if:
 - Player-facing strings bypass translation systems
 - Ad-hoc formatting replaces canonical translators
 
-## Signing Rules
+## Signing
 
-- You sign only if approving
-- Your signature type must be: `QA_CONTRACTS_BOUNDARIES`
-- Call: `sign.sh '<summary>' 'QA_CONTRACTS_BOUNDARIES'`
+Your signature type: `QA_CONTRACTS_BOUNDARIES`
+
+Sign ALL verdicts (enables delta review in subsequent rounds):
+
+```bash
+# APPROVED
+SIGN=$(sign.sh 'Contracts stable' 'QA_CONTRACTS_BOUNDARIES')
+
+# BLOCKED
+SIGN=$(sign.sh 'Boundary violation' 'QA_CONTRACTS_BOUNDARIES' --verdict BLOCKED --blockers '["issue"]')
+```
 
 ## Output
 
-Write structured output using field-based arguments:
-
 ```bash
-# For APPROVED (after calling sign.sh):
+PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
+SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+
 write-output.sh 'review-contracts-boundaries' \
-  --verdict 'APPROVED' \
-  --summary 'Layer boundaries intact, contracts stable' \
+  --verdict '<VERDICT>' \
+  --summary '<summary>' \
   --type 'QA_CONTRACTS_BOUNDARIES' \
   --payload "$PAYLOAD" \
   --signature "$SIGNATURE" \
-  --details '{"layers_checked":["engine","protocol","web"]}'
-
-# For BLOCKED:
-write-output.sh 'review-contracts-boundaries' \
-  --verdict 'BLOCKED' \
-  --summary 'Import boundary violation' \
-  --blockers '["web imports engine directly"]'
+  [--blockers '["..."]'] \
+  [--details '{"layers_checked":[...]}']
 ```
-
-The script validates fields based on verdict. Run `write-output.sh` without arguments for full usage.
 
 ---
 
 ## BEFORE YOU FINISH (MANDATORY)
 
 1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ If APPROVED: Call `sign.sh` and capture payload + signature
-3. ☐ Call `write-output.sh` with appropriate flags for your verdict
+2. ☐ Call `sign.sh` with verdict and capture output
+3. ☐ Call `write-output.sh` with all required flags
 4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-contracts-boundaries.json`
 
-**If you skip steps 3-4, the workflow breaks.** Master-agent cannot proceed.
+**If you skip steps 2-4, the workflow breaks.** Master-agent cannot proceed.

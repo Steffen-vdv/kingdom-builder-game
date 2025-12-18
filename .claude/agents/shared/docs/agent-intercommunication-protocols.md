@@ -83,34 +83,32 @@ Where `{agent}` is the subagent identifier:
 
 How to write the file:
 
-**USE THE HELPER SCRIPT WITH FIELD-BASED ARGUMENTS:**
+**USE THE HELPER SCRIPTS:**
 
 ```bash
-# For APPROVED verdict (after calling sign.sh):
+# Step 1: Sign your verdict (ALL verdicts, not just APPROVED)
+SIGN_OUTPUT=$(sign.sh '<summary>' '<signature_type>' --verdict '<VERDICT>' [--blockers '<json>'] [--questions '<json>'])
+PAYLOAD=$(echo "$SIGN_OUTPUT" | jq -r '.payload')
+SIGNATURE=$(echo "$SIGN_OUTPUT" | jq -r '.signature')
+
+# Step 2: Write output file
 write-output.sh '<agent>' \
-  --verdict 'APPROVED' \
+  --verdict '<VERDICT>' \
   --summary '<summary>' \
   --type '<signature_type>' \
-  --payload '<payload_from_sign.sh>' \
-  --signature '<signature_from_sign.sh>' \
-  --details '<agent_specific_json>'
-
-# For BLOCKED verdict:
-write-output.sh '<agent>' \
-  --verdict 'BLOCKED' \
-  --summary '<summary>' \
-  --blockers '["blocker1","blocker2"]' \
-  --details '<agent_specific_json>'
+  --payload "$PAYLOAD" \
+  --signature "$SIGNATURE" \
+  [--blockers '<json>'] \
+  [--details '<json>']
 ```
 
-Run `write-output.sh` without arguments to see full usage and validation rules.
+Run `sign.sh` or `write-output.sh` without arguments to see full usage.
 
-**Why use this script?**
+**Why sign all verdicts?**
 
-- Constructs valid JSON schema automatically
-- Validates fields based on verdict (APPROVED requires signature fields, etc.)
-- Maps `--type` to `signature_type` in output (matches sign.sh output)
-- Prevents schema drift that caused downstream failures
+- Enables delta review in subsequent rounds (see Delta Review Protocol below)
+- Agent can prove what it decided before without re-analyzing everything
+- Speeds up fix-and-retry workflows significantly
 
 Rules:
 
@@ -184,14 +182,11 @@ Each Phase 1 agent MUST write the following structure to `{agent}.json`:
 - `verdict`: required
 - `summary`: required
 
-Signing rules:
+Signing rules (ALL verdicts are signed to enable delta review):
 
-- If verdict == APPROVED:
-  - `signature_type` MUST be a non-empty string
-  - `payload` MUST be a non-empty string
-  - `signature` MUST be a non-empty string
-- Otherwise:
-  - `signature_type`, `payload`, `signature` MUST be null
+- `signature_type` MUST always be a non-empty string
+- `payload` MUST always be a non-empty string
+- `signature` MUST always be a non-empty string
 
 BLOCKED rules:
 
@@ -398,6 +393,69 @@ Emits warnings to stderr if:
 - Output file is not valid JSON
 
 Master-agent reads the JSON file directly for structured data.
+
+---
+
+## Delta Review Protocol (Round 2+)
+
+When a QA round results in BLOCKED and the issue is fixed, subsequent rounds
+can be faster. Agents check for prior signed state and only analyze new commits.
+
+### How It Works
+
+1. Agent checks for its own prior JSON file at startup
+2. If file exists and signature verifies, agent compares commits
+3. If prior commits ⊆ current commits, agent enters delta review mode
+4. Agent only analyzes the new commits, not the full diff
+
+### Helper Script
+
+Agents call `check-prior-state.sh` to determine review mode:
+
+```bash
+PRIOR_STATE=$(check-prior-state.sh '<agent>' '["commit1","commit2","commit3"]')
+MODE=$(echo "$PRIOR_STATE" | jq -r '.mode')
+
+if [[ "$MODE" == "DELTA_REVIEW" ]]; then
+  PRIOR_VERDICT=$(echo "$PRIOR_STATE" | jq -r '.prior_verdict')
+  NEW_COMMITS=$(echo "$PRIOR_STATE" | jq -r '.new_commits')
+  # Only analyze new commits
+else
+  # Full review
+fi
+```
+
+Returns:
+
+- `{"mode":"FULL_REVIEW","reason":"..."}` - Do full review
+- `{"mode":"DELTA_REVIEW","prior_verdict":"...","prior_commits":[...],"new_commits":[...]}` - Delta review possible
+
+### Delta Review Behavior
+
+| Prior Verdict | Action                                                         |
+| ------------- | -------------------------------------------------------------- |
+| APPROVED      | Check if new commits invalidate approval; fast approve if safe |
+| BLOCKED       | Check if new commits address blockers                          |
+| NEEDS_INPUT   | Check if answers were provided and proceed                     |
+
+### Fallback to Full Review
+
+Delta review is conservative. Full review happens if:
+
+- No prior state file exists
+- Signature verification fails
+- Prior commits not subset of current (rebase, etc.)
+- Agent uncertain if delta affects its domain
+
+### Cleanup
+
+After successful push, `safe-deployment-gate` clears all QA output files:
+
+```bash
+cleanup-qa-outputs.sh
+```
+
+This ensures the next QA workflow starts fresh.
 
 ---
 

@@ -53,6 +53,8 @@ if [[ "$1" == "--override" ]]; then
 	success "✅ PUSH SUCCESSFUL (override)"
 	echo "Branch: $BRANCH"
 	echo "Commit: $(git rev-parse HEAD)"
+	# Clean up QA output files for next workflow
+	"$SCRIPT_DIR/cleanup-qa-outputs.sh" 2>/dev/null || true
 	exit 0
 fi
 
@@ -110,3 +112,6 @@ git push -u origin "$BRANCH" || error "Git push failed"
 success "✅ PUSH SUCCESSFUL"
 echo "Branch: $BRANCH"
 echo "Commit: $HEAD_COMMIT"
+
+# Clean up QA output files for next workflow
+"$SCRIPT_DIR/cleanup-qa-outputs.sh" 2>/dev/null || true

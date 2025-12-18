@@ -115,52 +115,35 @@ Apply the decision tree above based on your analysis.
 
 ---
 
-## Signing (When Tests Pass)
+## Signing
 
-If all tests pass (or no tests required for docs-only changes), you MUST sign.
+Your signature type: `QA_CI_REQUIRED_TESTS`
 
-**Signature type:** `QA_CI_REQUIRED_TESTS`
-
-**How to sign:**
+Sign ALL verdicts (enables delta review in subsequent rounds):
 
 ```bash
-.claude/agents/sub-agent/scripts/sign.sh '<summary>' 'QA_CI_REQUIRED_TESTS'
+# APPROVED (tests pass)
+SIGN=$(sign.sh 'All 47 tests passed' 'QA_CI_REQUIRED_TESTS')
+
+# BLOCKED (tests fail)
+SIGN=$(sign.sh '3 tests failed' 'QA_CI_REQUIRED_TESTS' --verdict BLOCKED --blockers '["test:foo.test.ts"]')
 ```
-
-The script outputs JSON with `payload`, `signature`, and `type`. Extract these
-for your output file.
-
-**Example:**
-
-```bash
-SIGN_OUTPUT=$(.claude/agents/sub-agent/scripts/sign.sh 'All 47 tests passed' 'QA_CI_REQUIRED_TESTS')
-# Parse SIGN_OUTPUT to extract payload, signature, type
-```
-
----
 
 ## Output
 
-Write structured output using field-based arguments:
-
 ```bash
-# For APPROVED (after calling sign.sh):
+PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
+SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+
 write-output.sh 'review-ci-tests-required' \
-  --verdict 'APPROVED' \
-  --summary 'All 47 tests passed (targeted: engine)' \
+  --verdict '<VERDICT>' \
+  --summary '<summary>' \
   --type 'QA_CI_REQUIRED_TESTS' \
   --payload "$PAYLOAD" \
   --signature "$SIGNATURE" \
-  --details '{"strategy":"targeted","tests_run":47,"tests_passed":47}'
-
-# For BLOCKED:
-write-output.sh 'review-ci-tests-required' \
-  --verdict 'BLOCKED' \
-  --summary '3 tests failed in engine package' \
-  --blockers '["test:engine/tests/foo.test.ts::should handle edge case"]'
+  [--blockers '["..."]'] \
+  [--details '{"strategy":"targeted","tests_run":47}']
 ```
-
-The script validates fields based on verdict. Run `write-output.sh` without arguments for full usage.
 
 ---
 

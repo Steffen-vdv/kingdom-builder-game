@@ -58,42 +58,43 @@ BLOCK if:
 - Core changes lack architecture updates
 - Data or rules are duplicated
 
-## Signing Rules
+## Signing
 
-- You sign only if approving
-- Your signature type must be: `QA_TESTS_DOCS_DRY`
-- Call: `sign.sh '<summary>' 'QA_TESTS_DOCS_DRY'`
+Your signature type: `QA_TESTS_DOCS_DRY`
+
+Sign ALL verdicts (enables delta review in subsequent rounds):
+
+```bash
+# APPROVED
+SIGN=$(sign.sh 'Tests adequate' 'QA_TESTS_DOCS_DRY')
+
+# BLOCKED
+SIGN=$(sign.sh 'Test gap' 'QA_TESTS_DOCS_DRY' --verdict BLOCKED --blockers '["issue"]')
+```
 
 ## Output
 
-Write structured output using field-based arguments:
-
 ```bash
-# For APPROVED (after calling sign.sh):
+PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
+SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+
 write-output.sh 'review-tests-docs-dry' \
-  --verdict 'APPROVED' \
-  --summary 'Tests adequate, docs current, no DRY violations' \
+  --verdict '<VERDICT>' \
+  --summary '<summary>' \
   --type 'QA_TESTS_DOCS_DRY' \
   --payload "$PAYLOAD" \
   --signature "$SIGNATURE" \
-  --details '{"test_coverage":"adequate","docs_updated":true}'
-
-# For BLOCKED:
-write-output.sh 'review-tests-docs-dry' \
-  --verdict 'BLOCKED' \
-  --summary 'Test coverage gap' \
-  --blockers '["New function has no tests"]'
+  [--blockers '["..."]'] \
+  [--details '{"test_coverage":"adequate"}']
 ```
-
-The script validates fields based on verdict. Run `write-output.sh` without arguments for full usage.
 
 ---
 
 ## BEFORE YOU FINISH (MANDATORY)
 
 1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ If APPROVED: Call `sign.sh` and capture payload + signature
-3. ☐ Call `write-output.sh` with appropriate flags for your verdict
+2. ☐ Call `sign.sh` with verdict and capture output
+3. ☐ Call `write-output.sh` with all required flags
 4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-tests-docs-dry.json`
 
-**If you skip steps 3-4, the workflow breaks.** Master-agent cannot proceed.
+**If you skip steps 2-4, the workflow breaks.** Master-agent cannot proceed.

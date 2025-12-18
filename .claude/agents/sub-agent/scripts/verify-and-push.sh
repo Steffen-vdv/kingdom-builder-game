@@ -118,6 +118,8 @@ Commit: $HEAD_SHA
 
 Note: This push bypassed normal QA workflow via user override.
 SUCCESS_OVERRIDE
+		# Clean up QA output files for next workflow
+		"$SCRIPT_DIR/cleanup-qa-outputs.sh" 2>/dev/null || true
 		exit 0
 	else
 		cat >&2 << 'PUSH_FAILED'
@@ -289,6 +291,8 @@ if git push -u origin "$BRANCH"; then
 Branch: $BRANCH
 Commit: $HEAD_SHA
 SUCCESS
+	# Clean up QA output files for next workflow
+	"$SCRIPT_DIR/cleanup-qa-outputs.sh" 2>/dev/null || true
 	exit 0
 else
 	cat >&2 << 'PUSH_FAILED'

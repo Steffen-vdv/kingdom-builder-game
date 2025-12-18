@@ -61,42 +61,43 @@ You do NOT OWN:
 - Summary omits high-impact changes
 - Diff contradicts stated intent
 
-## Signing Rules
+## Signing
 
-- You sign only if approving
-- Your signature type must be: `QA_CLAIMS_AUDITOR`
-- Call: `sign.sh '<summary>' 'QA_CLAIMS_AUDITOR'`
+Your signature type: `QA_CLAIMS_AUDITOR`
+
+Sign ALL verdicts (enables delta review in subsequent rounds):
+
+```bash
+# APPROVED
+SIGN=$(sign.sh 'Claims verified' 'QA_CLAIMS_AUDITOR')
+
+# BLOCKED
+SIGN=$(sign.sh 'Claim mismatch' 'QA_CLAIMS_AUDITOR' --verdict BLOCKED --blockers '["issue"]')
+```
 
 ## Output
 
-Write structured output using field-based arguments:
-
 ```bash
-# For APPROVED (after calling sign.sh):
+PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
+SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+
 write-output.sh 'review-claims-auditor' \
-  --verdict 'APPROVED' \
-  --summary 'Claims verified against diff' \
+  --verdict '<VERDICT>' \
+  --summary '<summary>' \
   --type 'QA_CLAIMS_AUDITOR' \
   --payload "$PAYLOAD" \
   --signature "$SIGNATURE" \
-  --details '{"risk_tier":"HIGH","findings":[...]}'
-
-# For BLOCKED:
-write-output.sh 'review-claims-auditor' \
-  --verdict 'BLOCKED' \
-  --summary 'Claim mismatch found' \
-  --blockers '["Claimed X but diff shows Y"]'
+  [--blockers '["..."]'] \
+  [--details '{"risk_tier":"HIGH"}']
 ```
-
-The script validates fields based on verdict. Run `write-output.sh` without arguments for full usage.
 
 ---
 
 ## BEFORE YOU FINISH (MANDATORY)
 
 1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ If APPROVED: Call `sign.sh` and capture payload + signature
-3. ☐ Call `write-output.sh` with appropriate flags for your verdict
+2. ☐ Call `sign.sh` with verdict and capture output
+3. ☐ Call `write-output.sh` with all required flags
 4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-claims-auditor.json`
 
-**If you skip steps 3-4, the workflow breaks.** Master-agent cannot proceed.
+**If you skip steps 2-4, the workflow breaks.** Master-agent cannot proceed.

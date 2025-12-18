@@ -1,26 +1,83 @@
 #!/bin/bash
 #
-# sign.sh — Sign QA approval for verified push
+# sign.sh — Sign QA verdict for workflow state tracking
 #
-# Usage: sign.sh '<summary>' '<signature_type>'
+# Usage: sign.sh '<summary>' '<signature_type>' [options]
+#
+# Options:
+#   --verdict <V>      APPROVED|BLOCKED|NEEDS_INPUT (default: APPROVED)
+#   --blockers <JSON>  JSON array of blockers (for BLOCKED verdict)
+#   --questions <JSON> JSON array of questions (for NEEDS_INPUT verdict)
 #
 # Gathers commit info, creates payload, signs via crypto-gate,
 # and outputs structured JSON for downstream verification.
 #
-# Called by QA reviewers after APPROVED verdict.
-# Each reviewer must use their assigned signature type.
+# Called by QA reviewers after determining their verdict.
+# All verdicts are signed to enable delta review in subsequent rounds.
 #
 
 set -euo pipefail
 
-SUMMARY="${1:-QA approved}"
+SUMMARY="${1:-}"
 SIG_TYPE="${2:-}"
+shift 2 2>/dev/null || true
 
-if [[ -z "$SIG_TYPE" ]]; then
-	echo "ERROR: Signature type is required. Usage: sign.sh '<summary>' '<type>'" >&2
-	echo "Valid types: QA_FINAL_SIGNATORY, QA_CI_REQUIRED_TESTS, QA_CLAIMS_AUDITOR," >&2
-	echo "             QA_CONTRACTS_BOUNDARIES, QA_MECHANICS_CONTENT," >&2
-	echo "             QA_INFRA_CONCURRENCY, QA_TESTS_DOCS_DRY" >&2
+# Parse optional arguments
+VERDICT="APPROVED"
+BLOCKERS=""
+QUESTIONS=""
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		--verdict)
+			VERDICT="$2"
+			shift 2
+			;;
+		--blockers)
+			BLOCKERS="$2"
+			shift 2
+			;;
+		--questions)
+			QUESTIONS="$2"
+			shift 2
+			;;
+		*)
+			echo "ERROR: Unknown argument: $1" >&2
+			exit 1
+			;;
+	esac
+done
+
+if [[ -z "$SUMMARY" || -z "$SIG_TYPE" ]]; then
+	cat >&2 << 'USAGE'
+Usage: sign.sh '<summary>' '<signature_type>' [options]
+
+Options:
+  --verdict <V>      APPROVED|BLOCKED|NEEDS_INPUT (default: APPROVED)
+  --blockers <JSON>  JSON array (required for BLOCKED)
+  --questions <JSON> JSON array (required for NEEDS_INPUT)
+
+Valid signature types:
+  QA_FINAL_SIGNATORY, QA_CI_REQUIRED_TESTS, QA_CLAIMS_AUDITOR,
+  QA_CONTRACTS_BOUNDARIES, QA_MECHANICS_CONTENT,
+  QA_INFRA_CONCURRENCY, QA_TESTS_DOCS_DRY
+USAGE
+	exit 1
+fi
+
+# Validate verdict
+if [[ ! "$VERDICT" =~ ^(APPROVED|BLOCKED|NEEDS_INPUT)$ ]]; then
+	echo "ERROR: --verdict must be APPROVED, BLOCKED, or NEEDS_INPUT" >&2
+	exit 1
+fi
+
+# Validate conditional fields
+if [[ "$VERDICT" == "BLOCKED" && -z "$BLOCKERS" ]]; then
+	echo "ERROR: BLOCKED verdict requires --blockers" >&2
+	exit 1
+fi
+if [[ "$VERDICT" == "NEEDS_INPUT" && -z "$QUESTIONS" ]]; then
+	echo "ERROR: NEEDS_INPUT verdict requires --questions" >&2
 	exit 1
 fi
 
@@ -72,10 +129,25 @@ TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 # CREATE PAYLOAD AND SIGN
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Escape summary for JSON (basic escaping)
-ESCAPED_SUMMARY=$(echo "$SUMMARY" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\n/\\n/g')
-
-PAYLOAD="{\"commits\":[\"$HEAD_SHA\"],\"diffHash\":\"$DIFF_HASH\",\"verdict\":\"APPROVED\",\"summary\":\"$ESCAPED_SUMMARY\",\"timestamp\":\"$TIMESTAMP\"}"
+# Build payload using jq for proper escaping
+PAYLOAD=$(jq -n -c \
+	--arg commits "$HEAD_SHA" \
+	--arg diffHash "$DIFF_HASH" \
+	--arg verdict "$VERDICT" \
+	--arg summary "$SUMMARY" \
+	--arg timestamp "$TIMESTAMP" \
+	--argjson blockers "${BLOCKERS:-null}" \
+	--argjson questions "${QUESTIONS:-null}" \
+	'{
+		commits: [$commits],
+		diffHash: $diffHash,
+		verdict: $verdict,
+		summary: $summary,
+		timestamp: $timestamp
+	}
+	+ (if $blockers != null then {blockers: $blockers} else {} end)
+	+ (if $questions != null then {questions: $questions} else {} end)'
+)
 
 # Sign via crypto-gate CLI with signature type
 # crypto-gate sign outputs just the hex signature
@@ -92,7 +164,10 @@ if [[ ! "$SIGNATURE" =~ ^[a-f0-9]{64}$ ]]; then
 	exit 1
 fi
 
-# Output JSON with payload, signature, and type (for verify-bulk)
-# Escape payload for JSON embedding (it's already JSON, so escape quotes)
-ESCAPED_PAYLOAD=$(echo "$PAYLOAD" | sed 's/"/\\"/g')
-echo "{\"payload\":\"$ESCAPED_PAYLOAD\",\"signature\":\"$SIGNATURE\",\"type\":\"$SIG_TYPE\"}"
+# Output JSON with payload, signature, and type
+# Use jq for proper escaping
+jq -n -c \
+	--arg payload "$PAYLOAD" \
+	--arg signature "$SIGNATURE" \
+	--arg type "$SIG_TYPE" \
+	'{payload: $payload, signature: $signature, type: $type}'

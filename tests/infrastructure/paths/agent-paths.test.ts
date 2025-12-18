@@ -104,6 +104,20 @@ describe('Infrastructure: Agent Path Validation', () => {
 			expect(
 				pathExists('.claude/agents/sub-agent/scripts/subagent-cleanup.sh'),
 			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/scripts/write-output.sh'),
+			).toBe(true);
+			expect(
+				pathExists(
+					'.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh',
+				),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/scripts/check-prior-state.sh'),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/scripts/cleanup-qa-outputs.sh'),
+			).toBe(true);
 		});
 
 		it('should NOT have old script names', () => {

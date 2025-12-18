@@ -10,7 +10,9 @@ import * as path from 'path';
  * - Constructs valid JSON from field arguments
  * - Maps --type to signature_type in output
  * - Validates required fields based on verdict
- * - Validates conditional fields (signature for APPROVED, blockers for BLOCKED)
+ * - Requires signature fields for ALL verdicts (enables delta review)
+ * - Validates conditional fields
+ *   (blockers for BLOCKED, questions for NEEDS_INPUT)
  * - Rejects invalid argument combinations
  */
 
@@ -186,7 +188,7 @@ describe('Infrastructure: write-output.sh', () => {
 			]);
 
 			expect(success).toBe(false);
-			expect(stderr).toContain('APPROVED verdict requires --type');
+			expect(stderr).toContain('--type (signature type) is required');
 		});
 
 		it('should fail when --payload is missing', () => {
@@ -203,7 +205,7 @@ describe('Infrastructure: write-output.sh', () => {
 			]);
 
 			expect(success).toBe(false);
-			expect(stderr).toContain('APPROVED verdict requires --payload');
+			expect(stderr).toContain('--payload (signed payload) is required');
 		});
 
 		it('should fail when --signature is missing', () => {
@@ -220,7 +222,7 @@ describe('Infrastructure: write-output.sh', () => {
 			]);
 
 			expect(success).toBe(false);
-			expect(stderr).toContain('APPROVED verdict requires --signature');
+			expect(stderr).toContain('--signature (hex signature) is required');
 		});
 
 		it('should fail when --blockers is provided with APPROVED', () => {
@@ -246,13 +248,19 @@ describe('Infrastructure: write-output.sh', () => {
 	});
 
 	describe('BLOCKED Verdict', () => {
-		it('should create valid JSON with blockers array', () => {
+		it('should create valid JSON with blockers array and signature', () => {
 			const { success } = runScript([
 				'test-agent',
 				'--verdict',
 				'BLOCKED',
 				'--summary',
 				'Found issues',
+				'--type',
+				'QA_TEST_TYPE',
+				'--payload',
+				'{"verdict":"BLOCKED","blockers":["Issue 1","Issue 2"]}',
+				'--signature',
+				'deadbeef1234567890',
 				'--blockers',
 				'["Issue 1","Issue 2"]',
 				'--details',
@@ -270,9 +278,11 @@ describe('Infrastructure: write-output.sh', () => {
 			expect(output.agent).toBe('test-agent');
 			expect(output.verdict).toBe('BLOCKED');
 			expect(output.summary).toBe('Found issues');
-			expect(output.signature_type).toBeNull();
-			expect(output.payload).toBeNull();
-			expect(output.signature).toBeNull();
+			expect(output.signature_type).toBe('QA_TEST_TYPE');
+			expect(output.payload).toBe(
+				'{"verdict":"BLOCKED","blockers":["Issue 1","Issue 2"]}',
+			);
+			expect(output.signature).toBe('deadbeef1234567890');
 			expect(output.blockers).toEqual(['Issue 1', 'Issue 2']);
 			expect(output.questions).toBeNull();
 		});
@@ -284,13 +294,19 @@ describe('Infrastructure: write-output.sh', () => {
 				'BLOCKED',
 				'--summary',
 				'Found issues',
+				'--type',
+				'QA_TEST',
+				'--payload',
+				'{}',
+				'--signature',
+				'abc',
 			]);
 
 			expect(success).toBe(false);
 			expect(stderr).toContain('BLOCKED verdict requires --blockers');
 		});
 
-		it('should fail when signature fields are provided with BLOCKED', () => {
+		it('should fail when signature fields are missing with BLOCKED', () => {
 			const { success, stderr } = runScript([
 				'test-agent',
 				'--verdict',
@@ -299,25 +315,28 @@ describe('Infrastructure: write-output.sh', () => {
 				'Found issues',
 				'--blockers',
 				'["Issue"]',
-				'--type',
-				'QA_TEST',
 			]);
 
 			expect(success).toBe(false);
-			expect(stderr).toContain(
-				'BLOCKED verdict must not have signature fields',
-			);
+			// All verdicts require signature fields for delta review
+			expect(stderr).toContain('--type (signature type) is required');
 		});
 	});
 
 	describe('NEEDS_INPUT Verdict', () => {
-		it('should create valid JSON with questions array', () => {
+		it('should create valid JSON with questions array and signature', () => {
 			const { success } = runScript([
 				'test-agent',
 				'--verdict',
 				'NEEDS_INPUT',
 				'--summary',
 				'Need clarification',
+				'--type',
+				'QA_TEST_TYPE',
+				'--payload',
+				'{"verdict":"NEEDS_INPUT","questions":["Q1","Q2"]}',
+				'--signature',
+				'deadbeef1234567890',
 				'--questions',
 				'["What is the expected behavior?","Should this affect X?"]',
 			]);
@@ -331,6 +350,11 @@ describe('Infrastructure: write-output.sh', () => {
 				),
 			);
 			expect(output.verdict).toBe('NEEDS_INPUT');
+			expect(output.signature_type).toBe('QA_TEST_TYPE');
+			expect(output.payload).toBe(
+				'{"verdict":"NEEDS_INPUT","questions":["Q1","Q2"]}',
+			);
+			expect(output.signature).toBe('deadbeef1234567890');
 			expect(output.questions).toEqual([
 				'What is the expected behavior?',
 				'Should this affect X?',
@@ -345,6 +369,12 @@ describe('Infrastructure: write-output.sh', () => {
 				'NEEDS_INPUT',
 				'--summary',
 				'Need clarification',
+				'--type',
+				'QA_TEST',
+				'--payload',
+				'{}',
+				'--signature',
+				'abc',
 			]);
 
 			expect(success).toBe(false);
@@ -353,13 +383,19 @@ describe('Infrastructure: write-output.sh', () => {
 	});
 
 	describe('ERROR Verdict', () => {
-		it('should allow ERROR verdict with just summary', () => {
+		it('should allow ERROR verdict with signature fields', () => {
 			const { success } = runScript([
 				'test-agent',
 				'--verdict',
 				'ERROR',
 				'--summary',
 				'Script crashed unexpectedly',
+				'--type',
+				'QA_TEST_TYPE',
+				'--payload',
+				'{"verdict":"ERROR"}',
+				'--signature',
+				'deadbeef1234567890',
 			]);
 
 			expect(success).toBe(true);
@@ -372,6 +408,22 @@ describe('Infrastructure: write-output.sh', () => {
 			);
 			expect(output.verdict).toBe('ERROR');
 			expect(output.summary).toBe('Script crashed unexpectedly');
+			expect(output.signature_type).toBe('QA_TEST_TYPE');
+			expect(output.payload).toBe('{"verdict":"ERROR"}');
+			expect(output.signature).toBe('deadbeef1234567890');
+		});
+
+		it('should fail when signature fields are missing with ERROR', () => {
+			const { success, stderr } = runScript([
+				'test-agent',
+				'--verdict',
+				'ERROR',
+				'--summary',
+				'Script crashed unexpectedly',
+			]);
+
+			expect(success).toBe(false);
+			expect(stderr).toContain('--type (signature type) is required');
 		});
 	});
 
@@ -420,6 +472,12 @@ describe('Infrastructure: write-output.sh', () => {
 				'BLOCKED',
 				'--summary',
 				'Test',
+				'--type',
+				'QA_TEST',
+				'--payload',
+				'{}',
+				'--signature',
+				'abc',
 				'--blockers',
 				'not an array',
 			]);
@@ -435,6 +493,12 @@ describe('Infrastructure: write-output.sh', () => {
 				'ERROR',
 				'--summary',
 				'Test',
+				'--type',
+				'QA_TEST',
+				'--payload',
+				'{}',
+				'--signature',
+				'abc',
 				'--details',
 				'["not","an","object"]',
 			]);
@@ -450,6 +514,12 @@ describe('Infrastructure: write-output.sh', () => {
 				'ERROR',
 				'--summary',
 				'Test',
+				'--type',
+				'QA_TEST',
+				'--payload',
+				'{}',
+				'--signature',
+				'abc',
 				'--unknown',
 				'value',
 			]);
@@ -467,6 +537,12 @@ describe('Infrastructure: write-output.sh', () => {
 				'ERROR',
 				'--summary',
 				'Test',
+				'--type',
+				'QA_TEST',
+				'--payload',
+				'{}',
+				'--signature',
+				'abc',
 			]);
 
 			expect(success).toBe(true);
@@ -497,6 +573,12 @@ describe('Infrastructure: write-output.sh', () => {
 				'ERROR',
 				'--summary',
 				'Test',
+				'--type',
+				'QA_TEST',
+				'--payload',
+				'{}',
+				'--signature',
+				'abc',
 			]);
 
 			expect(success).toBe(true);
@@ -517,6 +599,12 @@ describe('Infrastructure: write-output.sh', () => {
 				'ERROR',
 				'--summary',
 				'Test with "quotes" and \\backslash',
+				'--type',
+				'QA_TEST',
+				'--payload',
+				'{}',
+				'--signature',
+				'abc',
 			]);
 
 			expect(success).toBe(true);
@@ -542,9 +630,9 @@ describe('Infrastructure: write-output.sh', () => {
 
 			expect(success).toBe(false);
 			expect(stderr).toContain('--summary is required');
-			expect(stderr).toContain('APPROVED verdict requires --type');
-			expect(stderr).toContain('APPROVED verdict requires --payload');
-			expect(stderr).toContain('APPROVED verdict requires --signature');
+			expect(stderr).toContain('--type (signature type) is required');
+			expect(stderr).toContain('--payload (signed payload) is required');
+			expect(stderr).toContain('--signature (hex signature) is required');
 		});
 	});
 });

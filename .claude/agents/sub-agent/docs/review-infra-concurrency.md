@@ -47,42 +47,43 @@ BLOCK if you see:
 - Unconditional cleanup
 - No crash-recovery strategy
 
-## Signing Rules
+## Signing
 
-- You sign only if approving
-- Your signature type must be: `QA_INFRA_CONCURRENCY`
-- Call: `sign.sh '<summary>' 'QA_INFRA_CONCURRENCY'`
+Your signature type: `QA_INFRA_CONCURRENCY`
+
+Sign ALL verdicts (enables delta review in subsequent rounds):
+
+```bash
+# APPROVED
+SIGN=$(sign.sh 'Infrastructure safe' 'QA_INFRA_CONCURRENCY')
+
+# BLOCKED
+SIGN=$(sign.sh 'Race condition' 'QA_INFRA_CONCURRENCY' --verdict BLOCKED --blockers '["issue"]')
+```
 
 ## Output
 
-Write structured output using field-based arguments:
-
 ```bash
-# For APPROVED (after calling sign.sh):
+PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
+SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+
 write-output.sh 'review-infra-concurrency' \
-  --verdict 'APPROVED' \
-  --summary 'Infrastructure safe, no concurrency issues' \
+  --verdict '<VERDICT>' \
+  --summary '<summary>' \
   --type 'QA_INFRA_CONCURRENCY' \
   --payload "$PAYLOAD" \
   --signature "$SIGNATURE" \
-  --details '{"hooks_checked":true,"race_conditions":"none"}'
-
-# For BLOCKED:
-write-output.sh 'review-infra-concurrency' \
-  --verdict 'BLOCKED' \
-  --summary 'Race condition detected' \
-  --blockers '["Shared state modified without lock"]'
+  [--blockers '["..."]'] \
+  [--details '{"hooks_checked":true}']
 ```
-
-The script validates fields based on verdict. Run `write-output.sh` without arguments for full usage.
 
 ---
 
 ## BEFORE YOU FINISH (MANDATORY)
 
 1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ If APPROVED: Call `sign.sh` and capture payload + signature
-3. ☐ Call `write-output.sh` with appropriate flags for your verdict
+2. ☐ Call `sign.sh` with verdict and capture output
+3. ☐ Call `write-output.sh` with all required flags
 4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-infra-concurrency.json`
 
-**If you skip steps 3-4, the workflow breaks.** Master-agent cannot proceed.
+**If you skip steps 2-4, the workflow breaks.** Master-agent cannot proceed.

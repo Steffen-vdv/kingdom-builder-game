@@ -119,6 +119,12 @@ Task(subagent_type: "safe-deployment-gate", prompt: "{
   from Phase 1 (signatures may be stale).
 - **Phase 3 failure:** If safe-deployment-gate fails, check error and retry.
 
+**Subsequent rounds are fast.** QA agents sign ALL verdicts (not just APPROVED).
+When you re-run after fixing issues, agents detect their prior signed state and
+only analyze new commits. A round with 5 APPROVED + 1 BLOCKED becomes fast on
+retry — the 5 approved agents do delta review while only the blocked domain
+needs full re-analysis.
+
 ---
 
 ## 3. Override Push

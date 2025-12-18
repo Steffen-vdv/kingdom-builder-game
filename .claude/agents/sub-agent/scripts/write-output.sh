@@ -40,20 +40,18 @@ Required:
   <agent>              Agent identifier (e.g., review-claims-auditor)
   --verdict <V>        APPROVED | BLOCKED | NEEDS_INPUT | ERROR
   --summary <S>        Human-readable summary string
-
-Conditional (required for APPROVED):
   --type <T>           Signature type (e.g., QA_CLAIMS_AUDITOR)
-  --payload <P>        Signed payload JSON string
+  --payload <P>        Signed payload JSON string from sign.sh
   --signature <SIG>    Hex signature from sign.sh
 
-Conditional (required for BLOCKED):
-  --blockers <JSON>    JSON array of blocker strings
-
-Conditional (required for NEEDS_INPUT):
-  --questions <JSON>   JSON array of question strings
+Conditional:
+  --blockers <JSON>    JSON array of blockers (required for BLOCKED)
+  --questions <JSON>   JSON array of questions (required for NEEDS_INPUT)
 
 Optional:
   --details <JSON>     Agent-specific metadata object (default: {})
+
+NOTE: All verdicts must be signed to enable delta review in subsequent rounds.
 
 Example (APPROVED):
   write-output.sh 'review-claims-auditor' \
@@ -68,8 +66,10 @@ Example (BLOCKED):
   write-output.sh 'review-claims-auditor' \
     --verdict 'BLOCKED' \
     --summary 'Claim mismatch found' \
-    --blockers '["Claimed refactor but added new feature"]' \
-    --details '{"risk_tier":"HIGH"}'
+    --type 'QA_CLAIMS_AUDITOR' \
+    --payload '{"commits":["abc"],"verdict":"BLOCKED","blockers":[...]}' \
+    --signature 'a1b2c3...' \
+    --blockers '["Claimed refactor but added new feature"]'
 USAGE
 	exit 1
 fi
@@ -151,17 +151,19 @@ fi
 # VALIDATE CONDITIONAL FIELDS BASED ON VERDICT
 # ═══════════════════════════════════════════════════════════════════════════════
 
+# All verdicts require signature fields (enables delta review in subsequent rounds)
+if [[ -z "$SIG_TYPE" ]]; then
+	ERRORS+=("--type (signature type) is required for all verdicts")
+fi
+if [[ -z "$PAYLOAD" ]]; then
+	ERRORS+=("--payload (signed payload) is required for all verdicts")
+fi
+if [[ -z "$SIGNATURE" ]]; then
+	ERRORS+=("--signature (hex signature) is required for all verdicts")
+fi
+
+# Verdict-specific field requirements
 if [[ "$VERDICT" == "APPROVED" ]]; then
-	if [[ -z "$SIG_TYPE" ]]; then
-		ERRORS+=("APPROVED verdict requires --type (signature type)")
-	fi
-	if [[ -z "$PAYLOAD" ]]; then
-		ERRORS+=("APPROVED verdict requires --payload (signed payload)")
-	fi
-	if [[ -z "$SIGNATURE" ]]; then
-		ERRORS+=("APPROVED verdict requires --signature (hex signature)")
-	fi
-	# Ensure blockers/questions are not set for APPROVED
 	if [[ -n "$BLOCKERS" ]]; then
 		ERRORS+=("APPROVED verdict must not have --blockers")
 	fi
@@ -174,19 +176,11 @@ if [[ "$VERDICT" == "BLOCKED" ]]; then
 	if [[ -z "$BLOCKERS" ]]; then
 		ERRORS+=("BLOCKED verdict requires --blockers (JSON array)")
 	fi
-	# Ensure signature fields are not set for BLOCKED
-	if [[ -n "$SIG_TYPE" || -n "$PAYLOAD" || -n "$SIGNATURE" ]]; then
-		ERRORS+=("BLOCKED verdict must not have signature fields (--type, --payload, --signature)")
-	fi
 fi
 
 if [[ "$VERDICT" == "NEEDS_INPUT" ]]; then
 	if [[ -z "$QUESTIONS" ]]; then
 		ERRORS+=("NEEDS_INPUT verdict requires --questions (JSON array)")
-	fi
-	# Ensure signature fields are not set for NEEDS_INPUT
-	if [[ -n "$SIG_TYPE" || -n "$PAYLOAD" || -n "$SIGNATURE" ]]; then
-		ERRORS+=("NEEDS_INPUT verdict must not have signature fields")
 	fi
 fi
 

@@ -63,42 +63,43 @@ BLOCK if:
 
 - Mechanics changed but architecture docs were not updated
 
-## Signing Rules
+## Signing
 
-- You sign only if approving
-- Your signature type must be: `QA_MECHANICS_CONTENT`
-- Call: `sign.sh '<summary>' 'QA_MECHANICS_CONTENT'`
+Your signature type: `QA_MECHANICS_CONTENT`
+
+Sign ALL verdicts (enables delta review in subsequent rounds):
+
+```bash
+# APPROVED
+SIGN=$(sign.sh 'Mechanics correct' 'QA_MECHANICS_CONTENT')
+
+# BLOCKED
+SIGN=$(sign.sh 'Hardcoded data' 'QA_MECHANICS_CONTENT' --verdict BLOCKED --blockers '["issue"]')
+```
 
 ## Output
 
-Write structured output using field-based arguments:
-
 ```bash
-# For APPROVED (after calling sign.sh):
+PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
+SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+
 write-output.sh 'review-mechanics-content' \
-  --verdict 'APPROVED' \
-  --summary 'Mechanics correct, content-driven architecture intact' \
+  --verdict '<VERDICT>' \
+  --summary '<summary>' \
   --type 'QA_MECHANICS_CONTENT' \
   --payload "$PAYLOAD" \
   --signature "$SIGNATURE" \
-  --details '{"systems_checked":["effects","triggers"]}'
-
-# For BLOCKED:
-write-output.sh 'review-mechanics-content' \
-  --verdict 'BLOCKED' \
-  --summary 'Hardcoded game data found' \
-  --blockers '["Gold value hardcoded in web layer"]'
+  [--blockers '["..."]'] \
+  [--details '{"systems_checked":[...]}']
 ```
-
-The script validates fields based on verdict. Run `write-output.sh` without arguments for full usage.
 
 ---
 
 ## BEFORE YOU FINISH (MANDATORY)
 
 1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ If APPROVED: Call `sign.sh` and capture payload + signature
-3. ☐ Call `write-output.sh` with appropriate flags for your verdict
+2. ☐ Call `sign.sh` with verdict and capture output
+3. ☐ Call `write-output.sh` with all required flags
 4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-mechanics-content.json`
 
-**If you skip steps 3-4, the workflow breaks.** Master-agent cannot proceed.
+**If you skip steps 2-4, the workflow breaks.** Master-agent cannot proceed.
