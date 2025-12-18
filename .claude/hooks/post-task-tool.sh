@@ -6,6 +6,8 @@
 # This hook validates that file exists and contains valid JSON.
 # Master-agent reads the .json file directly (only review-lead.json in new workflow).
 
+source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
+
 INPUT=$(cat)
 
 SUBAGENT=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // ""')
@@ -13,6 +15,7 @@ SUBAGENT=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // ""')
 # Only process specific subagent types
 case "$SUBAGENT" in
 	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead|safe-deployment-gate)
+		log_hook "$SUBAGENT" "Stopped"
 		;;
 	*)
 		exit 0
