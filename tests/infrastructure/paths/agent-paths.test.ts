@@ -116,7 +116,7 @@ describe('Infrastructure: Agent Path Validation', () => {
 				pathExists('.claude/agents/sub-agent/scripts/check-prior-state.sh'),
 			).toBe(true);
 			expect(
-				pathExists('.claude/agents/sub-agent/scripts/cleanup-qa-outputs.sh'),
+				pathExists('.claude/agents/shared/scripts/cleanup-qa-outputs.sh'),
 			).toBe(true);
 		});
 

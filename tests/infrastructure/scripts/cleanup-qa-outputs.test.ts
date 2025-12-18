@@ -17,7 +17,7 @@ import * as path from 'path';
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 const SCRIPT_PATH = path.join(
 	PROJECT_ROOT,
-	'.claude/agents/sub-agent/scripts/cleanup-qa-outputs.sh',
+	'.claude/agents/shared/scripts/cleanup-qa-outputs.sh',
 );
 const OUTPUT_DIR = '/tmp/claude/sub-agents/output';
 
