@@ -44,20 +44,37 @@ esac
 # =============================================================================
 # Verify review-lead signature before allowing safe-deployment-gate to run.
 # The actual push is performed by the subagent via verify-and-push.sh.
-# Exception: Override mode bypasses all checks (token verified by crypto-gate).
+# Override mode: verify token via crypto-gate before allowing subagent.
 
 if [[ "$SUBAGENT" == "safe-deployment-gate" ]]; then
 	log_hook "safe-deployment-gate" "Gating check started"
 
-	# Check for override mode - if override_token present, allow through
-	# The subagent will run verify-and-push.sh --override which verifies the token
+	# Check for override mode - if override_token present, verify via crypto-gate
 	OVERRIDE_TOKEN=""
 	if echo "$PROMPT" | jq -e '.' >/dev/null 2>&1; then
 		OVERRIDE_TOKEN=$(echo "$PROMPT" | jq -r '.override_token // ""' 2>/dev/null || echo "")
 	fi
 
 	if [[ -n "$OVERRIDE_TOKEN" ]]; then
-		log_hook "safe-deployment-gate" "Override mode detected, allowing subagent"
+		log_hook "safe-deployment-gate" "Override mode detected, verifying token"
+
+		# Verify override token via crypto-gate
+		CRYPTO_GATE=$(qa_crypto_gate_path 2>/dev/null) || CRYPTO_GATE=""
+		if [[ -z "$CRYPTO_GATE" || ! -x "$CRYPTO_GATE" ]]; then
+			cat << EOF
+{"decision":"block","reason":"crypto-gate binary not found. Cannot verify override token."}
+EOF
+			exit 1
+		fi
+
+		if ! "$CRYPTO_GATE" verify-override "$OVERRIDE_TOKEN" >/dev/null 2>&1; then
+			cat << EOF
+{"decision":"block","reason":"Invalid override token. Token verification failed via crypto-gate."}
+EOF
+			exit 1
+		fi
+
+		log_hook "safe-deployment-gate" "Override token verified, allowing subagent"
 		exit 0
 	fi
 
