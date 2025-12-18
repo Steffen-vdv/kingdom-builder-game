@@ -31,6 +31,15 @@
 						"command": "$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/scripts/master-session-handover.sh"
 					}
 				]
+			},
+			{
+				"matcher": "clear",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/scripts/master-session-handover.sh"
+					}
+				]
 			}
 		],
 		"SubagentStart": [
