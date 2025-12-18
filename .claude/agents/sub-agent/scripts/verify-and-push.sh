@@ -456,7 +456,8 @@ echo "✓ Signature valid" >&2
 # VERIFY VERDICT IS APPROVED
 # ═══════════════════════════════════════════════════════════════════════════════
 
-VERDICT=$(echo "$PAYLOAD" | jq -r '.verdict // empty' 2>/dev/null)
+# Verdict is nested: .verdict.verdict (the outer .verdict is the footer object)
+VERDICT=$(echo "$PAYLOAD" | jq -r '.verdict.verdict // empty' 2>/dev/null)
 
 if [[ "$VERDICT" != "APPROVED" ]]; then
 	cat >&2 << WRONG_VERDICT
@@ -484,7 +485,8 @@ echo "✓ Verdict is APPROVED" >&2
 # ═══════════════════════════════════════════════════════════════════════════════
 
 HEAD_SHA=$(git rev-parse HEAD 2>/dev/null)
-APPROVED_COMMITS=$(echo "$PAYLOAD" | jq -r '.commits[]?' 2>/dev/null)
+# Commits are nested under input.commits in the payload structure
+APPROVED_COMMITS=$(echo "$PAYLOAD" | jq -r '.input.commits[]?' 2>/dev/null)
 
 if [[ -z "$APPROVED_COMMITS" ]]; then
 	cat >&2 << 'NO_COMMITS'
@@ -492,10 +494,10 @@ if [[ -z "$APPROVED_COMMITS" ]]; then
 ║  ❌ PUSH BLOCKED — No commits in payload                                      ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-The payload does not contain a 'commits' array.
+The payload does not contain commits at 'input.commits'.
 
 Expected payload format:
-  {"commits": ["<sha1>", ...], "verdict": "APPROVED", ...}
+  {"input": {"commits": ["<sha1>", ...], ...}, "verdict": {...}, ...}
 NO_COMMITS
 	exit 1
 fi
