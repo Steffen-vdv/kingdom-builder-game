@@ -258,7 +258,8 @@ if [[ ${#ERRORS[@]} -eq 0 && -n "$PAYLOAD" && -n "$SIGNATURE" && -n "$SIG_TYPE" 
 		ERRORS+=("crypto-gate not found at $CRYPTO_GATE - cannot verify signature")
 	else
 		# Verify the signature matches the payload
-		VERIFY_RESULT=$("$CRYPTO_GATE" verify --type "$SIG_TYPE" --payload "$PAYLOAD" --signature "$SIGNATURE" 2>&1) || true
+		# crypto-gate verify uses positional args: verify <payload> <sig> --type <t>
+		VERIFY_RESULT=$("$CRYPTO_GATE" verify "$PAYLOAD" "$SIGNATURE" --type "$SIG_TYPE" 2>&1) || true
 
 		if [[ "$VERIFY_RESULT" != "valid" ]]; then
 			cat >&2 << 'SIG_ERROR_HEADER'
