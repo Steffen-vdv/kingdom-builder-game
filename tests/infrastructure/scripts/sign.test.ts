@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { execSync } from 'child_process';
 import * as path from 'path';
+import * as fs from 'fs';
 
 /**
  * Infrastructure Test: sign.sh
@@ -12,6 +13,9 @@ import * as path from 'path';
  * - Includes verdict in payload
  * - Includes blockers/questions in payload when provided
  * - Returns valid JSON with payload, signature, and type
+ *
+ * NOTE: These tests require the crypto-gate binary which is downloaded
+ * by the SubagentStart hook. Tests are skipped if binary is not available.
  */
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
@@ -19,6 +23,10 @@ const SCRIPT_PATH = path.join(
 	PROJECT_ROOT,
 	'.claude/agents/sub-agent/scripts/sign.sh',
 );
+const CRYPTO_GATE_PATH = path.join(PROJECT_ROOT, 'bin/crypto-gate');
+
+// Check if crypto-gate binary exists (downloaded by SubagentStart hook)
+const hasCryptoGate = fs.existsSync(CRYPTO_GATE_PATH);
 
 interface SignResult {
 	payload: string;
@@ -57,7 +65,7 @@ function runScript(args: string[]): RunResult {
 	}
 }
 
-describe('Infrastructure: sign.sh', () => {
+describe.skipIf(!hasCryptoGate)('Infrastructure: sign.sh', () => {
 	describe('Basic Usage', () => {
 		it('should require summary and signature type arguments', () => {
 			const { success, stderr } = runScript([]);
