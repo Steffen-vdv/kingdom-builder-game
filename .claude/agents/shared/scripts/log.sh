@@ -40,6 +40,6 @@ log_session() {
 	mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null
 	(
 		flock -x 200
-		echo "=== $event$suffix $timestamp ===" >> "$LOG_FILE"
+		echo "===    $timestamp    $event$suffix     $tag   ===" >> "$LOG_FILE"
 	) 200>"$LOG_LOCK"
 }
