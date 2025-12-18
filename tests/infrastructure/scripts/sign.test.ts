@@ -33,16 +33,41 @@ const MOCK_CRYPTO_GATE_PATH = path.join(
 );
 
 /**
- * Cleans up any stale mock from crashed test runs.
- * If marker exists, the binary is a mock and should be removed.
+ * Checks if a process with the given PID is still running.
  */
-function cleanupStaleMock(): void {
+function isPidRunning(pid: number): boolean {
+	try {
+		// Sending signal 0 checks if process exists without affecting it
+		process.kill(pid, 0);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Cleans up stale mock from crashed test runs.
+ * Only cleans up if the marker exists and the owning process is dead.
+ * Returns true if mock was installed by another active process (should skip).
+ */
+function cleanupStaleMock(): boolean {
 	if (fs.existsSync(MOCK_MARKER_PATH)) {
+		const content = fs.readFileSync(MOCK_MARKER_PATH, 'utf-8');
+		const match = content.match(/installed-by-pid-(\d+)/);
+		if (match) {
+			const pid = parseInt(match[1], 10);
+			if (isPidRunning(pid) && pid !== process.pid) {
+				// Another process owns this mock, don't touch it
+				return true;
+			}
+		}
+		// Marker from dead process - clean up
 		if (fs.existsSync(CRYPTO_GATE_PATH)) {
 			fs.unlinkSync(CRYPTO_GATE_PATH);
 		}
 		fs.unlinkSync(MOCK_MARKER_PATH);
 	}
+	return false;
 }
 
 interface SignResult {
@@ -82,10 +107,18 @@ function runScript(args: string[]): RunResult {
 	}
 }
 
+// Track if THIS process installed the mock (for cleanup)
+let weInstalledMock = false;
+
 describe('Infrastructure: sign.sh', () => {
 	beforeAll(() => {
-		// Clean up any stale mock from previous crashed runs
-		cleanupStaleMock();
+		// Clean up stale mock from crashed runs (if not owned by active process)
+		const anotherProcessOwnsMock = cleanupStaleMock();
+
+		// If another process owns the mock, use it (don't reinstall)
+		if (anotherProcessOwnsMock) {
+			return;
+		}
 
 		// If real crypto-gate doesn't exist, install the mock
 		if (!fs.existsSync(CRYPTO_GATE_PATH)) {
@@ -99,16 +132,18 @@ describe('Infrastructure: sign.sh', () => {
 			fs.chmodSync(CRYPTO_GATE_PATH, 0o755);
 			// Create marker file to indicate this is a mock (for crash recovery)
 			fs.writeFileSync(MOCK_MARKER_PATH, `installed-by-pid-${process.pid}\n`);
+			weInstalledMock = true;
 		}
 	});
 
 	afterAll(() => {
-		// Clean up mock if marker exists (we installed it)
-		if (fs.existsSync(MOCK_MARKER_PATH)) {
+		// Only clean up if WE installed the mock (not another process)
+		if (weInstalledMock && fs.existsSync(MOCK_MARKER_PATH)) {
 			if (fs.existsSync(CRYPTO_GATE_PATH)) {
 				fs.unlinkSync(CRYPTO_GATE_PATH);
 			}
 			fs.unlinkSync(MOCK_MARKER_PATH);
+			weInstalledMock = false;
 		}
 	});
 
