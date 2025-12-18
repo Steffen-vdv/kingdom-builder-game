@@ -364,32 +364,10 @@ APPROVALS=$(.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh)
 4. Dispatch review-lead with the collected approvals in `approvals_json`
 5. Wait for completion
 6. Read `/tmp/claude/sub-agents/output/review-lead.json`
-7. **Display JSON contents verbatim to user (CRUCIAL)**
+7. **Display JSON contents verbatim to user (CRUCIAL) (Review Lead should send master agent a reminder about this)**
 8. Extract review-lead's approval (payload, signature, type)
 
 ### Phase 3
 
 9. Dispatch safe-deployment-gate with review-lead's single approval
 10. Report result to user
-
----
-
-## Validation & Error Handling
-
-### Pre-hook (task-pre.sh)
-
-Blocks execution if:
-
-- Input is not valid JSON
-- Required fields are missing
-
-### Post-hook (task-post.sh)
-
-Validates JSON output file exists and is valid. Cannot block execution.
-
-Emits warnings to stderr if:
-
-- Output file does not exist
-- Output file is not valid JSON
-
-Master-agent reads the JSON file directly for structured data.
