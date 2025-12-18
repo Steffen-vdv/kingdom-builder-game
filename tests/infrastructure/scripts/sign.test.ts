@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { execSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -14,8 +14,10 @@ import * as fs from 'fs';
  * - Includes blockers/questions in payload when provided
  * - Returns valid JSON with payload, signature, and type
  *
- * NOTE: These tests require the crypto-gate binary which is downloaded
- * by the SubagentStart hook. Tests are skipped if binary is not available.
+ * NOTE: These tests use a mock crypto-gate binary when the real one is not
+ * available (e.g., in CI). The mock produces deterministic signatures,
+ * allowing us to test sign.sh's interaction with crypto-gate without
+ * depending on the actual binary.
  */
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
@@ -24,9 +26,13 @@ const SCRIPT_PATH = path.join(
 	'.claude/agents/sub-agent/scripts/sign.sh',
 );
 const CRYPTO_GATE_PATH = path.join(PROJECT_ROOT, 'bin/crypto-gate');
+const MOCK_CRYPTO_GATE_PATH = path.join(
+	PROJECT_ROOT,
+	'tests/infrastructure/mocks/crypto-gate-mock.sh',
+);
 
-// Check if crypto-gate binary exists (downloaded by SubagentStart hook)
-const hasCryptoGate = fs.existsSync(CRYPTO_GATE_PATH);
+// Track if we installed the mock (for cleanup)
+let installedMock = false;
 
 interface SignResult {
 	payload: string;
@@ -65,7 +71,30 @@ function runScript(args: string[]): RunResult {
 	}
 }
 
-describe.skipIf(!hasCryptoGate)('Infrastructure: sign.sh', () => {
+describe('Infrastructure: sign.sh', () => {
+	beforeAll(() => {
+		// If real crypto-gate doesn't exist, install the mock
+		if (!fs.existsSync(CRYPTO_GATE_PATH)) {
+			// Ensure bin directory exists
+			const binDir = path.dirname(CRYPTO_GATE_PATH);
+			if (!fs.existsSync(binDir)) {
+				fs.mkdirSync(binDir, { recursive: true });
+			}
+			// Copy mock to bin/crypto-gate
+			fs.copyFileSync(MOCK_CRYPTO_GATE_PATH, CRYPTO_GATE_PATH);
+			fs.chmodSync(CRYPTO_GATE_PATH, 0o755);
+			installedMock = true;
+		}
+	});
+
+	afterAll(() => {
+		// Clean up mock if we installed it
+		if (installedMock && fs.existsSync(CRYPTO_GATE_PATH)) {
+			fs.unlinkSync(CRYPTO_GATE_PATH);
+			installedMock = false;
+		}
+	});
+
 	describe('Basic Usage', () => {
 		it('should require summary and signature type arguments', () => {
 			const { success, stderr } = runScript([]);
