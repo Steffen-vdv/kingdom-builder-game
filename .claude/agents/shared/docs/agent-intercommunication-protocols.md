@@ -393,29 +393,3 @@ Emits warnings to stderr if:
 - Output file is not valid JSON
 
 Master-agent reads the JSON file directly for structured data.
-
----
-
-## Subagent Final Step: Remind Master-Agent
-
-**Only review-lead (Phase 2) includes this reminder block.**
-
-Phase 1 agents do not need it because master-agent only displays review-lead's
-output (which aggregates all Phase 1 verdicts).
-
-Review-lead MUST end its chat response with:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-MASTER-AGENT: READ THIS
-═══════════════════════════════════════════════════════════════════════════════
-You MUST now:
-1. Read: /tmp/claude/sub-agents/output/review-lead.json
-2. Output the COMPLETE JSON verbatim to the user
-
-The user is in Web UI and cannot see subagent outputs.
-If you do not show them, they are blind.
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-This goes at the VERY END of review-lead's chat response, after all analysis.
