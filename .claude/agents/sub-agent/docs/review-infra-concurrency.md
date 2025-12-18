@@ -47,34 +47,43 @@ BLOCK if you see:
 - Unconditional cleanup
 - No crash-recovery strategy
 
-## Signing Rules
+## Signing
 
-- You sign only if approving
-- Your signature type must be: `QA_INFRA_CONCURRENCY`
-- Call: `sign.sh '<summary>' 'QA_INFRA_CONCURRENCY'`
+Your signature type: `QA_INFRA_CONCURRENCY`
+
+Sign ALL verdicts (enables delta review in subsequent rounds):
+
+```bash
+# APPROVED
+SIGN=$(sign.sh 'Infrastructure safe' 'QA_INFRA_CONCURRENCY')
+
+# BLOCKED
+SIGN=$(sign.sh 'Race condition' 'QA_INFRA_CONCURRENCY' --verdict BLOCKED --blockers '["issue"]')
+```
 
 ## Output
 
-Write structured output using the helper script:
-
 ```bash
-.claude/agents/sub-agent/scripts/write-output.sh 'review-infra-concurrency' '<json>'
+PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
+SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+
+write-output.sh 'review-infra-concurrency' \
+  --verdict '<VERDICT>' \
+  --summary '<summary>' \
+  --type 'QA_INFRA_CONCURRENCY' \
+  --payload "$PAYLOAD" \
+  --signature "$SIGNATURE" \
+  [--blockers '["..."]'] \
+  [--details '{"hooks_checked":true}']
 ```
-
-Follow the QA Output Schema in:
-`.claude/agents/shared/docs/agent-intercommunication-protocols.md`
-
-Narrative chat is allowed. JSON file governs workflow.
 
 ---
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-Before ending your response, verify:
-
 1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ If APPROVED: Called `sign.sh '<summary>' 'QA_INFRA_CONCURRENCY'`
-3. ☐ Called `write-output.sh 'review-infra-concurrency' '<json>'`
-4. ☐ Verified file exists: `/tmp/claude/sub-agents/output/review-infra-concurrency.json`
+2. ☐ Call `sign.sh` with verdict and capture output
+3. ☐ Call `write-output.sh` with all required flags
+4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-infra-concurrency.json`
 
-**If you skip step 3 or 4, the workflow breaks.** Master-agent cannot proceed.
+**If you skip steps 2-4, the workflow breaks.** Master-agent cannot proceed.

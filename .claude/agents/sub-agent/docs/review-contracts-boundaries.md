@@ -25,6 +25,7 @@ You OWN:
 - Import and domain boundaries
 - Translation and localization pipelines
 - Cross-package contract synchronization
+- Extensibility patterns (registry over switch, separation of concerns)
 
 You do NOT OWN:
 
@@ -66,34 +67,54 @@ BLOCK if:
 - Player-facing strings bypass translation systems
 - Ad-hoc formatting replaces canonical translators
 
-## Signing Rules
+### Extensibility Patterns
 
-- You sign only if approving
-- Your signature type must be: `QA_CONTRACTS_BOUNDARIES`
-- Call: `sign.sh '<summary>' 'QA_CONTRACTS_BOUNDARIES'`
+BLOCK if:
+
+- Type switches (`if type === "foo"`) used where registry patterns belong
+- Hardcoded lists that will grow with each new feature
+- Multi-concern functions that should be separated
+- Custom implementations of what libraries/tools already provide
+
+See CLAUDE.md section 2.8 for details on extensible design.
+
+## Signing
+
+Your signature type: `QA_CONTRACTS_BOUNDARIES`
+
+Sign ALL verdicts (enables delta review in subsequent rounds):
+
+```bash
+# APPROVED
+SIGN=$(sign.sh 'Contracts stable' 'QA_CONTRACTS_BOUNDARIES')
+
+# BLOCKED
+SIGN=$(sign.sh 'Boundary violation' 'QA_CONTRACTS_BOUNDARIES' --verdict BLOCKED --blockers '["issue"]')
+```
 
 ## Output
 
-Write structured output using the helper script:
-
 ```bash
-.claude/agents/sub-agent/scripts/write-output.sh 'review-contracts-boundaries' '<json>'
+PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
+SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+
+write-output.sh 'review-contracts-boundaries' \
+  --verdict '<VERDICT>' \
+  --summary '<summary>' \
+  --type 'QA_CONTRACTS_BOUNDARIES' \
+  --payload "$PAYLOAD" \
+  --signature "$SIGNATURE" \
+  [--blockers '["..."]'] \
+  [--details '{"layers_checked":[...]}']
 ```
-
-Follow the QA Output Schema in:
-`.claude/agents/shared/docs/agent-intercommunication-protocols.md`
-
-Narrative chat output is allowed. Only the JSON file is used for decisions.
 
 ---
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-Before ending your response, verify:
-
 1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ If APPROVED: Called `sign.sh '<summary>' 'QA_CONTRACTS_BOUNDARIES'`
-3. ☐ Called `write-output.sh 'review-contracts-boundaries' '<json>'`
-4. ☐ Verified file exists: `/tmp/claude/sub-agents/output/review-contracts-boundaries.json`
+2. ☐ Call `sign.sh` with verdict and capture output
+3. ☐ Call `write-output.sh` with all required flags
+4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-contracts-boundaries.json`
 
-**If you skip step 3 or 4, the workflow breaks.** Master-agent cannot proceed.
+**If you skip steps 2-4, the workflow breaks.** Master-agent cannot proceed.

@@ -61,34 +61,43 @@ You do NOT OWN:
 - Summary omits high-impact changes
 - Diff contradicts stated intent
 
-## Signing Rules
+## Signing
 
-- You sign only if approving
-- Your signature type must be: `QA_CLAIMS_AUDITOR`
-- Call: `sign.sh '<summary>' 'QA_CLAIMS_AUDITOR'`
+Your signature type: `QA_CLAIMS_AUDITOR`
+
+Sign ALL verdicts (enables delta review in subsequent rounds):
+
+```bash
+# APPROVED
+SIGN=$(sign.sh 'Claims verified' 'QA_CLAIMS_AUDITOR')
+
+# BLOCKED
+SIGN=$(sign.sh 'Claim mismatch' 'QA_CLAIMS_AUDITOR' --verdict BLOCKED --blockers '["issue"]')
+```
 
 ## Output
 
-Write structured output using the helper script:
-
 ```bash
-.claude/agents/sub-agent/scripts/write-output.sh 'review-claims-auditor' '<json>'
+PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
+SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+
+write-output.sh 'review-claims-auditor' \
+  --verdict '<VERDICT>' \
+  --summary '<summary>' \
+  --type 'QA_CLAIMS_AUDITOR' \
+  --payload "$PAYLOAD" \
+  --signature "$SIGNATURE" \
+  [--blockers '["..."]'] \
+  [--details '{"risk_tier":"HIGH"}']
 ```
-
-Follow the QA Output Schema in:
-`.claude/agents/shared/docs/agent-intercommunication-protocols.md`
-
-Chat output may be narrative. Only the JSON file is authoritative.
 
 ---
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-Before ending your response, verify:
-
 1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ If APPROVED: Called `sign.sh '<summary>' 'QA_CLAIMS_AUDITOR'`
-3. ☐ Called `write-output.sh 'review-claims-auditor' '<json>'`
-4. ☐ Verified file exists: `/tmp/claude/sub-agents/output/review-claims-auditor.json`
+2. ☐ Call `sign.sh` with verdict and capture output
+3. ☐ Call `write-output.sh` with all required flags
+4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-claims-auditor.json`
 
-**If you skip step 3 or 4, the workflow breaks.** Master-agent cannot proceed.
+**If you skip steps 2-4, the workflow breaks.** Master-agent cannot proceed.

@@ -83,26 +83,32 @@ Where `{agent}` is the subagent identifier:
 
 How to write the file:
 
-**USE THE HELPER SCRIPT:**
+**USE THE HELPER SCRIPTS:**
 
 ```bash
-.claude/agents/sub-agent/scripts/write-output.sh '<agent-name>' '<json-content>'
+# Step 1: Sign your verdict (ALL verdicts, not just APPROVED)
+SIGN_OUTPUT=$(sign.sh '<summary>' '<signature_type>' --verdict '<VERDICT>' [--blockers '<json>'] [--questions '<json>'])
+PAYLOAD=$(echo "$SIGN_OUTPUT" | jq -r '.payload')
+SIGNATURE=$(echo "$SIGN_OUTPUT" | jq -r '.signature')
+
+# Step 2: Write output file
+write-output.sh '<agent>' \
+  --verdict '<VERDICT>' \
+  --summary '<summary>' \
+  --type '<signature_type>' \
+  --payload "$PAYLOAD" \
+  --signature "$SIGNATURE" \
+  [--blockers '<json>'] \
+  [--details '<json>']
 ```
 
-Example:
+Run `sign.sh` or `write-output.sh` without arguments to see full usage.
 
-```bash
-.claude/agents/sub-agent/scripts/write-output.sh 'review-lead' '{"agent":"review-lead","verdict":"APPROVED",...}'
-```
+**Why sign all verdicts?**
 
-The script handles directory creation and overwrites any existing file.
-
-**Why use the script (not Write tool or bash)?**
-
-- Ensures correct path `/tmp/claude/sub-agents/output/{agent}.json`
-- Creates directory if missing
-- Validates arguments
-- Consistent across all agents
+- Enables delta review in subsequent rounds (see Delta Review Protocol below)
+- Agent can prove what it decided before without re-analyzing everything
+- Speeds up fix-and-retry workflows significantly
 
 Rules:
 
@@ -176,14 +182,11 @@ Each Phase 1 agent MUST write the following structure to `{agent}.json`:
 - `verdict`: required
 - `summary`: required
 
-Signing rules:
+Signing rules (ALL verdicts are signed to enable delta review):
 
-- If verdict == APPROVED:
-  - `signature_type` MUST be a non-empty string
-  - `payload` MUST be a non-empty string
-  - `signature` MUST be a non-empty string
-- Otherwise:
-  - `signature_type`, `payload`, `signature` MUST be null
+- `signature_type` MUST always be a non-empty string
+- `payload` MUST always be a non-empty string
+- `signature` MUST always be a non-empty string
 
 BLOCKED rules:
 
@@ -234,7 +237,13 @@ NEEDS_INPUT rules:
 **Use `write-output.sh` to write this file:**
 
 ```bash
-.claude/agents/sub-agent/scripts/write-output.sh 'review-claims-auditor' '{"agent":"review-claims-auditor",...}'
+write-output.sh 'review-claims-auditor' \
+  --verdict 'APPROVED' \
+  --summary 'All claims verified against diff. Pure refactor, no behavioral changes.' \
+  --type 'QA_CLAIMS_AUDITOR' \
+  --payload '{"commits":["abc123"],...}' \
+  --signature 'a1b2c3d4e5f6...' \
+  --details '{"risk_tier":"LIGHT","files_audited":["packages/engine/src/foo.ts"]}'
 ```
 
 ---
@@ -325,23 +334,14 @@ Only `QA_FINAL_SIGNATORY` type is accepted.
 }
 ```
 
-### Output Schema
+### Output
 
-```json
-{
-	"agent": "safe-deployment-gate",
-	"status": "SUCCESS | FAILED | ERROR",
-	"branch": "branch-name",
-	"commit": "sha-or-null",
-	"message": "Human-readable result"
-}
-```
+Phase 3 does not write JSON output. It communicates results via:
 
-Status meanings:
+- Exit code (0 = success, non-zero = failure)
+- stdout/stderr messages
 
-- SUCCESS: Push completed, `commit` contains the pushed SHA
-- FAILED: Verification failed (invalid signature, HEAD mismatch)
-- ERROR: System error (network, permissions)
+There is no Phase 4, so no downstream consumer needs structured output.
 
 ---
 
@@ -371,3 +371,56 @@ APPROVALS=$(.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh)
 
 9. Dispatch safe-deployment-gate with review-lead's single approval
 10. Report result to user
+
+---
+
+## Delta Review Protocol (Round 2+)
+
+When a QA round results in BLOCKED and the issue is fixed, subsequent rounds
+can be faster. Agents check for prior signed state and only analyze new commits.
+
+### How It Works
+
+1. Agent checks for its own prior JSON file at startup
+2. If file exists and signature verifies, agent compares commits
+3. If prior commits ⊆ current commits, agent enters delta review mode
+4. Agent only analyzes the new commits, not the full diff
+
+### Helper Script
+
+Agents call `check-prior-state.sh` to determine review mode:
+
+```bash
+PRIOR_STATE=$(check-prior-state.sh '<agent>' '["commit1","commit2","commit3"]')
+MODE=$(echo "$PRIOR_STATE" | jq -r '.mode')
+
+if [[ "$MODE" == "DELTA_REVIEW" ]]; then
+  PRIOR_VERDICT=$(echo "$PRIOR_STATE" | jq -r '.prior_verdict')
+  NEW_COMMITS=$(echo "$PRIOR_STATE" | jq -r '.new_commits')
+  # Only analyze new commits
+else
+  # Full review
+fi
+```
+
+Returns:
+
+- `{"mode":"FULL_REVIEW","reason":"..."}` - Do full review
+- `{"mode":"DELTA_REVIEW","prior_verdict":"...","prior_commits":[...],"new_commits":[...]}` - Delta review possible
+
+### Delta Review Behavior
+
+| Prior Verdict | Action                                                         |
+| ------------- | -------------------------------------------------------------- |
+| APPROVED      | Check if new commits invalidate approval; fast approve if safe |
+| BLOCKED       | Check if new commits address blockers                          |
+| NEEDS_INPUT   | Check if answers were provided and proceed                     |
+
+### Fallback to Full Review
+
+Delta review is conservative. Full review happens if:
+
+- No prior state file exists
+- Signature verification fails
+- Prior commits not subset of current (rebase, etc.)
+- Agent uncertain if delta affects its domain

@@ -28,6 +28,7 @@ set -euo pipefail
 # Derive project root from script location (.claude/agents/sub-agent/scripts/verify-and-push.sh)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
+SHARED_SCRIPTS="$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # LOCATE CRYPTO-GATE BINARY
@@ -118,6 +119,8 @@ Commit: $HEAD_SHA
 
 Note: This push bypassed normal QA workflow via user override.
 SUCCESS_OVERRIDE
+		# Clean up QA output files for next workflow
+		"$SHARED_SCRIPTS/cleanup-qa-outputs.sh" 2>/dev/null || true
 		exit 0
 	else
 		cat >&2 << 'PUSH_FAILED'
@@ -289,6 +292,8 @@ if git push -u origin "$BRANCH"; then
 Branch: $BRANCH
 Commit: $HEAD_SHA
 SUCCESS
+	# Clean up QA output files for next workflow
+	"$SHARED_SCRIPTS/cleanup-qa-outputs.sh" 2>/dev/null || true
 	exit 0
 else
 	cat >&2 << 'PUSH_FAILED'

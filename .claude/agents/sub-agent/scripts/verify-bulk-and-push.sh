@@ -14,6 +14,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CRYPTO_GATE="${SCRIPT_DIR}/../../../bin/crypto-gate"
+SHARED_SCRIPTS="$SCRIPT_DIR/../../shared/scripts"
 
 # Colors
 RED='\033[0;31m'
@@ -53,6 +54,8 @@ if [[ "$1" == "--override" ]]; then
 	success "✅ PUSH SUCCESSFUL (override)"
 	echo "Branch: $BRANCH"
 	echo "Commit: $(git rev-parse HEAD)"
+	# Clean up QA output files for next workflow
+	"$SHARED_SCRIPTS/cleanup-qa-outputs.sh" 2>/dev/null || true
 	exit 0
 fi
 
@@ -110,3 +113,6 @@ git push -u origin "$BRANCH" || error "Git push failed"
 success "✅ PUSH SUCCESSFUL"
 echo "Branch: $BRANCH"
 echo "Commit: $HEAD_COMMIT"
+
+# Clean up QA output files for next workflow
+"$SHARED_SCRIPTS/cleanup-qa-outputs.sh" 2>/dev/null || true

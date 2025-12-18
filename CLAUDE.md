@@ -216,6 +216,44 @@ drift apart.
 **The test:** If updating information requires changing multiple files, you have
 duplication that should be eliminated.
 
+### 2.8 Extensible Design
+
+**Prefer patterns over special cases.**
+
+When implementing new functionality, design for the next 20 similar additions,
+not just today's feature. Code that works but doesn't scale creates technical
+debt for every future extension.
+
+**Red flags indicating poor extensibility:**
+
+- `if (type === "foo")` chains that grow with each new type
+- Hardcoded lists that need manual updates
+- Functions doing multiple unrelated things
+- Missing abstractions that force copy-paste
+
+**Correct patterns:**
+
+- Registry/plugin patterns for type-specific behavior
+- Base classes or interfaces for shared contracts
+- Separate files/modules for distinct concerns
+- Tools that do one thing well and compose
+
+```python
+# WRONG - Grows with every new command
+if executable == "git":
+    parse_git(args)
+elif executable == "docker":
+    parse_docker(args)
+
+# CORRECT - New commands just register themselves
+SPECS = {"git": GitSpec(), "docker": DockerSpec()}
+spec = SPECS.get(executable)
+```
+
+**Reuse existing tools and specs.** Before writing custom logic, check if a
+library, tool, or existing codebase solution already handles the problem.
+Reinventing what exists wastes time and introduces bugs the original solved.
+
 ---
 
 ## 3. Agent Architecture

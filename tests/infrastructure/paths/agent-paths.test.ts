@@ -104,6 +104,20 @@ describe('Infrastructure: Agent Path Validation', () => {
 			expect(
 				pathExists('.claude/agents/sub-agent/scripts/subagent-cleanup.sh'),
 			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/scripts/write-output.sh'),
+			).toBe(true);
+			expect(
+				pathExists(
+					'.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh',
+				),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/scripts/check-prior-state.sh'),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/shared/scripts/cleanup-qa-outputs.sh'),
+			).toBe(true);
 		});
 
 		it('should NOT have old script names', () => {
@@ -129,7 +143,7 @@ describe('Infrastructure: Agent Path Validation', () => {
 
 	describe('Hook Files', () => {
 		it('should have security hooks', () => {
-			expect(pathExists('.claude/hooks/pre-push-review.sh')).toBe(true);
+			expect(pathExists('.claude/hooks/block-git-command.sh')).toBe(true);
 			expect(pathExists('.claude/hooks/block-agent-access.sh')).toBe(true);
 		});
 	});

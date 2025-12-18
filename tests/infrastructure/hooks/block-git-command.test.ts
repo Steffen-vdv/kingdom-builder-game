@@ -3,9 +3,9 @@ import { execSync } from 'child_process';
 import * as path from 'path';
 
 /**
- * Infrastructure Test: Pre-Push Hook
+ * Infrastructure Test: Block Git Command Hook
  *
- * Verifies that the pre-push-review hook correctly:
+ * Verifies that the block-git-command hook correctly:
  * - Blocks direct git push commands
  * - Allows verify-and-push.sh script (Phase 3 single signature)
  * - Allows verify-bulk-and-push.sh script (legacy/alternative)
@@ -14,13 +14,17 @@ import * as path from 'path';
  */
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
-const HOOK_SCRIPT = path.join(PROJECT_ROOT, '.claude/hooks/pre-push-review.sh');
+const HOOK_SCRIPT = path.join(
+	PROJECT_ROOT,
+	'.claude/hooks/block-git-command.sh',
+);
 
-describe('Infrastructure: Pre-Push Hook', () => {
+describe('Infrastructure: Block Git Command Hook', () => {
 	const testCommand = (
 		command: string,
 	): { blocked: boolean; output: string } => {
 		const toolInput = JSON.stringify({
+			tool_name: 'Bash',
 			tool_input: {
 				command: command,
 			},
@@ -31,6 +35,10 @@ describe('Infrastructure: Pre-Push Hook', () => {
 				encoding: 'utf-8',
 				stdio: 'pipe',
 				cwd: PROJECT_ROOT,
+				env: {
+					...process.env,
+					CLAUDE_PROJECT_DIR: PROJECT_ROOT,
+				},
 			});
 			return { blocked: false, output: result };
 		} catch (error: unknown) {
@@ -70,8 +78,8 @@ describe('Infrastructure: Pre-Push Hook', () => {
 		it('should provide helpful error message', () => {
 			const { blocked, output } = testCommand('git push');
 			expect(blocked).toBe(true);
-			expect(output).toContain('PUSH BLOCKED');
-			expect(output).toContain('verify-bulk-and-push.sh');
+			expect(output).toContain('BLOCKED');
+			expect(output).toContain('verified push workflow');
 		});
 
 		it('should describe three-phase workflow in error message', () => {

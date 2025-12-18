@@ -115,88 +115,34 @@ Apply the decision tree above based on your analysis.
 
 ---
 
-## Signing (When Tests Pass)
+## Signing
 
-If all tests pass (or no tests required for docs-only changes), you MUST sign.
+Your signature type: `QA_CI_REQUIRED_TESTS`
 
-**Signature type:** `QA_CI_REQUIRED_TESTS`
-
-**How to sign:**
+Sign ALL verdicts (enables delta review in subsequent rounds):
 
 ```bash
-.claude/agents/sub-agent/scripts/sign.sh '<summary>' 'QA_CI_REQUIRED_TESTS'
+# APPROVED (tests pass)
+SIGN=$(sign.sh 'All 47 tests passed' 'QA_CI_REQUIRED_TESTS')
+
+# BLOCKED (tests fail)
+SIGN=$(sign.sh '3 tests failed' 'QA_CI_REQUIRED_TESTS' --verdict BLOCKED --blockers '["test:foo.test.ts"]')
 ```
-
-The script outputs JSON with `payload`, `signature`, and `type`. Extract these
-for your output file.
-
-**Example:**
-
-```bash
-SIGN_OUTPUT=$(.claude/agents/sub-agent/scripts/sign.sh 'All 47 tests passed' 'QA_CI_REQUIRED_TESTS')
-# Parse SIGN_OUTPUT to extract payload, signature, type
-```
-
----
 
 ## Output
 
-Write structured output using the helper script:
-
 ```bash
-.claude/agents/sub-agent/scripts/write-output.sh 'review-ci-tests-required' '<json>'
-```
+PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
+SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
 
-Follow the QA Output Schema in:
-`.claude/agents/shared/docs/agent-intercommunication-protocols.md`
-
-**When tests PASS:**
-
-```json
-{
-	"agent": "review-ci-tests-required",
-	"verdict": "APPROVED",
-	"summary": "All 47 tests passed (targeted: engine package)",
-	"signature_type": "QA_CI_REQUIRED_TESTS",
-	"payload": "{...}",
-	"signature": "abc123...",
-	"blockers": null,
-	"questions": null,
-	"details": {
-		"strategy": "targeted",
-		"tests_run": 47,
-		"tests_passed": 47,
-		"tests_failed": 0,
-		"duration_ms": 12340
-	}
-}
-```
-
-**When tests FAIL:**
-
-```json
-{
-	"agent": "review-ci-tests-required",
-	"verdict": "BLOCKED",
-	"summary": "3 tests failed in engine package",
-	"signature_type": null,
-	"payload": null,
-	"signature": null,
-	"blockers": ["test:engine/tests/foo.test.ts::should handle edge case"],
-	"questions": null,
-	"details": {
-		"strategy": "targeted",
-		"tests_run": 47,
-		"tests_passed": 44,
-		"tests_failed": 3,
-		"failures": [
-			{
-				"test": "engine/tests/foo.test.ts::should handle edge case",
-				"error": "Expected 5, got 6"
-			}
-		]
-	}
-}
+write-output.sh 'review-ci-tests-required' \
+  --verdict '<VERDICT>' \
+  --summary '<summary>' \
+  --type 'QA_CI_REQUIRED_TESTS' \
+  --payload "$PAYLOAD" \
+  --signature "$SIGNATURE" \
+  [--blockers '["..."]'] \
+  [--details '{"strategy":"targeted","tests_run":47}']
 ```
 
 ---
@@ -236,11 +182,9 @@ For project principles (fetch if needed):
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-Before ending your response, verify:
-
 1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ If APPROVED: Called `sign.sh '<summary>' 'QA_CI_REQUIRED_TESTS'`
-3. ☐ Called `write-output.sh 'review-ci-tests-required' '<json>'`
-4. ☐ Verified file exists: `/tmp/claude/sub-agents/output/review-ci-tests-required.json`
+2. ☐ If APPROVED: Call `sign.sh` and capture payload + signature
+3. ☐ Call `write-output.sh` with appropriate flags for your verdict
+4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-ci-tests-required.json`
 
-**If you skip step 3 or 4, the workflow breaks.** Master-agent cannot proceed.
+**If you skip steps 3-4, the workflow breaks.** Master-agent cannot proceed.

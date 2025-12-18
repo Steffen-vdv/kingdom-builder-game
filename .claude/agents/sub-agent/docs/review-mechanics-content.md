@@ -63,34 +63,43 @@ BLOCK if:
 
 - Mechanics changed but architecture docs were not updated
 
-## Signing Rules
+## Signing
 
-- You sign only if approving
-- Your signature type must be: `QA_MECHANICS_CONTENT`
-- Call: `sign.sh '<summary>' 'QA_MECHANICS_CONTENT'`
+Your signature type: `QA_MECHANICS_CONTENT`
+
+Sign ALL verdicts (enables delta review in subsequent rounds):
+
+```bash
+# APPROVED
+SIGN=$(sign.sh 'Mechanics correct' 'QA_MECHANICS_CONTENT')
+
+# BLOCKED
+SIGN=$(sign.sh 'Hardcoded data' 'QA_MECHANICS_CONTENT' --verdict BLOCKED --blockers '["issue"]')
+```
 
 ## Output
 
-Write structured output using the helper script:
-
 ```bash
-.claude/agents/sub-agent/scripts/write-output.sh 'review-mechanics-content' '<json>'
+PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
+SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+
+write-output.sh 'review-mechanics-content' \
+  --verdict '<VERDICT>' \
+  --summary '<summary>' \
+  --type 'QA_MECHANICS_CONTENT' \
+  --payload "$PAYLOAD" \
+  --signature "$SIGNATURE" \
+  [--blockers '["..."]'] \
+  [--details '{"systems_checked":[...]}']
 ```
-
-Follow the QA Output Schema in:
-`.claude/agents/shared/docs/agent-intercommunication-protocols.md`
-
-Chat output may explain reasoning. JSON file is authoritative.
 
 ---
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-Before ending your response, verify:
-
 1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ If APPROVED: Called `sign.sh '<summary>' 'QA_MECHANICS_CONTENT'`
-3. ☐ Called `write-output.sh 'review-mechanics-content' '<json>'`
-4. ☐ Verified file exists: `/tmp/claude/sub-agents/output/review-mechanics-content.json`
+2. ☐ Call `sign.sh` with verdict and capture output
+3. ☐ Call `write-output.sh` with all required flags
+4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-mechanics-content.json`
 
-**If you skip step 3 or 4, the workflow breaks.** Master-agent cannot proceed.
+**If you skip steps 2-4, the workflow breaks.** Master-agent cannot proceed.

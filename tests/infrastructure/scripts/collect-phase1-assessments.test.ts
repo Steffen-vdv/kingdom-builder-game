@@ -322,4 +322,42 @@ describe('Infrastructure: collect-phase1-assessments.sh', () => {
 			expect(stderr).toContain('review-tests-docs-dry');
 		});
 	});
+
+	describe('Signature Type Validation (Security)', () => {
+		it('should fail when signature_type does not match expected type for agent', () => {
+			// Create files but use wrong signature type for claims auditor
+			for (const agent of AGENTS) {
+				const output = createValidOutput(agent);
+				if (agent === 'review-claims-auditor') {
+					// Use wrong type - should be QA_CLAIMS_AUDITOR
+					(output as { signature_type: string }).signature_type =
+						'QA_CI_REQUIRED_TESTS';
+				}
+				writeOutput(agent, output);
+			}
+
+			const { success, stderr } = runScript();
+			expect(success).toBe(false);
+			expect(stderr).toContain('review-claims-auditor');
+			expect(stderr).toContain("signature_type is 'QA_CI_REQUIRED_TESTS'");
+			expect(stderr).toContain("expected 'QA_CLAIMS_AUDITOR'");
+		});
+
+		it('should fail when same approval is copied to all 6 slots', () => {
+			// Security test: copying one approval to all slots should fail
+			const singleApproval = createValidOutput('review-ci-tests-required');
+			for (const agent of AGENTS) {
+				writeOutput(agent, singleApproval);
+			}
+
+			const { success, stderr } = runScript();
+			expect(success).toBe(false);
+			// Should fail for 5 out of 6 agents (all except ci-tests-required)
+			expect(stderr).toContain('review-claims-auditor');
+			expect(stderr).toContain('review-contracts-boundaries');
+			expect(stderr).toContain('review-mechanics-content');
+			expect(stderr).toContain('review-infra-concurrency');
+			expect(stderr).toContain('review-tests-docs-dry');
+		});
+	});
 });

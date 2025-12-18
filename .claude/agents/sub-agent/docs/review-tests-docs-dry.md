@@ -58,34 +58,43 @@ BLOCK if:
 - Core changes lack architecture updates
 - Data or rules are duplicated
 
-## Signing Rules
+## Signing
 
-- You sign only if approving
-- Your signature type must be: `QA_TESTS_DOCS_DRY`
-- Call: `sign.sh '<summary>' 'QA_TESTS_DOCS_DRY'`
+Your signature type: `QA_TESTS_DOCS_DRY`
+
+Sign ALL verdicts (enables delta review in subsequent rounds):
+
+```bash
+# APPROVED
+SIGN=$(sign.sh 'Tests adequate' 'QA_TESTS_DOCS_DRY')
+
+# BLOCKED
+SIGN=$(sign.sh 'Test gap' 'QA_TESTS_DOCS_DRY' --verdict BLOCKED --blockers '["issue"]')
+```
 
 ## Output
 
-Write structured output using the helper script:
-
 ```bash
-.claude/agents/sub-agent/scripts/write-output.sh 'review-tests-docs-dry' '<json>'
+PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
+SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+
+write-output.sh 'review-tests-docs-dry' \
+  --verdict '<VERDICT>' \
+  --summary '<summary>' \
+  --type 'QA_TESTS_DOCS_DRY' \
+  --payload "$PAYLOAD" \
+  --signature "$SIGNATURE" \
+  [--blockers '["..."]'] \
+  [--details '{"test_coverage":"adequate"}']
 ```
-
-Follow the QA Output Schema in:
-`.claude/agents/shared/docs/agent-intercommunication-protocols.md`
-
-Chat output is explanatory only. JSON file is decisive.
 
 ---
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-Before ending your response, verify:
-
 1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ If APPROVED: Called `sign.sh '<summary>' 'QA_TESTS_DOCS_DRY'`
-3. ☐ Called `write-output.sh 'review-tests-docs-dry' '<json>'`
-4. ☐ Verified file exists: `/tmp/claude/sub-agents/output/review-tests-docs-dry.json`
+2. ☐ Call `sign.sh` with verdict and capture output
+3. ☐ Call `write-output.sh` with all required flags
+4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-tests-docs-dry.json`
 
-**If you skip step 3 or 4, the workflow breaks.** Master-agent cannot proceed.
+**If you skip steps 2-4, the workflow breaks.** Master-agent cannot proceed.
