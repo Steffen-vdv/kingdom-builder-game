@@ -7,10 +7,6 @@
 # Read stdin FIRST before cd (stdin may not survive cd in some shells)
 HOOK_INPUT=$(cat)
 
-# Log full HOOK_INPUT for debugging
-mkdir -p /tmp/claude/hooks
-echo "$HOOK_INPUT" > /tmp/claude/hooks/subagent-hook-input.txt
-
 cd "$CLAUDE_PROJECT_DIR" || exit 1
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
 
