@@ -97,7 +97,7 @@ if [[ ! -x "$CRYPTO_GATE" ]]; then
 
 Expected: $CRYPTO_GATE
 
-The crypto-gate binary should be downloaded by SubagentStart hook.
+The crypto-gate binary should be downloaded by master-agent at session start.
 If you are a subagent and see this, report ERROR to the master-agent.
 EOF
 	exit 1
