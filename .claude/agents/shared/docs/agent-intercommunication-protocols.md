@@ -376,14 +376,14 @@ APPROVALS=$(.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh)
 
 ## Validation & Error Handling
 
-### Pre-hook (task-pre.sh)
+### Pre-hook (pre-task-tool.sh)
 
 Blocks execution if:
 
 - Input is not valid JSON
 - Required fields are missing
 
-### Post-hook (task-post.sh)
+### Post-hook (post-task-tool.sh)
 
 Validates JSON output file exists and is valid. Cannot block execution.
 

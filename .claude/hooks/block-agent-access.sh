@@ -8,6 +8,12 @@
 #
 # NOTE: Read/Write/Edit/Glob/Grep are ALLOWED for all directories.
 # Only EXECUTION (Bash) is restricted for security purposes.
+#
+# IMPORTANT: We only block EXECUTION of scripts in these directories.
+# Commands like `rm .claude/hooks/file.sh` are ALLOWED because `rm` is the
+# executable, not the hook file. The hook file is just an argument.
+
+SCRIPTS_DIR="$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts"
 
 # Read tool input from stdin
 JSON_INPUT=$(cat)
@@ -16,17 +22,29 @@ JSON_INPUT=$(cat)
 COMMAND=$(echo "$JSON_INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
 TOOL_NAME=$(echo "$JSON_INPUT" | jq -r '.tool_name // empty' 2>/dev/null)
 
-# Only restrict Bash execution - allow all file operations (Read/Write/Edit/Glob/Grep)
+# Only restrict Bash execution - allow all file operations
 if [[ "$TOOL_NAME" != "Bash" ]] || [[ -z "$COMMAND" ]]; then
 	exit 0
 fi
 
-# For Bash commands, extract executable paths (starting with ./ or / or bare path)
-# This avoids false positives from text in arguments like commit messages
-EXEC_PATH=""
-if [[ -n "$COMMAND" ]]; then
-	# Extract first word that looks like an executable path
-	EXEC_PATH=$(echo "$COMMAND" | grep -oE '(^|[[:space:]])(\.?/[^[:space:]]+)' | head -1 | xargs)
+# Parse the command using the command package
+PARSED=$(echo "$COMMAND" | PYTHONPATH="$SCRIPTS_DIR" python3 -m command 2>/dev/null)
+
+# Extract executable from parsed output
+EXECUTABLE=$(echo "$PARSED" | jq -r '.executable // empty' 2>/dev/null)
+
+# If parse failed or no executable, allow (fail open for safety)
+if [[ -z "$EXECUTABLE" ]]; then
+	exit 0
+fi
+
+# Handle shell invocations: bash/sh <script> → check the script path
+if [[ "$EXECUTABLE" == "bash" ]] || [[ "$EXECUTABLE" == "sh" ]]; then
+	# Get first positional argument (the script being executed)
+	SCRIPT_ARG=$(echo "$PARSED" | jq -r '.positional[0] // empty' 2>/dev/null)
+	if [[ -n "$SCRIPT_ARG" ]]; then
+		EXECUTABLE="$SCRIPT_ARG"
+	fi
 fi
 
 # Check what's being executed
@@ -35,29 +53,29 @@ EXECUTES_SUBAGENT_SCRIPTS=false
 EXECUTES_MASTER_SCRIPTS=false
 EXECUTES_HOOKS=false
 
-# Check bin/ execution
-if [[ "$EXEC_PATH" == *"/bin/"* ]] || [[ "$COMMAND" == bin/* ]]; then
+# Check bin/ execution (crypto tools)
+if [[ "$EXECUTABLE" == *"/bin/"* ]] || [[ "$EXECUTABLE" == bin/* ]]; then
 	EXECUTES_BIN=true
 fi
 
 # Check sub-agent/scripts/ execution
-if [[ "$EXEC_PATH" == *"/sub-agent/scripts/"* ]] || \
-   [[ "$COMMAND" == *".claude/"*"sub-agent/scripts/"* ]]; then
+if [[ "$EXECUTABLE" == *"/sub-agent/scripts/"* ]] || \
+   [[ "$EXECUTABLE" == *".claude/"*"sub-agent/scripts/"* ]] || \
+   [[ "$EXECUTABLE" == .claude/agents/sub-agent/scripts/* ]]; then
 	EXECUTES_SUBAGENT_SCRIPTS=true
 fi
 
 # Check master-agent/scripts/ execution
-if [[ "$EXEC_PATH" == *"/master-agent/scripts/"* ]] || \
-   [[ "$COMMAND" == *".claude/"*"master-agent/scripts/"* ]]; then
+if [[ "$EXECUTABLE" == *"/master-agent/scripts/"* ]] || \
+   [[ "$EXECUTABLE" == *".claude/"*"master-agent/scripts/"* ]] || \
+   [[ "$EXECUTABLE" == .claude/agents/master-agent/scripts/* ]]; then
 	EXECUTES_MASTER_SCRIPTS=true
 fi
 
-# Check .claude/hooks/ EXECUTION - hooks are system-invoked, never agent-invoked
-if [[ "$EXEC_PATH" == *"/.claude/hooks/"* ]] || \
-   [[ "$EXEC_PATH" == *".claude/hooks/"* ]] || \
-   [[ "$COMMAND" == .claude/hooks/* ]] || \
-   [[ "$COMMAND" == bash\ *".claude/hooks/"* ]] || \
-   [[ "$COMMAND" == sh\ *".claude/hooks/"* ]]; then
+# Check .claude/hooks/ EXECUTION - hooks are system-invoked only
+if [[ "$EXECUTABLE" == *"/.claude/hooks/"* ]] || \
+   [[ "$EXECUTABLE" == *".claude/hooks/"* ]] || \
+   [[ "$EXECUTABLE" == .claude/hooks/* ]]; then
 	EXECUTES_HOOKS=true
 fi
 

@@ -25,6 +25,7 @@ You OWN:
 - Import and domain boundaries
 - Translation and localization pipelines
 - Cross-package contract synchronization
+- Extensibility patterns (registry over switch, separation of concerns)
 
 You do NOT OWN:
 
@@ -65,6 +66,17 @@ BLOCK if:
 
 - Player-facing strings bypass translation systems
 - Ad-hoc formatting replaces canonical translators
+
+### Extensibility Patterns
+
+BLOCK if:
+
+- Type switches (`if type === "foo"`) used where registry patterns belong
+- Hardcoded lists that will grow with each new feature
+- Multi-concern functions that should be separated
+- Custom implementations of what libraries/tools already provide
+
+See CLAUDE.md section 2.8 for details on extensible design.
 
 ## Signing
 
