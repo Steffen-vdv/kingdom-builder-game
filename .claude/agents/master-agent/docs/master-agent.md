@@ -105,7 +105,7 @@ Wait for all 6 to complete. Each produces a signed approval.
 **Step 1:** Collect approvals:
 
 ```bash
-APPROVALS=`.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh`
+APPROVALS=`.claude/agents/master-agent/scripts/collect-phase1-assessments.sh`
 ```
 
 **Step 2:** Dispatch review-lead:
@@ -238,7 +238,7 @@ summarization or conciseness.
 For Phase 1 outputs, use the helper script:
 
 ```bash
-APPROVALS=`.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh`
+APPROVALS=`.claude/agents/master-agent/scripts/collect-phase1-assessments.sh`
 ```
 
 For Phase 2 output (review-lead), read directly:

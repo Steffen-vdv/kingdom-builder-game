@@ -75,6 +75,25 @@ describe('Infrastructure: Block Git Command Hook', () => {
 			expect(blocked).toBe(true);
 		});
 
+		it('should block git push with -C directory flag (security bypass fix)', () => {
+			const { blocked } = testCommand(
+				'git -C /home/user/repo push origin main',
+			);
+			expect(blocked).toBe(true);
+		});
+
+		it('should block git push with --git-dir flag', () => {
+			const { blocked } = testCommand('git --git-dir=/path/.git push');
+			expect(blocked).toBe(true);
+		});
+
+		it('should block git push with multiple global flags', () => {
+			const { blocked } = testCommand(
+				'git -C /path --no-pager push origin feature',
+			);
+			expect(blocked).toBe(true);
+		});
+
 		it('should provide helpful error message', () => {
 			const { blocked, output } = testCommand('git push');
 			expect(blocked).toBe(true);

@@ -45,3 +45,22 @@ class CommandSpec(ABC):
             subcommand: The subcommand to check, or None for base command
         """
         pass
+
+    def extract_subcommand(self, args: list[str]) -> tuple[str | None, list[str]]:
+        """
+        Extract the subcommand from argument list.
+
+        Some commands (like git) have global flags that can appear before
+        the subcommand. Override this method to handle such cases.
+
+        Args:
+            args: All arguments after the executable
+
+        Returns:
+            (subcommand, remaining_args) where remaining_args excludes
+            both global flags and the subcommand itself
+        """
+        # Default: first non-flag argument is the subcommand
+        if args and not args[0].startswith("-"):
+            return args[0], args[1:]
+        return None, args

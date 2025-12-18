@@ -12,6 +12,24 @@ INPUT=$(cat)
 
 SUBAGENT=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // ""')
 PROMPT=$(echo "$INPUT" | jq -r '.tool_input.prompt // ""')
+MODEL_OVERRIDE=$(echo "$INPUT" | jq -r '.tool_input.model // ""')
+
+# =============================================================================
+# BLOCK MODEL OVERRIDES for QA subagents
+# =============================================================================
+# These subagents have model configured in frontmatter. Overriding degrades
+# reliability (e.g., haiku may skip tool invocations and output narrative).
+
+case "$SUBAGENT" in
+	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead|safe-deployment-gate)
+		if [[ -n "$MODEL_OVERRIDE" ]]; then
+			cat << EOF
+{"decision":"block","reason":"Model override '$MODEL_OVERRIDE' not allowed for $SUBAGENT. These subagents have model configured in frontmatter. Remove the 'model' parameter from your Task invocation."}
+EOF
+			exit 1
+		fi
+		;;
+esac
 
 # Only validate specific subagent types
 case "$SUBAGENT" in
@@ -29,7 +47,7 @@ if ! echo "$PROMPT" | jq '.' >/dev/null 2>&1; then
 	cat << 'EOF'
 {"decision":"block","reason":"INPUT is not valid JSON. Prompt must be a pure JSON object.\n\nExample: {\"branch\": \"...\", \"commits\": [...]}"}
 EOF
-	exit 0
+	exit 1
 fi
 
 # Parse the JSON for field validation
@@ -40,7 +58,27 @@ if ! echo "$PARSED" | jq -e '.branch' >/dev/null 2>&1; then
 	cat << 'EOF'
 {"decision":"block","reason":"INPUT JSON missing required 'branch' field."}
 EOF
-	exit 0
+	exit 1
+fi
+
+# Validate commits field for agents that require it (all except safe-deployment-gate)
+# safe-deployment-gate uses approval.payload which contains commits internally
+if [[ "$SUBAGENT" != "safe-deployment-gate" ]]; then
+	if ! echo "$PARSED" | jq -e '.commits | type == "array"' >/dev/null 2>&1; then
+		cat << EOF
+{"decision":"block","reason":"INPUT JSON missing or invalid 'commits' field. Must be a JSON array of commit SHAs.\n\nExample: {\"branch\": \"...\", \"commits\": [\"abc123\", \"def456\"], ...}"}
+EOF
+		exit 1
+	fi
+
+	# Validate commits array is non-empty
+	COMMITS_COUNT=$(echo "$PARSED" | jq '.commits | length' 2>/dev/null)
+	if [[ "$COMMITS_COUNT" == "0" ]]; then
+		cat << 'EOF'
+{"decision":"block","reason":"INPUT JSON 'commits' array is empty. At least one commit SHA is required."}
+EOF
+		exit 1
+	fi
 fi
 
 # Subagent-specific validation
@@ -50,7 +88,7 @@ case "$SUBAGENT" in
 			cat << 'EOF'
 {"decision":"block","reason":"review-ci-tests-required INPUT missing 'files_changed' field. Required: { branch, commits, files_changed }"}
 EOF
-			exit 0
+			exit 1
 		fi
 		;;
 	review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry)
@@ -58,7 +96,7 @@ EOF
 			cat << 'EOF'
 {"decision":"block","reason":"QA reviewer INPUT missing 'original_request' field. Required: { branch, commits, original_request, changes_summary, user_approval, files_changed }"}
 EOF
-			exit 0
+			exit 1
 		fi
 		;;
 	review-lead)
@@ -67,7 +105,7 @@ EOF
 			cat << 'EOF'
 {"decision":"block","reason":"review-lead INPUT missing 'approvals_json' field. Required: { branch, commits, approvals_json, original_request, changes_summary }"}
 EOF
-			exit 0
+			exit 1
 		fi
 		;;
 	safe-deployment-gate)
@@ -76,7 +114,7 @@ EOF
 			cat << 'EOF'
 {"decision":"block","reason":"safe-deployment-gate INPUT missing 'approval' or 'override_token' field. Required: { branch, approval } OR { branch, override_token }"}
 EOF
-			exit 0
+			exit 1
 		fi
 		;;
 esac

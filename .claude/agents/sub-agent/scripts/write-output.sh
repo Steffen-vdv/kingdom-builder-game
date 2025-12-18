@@ -21,6 +21,10 @@
 
 set -euo pipefail
 
+# Source the canonical agent registry for validation
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/../../shared/config/agent-registry.sh"
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # PARSE ARGUMENTS
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -129,6 +133,33 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# VALIDATE AGENT IDENTIFIER (using VALID_AGENTS and AGENT_SIG_TYPES from agent-registry.sh)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+if [[ ! "$AGENT" =~ ^($VALID_AGENTS)$ ]]; then
+	cat >&2 << EOF
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  ❌ INVALID AGENT IDENTIFIER                                                  ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Provided: $AGENT
+
+Valid agent identifiers:
+  • review-ci-tests-required
+  • review-claims-auditor
+  • review-contracts-boundaries
+  • review-mechanics-content
+  • review-infra-concurrency
+  • review-tests-docs-dry
+  • review-lead
+
+Note: safe-deployment-gate does not write JSON output (communicates via exit code).
+The agent identifier must match exactly — check for typos.
+EOF
+	exit 1
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # VALIDATE REQUIRED FIELDS
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -160,6 +191,19 @@ if [[ -z "$PAYLOAD" ]]; then
 fi
 if [[ -z "$SIGNATURE" ]]; then
 	ERRORS+=("--signature (hex signature) is required for all verdicts")
+fi
+
+# Cross-validate agent identifier matches signature type (prevents copy/paste errors)
+if [[ -n "$SIG_TYPE" ]]; then
+	EXPECTED_SIG_TYPE="${AGENT_SIG_TYPES[$AGENT]}"
+	if [[ "$SIG_TYPE" != "$EXPECTED_SIG_TYPE" ]]; then
+		ERRORS+=("Agent '$AGENT' must use signature type '$EXPECTED_SIG_TYPE', not '$SIG_TYPE'")
+	fi
+fi
+
+# Validate signature format (64 hex characters)
+if [[ -n "$SIGNATURE" && ! "$SIGNATURE" =~ ^[a-f0-9]{64}$ ]]; then
+	ERRORS+=("--signature must be 64 hex characters (got ${#SIGNATURE} chars)")
 fi
 
 # Verdict-specific field requirements
@@ -198,6 +242,63 @@ fi
 
 if ! echo "$DETAILS" | jq -e 'type == "object"' >/dev/null 2>&1; then
 	ERRORS+=("--details must be a valid JSON object")
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CRYPTOGRAPHIC SIGNATURE VERIFICATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Only verify if we have all required signing fields (skip if already has errors)
+if [[ ${#ERRORS[@]} -eq 0 && -n "$PAYLOAD" && -n "$SIGNATURE" && -n "$SIG_TYPE" ]]; then
+	# Locate crypto-gate
+	PROJECT_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+	CRYPTO_GATE="$PROJECT_DIR/bin/crypto-gate"
+
+	if [[ ! -x "$CRYPTO_GATE" ]]; then
+		ERRORS+=("crypto-gate not found at $CRYPTO_GATE - cannot verify signature")
+	else
+		# Verify the signature matches the payload
+		VERIFY_RESULT=$("$CRYPTO_GATE" verify --type "$SIG_TYPE" --payload "$PAYLOAD" --signature "$SIGNATURE" 2>&1) || true
+
+		if [[ "$VERIFY_RESULT" != "valid" ]]; then
+			cat >&2 << 'SIG_ERROR_HEADER'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  ❌ SIGNATURE VERIFICATION FAILED                                             ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+The signature does not cryptographically verify against the payload.
+This means the payload was NOT signed by crypto-gate with this signature.
+
+SIG_ERROR_HEADER
+			cat >&2 << EOF
+COMMON CAUSES:
+  1. You manually constructed the payload instead of using sign.sh output
+  2. You modified the payload after calling sign.sh
+  3. You passed a different payload to write-output.sh than what was signed
+  4. You fabricated or copied a signature from elsewhere
+
+CORRECT WORKFLOW:
+  # Step 1: Call sign.sh and capture its output
+  SIGN_OUTPUT=\`sign.sh '<summary>' '$SIG_TYPE'\`
+
+  # Step 2: Extract payload and signature from sign.sh output
+  PAYLOAD=\`echo "\$SIGN_OUTPUT" | jq -r '.payload'\`
+  SIGNATURE=\`echo "\$SIGN_OUTPUT" | jq -r '.signature'\`
+
+  # Step 3: Pass EXACTLY those values to write-output.sh
+  write-output.sh '$AGENT' --payload "\$PAYLOAD" --signature "\$SIGNATURE" ...
+
+The payload from sign.sh is the ONLY payload that will verify.
+Do NOT construct your own payload or add extra fields.
+
+PROVIDED VALUES:
+  Signature type: $SIG_TYPE
+  Signature: $SIGNATURE
+  Payload (first 200 chars): ${PAYLOAD:0:200}...
+EOF
+			exit 1
+		fi
+	fi
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════

@@ -16,6 +16,27 @@ You BLOCK unless safety is explicit.
 
 Default stance: BLOCK.
 
+## Step 0: Delta Review Check (DO THIS FIRST)
+
+Before doing any analysis, check if you have prior signed state:
+
+```bash
+COMMITS='["commit1", "commit2"]'  # From your input
+PRIOR_STATE=$(check-prior-state.sh 'review-infra-concurrency' "$COMMITS")
+MODE=$(echo "$PRIOR_STATE" | jq -r '.mode')
+```
+
+**If `MODE == "DELTA_REVIEW"`:**
+
+| Prior Verdict | Action                                                                                |
+| ------------- | ------------------------------------------------------------------------------------- |
+| `APPROVED`    | Only check infra in new commits. If no .claude/ or concurrency changes, fast-approve. |
+| `BLOCKED`     | Check if new commits fix the infrastructure issues.                                   |
+
+**If `MODE == "FULL_REVIEW"`:** Proceed with normal workflow.
+
+---
+
 ## Scope (What You Own)
 
 You OWN:

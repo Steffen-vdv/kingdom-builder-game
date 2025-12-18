@@ -39,6 +39,8 @@ you report them for the master-agent to address.
 │ REVIEW-CI-TESTS-REQUIRED WORKFLOW                                               │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                 │
+│ 0. CHECK for prior state (delta review optimization)                            │
+│    ↓                                                                            │
 │ 1. RECEIVE commit(s) or branch reference from master-agent                      │
 │    ↓                                                                            │
 │ 2. ANALYZE what changed (git diff, file inspection)                             │
@@ -54,6 +56,38 @@ you report them for the master-agent to address.
 │                                                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Step 0: Delta Review Check (DO THIS FIRST)
+
+Before doing any analysis, check if you have prior signed state:
+
+```bash
+# Get commits from input JSON (passed by master-agent)
+COMMITS='["commit1", "commit2"]'  # From your input
+
+# Check for prior state
+PRIOR_STATE=$(check-prior-state.sh 'review-ci-tests-required' "$COMMITS")
+MODE=$(echo "$PRIOR_STATE" | jq -r '.mode')
+```
+
+**If `MODE == "DELTA_REVIEW"`:**
+
+```bash
+PRIOR_VERDICT=$(echo "$PRIOR_STATE" | jq -r '.prior_verdict')
+NEW_COMMITS=$(echo "$PRIOR_STATE" | jq -r '.new_commits')
+```
+
+| Prior Verdict | Action                                                                                                                   |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `APPROVED`    | Only run tests affected by files in `$NEW_COMMITS`. If no test-relevant files changed, fast-approve with same signature. |
+| `BLOCKED`     | Check if `$NEW_COMMITS` fix the blockers. Re-run only affected tests.                                                    |
+| `NEEDS_INPUT` | Check if answers were provided. Proceed accordingly.                                                                     |
+
+**If `MODE == "FULL_REVIEW"`:** Proceed with normal workflow (steps 1-6).
+
+**Delta review is 10x faster** — use it whenever prior state exists.
 
 ---
 
