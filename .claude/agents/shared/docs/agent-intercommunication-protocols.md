@@ -87,9 +87,9 @@ How to write the file:
 
 ```bash
 # Step 1: Sign your verdict (ALL verdicts, not just APPROVED)
-SIGN_OUTPUT=$(sign.sh '<summary>' '<signature_type>' --verdict '<VERDICT>' [--blockers '<json>'] [--questions '<json>'])
-PAYLOAD=$(echo "$SIGN_OUTPUT" | jq -r '.payload')
-SIGNATURE=$(echo "$SIGN_OUTPUT" | jq -r '.signature')
+SIGN_OUTPUT=`sign.sh '<summary>' '<signature_type>' --verdict '<VERDICT>' [--blockers '<json>'] [--questions '<json>']`
+PAYLOAD=`echo "$SIGN_OUTPUT" | jq -r '.payload'`
+SIGNATURE=`echo "$SIGN_OUTPUT" | jq -r '.signature'`
 
 # Step 2: Write output file
 write-output.sh '<agent>' \
@@ -356,7 +356,7 @@ The three-phase workflow requires master-agent to:
 3. Collect approvals:
 
 ```bash
-APPROVALS=$(.claude/agents/master-agent/scripts/collect-phase1-assessments.sh)
+APPROVALS=`.claude/agents/master-agent/scripts/collect-phase1-assessments.sh`
 ```
 
 ### Phase 2
@@ -391,12 +391,12 @@ can be faster. Agents check for prior signed state and only analyze new commits.
 Agents call `check-prior-state.sh` to determine review mode:
 
 ```bash
-PRIOR_STATE=$(check-prior-state.sh '<agent>' '["commit1","commit2","commit3"]')
-MODE=$(echo "$PRIOR_STATE" | jq -r '.mode')
+PRIOR_STATE=`check-prior-state.sh '<agent>' '["commit1","commit2","commit3"]'`
+MODE=`echo "$PRIOR_STATE" | jq -r '.mode'`
 
 if [[ "$MODE" == "DELTA_REVIEW" ]]; then
-  PRIOR_VERDICT=$(echo "$PRIOR_STATE" | jq -r '.prior_verdict')
-  NEW_COMMITS=$(echo "$PRIOR_STATE" | jq -r '.new_commits')
+  PRIOR_VERDICT=`echo "$PRIOR_STATE" | jq -r '.prior_verdict'`
+  NEW_COMMITS=`echo "$PRIOR_STATE" | jq -r '.new_commits'`
   # Only analyze new commits
 else
   # Full review

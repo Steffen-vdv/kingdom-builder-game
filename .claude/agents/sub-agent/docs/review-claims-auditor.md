@@ -25,8 +25,8 @@ Before doing any analysis, check if you have prior signed state:
 
 ```bash
 COMMITS='["commit1", "commit2"]'  # From your input
-PRIOR_STATE=$(check-prior-state.sh 'review-claims-auditor' "$COMMITS")
-MODE=$(echo "$PRIOR_STATE" | jq -r '.mode')
+PRIOR_STATE=`check-prior-state.sh 'review-claims-auditor' "$COMMITS"`
+MODE=`echo "$PRIOR_STATE" | jq -r '.mode'`
 ```
 
 **If `MODE == "DELTA_REVIEW"`:**
@@ -90,17 +90,17 @@ Sign ALL verdicts (enables delta review in subsequent rounds):
 
 ```bash
 # APPROVED
-SIGN=$(sign.sh 'Claims verified' 'QA_CLAIMS_AUDITOR')
+SIGN=`sign.sh 'Claims verified' 'QA_CLAIMS_AUDITOR'`
 
 # BLOCKED
-SIGN=$(sign.sh 'Claim mismatch' 'QA_CLAIMS_AUDITOR' --verdict BLOCKED --blockers '["issue"]')
+SIGN=`sign.sh 'Claim mismatch' 'QA_CLAIMS_AUDITOR' --verdict BLOCKED --blockers '["issue"]'`
 ```
 
 ## Output
 
 ```bash
-PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
-SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+PAYLOAD=`echo "$SIGN" | jq -r '.payload'`
+SIGNATURE=`echo "$SIGN" | jq -r '.signature'`
 
 write-output.sh 'review-claims-auditor' \
   --verdict '<VERDICT>' \

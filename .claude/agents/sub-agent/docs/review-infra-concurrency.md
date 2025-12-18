@@ -22,8 +22,8 @@ Before doing any analysis, check if you have prior signed state:
 
 ```bash
 COMMITS='["commit1", "commit2"]'  # From your input
-PRIOR_STATE=$(check-prior-state.sh 'review-infra-concurrency' "$COMMITS")
-MODE=$(echo "$PRIOR_STATE" | jq -r '.mode')
+PRIOR_STATE=`check-prior-state.sh 'review-infra-concurrency' "$COMMITS"`
+MODE=`echo "$PRIOR_STATE" | jq -r '.mode'`
 ```
 
 **If `MODE == "DELTA_REVIEW"`:**
@@ -76,17 +76,17 @@ Sign ALL verdicts (enables delta review in subsequent rounds):
 
 ```bash
 # APPROVED
-SIGN=$(sign.sh 'Infrastructure safe' 'QA_INFRA_CONCURRENCY')
+SIGN=`sign.sh 'Infrastructure safe' 'QA_INFRA_CONCURRENCY'`
 
 # BLOCKED
-SIGN=$(sign.sh 'Race condition' 'QA_INFRA_CONCURRENCY' --verdict BLOCKED --blockers '["issue"]')
+SIGN=`sign.sh 'Race condition' 'QA_INFRA_CONCURRENCY' --verdict BLOCKED --blockers '["issue"]'`
 ```
 
 ## Output
 
 ```bash
-PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
-SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+PAYLOAD=`echo "$SIGN" | jq -r '.payload'`
+SIGNATURE=`echo "$SIGN" | jq -r '.signature'`
 
 write-output.sh 'review-infra-concurrency' \
   --verdict '<VERDICT>' \

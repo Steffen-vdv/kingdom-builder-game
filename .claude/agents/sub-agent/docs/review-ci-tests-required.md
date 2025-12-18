@@ -68,15 +68,15 @@ Before doing any analysis, check if you have prior signed state:
 COMMITS='["commit1", "commit2"]'  # From your input
 
 # Check for prior state
-PRIOR_STATE=$(check-prior-state.sh 'review-ci-tests-required' "$COMMITS")
-MODE=$(echo "$PRIOR_STATE" | jq -r '.mode')
+PRIOR_STATE=`check-prior-state.sh 'review-ci-tests-required' "$COMMITS"`
+MODE=`echo "$PRIOR_STATE" | jq -r '.mode'`
 ```
 
 **If `MODE == "DELTA_REVIEW"`:**
 
 ```bash
-PRIOR_VERDICT=$(echo "$PRIOR_STATE" | jq -r '.prior_verdict')
-NEW_COMMITS=$(echo "$PRIOR_STATE" | jq -r '.new_commits')
+PRIOR_VERDICT=`echo "$PRIOR_STATE" | jq -r '.prior_verdict'`
+NEW_COMMITS=`echo "$PRIOR_STATE" | jq -r '.new_commits'`
 ```
 
 | Prior Verdict | Action                                                                                                                   |
@@ -157,17 +157,17 @@ Sign ALL verdicts (enables delta review in subsequent rounds):
 
 ```bash
 # APPROVED (tests pass)
-SIGN=$(sign.sh 'All 47 tests passed' 'QA_CI_REQUIRED_TESTS')
+SIGN=`sign.sh 'All 47 tests passed' 'QA_CI_REQUIRED_TESTS'`
 
 # BLOCKED (tests fail)
-SIGN=$(sign.sh '3 tests failed' 'QA_CI_REQUIRED_TESTS' --verdict BLOCKED --blockers '["test:foo.test.ts"]')
+SIGN=`sign.sh '3 tests failed' 'QA_CI_REQUIRED_TESTS' --verdict BLOCKED --blockers '["test:foo.test.ts"]'`
 ```
 
 ## Output
 
 ```bash
-PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
-SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+PAYLOAD=`echo "$SIGN" | jq -r '.payload'`
+SIGNATURE=`echo "$SIGN" | jq -r '.signature'`
 
 write-output.sh 'review-ci-tests-required' \
   --verdict '<VERDICT>' \
