@@ -109,7 +109,7 @@ describe('Infrastructure: Agent Path Validation', () => {
 			).toBe(true);
 			expect(
 				pathExists(
-					'.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh',
+					'.claude/agents/master-agent/scripts/collect-phase1-assessments.sh',
 				),
 			).toBe(true);
 			expect(
