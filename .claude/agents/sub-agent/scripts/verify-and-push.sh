@@ -223,7 +223,26 @@ HASH_MISMATCH
 		fi
 	fi
 
-	if [[ -n "$APPROVED_COMMITS" ]] && ! echo "$APPROVED_COMMITS" | grep -q "^${HEAD_SHA}$"; then
+	# Block if no commits could be loaded - cannot verify HEAD without commit list
+	if [[ -z "$APPROVED_COMMITS" ]]; then
+		cat >&2 << 'NO_COMMITS'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  ❌ PUSH BLOCKED — No approved commits found                                  ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Could not load approved commits from:
+- review-lead.json (.payload_json.input.commits)
+- input.json (.commits)
+
+Cannot verify HEAD is approved without commit list.
+
+WHAT TO DO:
+→ Re-run QA workflow from Phase 1 to generate proper input
+NO_COMMITS
+		exit 1
+	fi
+
+	if ! echo "$APPROVED_COMMITS" | grep -q "^${HEAD_SHA}$"; then
 		cat >&2 << COMMIT_MISMATCH
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║  ❌ PUSH BLOCKED — HEAD not in approved commits                               ║
