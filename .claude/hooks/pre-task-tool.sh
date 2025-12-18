@@ -68,7 +68,7 @@ if [[ "$SUBAGENT" != "safe-deployment-gate" ]]; then
 		cat << EOF
 {"decision":"block","reason":"INPUT JSON missing or invalid 'commits' field. Must be a JSON array of commit SHAs.\n\nExample: {\"branch\": \"...\", \"commits\": [\"abc123\", \"def456\"], ...}"}
 EOF
-		exit 0
+		exit 1
 	fi
 
 	# Validate commits array is non-empty
@@ -77,7 +77,7 @@ EOF
 		cat << 'EOF'
 {"decision":"block","reason":"INPUT JSON 'commits' array is empty. At least one commit SHA is required."}
 EOF
-		exit 0
+		exit 1
 	fi
 fi
 

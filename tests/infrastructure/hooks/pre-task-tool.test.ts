@@ -106,7 +106,7 @@ describe('Infrastructure: Pre-Task-Tool Hook', () => {
 		it('should allow QA subagents without model override', () => {
 			const { blocked } = testTaskInput('review-ci-tests-required', {
 				branch: 'test',
-				commits: [],
+				commits: ['abc123'],
 				files_changed: [],
 			});
 			expect(blocked).toBe(false);
@@ -151,7 +151,7 @@ describe('Infrastructure: Pre-Task-Tool Hook', () => {
 		it('should block review-ci-tests-required missing files_changed', () => {
 			const { blocked, output } = testTaskInput('review-ci-tests-required', {
 				branch: 'test',
-				commits: [],
+				commits: ['abc123'],
 			});
 			expect(blocked).toBe(true);
 			expect(output).toContain('files_changed');
@@ -160,7 +160,7 @@ describe('Infrastructure: Pre-Task-Tool Hook', () => {
 		it('should block Phase 1 reviewers missing original_request', () => {
 			const { blocked, output } = testTaskInput('review-claims-auditor', {
 				branch: 'test',
-				commits: [],
+				commits: ['abc123'],
 				files_changed: [],
 			});
 			expect(blocked).toBe(true);
@@ -170,7 +170,7 @@ describe('Infrastructure: Pre-Task-Tool Hook', () => {
 		it('should block review-lead missing approvals_json', () => {
 			const { blocked, output } = testTaskInput('review-lead', {
 				branch: 'test',
-				commits: [],
+				commits: ['abc123'],
 				original_request: 'test',
 			});
 			expect(blocked).toBe(true);
@@ -275,7 +275,7 @@ describe('Infrastructure: Pre-Task-Tool Hook', () => {
 		it('should exit 0 when allowing valid input', () => {
 			const { exitCode } = testTaskInput('review-ci-tests-required', {
 				branch: 'test',
-				commits: [],
+				commits: ['abc123'],
 				files_changed: [],
 			});
 			expect(exitCode).toBe(0);

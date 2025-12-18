@@ -19,7 +19,8 @@ const SCRIPT_PATH = path.join(
 	PROJECT_ROOT,
 	'.claude/agents/shared/scripts/cleanup-qa-outputs.sh',
 );
-const OUTPUT_DIR = '/tmp/claude/sub-agents/output';
+// Use PID-namespaced directory to isolate tests from parallel test runs
+const OUTPUT_DIR = `/tmp/claude/test-cleanup-${process.pid}/output`;
 
 const PHASE1_AGENTS = [
 	'review-ci-tests-required',
@@ -45,6 +46,7 @@ function runScript(): RunResult {
 			encoding: 'utf-8',
 			stdio: 'pipe',
 			cwd: PROJECT_ROOT,
+			env: { ...process.env, QA_OUTPUT_DIR: OUTPUT_DIR },
 		});
 		return { success: true, stdout, stderr: '' };
 	} catch (error: unknown) {
