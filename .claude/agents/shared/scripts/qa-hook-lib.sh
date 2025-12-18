@@ -342,9 +342,15 @@ qa_write_canonical_input() {
 qa_parse_footer_from_text() {
 	local full_text="$1"
 
-	# Get final non-empty line
+	# Get final non-empty line (|| true prevents pipefail exit on whitespace-only input)
 	local last_line
-	last_line=$(echo "$full_text" | grep -v '^[[:space:]]*$' | tail -n 1)
+	last_line=$(echo "$full_text" | grep -v '^[[:space:]]*$' | tail -n 1 || true)
+
+	# Handle whitespace-only or empty input
+	if [[ -z "$last_line" ]]; then
+		echo '{"error":"Response contains no non-empty lines"}' >&2
+		return 1
+	fi
 
 	# Check for QA_VERDICT: prefix
 	if [[ ! "$last_line" =~ ^QA_VERDICT: ]]; then
