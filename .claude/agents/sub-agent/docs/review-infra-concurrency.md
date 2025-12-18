@@ -22,8 +22,8 @@ Before doing any analysis, check if you have prior signed state:
 
 ```bash
 COMMITS='["commit1", "commit2"]'  # From your input
-PRIOR_STATE=$(check-prior-state.sh 'review-infra-concurrency' "$COMMITS")
-MODE=$(echo "$PRIOR_STATE" | jq -r '.mode')
+PRIOR_STATE=`check-prior-state.sh 'review-infra-concurrency' "$COMMITS"`
+MODE=`echo "$PRIOR_STATE" | jq -r '.mode'`
 ```
 
 **If `MODE == "DELTA_REVIEW"`:**
