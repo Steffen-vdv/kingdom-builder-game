@@ -356,7 +356,7 @@ The three-phase workflow requires master-agent to:
 3. Collect approvals:
 
 ```bash
-APPROVALS=$(.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh)
+APPROVALS=$(.claude/agents/master-agent/scripts/collect-phase1-assessments.sh)
 ```
 
 ### Phase 2

@@ -16,6 +16,27 @@ You BLOCK hardcoding, ID-special-casing, and invariant violations.
 
 Default stance: BLOCK.
 
+## Step 0: Delta Review Check (DO THIS FIRST)
+
+Before doing any analysis, check if you have prior signed state:
+
+```bash
+COMMITS='["commit1", "commit2"]'  # From your input
+PRIOR_STATE=$(check-prior-state.sh 'review-mechanics-content' "$COMMITS")
+MODE=$(echo "$PRIOR_STATE" | jq -r '.mode')
+```
+
+**If `MODE == "DELTA_REVIEW"`:**
+
+| Prior Verdict | Action                                                                            |
+| ------------- | --------------------------------------------------------------------------------- |
+| `APPROVED`    | Only check mechanics in new commits. If no engine/contents changes, fast-approve. |
+| `BLOCKED`     | Check if new commits fix the mechanics issues.                                    |
+
+**If `MODE == "FULL_REVIEW"`:** Proceed with normal workflow.
+
+---
+
 ## Scope (What You Own)
 
 You OWN:
