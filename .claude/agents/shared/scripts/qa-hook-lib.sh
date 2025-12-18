@@ -221,36 +221,50 @@ qa_files_changed_json() {
 
 # qa_write_canonical_input(session_id, tool_input_prompt, subagent_type) -> writes:
 #   /tmp/claude/qa/current/input.json and input.sha256
-# input.json structure (canonicalized):
+# input.json structure (canonicalized, NO timestamp to ensure stable hash):
 #   {
 #     "branch": "<branch>",
 #     "head": "<HEAD_SHA>",
 #     "commits": [...],
 #     "files_changed": [...],
 #     "intent_id": "...",
-#     "intent_text": "...",
-#     "session_id": "...",
-#     "timestamp": "..."
+#     "session_id": "..."
 #   }
+#
+# IMPORTANT: This is called by pre-task hook for EVERY QA agent.
+# To ensure stable hashes across the workflow, we:
+#   1. Do NOT include timestamp in the canonical input (causes hash instability)
+#   2. Reuse existing input.json if HEAD matches (allows Phase 1 agents to share hash)
 qa_write_canonical_input() {
 	local session_id="$1"
-	local tool_input_prompt="$2"
+	local tool_input_prompt="${2:-}"
 	local subagent_type="$3"
 
 	qa_paths_init
 
+	# Get current HEAD first - this is our stability anchor
+	local head_sha
+	head_sha=$(git rev-parse HEAD 2>/dev/null || echo "")
+
+	# Check if input.json already exists with same HEAD
+	# If so, reuse it to maintain hash stability across Phase 1 agents
+	if [[ -f "$QA_CURRENT_DIR/input.json" && -f "$QA_CURRENT_DIR/input.sha256" ]]; then
+		local existing_head
+		existing_head=$(jq -r '.head // ""' "$QA_CURRENT_DIR/input.json" 2>/dev/null || echo "")
+		if [[ "$existing_head" == "$head_sha" && -n "$existing_head" ]]; then
+			# Same HEAD, reuse existing canonical input
+			return 0
+		fi
+	fi
+
 	# Determine branch: try prompt JSON first, then git
 	local branch=""
-	if echo "$tool_input_prompt" | jq -e '.' >/dev/null 2>&1; then
+	if [[ -n "$tool_input_prompt" ]] && echo "$tool_input_prompt" | jq -e '.' >/dev/null 2>&1; then
 		branch=$(qa_branch_guess_from_prompt "$tool_input_prompt")
 	fi
 	if [[ -z "$branch" ]]; then
 		branch=$(qa_current_branch)
 	fi
-
-	# Get HEAD
-	local head_sha
-	head_sha=$(git rev-parse HEAD 2>/dev/null || echo "")
 
 	# Get commits
 	local commits
@@ -260,19 +274,13 @@ qa_write_canonical_input() {
 	local files_changed
 	files_changed=$(qa_files_changed_json)
 
-	# Get intent from prompt log
+	# Get intent from prompt log (intent_text excluded from canonical to keep hash stable)
 	local intent_json
 	intent_json=$(qa_intent_from_prompt_log "$session_id")
 	local intent_id
-	local intent_text
 	intent_id=$(echo "$intent_json" | jq -r '.intent_id')
-	intent_text=$(echo "$intent_json" | jq -r '.intent_text')
 
-	# Get timestamp
-	local timestamp
-	timestamp=$(qa_now_utc)
-
-	# Build input JSON
+	# Build input JSON (NO timestamp - ensures hash stability)
 	local input_json
 	input_json=$(jq -n -c \
 		--arg branch "$branch" \
@@ -280,18 +288,14 @@ qa_write_canonical_input() {
 		--argjson commits "$commits" \
 		--argjson files_changed "$files_changed" \
 		--arg intent_id "$intent_id" \
-		--arg intent_text "$intent_text" \
 		--arg session_id "$session_id" \
-		--arg timestamp "$timestamp" \
 		'{
 			branch: $branch,
 			head: $head,
 			commits: $commits,
 			files_changed: $files_changed,
 			intent_id: $intent_id,
-			intent_text: $intent_text,
-			session_id: $session_id,
-			timestamp: $timestamp
+			session_id: $session_id
 		}')
 
 	# Canonicalize and write
@@ -473,6 +477,7 @@ qa_compute_delta() {
 		reason="no prior state"
 	else
 		# Extract fields from prior JSON
+		# Use payload (string) for signature verification, payload_json (object) for reading fields
 		local prior_payload
 		local prior_signature
 		local prior_type
@@ -484,11 +489,11 @@ qa_compute_delta() {
 		if [[ -z "$prior_payload" || -z "$prior_signature" || -z "$prior_type" ]]; then
 			reason="prior state missing signature fields"
 		else
-			# Verify signature
+			# Verify signature using the string payload
 			if qa_verify_payload_signature "$prior_payload" "$prior_signature" "$prior_type"; then
-				# Parse prior payload
-				prior_commits=$(echo "$prior_payload" | jq -c '.input.commits // []' 2>/dev/null || echo '[]')
-				prior_verdict=$(echo "$prior_payload" | jq -r '.verdict.verdict // ""' 2>/dev/null || echo "")
+				# Read fields from payload_json (the pre-parsed object)
+				prior_commits=$(jq -c '.payload_json.input.commits // []' "$prior_file" 2>/dev/null || echo '[]')
+				prior_verdict=$(jq -r '.payload_json.verdict.verdict // ""' "$prior_file" 2>/dev/null || echo "")
 
 				if [[ -z "$prior_commits" || "$prior_commits" == "[]" ]]; then
 					reason="prior state has no commits"
@@ -586,15 +591,15 @@ qa_validate_phase1_outputs() {
 			return 1
 		fi
 
-		# Verify signature
+		# Verify signature using the string payload
 		if ! qa_verify_payload_signature "$payload" "$signature" "$sig_type"; then
 			echo "ERROR: $agent signature verification failed" >&2
 			return 1
 		fi
 
-		# Verify input_hash matches
+		# Verify input_hash matches (read from payload_json, the pre-parsed object)
 		local payload_input_hash
-		payload_input_hash=$(echo "$payload" | jq -r '.input_hash // ""' 2>/dev/null || echo "")
+		payload_input_hash=$(jq -r '.payload_json.input_hash // ""' "$file" 2>/dev/null || echo "")
 		if [[ "$payload_input_hash" != "$input_hash" ]]; then
 			echo "ERROR: $agent input_hash mismatch: $payload_input_hash != $input_hash" >&2
 			return 1
@@ -635,6 +640,10 @@ qa_write_error_output() {
 
 # qa_write_signed_output(agent, footer_json, payload, signature, sig_type, delta_json, input_hash)
 # -> writes signed output file
+#
+# NOTE: We store BOTH payload (string for signature verification) AND payload_json (parsed object
+# for reading fields like .input.commits). This solves the jq parsing issue where the payload
+# string cannot be queried directly.
 qa_write_signed_output() {
 	local agent="$1"
 	local footer_json="$2"
@@ -666,12 +675,14 @@ qa_write_signed_output() {
 		questions="null"
 	fi
 
+	# Store both payload (string for crypto) and payload_json (object for reading)
 	jq -n -c \
 		--arg agent "$agent" \
 		--arg verdict "$verdict" \
 		--arg summary "$summary" \
 		--arg sig_type "$sig_type" \
 		--arg payload "$payload" \
+		--argjson payload_json "$payload" \
 		--arg signature "$signature" \
 		--argjson blockers "$blockers" \
 		--argjson questions "$questions" \
@@ -683,6 +694,7 @@ qa_write_signed_output() {
 			summary: $summary,
 			signature_type: $sig_type,
 			payload: $payload,
+			payload_json: $payload_json,
 			signature: $signature,
 			blockers: $blockers,
 			questions: $questions,
