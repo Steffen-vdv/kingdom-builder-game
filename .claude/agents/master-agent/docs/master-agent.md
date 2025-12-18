@@ -76,20 +76,19 @@ Wait for all 6 to complete. Each produces a signed approval.
 
 ### Phase 2: Dispatch review-lead
 
-Collect the 6 approvals and pass them to review-lead:
+**Step 1:** Collect approvals:
+
+```bash
+APPROVALS=$(.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh)
+```
+
+**Step 2:** Dispatch review-lead:
 
 ```
 Task(subagent_type: "review-lead", prompt: "{
   \"branch\": \"...\",
   \"commits\": [...],
-  \"approvals_json\": [
-    {\"payload\": \"...\", \"signature\": \"...\", \"type\": \"QA_CI_REQUIRED_TESTS\"},
-    {\"payload\": \"...\", \"signature\": \"...\", \"type\": \"QA_CLAIMS_AUDITOR\"},
-    {\"payload\": \"...\", \"signature\": \"...\", \"type\": \"QA_CONTRACTS_BOUNDARIES\"},
-    {\"payload\": \"...\", \"signature\": \"...\", \"type\": \"QA_MECHANICS_CONTENT\"},
-    {\"payload\": \"...\", \"signature\": \"...\", \"type\": \"QA_INFRA_CONCURRENCY\"},
-    {\"payload\": \"...\", \"signature\": \"...\", \"type\": \"QA_TESTS_DOCS_DRY\"}
-  ],
+  \"approvals_json\": $APPROVALS,
   \"original_request\": \"...\",
   \"changes_summary\": \"...\"
 }")
@@ -204,8 +203,20 @@ summarization or conciseness.
 
 ### Parsing Subagent Results
 
-Read from `/tmp/claude/sub-agents/output/{agent}.json` for all structured data
-(signatures, verdicts, etc.). This is the canonical output location.
+For Phase 1 outputs, use the helper script:
+
+```bash
+APPROVALS=$(.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh)
+```
+
+For Phase 2 output (review-lead), read directly:
+
+```
+/tmp/claude/sub-agents/output/review-lead.json
+```
+
+This is the only file you need to read manually — and you MUST display it
+verbatim to the user.
 
 ### Don't Coerce Subagents
 

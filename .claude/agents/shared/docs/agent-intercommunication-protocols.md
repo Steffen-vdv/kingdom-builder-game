@@ -201,6 +201,42 @@ NEEDS_INPUT rules:
 - Agent-specific structured metadata goes here
   (risk tier, files examined, systems touched, etc.)
 
+### Concrete Example (APPROVED verdict)
+
+**Your output file MUST follow this structure** (values are examples — use your own):
+
+```json
+{
+	"agent": "review-claims-auditor",
+	"verdict": "APPROVED",
+	"summary": "All claims verified against diff. Pure refactor, no behavioral changes.",
+	"signature_type": "QA_CLAIMS_AUDITOR",
+	"payload": "{\"commits\":[\"abc123\"],\"diffHash\":\"def456\",\"verdict\":\"APPROVED\",\"summary\":\"Claims verified\",\"timestamp\":\"2025-01-01T12:00:00Z\"}",
+	"signature": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+	"blockers": null,
+	"questions": null,
+	"details": {
+		"risk_tier": "LIGHT",
+		"files_audited": ["packages/engine/src/foo.ts"],
+		"claims_verified": ["Parameter rename", "No behavioral change"]
+	}
+}
+```
+
+**Key points:**
+
+- `agent` matches your identifier exactly
+- `verdict` is `"APPROVED"` (not `"APPROVE"`)
+- `signature_type`, `payload`, `signature` are ALL present and non-null
+- `blockers` and `questions` are `null` (not omitted)
+- `details` contains agent-specific metadata
+
+**Use `write-output.sh` to write this file:**
+
+```bash
+.claude/agents/sub-agent/scripts/write-output.sh 'review-claims-auditor' '{"agent":"review-claims-auditor",...}'
+```
+
 ---
 
 ## Signature Type Registry
@@ -317,14 +353,18 @@ The three-phase workflow requires master-agent to:
 
 1. Dispatch all 6 Phase 1 reviewers in parallel (single message with 6 Task calls)
 2. Wait for all to complete
-3. Collect 6 approvals (payload, signature, type) from each
+3. Collect approvals:
+
+```bash
+APPROVALS=$(.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh)
+```
 
 ### Phase 2
 
-4. Dispatch review-lead with the 6 approvals in `approvals_json`
+4. Dispatch review-lead with the collected approvals in `approvals_json`
 5. Wait for completion
 6. Read `/tmp/claude/sub-agents/output/review-lead.json`
-7. Display JSON contents verbatim to user (CRUCIAL)
+7. **Display JSON contents verbatim to user (CRUCIAL)**
 8. Extract review-lead's approval (payload, signature, type)
 
 ### Phase 3
