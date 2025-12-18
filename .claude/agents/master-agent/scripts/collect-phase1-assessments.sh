@@ -27,10 +27,14 @@
 
 set -euo pipefail
 
+# Source the canonical agent registry for validation
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/../../shared/config/agent-registry.sh"
+
 OUTPUT_DIR="${PHASE1_OUTPUT_DIR:-/tmp/claude/sub-agents/output}"
 
-# Phase 1 agent identifiers (in order)
-AGENTS=(
+# Phase 1 agent identifiers (in order) — excludes review-lead (Phase 2)
+PHASE1_AGENTS=(
 	"review-ci-tests-required"
 	"review-claims-auditor"
 	"review-contracts-boundaries"
@@ -39,15 +43,7 @@ AGENTS=(
 	"review-tests-docs-dry"
 )
 
-# Expected signature type for each agent (security: prevents copying one approval to all slots)
-declare -A EXPECTED_TYPES=(
-	["review-ci-tests-required"]="QA_CI_REQUIRED_TESTS"
-	["review-claims-auditor"]="QA_CLAIMS_AUDITOR"
-	["review-contracts-boundaries"]="QA_CONTRACTS_BOUNDARIES"
-	["review-mechanics-content"]="QA_MECHANICS_CONTENT"
-	["review-infra-concurrency"]="QA_INFRA_CONCURRENCY"
-	["review-tests-docs-dry"]="QA_TESTS_DOCS_DRY"
-)
+# AGENT_SIG_TYPES comes from agent-registry.sh (single source of truth)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # VALIDATION
@@ -55,7 +51,7 @@ declare -A EXPECTED_TYPES=(
 
 ERRORS=()
 
-for agent in "${AGENTS[@]}"; do
+for agent in "${PHASE1_AGENTS[@]}"; do
 	FILE="$OUTPUT_DIR/${agent}.json"
 
 	# Check file exists
@@ -94,7 +90,7 @@ for agent in "${AGENTS[@]}"; do
 
 	# Security: Validate signature type matches expected type for this agent
 	# This prevents copying one approval file to all 6 slots
-	EXPECTED="${EXPECTED_TYPES[$agent]}"
+	EXPECTED="${AGENT_SIG_TYPES[$agent]}"
 	if [[ -n "$SIG_TYPE" && "$SIG_TYPE" != "$EXPECTED" ]]; then
 		ERRORS+=("$agent: signature_type is '$SIG_TYPE', expected '$EXPECTED'")
 	fi
@@ -113,8 +109,39 @@ ERROR_HEADER
 	for err in "${ERRORS[@]}"; do
 		echo "  • $err" >&2
 	done
+
+	# Show what files DO exist for debugging
 	echo "" >&2
-	echo "Fix the issues and re-run Phase 1 reviewers." >&2
+	echo "Directory contents ($OUTPUT_DIR):" >&2
+	if [[ -d "$OUTPUT_DIR" ]]; then
+		EXISTING=$(ls -la "$OUTPUT_DIR"/*.json 2>/dev/null | awk '{print "  " $NF " (" $5 " bytes)"}')
+		if [[ -n "$EXISTING" ]]; then
+			echo "$EXISTING" >&2
+		else
+			echo "  (no .json files found)" >&2
+		fi
+	else
+		echo "  (directory does not exist)" >&2
+	fi
+
+	# Show verdict summary for quick diagnosis
+	echo "" >&2
+	echo "Verdict summary:" >&2
+	for agent in "${PHASE1_AGENTS[@]}"; do
+		FILE="$OUTPUT_DIR/${agent}.json"
+		if [[ -f "$FILE" ]]; then
+			VERDICT=$(jq -r '.verdict // "PARSE_ERROR"' "$FILE" 2>/dev/null)
+			echo "  • $agent: $VERDICT" >&2
+		else
+			echo "  • $agent: (file missing)" >&2
+		fi
+	done
+
+	echo "" >&2
+	echo "NEXT STEPS:" >&2
+	echo "  • If files are missing: Re-run the missing Phase 1 reviewers" >&2
+	echo "  • If verdict is BLOCKED: Address blockers, then re-run that reviewer" >&2
+	echo "  • If verdict is NEEDS_INPUT: Provide answers, then re-run that reviewer" >&2
 	exit 1
 fi
 
@@ -129,7 +156,7 @@ fi
 APPROVALS="["
 FIRST=true
 
-for agent in "${AGENTS[@]}"; do
+for agent in "${PHASE1_AGENTS[@]}"; do
 	FILE="$OUTPUT_DIR/${agent}.json"
 
 	# Extract fields

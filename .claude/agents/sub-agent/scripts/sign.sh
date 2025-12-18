@@ -18,6 +18,10 @@
 
 set -euo pipefail
 
+# Source the canonical agent registry for validation
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/../../shared/config/agent-registry.sh"
+
 SUMMARY="${1:-}"
 SIG_TYPE="${2:-}"
 shift 2 2>/dev/null || true
@@ -65,6 +69,30 @@ USAGE
 	exit 1
 fi
 
+# Validate signature type is one of the known types (from agent-registry.sh)
+if [[ ! "$SIG_TYPE" =~ ^($VALID_SIG_TYPES)$ ]]; then
+	cat >&2 << EOF
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  ❌ INVALID SIGNATURE TYPE                                                    ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Provided: $SIG_TYPE
+
+Valid signature types:
+  • QA_FINAL_SIGNATORY      (review-lead only)
+  • QA_CI_REQUIRED_TESTS    (review-ci-tests-required)
+  • QA_CLAIMS_AUDITOR       (review-claims-auditor)
+  • QA_CONTRACTS_BOUNDARIES (review-contracts-boundaries)
+  • QA_MECHANICS_CONTENT    (review-mechanics-content)
+  • QA_INFRA_CONCURRENCY    (review-infra-concurrency)
+  • QA_TESTS_DOCS_DRY       (review-tests-docs-dry)
+
+Each agent MUST use its designated signature type. See:
+.claude/agents/sub-agent/docs/cryptographic-signing.md
+EOF
+	exit 1
+fi
+
 # Validate verdict
 if [[ ! "$VERDICT" =~ ^(APPROVED|BLOCKED|NEEDS_INPUT)$ ]]; then
 	echo "ERROR: --verdict must be APPROVED, BLOCKED, or NEEDS_INPUT" >&2
@@ -85,7 +113,7 @@ fi
 # LOCATE CRYPTO-GATE
 # ═══════════════════════════════════════════════════════════════════════════════
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# SCRIPT_DIR already set at top when sourcing agent-registry.sh
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 CRYPTO_GATE="$PROJECT_DIR/bin/crypto-gate"
 
@@ -154,7 +182,25 @@ PAYLOAD=$(jq -n -c \
 SIGNATURE=$("$CRYPTO_GATE" sign "$PAYLOAD" --type "$SIG_TYPE" 2>&1)
 
 if [[ $? -ne 0 ]]; then
-	echo "ERROR: crypto-gate signing failed: $SIGNATURE" >&2
+	cat >&2 << EOF
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  ❌ CRYPTO-GATE SIGNING FAILED                                                ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Signature type: $SIG_TYPE
+Verdict: $VERDICT
+Payload length: ${#PAYLOAD} bytes
+
+crypto-gate output:
+$SIGNATURE
+
+COMMON CAUSES:
+  • Invalid signature type (verify against Signature Type Registry)
+  • crypto-gate binary corrupted (ask master-agent to re-download)
+  • Payload encoding issue (check for special characters in summary)
+
+If this persists, report ERROR to the master-agent with this full message.
+EOF
 	exit 1
 fi
 

@@ -13,7 +13,8 @@
 
 set -euo pipefail
 
-OUTPUT_DIR="/tmp/claude/sub-agents/output"
+# Allow override for testing
+OUTPUT_DIR="${QA_OUTPUT_DIR:-/tmp/claude/sub-agents/output}"
 
 if [[ ! -d "$OUTPUT_DIR" ]]; then
 	echo "✓ No output directory to clean"
