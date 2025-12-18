@@ -3,14 +3,14 @@
 #
 # Phase 1 reviewers: review-ci-tests-required + 5 specialist reviewers
 # Phase 2 reviewer: review-lead (aggregates Phase 1)
-# Phase 3: qa-verified-push (hook-driven push, no subagent work)
+# Phase 3: safe-deployment-gate (subagent runs verify-and-push.sh)
 #
 # This hook:
 #   1. Blocks model overrides for QA subagents
 #   2. Writes canonical input to /tmp/claude/qa/current/input.json
 #   3. Computes delta review info for Phase 1 reviewers
 #   4. Gates review-lead by verifying all 6 Phase 1 outputs
-#   5. For qa-verified-push: verifies review-lead signature and performs git push
+#   5. Gates safe-deployment-gate by verifying review-lead signature
 
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/qa-hook-lib.sh"
@@ -29,7 +29,7 @@ SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
 # reliability (e.g., haiku may skip tool invocations and output narrative).
 
 case "$SUBAGENT" in
-	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead)
+	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead|safe-deployment-gate)
 		if [[ -n "$MODEL_OVERRIDE" ]]; then
 			cat << EOF
 {"decision":"block","reason":"Model override '$MODEL_OVERRIDE' not allowed for $SUBAGENT. These subagents have model configured in frontmatter. Remove the 'model' parameter from your Task invocation."}
@@ -40,102 +40,115 @@ EOF
 esac
 
 # =============================================================================
-# PHASE 3: HOOK-DRIVEN VERIFIED PUSH
+# PHASE 3: SAFE-DEPLOYMENT-GATE GATING
 # =============================================================================
-# qa-verified-push is a special subagent where ALL work happens in this hook.
-# The hook verifies the review-lead signature and performs git push.
-# The subagent itself just reports success (no tools needed).
+# Verify review-lead signature before allowing safe-deployment-gate to run.
+# The actual push is performed by the subagent via verify-and-push.sh.
+# Exception: Override mode bypasses all checks (token verified by crypto-gate).
 
-if [[ "$SUBAGENT" == "qa-verified-push" ]]; then
-	log_hook "qa-verified-push" "Starting verification and push"
+if [[ "$SUBAGENT" == "safe-deployment-gate" ]]; then
+	log_hook "safe-deployment-gate" "Gating check started"
 
-	# Read review-lead output
+	# Check for override mode - if override_token present, allow through
+	# The subagent will run verify-and-push.sh --override which verifies the token
+	OVERRIDE_TOKEN=""
+	if echo "$PROMPT" | jq -e '.' >/dev/null 2>&1; then
+		OVERRIDE_TOKEN=$(echo "$PROMPT" | jq -r '.override_token // ""' 2>/dev/null || echo "")
+	fi
+
+	if [[ -n "$OVERRIDE_TOKEN" ]]; then
+		log_hook "safe-deployment-gate" "Override mode detected, allowing subagent"
+		exit 0
+	fi
+
+	# Normal QA mode - verify review-lead.json
+	# Check 1: review-lead.json must exist
 	REVIEW_LEAD_FILE="$QA_OUTPUT_DIR/review-lead.json"
 	if [[ ! -f "$REVIEW_LEAD_FILE" ]]; then
 		cat << EOF
-{"decision":"block","reason":"Missing review-lead.json. Run Phase 2 (review-lead) first."}
+{"decision":"block","reason":"Missing review-lead.json. Run Phase 2 (review-lead) before Phase 3."}
 EOF
 		exit 1
 	fi
 
-	# Extract and verify fields
+	# Check 2: Extract required fields
 	VERDICT=$(jq -r '.verdict // ""' "$REVIEW_LEAD_FILE" 2>/dev/null || echo "")
 	PAYLOAD=$(jq -r '.payload // ""' "$REVIEW_LEAD_FILE" 2>/dev/null || echo "")
 	SIGNATURE=$(jq -r '.signature // ""' "$REVIEW_LEAD_FILE" 2>/dev/null || echo "")
 	SIG_TYPE=$(jq -r '.signature_type // ""' "$REVIEW_LEAD_FILE" 2>/dev/null || echo "")
 
+	# Check 3: Signature type must be QA_FINAL_SIGNATORY
+	if [[ "$SIG_TYPE" != "QA_FINAL_SIGNATORY" ]]; then
+		cat << EOF
+{"decision":"block","reason":"Review-lead signature_type is '$SIG_TYPE', expected 'QA_FINAL_SIGNATORY'."}
+EOF
+		exit 1
+	fi
+
+	# Check 4: Payload and signature must exist
+	if [[ -z "$PAYLOAD" || -z "$SIGNATURE" ]]; then
+		cat << EOF
+{"decision":"block","reason":"Review-lead output missing payload or signature."}
+EOF
+		exit 1
+	fi
+
+	# Check 5: Verdict must be APPROVED
 	if [[ "$VERDICT" != "APPROVED" ]]; then
 		cat << EOF
-{"decision":"block","reason":"Review-lead verdict is not APPROVED: $VERDICT. Cannot push without approval."}
+{"decision":"block","reason":"Review-lead verdict is '$VERDICT', expected 'APPROVED'. Cannot push without approval."}
 EOF
 		exit 1
 	fi
 
-	if [[ -z "$PAYLOAD" || -z "$SIGNATURE" || "$SIG_TYPE" != "QA_FINAL_SIGNATORY" ]]; then
-		cat << EOF
-{"decision":"block","reason":"Review-lead output missing valid signature fields."}
-EOF
-		exit 1
-	fi
-
-	# Verify signature
+	# Check 6: Verify signature via crypto-gate
 	if ! qa_verify_payload_signature "$PAYLOAD" "$SIGNATURE" "$SIG_TYPE"; then
 		cat << EOF
-{"decision":"block","reason":"Review-lead signature verification failed."}
+{"decision":"block","reason":"Review-lead signature verification failed via crypto-gate."}
 EOF
 		exit 1
 	fi
 
-	# Verify input hash matches current canonical input
-	CURRENT_INPUT_HASH=$(cat "$QA_CURRENT_DIR/input.sha256" 2>/dev/null || echo "")
+	# Check 7: Verify input hash matches current canonical input
+	CURRENT_INPUT_HASH=""
+	if [[ -f "$QA_CURRENT_DIR/input.sha256" ]]; then
+		CURRENT_INPUT_HASH=$(cat "$QA_CURRENT_DIR/input.sha256")
+	fi
+
+	# Extract input_hash from payload_json (the pre-parsed object in the output file)
 	PAYLOAD_INPUT_HASH=$(jq -r '.payload_json.input_hash // ""' "$REVIEW_LEAD_FILE" 2>/dev/null || echo "")
 
-	if [[ -z "$CURRENT_INPUT_HASH" || "$PAYLOAD_INPUT_HASH" != "$CURRENT_INPUT_HASH" ]]; then
+	if [[ -z "$CURRENT_INPUT_HASH" ]]; then
 		cat << EOF
-{"decision":"block","reason":"Input hash mismatch. Review may be stale. Re-run QA workflow."}
+{"decision":"block","reason":"Missing canonical input.sha256. Re-run QA workflow from Phase 1."}
 EOF
 		exit 1
 	fi
 
-	# Get branch from canonical input
-	BRANCH=$(jq -r '.branch // ""' "$QA_CURRENT_DIR/input.json" 2>/dev/null || echo "")
-	if [[ -z "$BRANCH" ]]; then
+	if [[ "$PAYLOAD_INPUT_HASH" != "$CURRENT_INPUT_HASH" ]]; then
 		cat << EOF
-{"decision":"block","reason":"Cannot determine branch from canonical input."}
+{"decision":"block","reason":"Input hash mismatch. Signed hash: '$PAYLOAD_INPUT_HASH', current: '$CURRENT_INPUT_HASH'. Review may be stale."}
 EOF
 		exit 1
 	fi
 
-	log_hook "qa-verified-push" "Verification passed, pushing to $BRANCH"
+	# Check 8: Verify HEAD matches what was signed (optional but recommended)
+	CURRENT_HEAD=$(git rev-parse HEAD 2>/dev/null || echo "")
+	INPUT_HEAD=$(jq -r '.head // ""' "$QA_CURRENT_DIR/input.json" 2>/dev/null || echo "")
 
-	# Perform the push (hook context can execute git push)
-	cd "$CLAUDE_PROJECT_DIR"
-	PUSH_OUTPUT=""
-	if PUSH_OUTPUT=$(git push -u origin "$BRANCH" 2>&1); then
-		log_hook "qa-verified-push" "Push successful"
-
-		# Cleanup QA outputs
-		rm -f "$QA_OUTPUT_DIR"/*.json 2>/dev/null || true
-		rm -f "$QA_CURRENT_DIR/input.json" 2>/dev/null || true
-		rm -f "$QA_CURRENT_DIR/input.sha256" 2>/dev/null || true
-		rm -rf "$QA_CURRENT_DIR/delta" 2>/dev/null || true
-
-		# Write success marker for subagent to read
-		echo '{"status":"success","branch":"'"$BRANCH"'"}' > "$QA_OUTPUT_DIR/push-result.json"
-
-		# Allow subagent to run (it just reports success)
-		exit 0
-	else
-		log_hook "qa-verified-push" "Push failed: $PUSH_OUTPUT"
+	if [[ -n "$INPUT_HEAD" && "$CURRENT_HEAD" != "$INPUT_HEAD" ]]; then
 		cat << EOF
-{"decision":"block","reason":"Git push failed: $PUSH_OUTPUT"}
+{"decision":"block","reason":"HEAD mismatch. Signed HEAD: '$INPUT_HEAD', current: '$CURRENT_HEAD'. New commits added after review."}
 EOF
 		exit 1
 	fi
+
+	log_hook "safe-deployment-gate" "All gating checks passed, allowing subagent to run"
+	exit 0
 fi
 
 # =============================================================================
-# CHECK IF THIS IS A QA SUBAGENT
+# CHECK IF THIS IS A QA SUBAGENT (Phase 1 or Phase 2)
 # =============================================================================
 
 if ! qa_is_qa_agent "$SUBAGENT"; then

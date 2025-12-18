@@ -8,6 +8,7 @@ import * as path from 'path';
  * Verifies that the pre-task-tool hook correctly:
  * - Blocks model overrides for QA subagents
  * - Writes canonical input for QA subagents
+ * - Gates safe-deployment-gate by verifying review-lead.json
  * - Allows non-QA inputs to pass through
  *
  * Note: The hook no longer validates JSON structure or required fields.
@@ -73,7 +74,7 @@ const testTaskInput = (
 describe('Infrastructure: Pre-Task-Tool Hook', () => {
 	describe('Model Override Blocking', () => {
 		// QA subagents that should block model overrides
-		// Note: safe-deployment-gate is replaced by qa-verified-push (hook-driven)
+		// Includes Phase 1 reviewers, review-lead, and safe-deployment-gate
 		const qaSubagents = [
 			'review-ci-tests-required',
 			'review-claims-auditor',
@@ -82,6 +83,7 @@ describe('Infrastructure: Pre-Task-Tool Hook', () => {
 			'review-infra-concurrency',
 			'review-tests-docs-dry',
 			'review-lead',
+			'safe-deployment-gate',
 		];
 
 		it.each(qaSubagents)('should block model override for %s', (subagent) => {
@@ -123,11 +125,15 @@ describe('Infrastructure: Pre-Task-Tool Hook', () => {
 			const { blocked } = testTaskInput('Explore', 'find all typescript files');
 			expect(blocked).toBe(false);
 		});
+	});
 
-		it('should pass through qa-verified-push for hook-driven push', () => {
-			// qa-verified-push is handled specially by the hook (performs push)
-			// but without review-lead.json present, it will block
-			const { blocked, output } = testTaskInput('qa-verified-push', {});
+	describe('Safe Deployment Gate Gating', () => {
+		it('should block safe-deployment-gate when review-lead.json is missing', () => {
+			// safe-deployment-gate requires review-lead.json to exist
+			// Without it, the hook should block
+			const { blocked, output } = testTaskInput('safe-deployment-gate', {
+				branch: 'test-branch',
+			});
 			expect(blocked).toBe(true);
 			expect(output).toContain('review-lead.json');
 		});
@@ -149,6 +155,11 @@ describe('Infrastructure: Pre-Task-Tool Hook', () => {
 				commits: ['abc123'],
 			});
 			expect(exitCode).toBe(0);
+		});
+
+		it('should exit 1 when safe-deployment-gate gating fails', () => {
+			const { exitCode } = testTaskInput('safe-deployment-gate', {});
+			expect(exitCode).toBe(1);
 		});
 	});
 });

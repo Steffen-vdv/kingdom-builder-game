@@ -11,7 +11,7 @@
 #   4. Builds and signs the payload
 #   5. Writes the signed output JSON file
 #
-# Note: safe-deployment-gate removed from QA pipeline (script-only now)
+# Note: safe-deployment-gate does not need signing - it just runs verify-and-push.sh
 
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/qa-hook-lib.sh"
