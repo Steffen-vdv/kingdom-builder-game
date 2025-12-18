@@ -18,6 +18,8 @@ import * as fs from 'fs';
  * available (e.g., in CI). The mock produces deterministic signatures,
  * allowing us to test sign.sh's interaction with crypto-gate without
  * depending on the actual binary.
+ *
+ * Concurrency safety: Uses flock for exclusive access during mock installation.
  */
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
@@ -27,47 +29,100 @@ const SCRIPT_PATH = path.join(
 );
 const CRYPTO_GATE_PATH = path.join(PROJECT_ROOT, 'bin/crypto-gate');
 const MOCK_MARKER_PATH = path.join(PROJECT_ROOT, 'bin/.crypto-gate-is-mock');
+const MOCK_LOCK_PATH = path.join(PROJECT_ROOT, 'bin/.crypto-gate-mock.lock');
 const MOCK_CRYPTO_GATE_PATH = path.join(
 	PROJECT_ROOT,
 	'tests/infrastructure/mocks/crypto-gate-mock.sh',
 );
 
 /**
- * Checks if a process with the given PID is still running.
+ * Executes a callback while holding an exclusive flock.
+ * Uses shell flock for POSIX-compliant file locking.
  */
-function isPidRunning(pid: number): boolean {
+function withFlockSync(lockPath: string, callback: () => string): string {
+	// Ensure lock directory exists
+	const lockDir = path.dirname(lockPath);
+	if (!fs.existsSync(lockDir)) {
+		fs.mkdirSync(lockDir, { recursive: true });
+	}
+
+	// Use shell flock to serialize access, execute callback script
+	const script = callback();
+	const result = execSync(
+		`flock -x "${lockPath}" -c '${script.replace(/'/g, "'\\''")}'`,
+		{ encoding: 'utf-8', stdio: 'pipe' },
+	);
+	return result;
+}
+
+/**
+ * Installs mock crypto-gate with flock serialization.
+ * Returns 'installed' if we installed, 'skipped' if already exists,
+ * 'owned' if another process owns it.
+ */
+function installMockWithLock(): 'installed' | 'skipped' | 'owned' {
+	const installScript = `
+		MARKER="${MOCK_MARKER_PATH}"
+		BINARY="${CRYPTO_GATE_PATH}"
+		MOCK_SRC="${MOCK_CRYPTO_GATE_PATH}"
+		PID=$$
+
+		# Check if marker exists
+		if [ -f "$MARKER" ]; then
+			OWNER_PID=$(grep -o 'installed-by-pid-[0-9]*' "$MARKER" | grep -o '[0-9]*')
+			if [ -n "$OWNER_PID" ] && kill -0 "$OWNER_PID" 2>/dev/null; then
+				echo "owned"
+				exit 0
+			fi
+			# Stale marker - clean up
+			rm -f "$BINARY" "$MARKER"
+		fi
+
+		# If real binary exists, skip
+		if [ -x "$BINARY" ]; then
+			echo "skipped"
+			exit 0
+		fi
+
+		# Install mock atomically: write to temp, rename
+		TEMP_MARKER=$(mktemp "$MARKER.XXXXXX")
+		echo "installed-by-pid-${process.pid}" > "$TEMP_MARKER"
+		cp "$MOCK_SRC" "$BINARY"
+		chmod 755 "$BINARY"
+		mv "$TEMP_MARKER" "$MARKER"
+		echo "installed"
+	`;
+
 	try {
-		// Sending signal 0 checks if process exists without affecting it
-		process.kill(pid, 0);
-		return true;
+		const result = withFlockSync(MOCK_LOCK_PATH, () => installScript);
+		return result.trim() as 'installed' | 'skipped' | 'owned';
 	} catch {
-		return false;
+		return 'skipped';
 	}
 }
 
 /**
- * Cleans up stale mock from crashed test runs.
- * Only cleans up if the marker exists and the owning process is dead.
- * Returns true if mock was installed by another active process (should skip).
+ * Cleans up mock with flock serialization.
  */
-function cleanupStaleMock(): boolean {
-	if (fs.existsSync(MOCK_MARKER_PATH)) {
-		const content = fs.readFileSync(MOCK_MARKER_PATH, 'utf-8');
-		const match = content.match(/installed-by-pid-(\d+)/);
-		if (match) {
-			const pid = parseInt(match[1], 10);
-			if (isPidRunning(pid) && pid !== process.pid) {
-				// Another process owns this mock, don't touch it
-				return true;
-			}
-		}
-		// Marker from dead process - clean up
-		if (fs.existsSync(CRYPTO_GATE_PATH)) {
-			fs.unlinkSync(CRYPTO_GATE_PATH);
-		}
-		fs.unlinkSync(MOCK_MARKER_PATH);
+function cleanupMockWithLock(): void {
+	const cleanupScript = `
+		MARKER="${MOCK_MARKER_PATH}"
+		BINARY="${CRYPTO_GATE_PATH}"
+
+		# Only clean up if marker indicates we own it
+		if [ -f "$MARKER" ]; then
+			OWNER_PID=$(grep -o 'installed-by-pid-[0-9]*' "$MARKER" | grep -o '[0-9]*')
+			if [ "$OWNER_PID" = "${process.pid}" ]; then
+				rm -f "$BINARY" "$MARKER"
+			fi
+		fi
+	`;
+
+	try {
+		withFlockSync(MOCK_LOCK_PATH, () => cleanupScript);
+	} catch {
+		// Ignore cleanup errors
 	}
-	return false;
 }
 
 interface SignResult {
@@ -112,37 +167,15 @@ let weInstalledMock = false;
 
 describe('Infrastructure: sign.sh', () => {
 	beforeAll(() => {
-		// Clean up stale mock from crashed runs (if not owned by active process)
-		const anotherProcessOwnsMock = cleanupStaleMock();
-
-		// If another process owns the mock, use it (don't reinstall)
-		if (anotherProcessOwnsMock) {
-			return;
-		}
-
-		// If real crypto-gate doesn't exist, install the mock
-		if (!fs.existsSync(CRYPTO_GATE_PATH)) {
-			// Ensure bin directory exists
-			const binDir = path.dirname(CRYPTO_GATE_PATH);
-			if (!fs.existsSync(binDir)) {
-				fs.mkdirSync(binDir, { recursive: true });
-			}
-			// Copy mock to bin/crypto-gate
-			fs.copyFileSync(MOCK_CRYPTO_GATE_PATH, CRYPTO_GATE_PATH);
-			fs.chmodSync(CRYPTO_GATE_PATH, 0o755);
-			// Create marker file to indicate this is a mock (for crash recovery)
-			fs.writeFileSync(MOCK_MARKER_PATH, `installed-by-pid-${process.pid}\n`);
-			weInstalledMock = true;
-		}
+		// Install mock with flock serialization to prevent races
+		const result = installMockWithLock();
+		weInstalledMock = result === 'installed';
 	});
 
 	afterAll(() => {
-		// Only clean up if WE installed the mock (not another process)
-		if (weInstalledMock && fs.existsSync(MOCK_MARKER_PATH)) {
-			if (fs.existsSync(CRYPTO_GATE_PATH)) {
-				fs.unlinkSync(CRYPTO_GATE_PATH);
-			}
-			fs.unlinkSync(MOCK_MARKER_PATH);
+		// Clean up with flock serialization if we installed
+		if (weInstalledMock) {
+			cleanupMockWithLock();
 			weInstalledMock = false;
 		}
 	});
