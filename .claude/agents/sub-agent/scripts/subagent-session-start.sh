@@ -23,58 +23,146 @@ log_session "subagent:$AGENT_TYPE" "SubagentStart" "completed"
 # =============================================================================
 # QA AGENT CONTEXT INJECTION
 # =============================================================================
-# For QA agents, inject the canonical input file paths and instructions
+# For QA agents, inject the ACTUAL CONTENTS of canonical input and delta files.
+# Agents should NEVER be required to open files manually for critical context.
+
+QA_CURRENT_DIR="/tmp/claude/qa/current"
+QA_OUTPUT_DIR="/tmp/claude/sub-agents/output"
 
 case "$AGENT_TYPE" in
 	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry)
-		cat << 'QA_PHASE1_CONTEXT'
-=== QA Phase 1 Reviewer Context ===
+		echo "=== QA Phase 1 Reviewer Context ==="
+		echo ""
 
-CANONICAL INPUT (read these files FIRST):
-- /tmp/claude/qa/current/input.json      <- WHAT you're reviewing (branch, commits, files_changed, intent)
-- /tmp/claude/qa/current/delta/<agent>.json  <- Your delta review mode
+		# Inject canonical input contents
+		echo "## Canonical Input (input.json)"
+		echo ""
+		if [[ -f "$QA_CURRENT_DIR/input.json" ]]; then
+			echo '```json'
+			cat "$QA_CURRENT_DIR/input.json"
+			echo ""
+			echo '```'
+		else
+			echo "WARNING: input.json not found at $QA_CURRENT_DIR/input.json"
+		fi
+		echo ""
 
-DELTA FILE CONTENTS:
-- If mode == "DELTA_REVIEW": focus only on new_commits; prior_verdict tells you what was decided before
-- If mode == "FULL_REVIEW": do complete analysis
+		# Inject delta file contents
+		DELTA_FILE="$QA_CURRENT_DIR/delta/${AGENT_TYPE}.json"
+		echo "## Delta Review Info (delta/${AGENT_TYPE}.json)"
+		echo ""
+		if [[ -f "$DELTA_FILE" ]]; then
+			echo '```json'
+			cat "$DELTA_FILE"
+			echo ""
+			echo '```'
+			echo ""
+			echo "**Interpretation:**"
+			MODE=$(jq -r '.mode // ""' "$DELTA_FILE" 2>/dev/null || echo "")
+			if [[ "$MODE" == "DELTA_REVIEW" ]]; then
+				PRIOR_VERDICT=$(jq -r '.prior_verdict // ""' "$DELTA_FILE" 2>/dev/null || echo "")
+				echo "- Mode: DELTA_REVIEW - Focus only on new_commits"
+				echo "- Prior verdict: $PRIOR_VERDICT"
+				echo "- Only analyze changes since prior review"
+			else
+				echo "- Mode: FULL_REVIEW - Complete analysis required"
+			fi
+		else
+			echo "No delta file found. This is a FULL_REVIEW."
+		fi
+		echo ""
 
-OUTPUT REQUIREMENT:
+		cat << 'QA_PHASE1_FOOTER'
+## Output Requirement
+
 End your response with the strict footer line (hooks handle signing):
+
+```
 QA_VERDICT:{"verdict":"APPROVED|BLOCKED|NEEDS_INPUT","summary":"...","blockers":[],"questions":[]}
+```
 
 DO NOT call sign.sh or write-output.sh - the post-task hook handles signing.
+
 ===
-QA_PHASE1_CONTEXT
+QA_PHASE1_FOOTER
 		;;
 
 	review-lead)
-		cat << 'QA_REVIEW_LEAD_CONTEXT'
-=== QA Review Lead Context (Phase 2) ===
+		echo "=== QA Review Lead Context (Phase 2) ==="
+		echo ""
 
-CANONICAL INPUT:
-- /tmp/claude/qa/current/input.json      <- Review context
+		# Inject canonical input contents
+		echo "## Canonical Input (input.json)"
+		echo ""
+		if [[ -f "$QA_CURRENT_DIR/input.json" ]]; then
+			echo '```json'
+			cat "$QA_CURRENT_DIR/input.json"
+			echo ""
+			echo '```'
+		else
+			echo "WARNING: input.json not found"
+		fi
+		echo ""
 
-PHASE 1 OUTPUT FILES (read ALL 6):
-- /tmp/claude/sub-agents/output/review-ci-tests-required.json
-- /tmp/claude/sub-agents/output/review-claims-auditor.json
-- /tmp/claude/sub-agents/output/review-contracts-boundaries.json
-- /tmp/claude/sub-agents/output/review-mechanics-content.json
-- /tmp/claude/sub-agents/output/review-infra-concurrency.json
-- /tmp/claude/sub-agents/output/review-tests-docs-dry.json
+		# Inject all 6 Phase 1 output files
+		echo "## Phase 1 Reviewer Outputs"
+		echo ""
 
-AGGREGATION LOGIC:
+		PHASE1_AGENTS=(
+			"review-ci-tests-required"
+			"review-claims-auditor"
+			"review-contracts-boundaries"
+			"review-mechanics-content"
+			"review-infra-concurrency"
+			"review-tests-docs-dry"
+		)
+
+		for agent in "${PHASE1_AGENTS[@]}"; do
+			echo "### $agent"
+			echo ""
+			OUTPUT_FILE="$QA_OUTPUT_DIR/${agent}.json"
+			if [[ -f "$OUTPUT_FILE" ]]; then
+				# Extract key fields for quick summary
+				VERDICT=$(jq -r '.verdict // "UNKNOWN"' "$OUTPUT_FILE" 2>/dev/null || echo "ERROR")
+				SUMMARY=$(jq -r '.summary // ""' "$OUTPUT_FILE" 2>/dev/null || echo "")
+				echo "**Verdict:** $VERDICT"
+				echo "**Summary:** $SUMMARY"
+				echo ""
+				echo "<details>"
+				echo "<summary>Full output (click to expand)</summary>"
+				echo ""
+				echo '```json'
+				cat "$OUTPUT_FILE"
+				echo ""
+				echo '```'
+				echo "</details>"
+			else
+				echo "**ERROR:** Output file not found: $OUTPUT_FILE"
+			fi
+			echo ""
+		done
+
+		cat << 'QA_REVIEW_LEAD_FOOTER'
+## Aggregation Logic
+
+Apply conservative aggregation:
 - If ANY verdict == ERROR → ERROR
 - Else if ANY verdict == BLOCKED → BLOCKED
 - Else if ANY verdict == NEEDS_INPUT → NEEDS_INPUT
 - Else continue to final sanity checks
 
-OUTPUT REQUIREMENT:
+## Output Requirement
+
 End your response with the strict footer line (hooks handle signing):
+
+```
 QA_VERDICT:{"verdict":"APPROVED|BLOCKED|NEEDS_INPUT","summary":"...","blockers":[],"questions":[]}
+```
 
 DO NOT call sign.sh or write-output.sh - the post-task hook handles signing.
+
 ===
-QA_REVIEW_LEAD_CONTEXT
+QA_REVIEW_LEAD_FOOTER
 		;;
 esac
 

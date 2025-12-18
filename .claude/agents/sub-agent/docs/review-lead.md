@@ -29,6 +29,40 @@ You try to be correct.
 
 ---
 
+## Inputs (Injected by Hooks)
+
+The SubagentStart hook injects these files' contents directly into your context.
+You do NOT need to read them manually - they appear in your session context.
+
+**Canonical Input (input.json):**
+
+- `branch`: The branch being reviewed
+- `head`: Current HEAD commit SHA
+- `commits`: Array of commit SHAs in this review
+- `files_changed`: Array of files modified
+- `intent_id`: Hash of user's original intent
+- `session_id`: Current session identifier
+
+**Phase 1 Reviewer Outputs (6 files):**
+
+Each reviewer output contains:
+
+- `verdict`: APPROVED, BLOCKED, or NEEDS_INPUT
+- `summary`: Reviewer's assessment
+- `blockers`: Array of issues (if BLOCKED)
+- `questions`: Array of questions (if NEEDS_INPUT)
+
+Reviewers:
+
+- review-ci-tests-required
+- review-claims-auditor
+- review-contracts-boundaries
+- review-mechanics-content
+- review-infra-concurrency
+- review-tests-docs-dry
+
+---
+
 ## When You Run (Phase 2)
 
 You are a **phase-2 agent**.

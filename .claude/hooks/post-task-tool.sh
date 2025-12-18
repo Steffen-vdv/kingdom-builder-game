@@ -62,6 +62,48 @@ fi
 log_hook "$SUBAGENT" "Footer parsed: $(echo "$FOOTER_JSON" | jq -c '.verdict')"
 
 # =============================================================================
+# FOOTER HARDENING (size limits)
+# =============================================================================
+# Prevent accidental large payload signing by enforcing limits
+
+MAX_FOOTER_SIZE=4096
+MAX_SUMMARY_LENGTH=500
+MAX_BLOCKERS_COUNT=20
+MAX_QUESTIONS_COUNT=10
+
+# Check total footer size
+FOOTER_SIZE=${#FOOTER_JSON}
+if [[ $FOOTER_SIZE -gt $MAX_FOOTER_SIZE ]]; then
+	log_hook "$SUBAGENT" "ERROR: Footer too large ($FOOTER_SIZE > $MAX_FOOTER_SIZE bytes)"
+	qa_write_error_output "$SUBAGENT" "footer_too_large"
+	exit 0
+fi
+
+# Check summary length
+SUMMARY_LENGTH=$(echo "$FOOTER_JSON" | jq -r '.summary // "" | length')
+if [[ $SUMMARY_LENGTH -gt $MAX_SUMMARY_LENGTH ]]; then
+	log_hook "$SUBAGENT" "ERROR: Summary too long ($SUMMARY_LENGTH > $MAX_SUMMARY_LENGTH chars)"
+	qa_write_error_output "$SUBAGENT" "summary_too_long"
+	exit 0
+fi
+
+# Check blockers count
+BLOCKERS_COUNT=$(echo "$FOOTER_JSON" | jq -r '.blockers // [] | length')
+if [[ $BLOCKERS_COUNT -gt $MAX_BLOCKERS_COUNT ]]; then
+	log_hook "$SUBAGENT" "ERROR: Too many blockers ($BLOCKERS_COUNT > $MAX_BLOCKERS_COUNT)"
+	qa_write_error_output "$SUBAGENT" "too_many_blockers"
+	exit 0
+fi
+
+# Check questions count
+QUESTIONS_COUNT=$(echo "$FOOTER_JSON" | jq -r '.questions // [] | length')
+if [[ $QUESTIONS_COUNT -gt $MAX_QUESTIONS_COUNT ]]; then
+	log_hook "$SUBAGENT" "ERROR: Too many questions ($QUESTIONS_COUNT > $MAX_QUESTIONS_COUNT)"
+	qa_write_error_output "$SUBAGENT" "too_many_questions"
+	exit 0
+fi
+
+# =============================================================================
 # LOAD CANONICAL INPUT AND HASH
 # =============================================================================
 

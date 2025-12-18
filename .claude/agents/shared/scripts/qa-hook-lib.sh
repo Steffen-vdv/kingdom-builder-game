@@ -235,6 +235,8 @@ qa_files_changed_json() {
 # To ensure stable hashes across the workflow, we:
 #   1. Do NOT include timestamp in the canonical input (causes hash instability)
 #   2. Reuse existing input.json if HEAD matches (allows Phase 1 agents to share hash)
+#   3. Use flock-based locking to prevent race conditions with parallel hooks
+#   4. Use atomic writes (temp file → mv) for consistency
 qa_write_canonical_input() {
 	local session_id="$1"
 	local tool_input_prompt="${2:-}"
@@ -242,71 +244,87 @@ qa_write_canonical_input() {
 
 	qa_paths_init
 
+	local lock_file="$QA_CURRENT_DIR/.lock"
+	local input_file="$QA_CURRENT_DIR/input.json"
+	local hash_file="$QA_CURRENT_DIR/input.sha256"
+
 	# Get current HEAD first - this is our stability anchor
 	local head_sha
 	head_sha=$(git rev-parse HEAD 2>/dev/null || echo "")
 
-	# Check if input.json already exists with same HEAD
-	# If so, reuse it to maintain hash stability across Phase 1 agents
-	if [[ -f "$QA_CURRENT_DIR/input.json" && -f "$QA_CURRENT_DIR/input.sha256" ]]; then
-		local existing_head
-		existing_head=$(jq -r '.head // ""' "$QA_CURRENT_DIR/input.json" 2>/dev/null || echo "")
-		if [[ "$existing_head" == "$head_sha" && -n "$existing_head" ]]; then
-			# Same HEAD, reuse existing canonical input
-			return 0
+	# Use flock for concurrency safety (6 parallel Phase 1 hooks may race)
+	(
+		flock -x 200
+
+		# Check if input.json already exists with same HEAD
+		# If so, reuse it to maintain hash stability across Phase 1 agents
+		if [[ -f "$input_file" && -f "$hash_file" ]]; then
+			local existing_head
+			existing_head=$(jq -r '.head // ""' "$input_file" 2>/dev/null || echo "")
+			if [[ "$existing_head" == "$head_sha" && -n "$existing_head" ]]; then
+				# Same HEAD, reuse existing canonical input
+				exit 0
+			fi
 		fi
-	fi
 
-	# Determine branch: try prompt JSON first, then git
-	local branch=""
-	if [[ -n "$tool_input_prompt" ]] && echo "$tool_input_prompt" | jq -e '.' >/dev/null 2>&1; then
-		branch=$(qa_branch_guess_from_prompt "$tool_input_prompt")
-	fi
-	if [[ -z "$branch" ]]; then
-		branch=$(qa_current_branch)
-	fi
+		# Determine branch: try prompt JSON first, then git
+		local branch=""
+		if [[ -n "$tool_input_prompt" ]] && echo "$tool_input_prompt" | jq -e '.' >/dev/null 2>&1; then
+			branch=$(qa_branch_guess_from_prompt "$tool_input_prompt")
+		fi
+		if [[ -z "$branch" ]]; then
+			branch=$(qa_current_branch)
+		fi
 
-	# Get commits
-	local commits
-	commits=$(qa_current_commits_json "$branch")
+		# Get commits
+		local commits
+		commits=$(qa_current_commits_json "$branch")
 
-	# Get files changed
-	local files_changed
-	files_changed=$(qa_files_changed_json)
+		# Get files changed
+		local files_changed
+		files_changed=$(qa_files_changed_json)
 
-	# Get intent from prompt log (intent_text excluded from canonical to keep hash stable)
-	local intent_json
-	intent_json=$(qa_intent_from_prompt_log "$session_id")
-	local intent_id
-	intent_id=$(echo "$intent_json" | jq -r '.intent_id')
+		# Get intent from prompt log (intent_text excluded from canonical to keep hash stable)
+		local intent_json
+		intent_json=$(qa_intent_from_prompt_log "$session_id")
+		local intent_id
+		intent_id=$(echo "$intent_json" | jq -r '.intent_id')
 
-	# Build input JSON (NO timestamp - ensures hash stability)
-	local input_json
-	input_json=$(jq -n -c \
-		--arg branch "$branch" \
-		--arg head "$head_sha" \
-		--argjson commits "$commits" \
-		--argjson files_changed "$files_changed" \
-		--arg intent_id "$intent_id" \
-		--arg session_id "$session_id" \
-		'{
-			branch: $branch,
-			head: $head,
-			commits: $commits,
-			files_changed: $files_changed,
-			intent_id: $intent_id,
-			session_id: $session_id
-		}')
+		# Build input JSON (NO timestamp - ensures hash stability)
+		local input_json
+		input_json=$(jq -n -c \
+			--arg branch "$branch" \
+			--arg head "$head_sha" \
+			--argjson commits "$commits" \
+			--argjson files_changed "$files_changed" \
+			--arg intent_id "$intent_id" \
+			--arg session_id "$session_id" \
+			'{
+				branch: $branch,
+				head: $head,
+				commits: $commits,
+				files_changed: $files_changed,
+				intent_id: $intent_id,
+				session_id: $session_id
+			}')
 
-	# Canonicalize and write
-	local canonical
-	canonical=$(qa_canonicalize_json "$input_json")
-	echo "$canonical" > "$QA_CURRENT_DIR/input.json"
+		# Canonicalize
+		local canonical
+		canonical=$(qa_canonicalize_json "$input_json")
 
-	# Write hash
-	local input_hash
-	input_hash=$(qa_sha256_string "$canonical")
-	echo "$input_hash" > "$QA_CURRENT_DIR/input.sha256"
+		# Atomic write: temp file → mv
+		local tmp_input="${input_file}.tmp.$$"
+		local tmp_hash="${hash_file}.tmp.$$"
+
+		echo "$canonical" > "$tmp_input"
+		local input_hash
+		input_hash=$(qa_sha256_string "$canonical")
+		echo "$input_hash" > "$tmp_hash"
+
+		mv "$tmp_input" "$input_file"
+		mv "$tmp_hash" "$hash_file"
+
+	) 200>"$lock_file"
 }
 
 # =============================================================================
@@ -457,6 +475,9 @@ qa_sign_payload() {
 # qa_compute_delta(agent, current_commits_json) -> writes delta file and returns mode
 # Output: JSON written to /tmp/claude/qa/current/delta/<agent>.json
 # Returns: echoes the mode (FULL_REVIEW or DELTA_REVIEW)
+#
+# Intent determinism: If intent_id changed between prior and current, we fall back to
+# FULL_REVIEW because the user's intent might have changed.
 qa_compute_delta() {
 	local agent="$1"
 	local current_commits="$2"
@@ -465,6 +486,7 @@ qa_compute_delta() {
 
 	local delta_file="$QA_DELTA_DIR/${agent}.json"
 	local prior_file="$QA_OUTPUT_DIR/${agent}.json"
+	local input_file="$QA_CURRENT_DIR/input.json"
 
 	# Default to full review
 	local mode="FULL_REVIEW"
@@ -472,6 +494,12 @@ qa_compute_delta() {
 	local prior_verdict=""
 	local prior_commits='[]'
 	local new_commits='[]'
+
+	# Read current intent_id from canonical input
+	local current_intent_id=""
+	if [[ -f "$input_file" ]]; then
+		current_intent_id=$(jq -r '.intent_id // ""' "$input_file" 2>/dev/null || echo "")
+	fi
 
 	if [[ ! -f "$prior_file" ]]; then
 		reason="no prior state"
@@ -495,7 +523,13 @@ qa_compute_delta() {
 				prior_commits=$(jq -c '.payload_json.input.commits // []' "$prior_file" 2>/dev/null || echo '[]')
 				prior_verdict=$(jq -r '.payload_json.verdict.verdict // ""' "$prior_file" 2>/dev/null || echo "")
 
-				if [[ -z "$prior_commits" || "$prior_commits" == "[]" ]]; then
+				# Check intent_id match (intent determinism)
+				local prior_intent_id
+				prior_intent_id=$(jq -r '.payload_json.input.intent_id // ""' "$prior_file" 2>/dev/null || echo "")
+
+				if [[ -n "$current_intent_id" && -n "$prior_intent_id" && "$current_intent_id" != "$prior_intent_id" ]]; then
+					reason="intent changed (intent_id mismatch)"
+				elif [[ -z "$prior_commits" || "$prior_commits" == "[]" ]]; then
 					reason="prior state has no commits"
 				else
 					# Check if prior commits are subset of current
