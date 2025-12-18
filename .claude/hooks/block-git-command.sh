@@ -39,14 +39,57 @@ if [[ ! "$COMMAND" == *"git"* ]]; then
 	exit 0
 fi
 
-# Security pre-check: catch "git push" in chained commands (e.g., "git status && git push")
-# The parser only returns the first command, so we need string matching for chains
-if [[ "$COMMAND" =~ git[[:space:]]+push($|[[:space:]]|[;&\|]) ]]; then
-	# Verify it's not an allowed command
-	if [[ ! "$COMMAND" == *"verify-bulk-and-push"* ]] && \
-	   [[ ! "$COMMAND" == *"verify-and-push"* ]] && \
-	   [[ ! "$COMMAND" == *"--dry-run"* ]]; then
-		cat >&2 << 'BLOCKED'
+# ═══════════════════════════════════════════════════════════════════════════════
+# Helper function: Check if a single command is a blocked git push
+# Uses the Python parser which properly handles global flags like -C
+# ═══════════════════════════════════════════════════════════════════════════════
+check_git_push() {
+	local cmd="$1"
+	local parsed
+	local executable
+	local subcommand
+
+	parsed=$(echo "$cmd" | PYTHONPATH="$SCRIPTS_DIR" python3 -m command 2>/dev/null)
+	if [[ -z "$parsed" ]]; then
+		return 1  # Parse failed, not a blocked push
+	fi
+
+	executable=$(echo "$parsed" | jq -r '.executable // empty')
+	subcommand=$(echo "$parsed" | jq -r '.subcommand // empty')
+
+	if [[ "$executable" == "git" ]] && [[ "$subcommand" == "push" ]]; then
+		# Check for allowed contexts
+		if [[ "$cmd" == *"verify-bulk-and-push"* ]] || \
+		   [[ "$cmd" == *"verify-and-push"* ]]; then
+			return 1  # Allowed
+		fi
+
+		# Check for --dry-run
+		local has_dry_run
+		has_dry_run=$(echo "$parsed" | jq -r '.flags["dry-run"] // false')
+		if [[ "$has_dry_run" == "true" ]]; then
+			return 1  # Allowed
+		fi
+
+		return 0  # Blocked push detected
+	fi
+
+	return 1  # Not a blocked push
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Check for git push in chained commands (e.g., "git status && git push")
+# Split by shell operators and check each segment with the parser
+# ═══════════════════════════════════════════════════════════════════════════════
+if [[ "$COMMAND" == *"&&"* ]] || [[ "$COMMAND" == *"||"* ]] || \
+   [[ "$COMMAND" == *";"* ]] || [[ "$COMMAND" == *"|"* ]]; then
+	# Split command by shell operators and check each segment
+	# Use Python for reliable splitting (handles quoted strings)
+	while IFS= read -r segment; do
+		segment=$(echo "$segment" | xargs)  # Trim whitespace
+		if [[ -n "$segment" ]] && [[ "$segment" == *"git"* ]]; then
+			if check_git_push "$segment"; then
+				cat >&2 << 'BLOCKED'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║  🛑 BLOCKED — git push requires QA workflow                                   ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
@@ -59,8 +102,19 @@ WORKFLOW:
 3. Phase 3: Run safe-deployment-gate with review-lead's signature to push
 
 BLOCKED
-		exit 2
-	fi
+				exit 2
+			fi
+		fi
+	done < <(echo "$COMMAND" | PYTHONPATH="$SCRIPTS_DIR" python3 -c "
+import sys
+import re
+# Split by shell operators, preserving quoted strings
+cmd = sys.stdin.read().strip()
+# Simple split - handles most cases
+segments = re.split(r'\s*(?:&&|\|\||[;|])\s*', cmd)
+for seg in segments:
+    print(seg)
+" 2>/dev/null)
 fi
 
 # Parse the command using the command package

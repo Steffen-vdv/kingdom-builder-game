@@ -17,7 +17,7 @@ import * as path from 'path';
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 const SCRIPT_PATH = path.join(
 	PROJECT_ROOT,
-	'.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh',
+	'.claude/agents/master-agent/scripts/collect-phase1-assessments.sh',
 );
 // Use PID-namespaced directory to isolate tests from production path.
 // This prevents test cleanup from deleting other agents' output files

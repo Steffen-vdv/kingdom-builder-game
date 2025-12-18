@@ -78,13 +78,8 @@ def parse_command(command: str) -> dict[str, Any]:
     spec = get_spec(executable)
 
     if spec is not None:
-        # Determine subcommand (first non-flag argument)
-        subcommand = None
-        remaining_args = args
-
-        if args and not args[0].startswith("-"):
-            subcommand = args[0]
-            remaining_args = args[1:]
+        # Use spec's method to extract subcommand (handles global flags)
+        subcommand, remaining_args = spec.extract_subcommand(args)
 
         if spec.supports(subcommand):
             result = spec.parse(subcommand, remaining_args)

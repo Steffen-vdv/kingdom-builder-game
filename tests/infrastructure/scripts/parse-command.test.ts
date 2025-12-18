@@ -29,8 +29,9 @@ describe('Infrastructure: command/ package', () => {
 			`PYTHONPATH="${SCRIPTS_DIR}" python3 -c "
 import base64, json, sys
 from command import parse_command
-from command.specs.git import _get_git_options
-_get_git_options.cache_clear()
+from command.specs.git import _parse_git_subcommand_flags, _parse_git_global_flags
+_parse_git_subcommand_flags.cache_clear()
+_parse_git_global_flags.cache_clear()
 cmd = base64.b64decode('${b64}').decode('utf-8')
 print(json.dumps(parse_command(cmd)))
 "`,
@@ -300,8 +301,9 @@ print(json.dumps(parse_command(cmd)))
 				`PYTHONPATH="${SCRIPTS_DIR}" python3 -c "
 import base64, json
 from command import parse_command
-from command.specs.git import _get_git_options
-_get_git_options.cache_clear()
+from command.specs.git import _parse_git_subcommand_flags, _parse_git_global_flags
+_parse_git_subcommand_flags.cache_clear()
+_parse_git_global_flags.cache_clear()
 cmd = base64.b64decode('${b64}').decode('utf-8')
 print(json.dumps(parse_command(cmd)))
 " | jq -r '${jqFilter}'`,
