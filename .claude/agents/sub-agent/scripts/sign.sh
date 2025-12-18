@@ -18,6 +18,10 @@
 
 set -euo pipefail
 
+# Source the canonical agent registry for validation
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/../../shared/config/agent-registry.sh"
+
 SUMMARY="${1:-}"
 SIG_TYPE="${2:-}"
 shift 2 2>/dev/null || true
@@ -65,8 +69,7 @@ USAGE
 	exit 1
 fi
 
-# Validate signature type is one of the known types
-VALID_SIG_TYPES="QA_FINAL_SIGNATORY|QA_CI_REQUIRED_TESTS|QA_CLAIMS_AUDITOR|QA_CONTRACTS_BOUNDARIES|QA_MECHANICS_CONTENT|QA_INFRA_CONCURRENCY|QA_TESTS_DOCS_DRY"
+# Validate signature type is one of the known types (from agent-registry.sh)
 if [[ ! "$SIG_TYPE" =~ ^($VALID_SIG_TYPES)$ ]]; then
 	cat >&2 << EOF
 ╔═══════════════════════════════════════════════════════════════════════════════╗
@@ -110,7 +113,7 @@ fi
 # LOCATE CRYPTO-GATE
 # ═══════════════════════════════════════════════════════════════════════════════
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# SCRIPT_DIR already set at top when sourcing agent-registry.sh
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 CRYPTO_GATE="$PROJECT_DIR/bin/crypto-gate"
 

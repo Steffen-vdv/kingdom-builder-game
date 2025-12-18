@@ -230,20 +230,23 @@ describe('Infrastructure: sign.sh', () => {
 		});
 
 		it('should return valid JSON with payload, signature, and type', () => {
-			const { success, stdout } = runScript(['Test summary', 'QA_TEST_TYPE']);
+			const { success, stdout } = runScript([
+				'Test summary',
+				'QA_CI_REQUIRED_TESTS',
+			]);
 			expect(success).toBe(true);
 
 			const result: SignResult = JSON.parse(stdout);
 			expect(result).toHaveProperty('payload');
 			expect(result).toHaveProperty('signature');
 			expect(result).toHaveProperty('type');
-			expect(result.type).toBe('QA_TEST_TYPE');
+			expect(result.type).toBe('QA_CI_REQUIRED_TESTS');
 		});
 
 		it('should include summary in payload', () => {
 			const { success, stdout } = runScript([
 				'My test summary',
-				'QA_TEST_TYPE',
+				'QA_CI_REQUIRED_TESTS',
 			]);
 			expect(success).toBe(true);
 
@@ -255,7 +258,10 @@ describe('Infrastructure: sign.sh', () => {
 
 	describe('--verdict Flag', () => {
 		it('should default to APPROVED verdict', () => {
-			const { success, stdout } = runScript(['Test summary', 'QA_TEST_TYPE']);
+			const { success, stdout } = runScript([
+				'Test summary',
+				'QA_CI_REQUIRED_TESTS',
+			]);
 			expect(success).toBe(true);
 
 			const result: SignResult = JSON.parse(stdout);
@@ -266,7 +272,7 @@ describe('Infrastructure: sign.sh', () => {
 		it('should accept --verdict APPROVED', () => {
 			const { success, stdout } = runScript([
 				'Test summary',
-				'QA_TEST_TYPE',
+				'QA_CI_REQUIRED_TESTS',
 				'--verdict',
 				'APPROVED',
 			]);
@@ -280,7 +286,7 @@ describe('Infrastructure: sign.sh', () => {
 		it('should accept --verdict BLOCKED', () => {
 			const { success, stdout } = runScript([
 				'Test summary',
-				'QA_TEST_TYPE',
+				'QA_CI_REQUIRED_TESTS',
 				'--verdict',
 				'BLOCKED',
 				'--blockers',
@@ -296,7 +302,7 @@ describe('Infrastructure: sign.sh', () => {
 		it('should accept --verdict NEEDS_INPUT', () => {
 			const { success, stdout } = runScript([
 				'Test summary',
-				'QA_TEST_TYPE',
+				'QA_CI_REQUIRED_TESTS',
 				'--verdict',
 				'NEEDS_INPUT',
 				'--questions',
@@ -314,7 +320,7 @@ describe('Infrastructure: sign.sh', () => {
 		it('should include blockers in payload when provided', () => {
 			const { success, stdout } = runScript([
 				'Test summary',
-				'QA_TEST_TYPE',
+				'QA_CI_REQUIRED_TESTS',
 				'--verdict',
 				'BLOCKED',
 				'--blockers',
@@ -328,7 +334,10 @@ describe('Infrastructure: sign.sh', () => {
 		});
 
 		it('should not include blockers key when not provided', () => {
-			const { success, stdout } = runScript(['Test summary', 'QA_TEST_TYPE']);
+			const { success, stdout } = runScript([
+				'Test summary',
+				'QA_CI_REQUIRED_TESTS',
+			]);
 			expect(success).toBe(true);
 
 			const result: SignResult = JSON.parse(stdout);
@@ -341,7 +350,7 @@ describe('Infrastructure: sign.sh', () => {
 		it('should include questions in payload when provided', () => {
 			const { success, stdout } = runScript([
 				'Test summary',
-				'QA_TEST_TYPE',
+				'QA_CI_REQUIRED_TESTS',
 				'--verdict',
 				'NEEDS_INPUT',
 				'--questions',
@@ -355,7 +364,10 @@ describe('Infrastructure: sign.sh', () => {
 		});
 
 		it('should not include questions key when not provided', () => {
-			const { success, stdout } = runScript(['Test summary', 'QA_TEST_TYPE']);
+			const { success, stdout } = runScript([
+				'Test summary',
+				'QA_CI_REQUIRED_TESTS',
+			]);
 			expect(success).toBe(true);
 
 			const result: SignResult = JSON.parse(stdout);
@@ -366,7 +378,10 @@ describe('Infrastructure: sign.sh', () => {
 
 	describe('Payload Structure', () => {
 		it('should include commits array in payload', () => {
-			const { success, stdout } = runScript(['Test summary', 'QA_TEST_TYPE']);
+			const { success, stdout } = runScript([
+				'Test summary',
+				'QA_CI_REQUIRED_TESTS',
+			]);
 			expect(success).toBe(true);
 
 			const result: SignResult = JSON.parse(stdout);
@@ -376,7 +391,10 @@ describe('Infrastructure: sign.sh', () => {
 		});
 
 		it('should include timestamp in payload', () => {
-			const { success, stdout } = runScript(['Test summary', 'QA_TEST_TYPE']);
+			const { success, stdout } = runScript([
+				'Test summary',
+				'QA_CI_REQUIRED_TESTS',
+			]);
 			expect(success).toBe(true);
 
 			const result: SignResult = JSON.parse(stdout);
@@ -387,7 +405,10 @@ describe('Infrastructure: sign.sh', () => {
 		});
 
 		it('should include diffHash in payload', () => {
-			const { success, stdout } = runScript(['Test summary', 'QA_TEST_TYPE']);
+			const { success, stdout } = runScript([
+				'Test summary',
+				'QA_CI_REQUIRED_TESTS',
+			]);
 			expect(success).toBe(true);
 
 			const result: SignResult = JSON.parse(stdout);
@@ -399,7 +420,10 @@ describe('Infrastructure: sign.sh', () => {
 
 	describe('Signature', () => {
 		it('should return a non-empty signature', () => {
-			const { success, stdout } = runScript(['Test summary', 'QA_TEST_TYPE']);
+			const { success, stdout } = runScript([
+				'Test summary',
+				'QA_CI_REQUIRED_TESTS',
+			]);
 			expect(success).toBe(true);
 
 			const result: SignResult = JSON.parse(stdout);
@@ -408,7 +432,10 @@ describe('Infrastructure: sign.sh', () => {
 		});
 
 		it('should return hex signature', () => {
-			const { success, stdout } = runScript(['Test summary', 'QA_TEST_TYPE']);
+			const { success, stdout } = runScript([
+				'Test summary',
+				'QA_CI_REQUIRED_TESTS',
+			]);
 			expect(success).toBe(true);
 
 			const result: SignResult = JSON.parse(stdout);

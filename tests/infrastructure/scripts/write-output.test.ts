@@ -91,9 +91,16 @@ describe('Infrastructure: write-output.sh', () => {
 	afterEach(() => {
 		// Clean up both test and production paths
 		cleanOutputDirectory();
-		const prodFile = '/tmp/claude/sub-agents/output/test-agent.json';
-		if (fs.existsSync(prodFile)) {
-			fs.unlinkSync(prodFile);
+		// Clean up all possible output files from tests
+		const agentFiles = [
+			'review-ci-tests-required.json',
+			'review-claims-auditor.json',
+		];
+		for (const file of agentFiles) {
+			const prodFile = `/tmp/claude/sub-agents/output/${file}`;
+			if (fs.existsSync(prodFile)) {
+				fs.unlinkSync(prodFile);
+			}
 		}
 	});
 
@@ -109,18 +116,19 @@ describe('Infrastructure: write-output.sh', () => {
 
 	describe('APPROVED Verdict', () => {
 		it('should create valid JSON with all signature fields', () => {
+			// Use valid agent/signature type combination
 			const { success, stdout } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'APPROVED',
 				'--summary',
 				'All checks passed',
 				'--type',
-				'QA_TEST_TYPE',
+				'QA_CI_REQUIRED_TESTS',
 				'--payload',
 				'{"commits":["abc123"]}',
 				'--signature',
-				'deadbeef1234567890',
+				'deadbeef1234567890abcdef1234567890abcdef1234567890abcdef12345678',
 				'--details',
 				'{"risk":"LOW"}',
 			]);
@@ -130,24 +138,27 @@ describe('Infrastructure: write-output.sh', () => {
 
 			const output = JSON.parse(
 				fs.readFileSync(
-					'/tmp/claude/sub-agents/output/test-agent.json',
+					'/tmp/claude/sub-agents/output/review-ci-tests-required.json',
 					'utf-8',
 				),
 			);
-			expect(output.agent).toBe('test-agent');
+			expect(output.agent).toBe('review-ci-tests-required');
 			expect(output.verdict).toBe('APPROVED');
 			expect(output.summary).toBe('All checks passed');
-			expect(output.signature_type).toBe('QA_TEST_TYPE');
+			expect(output.signature_type).toBe('QA_CI_REQUIRED_TESTS');
 			expect(output.payload).toBe('{"commits":["abc123"]}');
-			expect(output.signature).toBe('deadbeef1234567890');
+			expect(output.signature).toBe(
+				'deadbeef1234567890abcdef1234567890abcdef1234567890abcdef12345678',
+			);
 			expect(output.blockers).toBeNull();
 			expect(output.questions).toBeNull();
 			expect(output.details).toEqual({ risk: 'LOW' });
 		});
 
 		it('should map --type to signature_type in output', () => {
+			// Use review-claims-auditor with its matching signature type
 			const { success } = runScript([
-				'test-agent',
+				'review-claims-auditor',
 				'--verdict',
 				'APPROVED',
 				'--summary',
@@ -157,14 +168,14 @@ describe('Infrastructure: write-output.sh', () => {
 				'--payload',
 				'{}',
 				'--signature',
-				'abc',
+				'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
 			]);
 
 			expect(success).toBe(true);
 
 			const output = JSON.parse(
 				fs.readFileSync(
-					'/tmp/claude/sub-agents/output/test-agent.json',
+					'/tmp/claude/sub-agents/output/review-claims-auditor.json',
 					'utf-8',
 				),
 			);
@@ -176,7 +187,7 @@ describe('Infrastructure: write-output.sh', () => {
 
 		it('should fail when --type is missing', () => {
 			const { success, stderr } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'APPROVED',
 				'--summary',
@@ -184,7 +195,7 @@ describe('Infrastructure: write-output.sh', () => {
 				'--payload',
 				'{}',
 				'--signature',
-				'abc',
+				'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
 			]);
 
 			expect(success).toBe(false);
@@ -193,15 +204,15 @@ describe('Infrastructure: write-output.sh', () => {
 
 		it('should fail when --payload is missing', () => {
 			const { success, stderr } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'APPROVED',
 				'--summary',
 				'Test',
 				'--type',
-				'QA_TEST',
+				'QA_CI_REQUIRED_TESTS',
 				'--signature',
-				'abc',
+				'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
 			]);
 
 			expect(success).toBe(false);
@@ -210,13 +221,13 @@ describe('Infrastructure: write-output.sh', () => {
 
 		it('should fail when --signature is missing', () => {
 			const { success, stderr } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'APPROVED',
 				'--summary',
 				'Test',
 				'--type',
-				'QA_TEST',
+				'QA_CI_REQUIRED_TESTS',
 				'--payload',
 				'{}',
 			]);
@@ -227,17 +238,17 @@ describe('Infrastructure: write-output.sh', () => {
 
 		it('should fail when --blockers is provided with APPROVED', () => {
 			const { success, stderr } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'APPROVED',
 				'--summary',
 				'Test',
 				'--type',
-				'QA_TEST',
+				'QA_CI_REQUIRED_TESTS',
 				'--payload',
 				'{}',
 				'--signature',
-				'abc',
+				'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
 				'--blockers',
 				'["should not be here"]',
 			]);
@@ -245,22 +256,63 @@ describe('Infrastructure: write-output.sh', () => {
 			expect(success).toBe(false);
 			expect(stderr).toContain('APPROVED verdict must not have --blockers');
 		});
+
+		it('should fail when agent/signature type mismatch', () => {
+			// Mismatch: agent needs QA_CI_REQUIRED_TESTS, not QA_CLAIMS_AUDITOR
+			const { success, stderr } = runScript([
+				'review-ci-tests-required',
+				'--verdict',
+				'APPROVED',
+				'--summary',
+				'Test',
+				'--type',
+				'QA_CLAIMS_AUDITOR',
+				'--payload',
+				'{}',
+				'--signature',
+				'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+			]);
+
+			expect(success).toBe(false);
+			expect(stderr).toContain(
+				"must use signature type 'QA_CI_REQUIRED_TESTS'",
+			);
+		});
+
+		it('should fail when agent identifier is invalid', () => {
+			const { success, stderr } = runScript([
+				'invalid-agent',
+				'--verdict',
+				'APPROVED',
+				'--summary',
+				'Test',
+				'--type',
+				'QA_CI_REQUIRED_TESTS',
+				'--payload',
+				'{}',
+				'--signature',
+				'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+			]);
+
+			expect(success).toBe(false);
+			expect(stderr).toContain('INVALID AGENT IDENTIFIER');
+		});
 	});
 
 	describe('BLOCKED Verdict', () => {
 		it('should create valid JSON with blockers array and signature', () => {
 			const { success } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'BLOCKED',
 				'--summary',
 				'Found issues',
 				'--type',
-				'QA_TEST_TYPE',
+				'QA_CI_REQUIRED_TESTS',
 				'--payload',
 				'{"verdict":"BLOCKED","blockers":["Issue 1","Issue 2"]}',
 				'--signature',
-				'deadbeef1234567890',
+				'deadbeef1234567890abcdef1234567890abcdef1234567890abcdef12345678',
 				'--blockers',
 				'["Issue 1","Issue 2"]',
 				'--details',
@@ -271,35 +323,37 @@ describe('Infrastructure: write-output.sh', () => {
 
 			const output = JSON.parse(
 				fs.readFileSync(
-					'/tmp/claude/sub-agents/output/test-agent.json',
+					'/tmp/claude/sub-agents/output/review-ci-tests-required.json',
 					'utf-8',
 				),
 			);
-			expect(output.agent).toBe('test-agent');
+			expect(output.agent).toBe('review-ci-tests-required');
 			expect(output.verdict).toBe('BLOCKED');
 			expect(output.summary).toBe('Found issues');
-			expect(output.signature_type).toBe('QA_TEST_TYPE');
+			expect(output.signature_type).toBe('QA_CI_REQUIRED_TESTS');
 			expect(output.payload).toBe(
 				'{"verdict":"BLOCKED","blockers":["Issue 1","Issue 2"]}',
 			);
-			expect(output.signature).toBe('deadbeef1234567890');
+			expect(output.signature).toBe(
+				'deadbeef1234567890abcdef1234567890abcdef1234567890abcdef12345678',
+			);
 			expect(output.blockers).toEqual(['Issue 1', 'Issue 2']);
 			expect(output.questions).toBeNull();
 		});
 
 		it('should fail when --blockers is missing', () => {
 			const { success, stderr } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'BLOCKED',
 				'--summary',
 				'Found issues',
 				'--type',
-				'QA_TEST',
+				'QA_CI_REQUIRED_TESTS',
 				'--payload',
 				'{}',
 				'--signature',
-				'abc',
+				'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
 			]);
 
 			expect(success).toBe(false);
@@ -308,7 +362,7 @@ describe('Infrastructure: write-output.sh', () => {
 
 		it('should fail when signature fields are missing with BLOCKED', () => {
 			const { success, stderr } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'BLOCKED',
 				'--summary',
@@ -326,17 +380,17 @@ describe('Infrastructure: write-output.sh', () => {
 	describe('NEEDS_INPUT Verdict', () => {
 		it('should create valid JSON with questions array and signature', () => {
 			const { success } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'NEEDS_INPUT',
 				'--summary',
 				'Need clarification',
 				'--type',
-				'QA_TEST_TYPE',
+				'QA_CI_REQUIRED_TESTS',
 				'--payload',
 				'{"verdict":"NEEDS_INPUT","questions":["Q1","Q2"]}',
 				'--signature',
-				'deadbeef1234567890',
+				'deadbeef1234567890abcdef1234567890abcdef1234567890abcdef12345678',
 				'--questions',
 				'["What is the expected behavior?","Should this affect X?"]',
 			]);
@@ -345,16 +399,18 @@ describe('Infrastructure: write-output.sh', () => {
 
 			const output = JSON.parse(
 				fs.readFileSync(
-					'/tmp/claude/sub-agents/output/test-agent.json',
+					'/tmp/claude/sub-agents/output/review-ci-tests-required.json',
 					'utf-8',
 				),
 			);
 			expect(output.verdict).toBe('NEEDS_INPUT');
-			expect(output.signature_type).toBe('QA_TEST_TYPE');
+			expect(output.signature_type).toBe('QA_CI_REQUIRED_TESTS');
 			expect(output.payload).toBe(
 				'{"verdict":"NEEDS_INPUT","questions":["Q1","Q2"]}',
 			);
-			expect(output.signature).toBe('deadbeef1234567890');
+			expect(output.signature).toBe(
+				'deadbeef1234567890abcdef1234567890abcdef1234567890abcdef12345678',
+			);
 			expect(output.questions).toEqual([
 				'What is the expected behavior?',
 				'Should this affect X?',
@@ -364,17 +420,17 @@ describe('Infrastructure: write-output.sh', () => {
 
 		it('should fail when --questions is missing', () => {
 			const { success, stderr } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'NEEDS_INPUT',
 				'--summary',
 				'Need clarification',
 				'--type',
-				'QA_TEST',
+				'QA_CI_REQUIRED_TESTS',
 				'--payload',
 				'{}',
 				'--signature',
-				'abc',
+				'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
 			]);
 
 			expect(success).toBe(false);
@@ -385,37 +441,39 @@ describe('Infrastructure: write-output.sh', () => {
 	describe('ERROR Verdict', () => {
 		it('should allow ERROR verdict with signature fields', () => {
 			const { success } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'ERROR',
 				'--summary',
 				'Script crashed unexpectedly',
 				'--type',
-				'QA_TEST_TYPE',
+				'QA_CI_REQUIRED_TESTS',
 				'--payload',
 				'{"verdict":"ERROR"}',
 				'--signature',
-				'deadbeef1234567890',
+				'deadbeef1234567890abcdef1234567890abcdef1234567890abcdef12345678',
 			]);
 
 			expect(success).toBe(true);
 
 			const output = JSON.parse(
 				fs.readFileSync(
-					'/tmp/claude/sub-agents/output/test-agent.json',
+					'/tmp/claude/sub-agents/output/review-ci-tests-required.json',
 					'utf-8',
 				),
 			);
 			expect(output.verdict).toBe('ERROR');
 			expect(output.summary).toBe('Script crashed unexpectedly');
-			expect(output.signature_type).toBe('QA_TEST_TYPE');
+			expect(output.signature_type).toBe('QA_CI_REQUIRED_TESTS');
 			expect(output.payload).toBe('{"verdict":"ERROR"}');
-			expect(output.signature).toBe('deadbeef1234567890');
+			expect(output.signature).toBe(
+				'deadbeef1234567890abcdef1234567890abcdef1234567890abcdef12345678',
+			);
 		});
 
 		it('should fail when signature fields are missing with ERROR', () => {
 			const { success, stderr } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'ERROR',
 				'--summary',
@@ -430,7 +488,7 @@ describe('Infrastructure: write-output.sh', () => {
 	describe('Validation', () => {
 		it('should fail when verdict is invalid', () => {
 			const { success, stderr } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'APPROVE',
 				'--summary',
@@ -445,7 +503,7 @@ describe('Infrastructure: write-output.sh', () => {
 
 		it('should fail when verdict is missing', () => {
 			const { success, stderr } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--summary',
 				'Test',
 			]);
@@ -456,7 +514,7 @@ describe('Infrastructure: write-output.sh', () => {
 
 		it('should fail when summary is missing', () => {
 			const { success, stderr } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'ERROR',
 			]);
@@ -467,17 +525,17 @@ describe('Infrastructure: write-output.sh', () => {
 
 		it('should fail when --blockers is not a JSON array', () => {
 			const { success, stderr } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'BLOCKED',
 				'--summary',
 				'Test',
 				'--type',
-				'QA_TEST',
+				'QA_CI_REQUIRED_TESTS',
 				'--payload',
 				'{}',
 				'--signature',
-				'abc',
+				'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
 				'--blockers',
 				'not an array',
 			]);
@@ -488,17 +546,17 @@ describe('Infrastructure: write-output.sh', () => {
 
 		it('should fail when --details is not a JSON object', () => {
 			const { success, stderr } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'ERROR',
 				'--summary',
 				'Test',
 				'--type',
-				'QA_TEST',
+				'QA_CI_REQUIRED_TESTS',
 				'--payload',
 				'{}',
 				'--signature',
-				'abc',
+				'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
 				'--details',
 				'["not","an","object"]',
 			]);
@@ -509,17 +567,17 @@ describe('Infrastructure: write-output.sh', () => {
 
 		it('should fail on unknown arguments', () => {
 			const { success, stderr } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'ERROR',
 				'--summary',
 				'Test',
 				'--type',
-				'QA_TEST',
+				'QA_CI_REQUIRED_TESTS',
 				'--payload',
 				'{}',
 				'--signature',
-				'abc',
+				'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
 				'--unknown',
 				'value',
 			]);
@@ -532,24 +590,24 @@ describe('Infrastructure: write-output.sh', () => {
 	describe('JSON Output Structure', () => {
 		it('should always include all schema fields', () => {
 			const { success } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'ERROR',
 				'--summary',
 				'Test',
 				'--type',
-				'QA_TEST',
+				'QA_CI_REQUIRED_TESTS',
 				'--payload',
 				'{}',
 				'--signature',
-				'abc',
+				'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
 			]);
 
 			expect(success).toBe(true);
 
 			const output = JSON.parse(
 				fs.readFileSync(
-					'/tmp/claude/sub-agents/output/test-agent.json',
+					'/tmp/claude/sub-agents/output/review-ci-tests-required.json',
 					'utf-8',
 				),
 			);
@@ -568,24 +626,24 @@ describe('Infrastructure: write-output.sh', () => {
 
 		it('should use empty object as default for details', () => {
 			const { success } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'ERROR',
 				'--summary',
 				'Test',
 				'--type',
-				'QA_TEST',
+				'QA_CI_REQUIRED_TESTS',
 				'--payload',
 				'{}',
 				'--signature',
-				'abc',
+				'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
 			]);
 
 			expect(success).toBe(true);
 
 			const output = JSON.parse(
 				fs.readFileSync(
-					'/tmp/claude/sub-agents/output/test-agent.json',
+					'/tmp/claude/sub-agents/output/review-ci-tests-required.json',
 					'utf-8',
 				),
 			);
@@ -594,24 +652,24 @@ describe('Infrastructure: write-output.sh', () => {
 
 		it('should properly escape special characters in summary', () => {
 			const { success } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'ERROR',
 				'--summary',
 				'Test with "quotes" and \\backslash',
 				'--type',
-				'QA_TEST',
+				'QA_CI_REQUIRED_TESTS',
 				'--payload',
 				'{}',
 				'--signature',
-				'abc',
+				'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
 			]);
 
 			expect(success).toBe(true);
 
 			const output = JSON.parse(
 				fs.readFileSync(
-					'/tmp/claude/sub-agents/output/test-agent.json',
+					'/tmp/claude/sub-agents/output/review-ci-tests-required.json',
 					'utf-8',
 				),
 			);
@@ -622,7 +680,7 @@ describe('Infrastructure: write-output.sh', () => {
 	describe('Multiple Validation Errors', () => {
 		it('should report all errors at once', () => {
 			const { success, stderr } = runScript([
-				'test-agent',
+				'review-ci-tests-required',
 				'--verdict',
 				'APPROVED',
 				// Missing --summary, --type, --payload, --signature

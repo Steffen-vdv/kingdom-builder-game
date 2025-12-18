@@ -21,6 +21,10 @@
 
 set -euo pipefail
 
+# Source the canonical agent registry for validation
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/../../shared/config/agent-registry.sh"
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # PARSE ARGUMENTS
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -129,21 +133,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# VALIDATE AGENT IDENTIFIER
+# VALIDATE AGENT IDENTIFIER (using VALID_AGENTS and AGENT_SIG_TYPES from agent-registry.sh)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Valid agent identifiers and their required signature types
-declare -A AGENT_SIG_TYPES=(
-	["review-ci-tests-required"]="QA_CI_REQUIRED_TESTS"
-	["review-claims-auditor"]="QA_CLAIMS_AUDITOR"
-	["review-contracts-boundaries"]="QA_CONTRACTS_BOUNDARIES"
-	["review-mechanics-content"]="QA_MECHANICS_CONTENT"
-	["review-infra-concurrency"]="QA_INFRA_CONCURRENCY"
-	["review-tests-docs-dry"]="QA_TESTS_DOCS_DRY"
-	["review-lead"]="QA_FINAL_SIGNATORY"
-)
-
-VALID_AGENTS="review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead"
 if [[ ! "$AGENT" =~ ^($VALID_AGENTS)$ ]]; then
 	cat >&2 << EOF
 ╔═══════════════════════════════════════════════════════════════════════════════╗
