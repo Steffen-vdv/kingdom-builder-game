@@ -216,7 +216,7 @@ Safe-deployment-gate only accepts `QA_FINAL_SIGNATORY`. This ensures:
 
 ### "crypto-gate not found"
 
-The crypto-gate binary should be downloaded by SubagentStart hook. If missing:
+The crypto-gate binary should be downloaded by master-agent at session start. If missing:
 
 1. Check `$CLAUDE_PROJECT_DIR/bin/crypto-gate` exists
 2. Check it's executable (`chmod +x`)
