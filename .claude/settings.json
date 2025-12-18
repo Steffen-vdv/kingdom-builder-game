@@ -4,6 +4,15 @@
 		"allow": ["Skill"]
 	},
 	"hooks": {
+		"UserPromptSubmit": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/scripts/test.sh"
+					}
+				]
+			},
 		"SessionStart": [
 			{
 				"matcher": "startup",
