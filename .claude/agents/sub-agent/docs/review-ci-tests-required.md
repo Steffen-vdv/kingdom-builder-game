@@ -123,17 +123,17 @@ Sign ALL verdicts (enables delta review in subsequent rounds):
 
 ```bash
 # APPROVED (tests pass)
-SIGN=$(sign.sh 'All 47 tests passed' 'QA_CI_REQUIRED_TESTS')
+SIGN=`sign.sh 'All 47 tests passed' 'QA_CI_REQUIRED_TESTS'`
 
 # BLOCKED (tests fail)
-SIGN=$(sign.sh '3 tests failed' 'QA_CI_REQUIRED_TESTS' --verdict BLOCKED --blockers '["test:foo.test.ts"]')
+SIGN=`sign.sh '3 tests failed' 'QA_CI_REQUIRED_TESTS' --verdict BLOCKED --blockers '["test:foo.test.ts"]'`
 ```
 
 ## Output
 
 ```bash
-PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
-SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+PAYLOAD=`echo "$SIGN" | jq -r '.payload'`
+SIGNATURE=`echo "$SIGN" | jq -r '.signature'`
 
 write-output.sh 'review-ci-tests-required' \
   --verdict '<VERDICT>' \

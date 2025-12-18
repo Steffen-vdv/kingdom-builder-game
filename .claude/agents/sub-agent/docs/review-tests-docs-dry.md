@@ -66,17 +66,17 @@ Sign ALL verdicts (enables delta review in subsequent rounds):
 
 ```bash
 # APPROVED
-SIGN=$(sign.sh 'Tests adequate' 'QA_TESTS_DOCS_DRY')
+SIGN=`sign.sh 'Tests adequate' 'QA_TESTS_DOCS_DRY'`
 
 # BLOCKED
-SIGN=$(sign.sh 'Test gap' 'QA_TESTS_DOCS_DRY' --verdict BLOCKED --blockers '["issue"]')
+SIGN=`sign.sh 'Test gap' 'QA_TESTS_DOCS_DRY' --verdict BLOCKED --blockers '["issue"]'`
 ```
 
 ## Output
 
 ```bash
-PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
-SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+PAYLOAD=`echo "$SIGN" | jq -r '.payload'`
+SIGNATURE=`echo "$SIGN" | jq -r '.signature'`
 
 write-output.sh 'review-tests-docs-dry' \
   --verdict '<VERDICT>' \

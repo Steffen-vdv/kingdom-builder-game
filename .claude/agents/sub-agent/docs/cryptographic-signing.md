@@ -76,7 +76,7 @@ JSON object with three fields:
 **Example:**
 
 ```bash
-SIGN_OUTPUT=$(.claude/agents/sub-agent/scripts/sign.sh 'All 47 tests passed' 'QA_CI_REQUIRED_TESTS')
+SIGN_OUTPUT=`.claude/agents/sub-agent/scripts/sign.sh 'All 47 tests passed' 'QA_CI_REQUIRED_TESTS'`
 echo "$SIGN_OUTPUT"
 # {"payload":"{\"commits\":[\"abc123\"],...}","signature":"a1b2c3...","type":"QA_CI_REQUIRED_TESTS"}
 ```

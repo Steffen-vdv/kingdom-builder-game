@@ -71,17 +71,17 @@ Sign ALL verdicts (enables delta review in subsequent rounds):
 
 ```bash
 # APPROVED
-SIGN=$(sign.sh 'Mechanics correct' 'QA_MECHANICS_CONTENT')
+SIGN=`sign.sh 'Mechanics correct' 'QA_MECHANICS_CONTENT'`
 
 # BLOCKED
-SIGN=$(sign.sh 'Hardcoded data' 'QA_MECHANICS_CONTENT' --verdict BLOCKED --blockers '["issue"]')
+SIGN=`sign.sh 'Hardcoded data' 'QA_MECHANICS_CONTENT' --verdict BLOCKED --blockers '["issue"]'`
 ```
 
 ## Output
 
 ```bash
-PAYLOAD=$(echo "$SIGN" | jq -r '.payload')
-SIGNATURE=$(echo "$SIGN" | jq -r '.signature')
+PAYLOAD=`echo "$SIGN" | jq -r '.payload'`
+SIGNATURE=`echo "$SIGN" | jq -r '.signature'`
 
 write-output.sh 'review-mechanics-content' \
   --verdict '<VERDICT>' \
