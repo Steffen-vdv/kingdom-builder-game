@@ -3,24 +3,25 @@
 # Session start hook for Kingdom Builder
 # Runs on first session start - installs dependencies
 
-LOG="/tmp/claude-session-start-hook.log"
-echo "=== SessionStart $(date -Iseconds) ===" > "$LOG"
+cd "$CLAUDE_PROJECT_DIR" || exit 1
+source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
 
-cd "$CLAUDE_PROJECT_DIR" || { echo "FAILED to cd" >> "$LOG"; exit 1; }
+log_session "start" "SessionStart"
 
 # Install dependencies if needed
 if [ ! -d "$CLAUDE_PROJECT_DIR/node_modules" ]; then
-  echo "Installing dependencies with pnpm..." >> "$LOG"
-  pnpm install --frozen-lockfile >> "$LOG" 2>&1
+  log_hook "start" "Installing dependencies with pnpm..."
+  pnpm install --frozen-lockfile >> "$LOG_FILE" 2>&1
 fi
 
 # Initialize Husky if needed
-[ ! -d "$CLAUDE_PROJECT_DIR/.husky/_" ] && pnpm run prepare >> "$LOG" 2>&1
+[ ! -d "$CLAUDE_PROJECT_DIR/.husky/_" ] && pnpm run prepare >> "$LOG_FILE" 2>&1
 
 # Register master-agent context
 "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager/register-master-agent.sh"
+log_hook "start" "Context set to master-agent"
 
-echo "=== Completed $(date -Iseconds) ===" >> "$LOG"
+log_session "start" "SessionStart" "completed"
 
 # Output identity docs (injected into agent context)
 IDENTITY_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/docs/master-agent.md"
