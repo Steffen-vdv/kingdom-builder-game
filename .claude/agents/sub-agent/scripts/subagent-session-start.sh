@@ -81,7 +81,7 @@ End your response with the strict footer line (hooks handle signing):
 QA_VERDICT:{"verdict":"APPROVED|BLOCKED|NEEDS_INPUT","summary":"...","blockers":[],"questions":[]}
 ```
 
-DO NOT call sign.sh or write-output.sh - the post-task hook handles signing.
+Signing is handled automatically by hooks.
 
 ===
 QA_PHASE1_FOOTER
@@ -159,7 +159,7 @@ End your response with the strict footer line (hooks handle signing):
 QA_VERDICT:{"verdict":"APPROVED|BLOCKED|NEEDS_INPUT","summary":"...","blockers":[],"questions":[]}
 ```
 
-DO NOT call sign.sh or write-output.sh - the post-task hook handles signing.
+Signing is handled automatically by hooks.
 
 ===
 QA_REVIEW_LEAD_FOOTER
@@ -225,17 +225,5 @@ QA_REVIEW_LEAD_FOOTER
 		fi
 		;;
 esac
-
-# Output protocol spec (injected into subagent context)
-PROTOCOL_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/shared/docs/agent-intercommunication-protocols.md"
-
-cat << 'PROTOCOL_HEADER'
-=== Subagent Communication Protocol ===
-Your chat output can be free-form narrative. For QA agents, the post-task hook
-parses your QA_VERDICT footer line to create the signed output file.
-
-PROTOCOL_HEADER
-
-cat "$PROTOCOL_DOC"
 
 exit 0

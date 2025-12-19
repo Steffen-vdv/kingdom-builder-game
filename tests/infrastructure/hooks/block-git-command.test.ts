@@ -7,8 +7,8 @@ import * as path from 'path';
  *
  * Verifies that the block-git-command hook correctly:
  * - Blocks direct git push commands
- * - Allows verify-and-push.sh script (Phase 3 single signature)
- * - Allows verify-bulk-and-push.sh script (legacy/alternative)
+ * - Blocks git push in command chains (&&, ||, ;, |)
+ * - Allows verify-and-push.sh script (Phase 3)
  * - Allows git push --dry-run for testing
  * - Provides helpful three-phase workflow guidance
  */
@@ -115,14 +115,7 @@ describe('Infrastructure: Block Git Command Hook', () => {
 	describe('Allowing Legitimate Commands', () => {
 		it('should allow verify-and-push.sh script', () => {
 			const { blocked } = testCommand(
-				'.claude/agents/sub-agent/scripts/verify-and-push.sh payload signature',
-			);
-			expect(blocked).toBe(false);
-		});
-
-		it('should allow verify-bulk-and-push.sh script', () => {
-			const { blocked } = testCommand(
-				'.claude/agents/sub-agent/scripts/verify-bulk-and-push.sh approvals 6',
+				'.claude/agents/sub-agent/scripts/verify-and-push.sh --from-disk',
 			);
 			expect(blocked).toBe(false);
 		});
@@ -145,9 +138,66 @@ describe('Infrastructure: Block Git Command Hook', () => {
 			expect(testCommand('git log --oneline | grep push').blocked).toBe(false);
 		});
 
-		it('should block push even with other commands chained', () => {
+		it('should allow push in quoted string (not a command)', () => {
+			expect(testCommand('git commit -m "fix: push"').blocked).toBe(false);
+		});
+	});
+
+	describe('Command Chain Detection (bashlex)', () => {
+		it('should block push in && chain: git status && git push', () => {
 			const { blocked } = testCommand('git status && git push');
 			expect(blocked).toBe(true);
+		});
+
+		it('should block push in || chain: git push || echo "failed"', () => {
+			const { blocked } = testCommand('git push || echo "failed"');
+			expect(blocked).toBe(true);
+		});
+
+		it('should block push in ; chain: git status; git push', () => {
+			const { blocked } = testCommand('git status; git push');
+			expect(blocked).toBe(true);
+		});
+
+		it('should block push in | chain: echo "y" | git push', () => {
+			const { blocked } = testCommand('echo "y" | git push');
+			expect(blocked).toBe(true);
+		});
+
+		it('should block push with no spaces: git status&&git push', () => {
+			const { blocked } = testCommand('git status&&git push');
+			expect(blocked).toBe(true);
+		});
+
+		it('should block push in long chain: git fetch && git status && git push', () => {
+			const { blocked } = testCommand('git fetch && git status && git push');
+			expect(blocked).toBe(true);
+		});
+
+		it('should block push even when later in chain', () => {
+			const { blocked } = testCommand(
+				'npm test && npm build && git add . && git commit -m "fix" && git push',
+			);
+			expect(blocked).toBe(true);
+		});
+
+		it('should allow safe chains without push', () => {
+			expect(testCommand('git status && git fetch').blocked).toBe(false);
+			expect(testCommand('git add . && git commit -m "test"').blocked).toBe(
+				false,
+			);
+		});
+
+		it('should not be fooled by push in quoted strings within chains', () => {
+			expect(testCommand('git commit -m "push" && git status').blocked).toBe(
+				false,
+			);
+		});
+
+		it('should allow dry-run push in chain', () => {
+			expect(
+				testCommand('git status && git push --dry-run origin main').blocked,
+			).toBe(false);
 		});
 	});
 });

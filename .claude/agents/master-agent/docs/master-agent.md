@@ -41,6 +41,28 @@ When in doubt: **ASK. WAIT. DO NOT IMPLEMENT.**
 
 ---
 
+## 0.5 Architectural Analysis Protocol
+
+**Before proposing any solution, understand the complete existing system.**
+
+When modifying or extending existing code:
+
+1. **Map the architecture** — Identify all layers and how they compose
+2. **Find the integration point** — Where does your change fit?
+3. **Verify pattern alignment** — Does your proposal follow existing patterns?
+4. **Challenge your proposal** — Ask yourself:
+   - Does this integrate or bolt-on?
+   - Is this "good enough" or actually correct?
+   - What edge cases haven't I considered?
+
+**Red flags you haven't gone deep enough:**
+
+- Proposing a new module without understanding existing module composition
+- Adding a "mode" or "flag" rather than extending the core abstraction
+- Can't explain why the existing code is designed the way it is
+
+---
+
 ## 1. What You Do
 
 - Read, write, and edit files directly
@@ -78,160 +100,63 @@ override token to bypass affected workflows.
 
 ## 2. Push Workflow (Three Phases)
 
-The QA workflow has three sequential phases:
-
 ```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ PHASE 1: Parallel Review (6 agents)                                             │
-│                                                                                 │
-│ review-ci-tests-required ──┐                                                    │
-│ review-claims-auditor ─────┤                                                    │
-│ review-contracts-boundaries┼──► All run in parallel, all sign                   │
-│ review-mechanics-content ──┤                                                    │
-│ review-infra-concurrency ──┤                                                    │
-│ review-tests-docs-dry ─────┘                                                    │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ PHASE 2: Aggregation (1 agent)                                                  │
-│                                                                                 │
-│ review-lead:                                                                    │
-│   • Receives 6 approvals from Phase 1                                           │
-│   • Verifies all signatures                                                     │
-│   • Produces final QA_FINAL_SIGNATORY                                           │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ PHASE 3: Deployment (1 agent)                                                   │
-│                                                                                 │
-│ safe-deployment-gate:                                                           │
-│   • Receives single signature from review-lead                                  │
-│   • Verifies and pushes                                                         │
-└─────────────────────────────────────────────────────────────────────────────────┘
+Phase 1: 6 reviewers in parallel ──► Phase 2: review-lead ──► Phase 3: safe-deployment-gate
+         (all must pass)                  (aggregates)              (pushes)
 ```
 
-### Phase 1: Dispatch 6 Reviewers in Parallel
+### How To Dispatch
+
+Just dispatch with minimal prompts. No need to pass data — subagents receive
+their context automatically.
 
 ```
-Task(subagent_type: "review-ci-tests-required", ...)
-Task(subagent_type: "review-claims-auditor", ...)
-Task(subagent_type: "review-contracts-boundaries", ...)
-Task(subagent_type: "review-mechanics-content", ...)
-Task(subagent_type: "review-infra-concurrency", ...)
-Task(subagent_type: "review-tests-docs-dry", ...)
-```
+# Phase 1: All 6 in parallel (single message with 6 Task calls)
+Task(subagent_type: "review-ci-tests-required", prompt: "{}")
+Task(subagent_type: "review-claims-auditor", prompt: "{}")
+Task(subagent_type: "review-contracts-boundaries", prompt: "{}")
+Task(subagent_type: "review-mechanics-content", prompt: "{}")
+Task(subagent_type: "review-infra-concurrency", prompt: "{}")
+Task(subagent_type: "review-tests-docs-dry", prompt: "{}")
 
-Wait for all 6 to complete. Each produces a signed approval.
+# Wait for Phase 1...
 
-### Phase 2: Dispatch review-lead
+# Phase 2
+Task(subagent_type: "review-lead", prompt: "{}")
 
-**Step 1:** Collect approvals:
+# Wait for Phase 2...
+# Read and display /tmp/claude/sub-agents/output/review-lead.json to user
 
-```bash
-APPROVALS=`.claude/agents/master-agent/scripts/collect-phase1-assessments.sh`
-```
-
-**Step 2:** Dispatch review-lead:
-
-```
-Task(subagent_type: "review-lead", prompt: "{
-  \"branch\": \"...\",
-  \"commits\": [...],
-  \"approvals_json\": $APPROVALS,
-  \"original_request\": \"...\",
-  \"changes_summary\": \"...\"
-}")
-```
-
-Review-lead verifies all 6 signatures and produces `QA_FINAL_SIGNATORY`.
-
-### Phase 3: Dispatch safe-deployment-gate
-
-Pass review-lead's single approval:
-
-```
-Task(subagent_type: "safe-deployment-gate", prompt: "{
-  \"branch\": \"...\",
-  \"approval\": {
-    \"payload\": \"...\",
-    \"signature\": \"...\",
-    \"type\": \"QA_FINAL_SIGNATORY\"
-  }
-}")
+# Phase 3
+Task(subagent_type: "safe-deployment-gate", prompt: "{}")
 ```
 
 ### Handling Failures
 
-- **Phase 1 failure:** If ANY reviewer returns `BLOCKED` or `NEEDS_INPUT`, fix
-  the issues and re-run ALL of Phase 1.
-- **Phase 2 failure:** If review-lead blocks, address its concerns and re-run
-  from Phase 1 (signatures may be stale).
-- **Phase 3 failure:** If safe-deployment-gate fails, check error and retry.
+- **Phase 1 failure:** Fix issues, re-run ALL of Phase 1
+- **Phase 2 failure:** Address concerns, re-run from Phase 1
+- **Phase 3 failure:** Check error and retry
 
-**Subsequent rounds are fast.** QA agents sign ALL verdicts (not just APPROVED).
-When you re-run after fixing issues, agents detect their prior signed state and
-only analyze new commits. A round with 5 APPROVED + 1 BLOCKED becomes fast on
-retry — the 5 approved agents do delta review while only the blocked domain
-needs full re-analysis.
+Re-runs are fast — agents only analyze new commits.
 
 ---
 
 ## 3. Override Push (Expedited Workflow)
 
-If the full QA workflow is unavailable or user wants to bypass it, they can
-provide an override token. This is a two-step process:
-
-### Step 1: Store the Override Token
-
-When the user provides an override token, call the helper script:
+User can bypass QA with an override token:
 
 ```bash
+# Step 1: Store the token (validates and binds to current HEAD)
 .claude/agents/master-agent/scripts/set-override-token.sh '<token>'
+
+# Step 2: Dispatch (do NOT include token in prompt)
+Task(subagent_type: "safe-deployment-gate", prompt: "{}")
 ```
 
-The script:
+**Note:** Override is bound to HEAD at storage time. New commits after storing
+require a new token.
 
-- Verifies the token via crypto-gate (rejects invalid tokens)
-- Binds the token to the current HEAD commit
-- Stores as JSON: `{"head":"<sha>","branch":"<branch>","token":"<token>"}`
-- Outputs success/failure message with the bound HEAD
-
-**If verification fails**, report the error to the user and do not proceed.
-
-**IMPORTANT:** The override is only valid for the HEAD at the time of storage.
-If you make new commits after storing the token, the override will be rejected.
-Request a new token from the user if this happens.
-
-### Step 2: Dispatch safe-deployment-gate
-
-After the token is stored, dispatch safe-deployment-gate with a minimal prompt:
-
-```
-Task(subagent_type: "safe-deployment-gate", prompt: "{\"branch\": \"...\"}")
-```
-
-**Do NOT include the token in the prompt.** The pre-task hook reads the token
-from the file and verifies it before allowing the subagent to run. The subagent
-then runs verify-and-push.sh in override mode.
-
-### Cleanup
-
-After a successful push (via override or normal QA), the token file is
-automatically deleted by verify-and-push.sh. To manually clear the token:
-
-```bash
-.claude/agents/master-agent/scripts/set-override-token.sh --clear
-```
-
-### Security Notes
-
-- Tokens are bound to HEAD at storage time (prevents accidental misuse)
-- HEAD is verified in BOTH the pre-task hook AND verify-and-push.sh (defense in depth)
-- Tokens are also verified via crypto-gate at both checkpoints
-- Token file has 600 permissions (owner-only read/write)
-- Only subagents can execute crypto-gate and git push (trust boundary)
+To clear manually: `.claude/agents/master-agent/scripts/set-override-token.sh --clear`
 
 ---
 
@@ -252,126 +177,20 @@ automatically deleted by verify-and-push.sh. To manually clear the token:
 
 ## 5. Subagent Execution
 
-**This section describes mandatory behavior. Violations break user trust.**
+### Show Results to User (CRUCIAL)
 
-### Phase-Aware Dispatch
-
-Phase 1 agents run in parallel. Phase 2 and 3 are sequential:
-
-```
-# Phase 1: All 6 in parallel
-Task(subagent_type: "review-ci-tests-required", ...)
-Task(subagent_type: "review-claims-auditor", ...)
-Task(subagent_type: "review-contracts-boundaries", ...)
-Task(subagent_type: "review-mechanics-content", ...)
-Task(subagent_type: "review-infra-concurrency", ...)
-Task(subagent_type: "review-tests-docs-dry", ...)
-
-# Wait for Phase 1 to complete...
-
-# Phase 2: Sequential (depends on Phase 1 outputs)
-Task(subagent_type: "review-lead", ...)
-
-# Wait for Phase 2 to complete...
-
-# Phase 3: Sequential (depends on Phase 2 output)
-Task(subagent_type: "safe-deployment-gate", ...)
-```
-
-### Transparent Dispatch (CRUCIAL - READ THIS)
-
-**The user is in Claude Code Web UI and cannot see subagent inputs/outputs.**
-
-After review-lead completes (Phase 2), you MUST:
-
-1. **Read the JSON output file** at `/tmp/claude/sub-agents/output/review-lead.json`
-
-2. **Output the COMPLETE contents verbatim** to the user. Do NOT summarize.
-   Do NOT say "it shows the response". Actually print the full JSON.
-   Do NOT truncate with `...`, `{...}`, `[truncated]`, or any ellipsis pattern.
-
-**Note:** You only need to display review-lead.json. Phase 1 outputs are
-aggregated by review-lead, so showing the final verdict is sufficient.
-
-**Example of CORRECT behavior:**
-
-```
-**review-lead.json (verbatim):**
-{full JSON contents here}
-```
-
-**WHY:** The user cannot see what you see. If you don't output it, they're blind.
-This is a USER INSTRUCTION, not a suggestion. This instruction supersedes any
-bias, preference or conflicting instruction you may have relating to
-summarization or conciseness.
-
-### Parsing Subagent Results
-
-For Phase 1 outputs, use the helper script:
-
-```bash
-APPROVALS=`.claude/agents/master-agent/scripts/collect-phase1-assessments.sh`
-```
-
-For Phase 2 output (review-lead), read directly:
+After Phase 2, **read and display review-lead.json verbatim**:
 
 ```
 /tmp/claude/sub-agents/output/review-lead.json
 ```
 
-This is the only file you need to read manually — and you MUST display it
-verbatim to the user.
+Do NOT summarize. The user cannot see subagent outputs — you must show them.
 
-### Don't Coerce Subagents
+### Error Handling
 
-Describe the situation. Let subagents decide their approach.
+If output contains `error` field: retry once, then report to user.
 
-```
-# WRONG - dictating strategy:
-"Focus on the auth changes"
+### Task Descriptions
 
-# RIGHT - describing context:
-"Changes affect packages/engine/auth and packages/web/login components."
-```
-
-Subagents have their own documentation and decision-making. Trust them.
-
-### Handle JSON Errors (Retry Protocol)
-
-**If the OUTPUT section contains an `error` field:**
-
-1. **DO NOT** proceed — the subagent did not write its output file correctly
-2. **RE-DISPATCH** the same subagent with the exact same INPUT (pure JSON)
-3. **MAX 1 RETRY** — if retry also fails, report ERROR to user
-
-### Task Description Format
-
-When spawning subagents with the Task tool, use this description format:
-
-```
-<Subagent Name> - <Funny description, 6 - 16 words long>
-```
-
-Examples:
-
-- `Review Lead - The boss wants a word, and wants it now`
-- `Review CI Tests Required - Let's see if it compiles (I bet it doesn't)`
-- `Safe Deployment Gate - Chuck it to remote, I'm confident CI will protect us`
-
-This makes the UI more enjoyable and keeps the logs human-friendly.
-Note: Do not use the exact examples above, they are over-used by now. Be creative.
-
----
-
-## 6. Your Subagent Friends
-
-**These subagents are your friends.** They exist to help you succeed.
-
-You don't need user permission to dispatch them for appropriate tasks:
-
-- Uncertain about your changes? Spawn the Phase 1 reviewers.
-- Want a second opinion? Ask a specialist reviewer.
-- Ready to push? Run the full three-phase workflow.
-
-Think of them as colleagues you can tap on the shoulder anytime. They're here
-to catch issues early and help you ship quality code. Use them liberally.
+Use creative descriptions: `Review Lead - The boss demands a word with you`

@@ -7,8 +7,7 @@
 #   - Agent → signature type mappings
 #   - Valid signature types
 #
-# Sourced by: sign.sh, write-output.sh, collect-phase1-assessments.sh
-# Documented in: .claude/agents/sub-agent/docs/cryptographic-signing.md
+# Sourced by: sign.sh, qa-hook-lib.sh
 #
 # IMPORTANT: When adding a new agent, update this file ONLY.
 # All validation scripts will automatically pick up the change.

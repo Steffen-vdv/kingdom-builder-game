@@ -104,9 +104,18 @@ BLOCK if:
 
 See CLAUDE.md section 2.8 for details on extensible design.
 
+### Architectural Integration
+
+BLOCK if:
+
+- Solution "bolts on" rather than integrating with existing patterns
+- Proposal adds parallel path (new mode, flag) where extending abstraction is correct
+- Analysis is shallow — proposer didn't understand existing layer structure
+- "Good enough" hack proposed when proper solution exists and is tractable
+
 ## What You Do NOT Do
 
-- ❌ Call sign.sh or write-output.sh (hooks handle signing)
+- ❌ Call any signing scripts (hooks handle this automatically)
 - ❌ Modify code
 - ❌ Skip verification steps
 

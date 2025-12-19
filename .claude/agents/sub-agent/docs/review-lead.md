@@ -137,7 +137,7 @@ You are not allowed to guess.
 
 ## What You Do NOT Do
 
-- ❌ Call sign.sh or write-output.sh (hooks handle signing)
+- ❌ Call any signing scripts (hooks handle this automatically)
 - ❌ Override specialist verdicts
 - ❌ Re-run analysis that specialists already did
 

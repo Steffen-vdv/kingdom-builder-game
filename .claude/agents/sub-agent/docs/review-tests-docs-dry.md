@@ -86,7 +86,7 @@ BLOCK if:
 
 ## What You Do NOT Do
 
-- ❌ Call sign.sh or write-output.sh (hooks handle signing)
+- ❌ Call any signing scripts (hooks handle this automatically)
 - ❌ Modify code
 - ❌ Skip verification steps
 

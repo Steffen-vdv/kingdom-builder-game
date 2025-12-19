@@ -142,7 +142,7 @@ Apply the decision tree above based on your analysis.
 - ❌ Skip tests without explanation
 - ❌ Make assumptions about what "should" pass
 - ❌ Run tests without analyzing what changed first
-- ❌ Call sign.sh or write-output.sh (hooks handle signing)
+- ❌ Call any signing scripts (hooks handle this automatically)
 
 ---
 

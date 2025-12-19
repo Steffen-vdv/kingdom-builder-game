@@ -87,8 +87,7 @@ Valid signature types:
   • QA_INFRA_CONCURRENCY    (review-infra-concurrency)
   • QA_TESTS_DOCS_DRY       (review-tests-docs-dry)
 
-Each agent MUST use its designated signature type. See:
-.claude/agents/sub-agent/docs/cryptographic-signing.md
+Each agent MUST use its designated signature type.
 EOF
 	exit 1
 fi
