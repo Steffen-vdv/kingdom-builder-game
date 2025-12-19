@@ -256,13 +256,21 @@ qa_write_canonical_input() {
 	(
 		flock -x 200
 
-		# Check if input.json already exists with same HEAD
+		# Get current intent_id (must check before early exit)
+		local current_intent_id
+		current_intent_id=$(qa_intent_from_prompt_log "$session_id" | jq -r '.intent_id')
+
+		# Check if input.json already exists with same HEAD AND same intent
 		# If so, reuse it to maintain hash stability across Phase 1 agents
+		# IMPORTANT: Must also check intent_id - same commit with new clarifications
+		# requires a fresh canonical input to trigger FULL_REVIEW
 		if [[ -f "$input_file" && -f "$hash_file" ]]; then
-			local existing_head
+			local existing_head existing_intent
 			existing_head=$(jq -r '.head // ""' "$input_file" 2>/dev/null || echo "")
-			if [[ "$existing_head" == "$head_sha" && -n "$existing_head" ]]; then
-				# Same HEAD, reuse existing canonical input
+			existing_intent=$(jq -r '.intent_id // ""' "$input_file" 2>/dev/null || echo "")
+			if [[ "$existing_head" == "$head_sha" && -n "$existing_head" ]] && \
+			   [[ "$existing_intent" == "$current_intent_id" && -n "$existing_intent" ]]; then
+				# Same HEAD and same intent, reuse existing canonical input
 				exit 0
 			fi
 		fi
@@ -284,20 +292,15 @@ qa_write_canonical_input() {
 		local files_changed
 		files_changed=$(qa_files_changed_json)
 
-		# Get intent from prompt log (intent_text excluded from canonical to keep hash stable)
-		local intent_json
-		intent_json=$(qa_intent_from_prompt_log "$session_id")
-		local intent_id
-		intent_id=$(echo "$intent_json" | jq -r '.intent_id')
-
 		# Build input JSON (NO timestamp - ensures hash stability)
+		# Note: current_intent_id already computed above for early-exit check
 		local input_json
 		input_json=$(jq -n -c \
 			--arg branch "$branch" \
 			--arg head "$head_sha" \
 			--argjson commits "$commits" \
 			--argjson files_changed "$files_changed" \
-			--arg intent_id "$intent_id" \
+			--arg intent_id "$current_intent_id" \
 			--arg session_id "$session_id" \
 			'{
 				branch: $branch,
