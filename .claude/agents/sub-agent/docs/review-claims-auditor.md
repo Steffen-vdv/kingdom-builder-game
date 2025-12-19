@@ -24,7 +24,12 @@ You exist to answer one question:
 ## Inputs (Injected by Hooks)
 
 The SubagentStart hook injects these files' contents directly into your context.
-You do NOT need to read them manually - they appear in your session context.
+You do NOT need to read them manually - they appear above in your session context.
+
+**If files are missing from context, use these paths:**
+
+- Input: `/tmp/claude/qa/current/input.json`
+- Delta: `/tmp/claude/qa/current/delta/review-claims-auditor.json`
 
 **Canonical Input (input.json):**
 
@@ -127,7 +132,7 @@ QA_VERDICT:{"verdict":"BLOCKED","summary":"Claim mismatch found","blockers":["Cl
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-1. ☐ Read input.json and delta file
+1. ☐ Review the injected input.json and delta content above
 2. ☐ Inspected git diff
 3. ☐ Cross-checked claims against evidence
 4. ☐ Assigned risk tier

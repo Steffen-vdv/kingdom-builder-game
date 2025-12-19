@@ -21,7 +21,12 @@ Default stance: BLOCK.
 ## Inputs (Injected by Hooks)
 
 The SubagentStart hook injects these files' contents directly into your context.
-You do NOT need to read them manually - they appear in your session context.
+You do NOT need to read them manually - they appear above in your session context.
+
+**If files are missing from context, use these paths:**
+
+- Input: `/tmp/claude/qa/current/input.json`
+- Delta: `/tmp/claude/qa/current/delta/review-contracts-boundaries.json`
 
 **Canonical Input (input.json):**
 
@@ -155,7 +160,7 @@ QA_VERDICT:{"verdict":"BLOCKED","summary":"Contract violations found","blockers"
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-1. ☐ Read input.json and delta file
+1. ☐ Review the injected input.json and delta content above
 2. ☐ Checked strictness patterns
 3. ☐ Verified protocol/schema stability
 4. ☐ Verified domain boundaries

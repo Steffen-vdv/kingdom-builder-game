@@ -32,7 +32,12 @@ You try to be correct.
 ## Inputs (Injected by Hooks)
 
 The SubagentStart hook injects these files' contents directly into your context.
-You do NOT need to read them manually - they appear in your session context.
+You do NOT need to read them manually - they appear above in your session context.
+
+**If files are missing from context, use these paths:**
+
+- Input: `/tmp/claude/qa/current/input.json`
+- Phase 1 outputs: `/tmp/claude/sub-agents/output/<reviewer>.json`
 
 **Canonical Input (input.json):**
 
@@ -177,8 +182,8 @@ QA_VERDICT:{"verdict":"BLOCKED","summary":"Blocked by review-claims-auditor","bl
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-1. ☐ Read input.json
-2. ☐ Read all 6 Phase 1 output files
+1. ☐ Review the injected input.json content above
+2. ☐ Review all 6 Phase 1 outputs above (or read from `/tmp/claude/sub-agents/output/`)
 3. ☐ Applied conservative aggregation
 4. ☐ Performed final sanity checks
 5. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)

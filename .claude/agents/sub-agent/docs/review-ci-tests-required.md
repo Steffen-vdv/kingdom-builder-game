@@ -24,7 +24,12 @@ you report them for the master-agent to address.
 ## Inputs (Injected by Hooks)
 
 The SubagentStart hook injects these files' contents directly into your context.
-You do NOT need to read them manually - they appear in your session context.
+You do NOT need to read them manually - they appear above in your session context.
+
+**If files are missing from context, use these paths:**
+
+- Input: `/tmp/claude/qa/current/input.json`
+- Delta: `/tmp/claude/qa/current/delta/review-ci-tests-required.json`
 
 **Canonical Input (input.json):**
 
@@ -192,7 +197,7 @@ QA_VERDICT:{"verdict":"BLOCKED","summary":"3 tests failed in engine package","bl
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-1. ☐ Read input.json and delta file
+1. ☐ Review the injected input.json and delta content above
 2. ☐ Analyzed changes and chose test strategy
 3. ☐ Ran appropriate tests
 4. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)

@@ -21,7 +21,12 @@ Default stance: BLOCK.
 ## Inputs (Injected by Hooks)
 
 The SubagentStart hook injects these files' contents directly into your context.
-You do NOT need to read them manually - they appear in your session context.
+You do NOT need to read them manually - they appear above in your session context.
+
+**If files are missing from context, use these paths:**
+
+- Input: `/tmp/claude/qa/current/input.json`
+- Delta: `/tmp/claude/qa/current/delta/review-mechanics-content.json`
 
 **Canonical Input (input.json):**
 
@@ -131,7 +136,7 @@ QA_VERDICT:{"verdict":"BLOCKED","summary":"Hardcoded game data found","blockers"
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-1. ☐ Read input.json and delta file
+1. ☐ Review the injected input.json and delta content above
 2. ☐ Checked for hardcoded game data
 3. ☐ Verified property-based behavior (no ID branching)
 4. ☐ Validated mechanics correctness if applicable
