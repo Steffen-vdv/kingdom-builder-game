@@ -29,7 +29,8 @@ You do NOT need to read them manually - they appear in your session context.
 - `head`: Current HEAD commit SHA
 - `commits`: Array of commit SHAs in this review
 - `files_changed`: Array of files modified
-- `intent_id`: Hash of user's original intent
+- `prompts`: Array of user's actual prompts (AUTHORITATIVE - see shared-context.md)
+- `summary`: Master agent's description (INFORMATIONAL - see shared-context.md)
 - `session_id`: Current session identifier
 
 **Delta Info (delta/review-infra-concurrency.json):**

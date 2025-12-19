@@ -107,8 +107,16 @@ Phase 1: 6 reviewers in parallel ──► Phase 2: review-lead ──► Phase 
 
 ### How To Dispatch
 
-Just dispatch with minimal prompts. No need to pass data — subagents receive
-their context automatically.
+**Step 0: Prepare canonical input (REQUIRED before Phase 1)**
+
+```bash
+.claude/agents/shared/scripts/qa-prepare.sh --summary "Description of what was implemented..."
+```
+
+The summary should describe what you implemented. This helps reviewers understand
+the changes. User prompts are captured automatically from the session log.
+
+**Step 1-3: Dispatch reviewers**
 
 ```
 # Phase 1: All 6 in parallel (single message with 6 Task calls)
@@ -130,6 +138,8 @@ Task(subagent_type: "review-lead", prompt: "{}")
 # Phase 3
 Task(subagent_type: "safe-deployment-gate", prompt: "{}")
 ```
+
+**Note:** If you skip Step 0, Phase 1 dispatch will be blocked with an error.
 
 ### Handling Failures
 

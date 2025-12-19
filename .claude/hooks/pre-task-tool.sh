@@ -193,13 +193,19 @@ fi
 log_hook "$SUBAGENT" "Starting (pre-task)"
 
 # =============================================================================
-# INITIALIZE PATHS AND WRITE CANONICAL INPUT
+# VERIFY CANONICAL INPUT EXISTS (created by qa-prepare.sh)
 # =============================================================================
 
 qa_paths_init
 
-# Write canonical input (this becomes the source of truth for what's being reviewed)
-qa_write_canonical_input "$SESSION_ID" "$PROMPT" "$SUBAGENT"
+# Master agent MUST run qa-prepare.sh before dispatching Phase 1
+# The prep script creates input.json with prompts and summary
+if [[ ! -f "$QA_CURRENT_DIR/input.json" ]]; then
+	cat << 'EOF'
+{"decision":"block","reason":"input.json not found. Master agent must run qa-prepare.sh before dispatching Phase 1 reviewers.\n\nUsage:\n  .claude/agents/shared/scripts/qa-prepare.sh --summary \"Description of what was implemented...\"\n\nThen dispatch Phase 1 reviewers."}
+EOF
+	exit 1
+fi
 
 # =============================================================================
 # DELTA LOGIC FOR PHASE 1 REVIEWERS

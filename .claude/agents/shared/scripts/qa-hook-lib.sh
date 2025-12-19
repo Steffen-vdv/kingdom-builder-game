@@ -129,32 +129,22 @@ qa_canonicalize_json() {
 # PROMPT LOGGING
 # =============================================================================
 
-# qa_intent_from_prompt_log(session_id) -> outputs JSON:
-#   { "intent_id": "<sha256>", "intent_text": "<joined text>" }
-# Uses last 8 prompts by default; joins with "\n\n---\n\n".
-# If missing log => intent_text empty and intent_id = sha256("").
-qa_intent_from_prompt_log() {
+# qa_prompts_from_log(session_id) -> outputs JSON array of user prompts
+# Returns the last 100 prompts from the session log as a JSON array of strings.
+# If missing log => empty array [].
+qa_prompts_from_log() {
 	local session_id="$1"
 	local log_path
 	log_path=$(qa_prompt_log_path "$session_id")
 
-	local intent_text=""
-	local intent_id=""
-
 	if [[ -f "$log_path" ]]; then
-		# Get last 8 prompts, extract prompt field, join with separator
-		intent_text=$(tail -n 8 "$log_path" 2>/dev/null | \
-			jq -r '.prompt // ""' 2>/dev/null | \
-			paste -sd $'\n' - | \
-			awk 'NR>1{printf "\n\n---\n\n"}{printf "%s",$0}' || echo "")
+		# Get last 100 prompts, extract prompt field, output as JSON array
+		tail -n 100 "$log_path" 2>/dev/null | \
+			jq -r '.prompt // empty' 2>/dev/null | \
+			jq -R -s -c 'split("\n") | map(select(length > 0))'
+	else
+		echo '[]'
 	fi
-
-	intent_id=$(qa_sha256_string "$intent_text")
-
-	jq -n -c \
-		--arg intent_id "$intent_id" \
-		--arg intent_text "$intent_text" \
-		'{intent_id: $intent_id, intent_text: $intent_text}'
 }
 
 # =============================================================================
@@ -213,121 +203,6 @@ qa_files_changed_json() {
 	else
 		echo '[]'
 	fi
-}
-
-# =============================================================================
-# CANONICAL INPUT WRITING
-# =============================================================================
-
-# qa_write_canonical_input(session_id, tool_input_prompt, subagent_type) -> writes:
-#   /tmp/claude/qa/current/input.json and input.sha256
-# input.json structure (canonicalized, NO timestamp to ensure stable hash):
-#   {
-#     "branch": "<branch>",
-#     "head": "<HEAD_SHA>",
-#     "commits": [...],
-#     "files_changed": [...],
-#     "intent_id": "...",
-#     "session_id": "..."
-#   }
-#
-# IMPORTANT: This is called by pre-task hook for EVERY QA agent.
-# To ensure stable hashes across the workflow, we:
-#   1. Do NOT include timestamp in the canonical input (causes hash instability)
-#   2. Reuse existing input.json if HEAD matches (allows Phase 1 agents to share hash)
-#   3. Use flock-based locking to prevent race conditions with parallel hooks
-#   4. Use atomic writes (temp file → mv) for consistency
-qa_write_canonical_input() {
-	local session_id="$1"
-	local tool_input_prompt="${2:-}"
-	local subagent_type="$3"
-
-	qa_paths_init
-
-	local lock_file="$QA_CURRENT_DIR/.lock"
-	local input_file="$QA_CURRENT_DIR/input.json"
-	local hash_file="$QA_CURRENT_DIR/input.sha256"
-
-	# Get current HEAD first - this is our stability anchor
-	local head_sha
-	head_sha=$(git rev-parse HEAD 2>/dev/null || echo "")
-
-	# Use flock for concurrency safety (6 parallel Phase 1 hooks may race)
-	(
-		flock -x 200
-
-		# Get current intent_id (must check before early exit)
-		local current_intent_id
-		current_intent_id=$(qa_intent_from_prompt_log "$session_id" | jq -r '.intent_id')
-
-		# Check if input.json already exists with same HEAD AND same intent
-		# If so, reuse it to maintain hash stability across Phase 1 agents
-		# IMPORTANT: Must also check intent_id - same commit with new clarifications
-		# requires a fresh canonical input to trigger FULL_REVIEW
-		if [[ -f "$input_file" && -f "$hash_file" ]]; then
-			local existing_head existing_intent
-			existing_head=$(jq -r '.head // ""' "$input_file" 2>/dev/null || echo "")
-			existing_intent=$(jq -r '.intent_id // ""' "$input_file" 2>/dev/null || echo "")
-			if [[ "$existing_head" == "$head_sha" && -n "$existing_head" ]] && \
-			   [[ "$existing_intent" == "$current_intent_id" && -n "$existing_intent" ]]; then
-				# Same HEAD and same intent, reuse existing canonical input
-				exit 0
-			fi
-		fi
-
-		# Determine branch: try prompt JSON first, then git
-		local branch=""
-		if [[ -n "$tool_input_prompt" ]] && echo "$tool_input_prompt" | jq -e '.' >/dev/null 2>&1; then
-			branch=$(qa_branch_guess_from_prompt "$tool_input_prompt")
-		fi
-		if [[ -z "$branch" ]]; then
-			branch=$(qa_current_branch)
-		fi
-
-		# Get commits
-		local commits
-		commits=$(qa_current_commits_json "$branch")
-
-		# Get files changed
-		local files_changed
-		files_changed=$(qa_files_changed_json)
-
-		# Build input JSON (NO timestamp - ensures hash stability)
-		# Note: current_intent_id already computed above for early-exit check
-		local input_json
-		input_json=$(jq -n -c \
-			--arg branch "$branch" \
-			--arg head "$head_sha" \
-			--argjson commits "$commits" \
-			--argjson files_changed "$files_changed" \
-			--arg intent_id "$current_intent_id" \
-			--arg session_id "$session_id" \
-			'{
-				branch: $branch,
-				head: $head,
-				commits: $commits,
-				files_changed: $files_changed,
-				intent_id: $intent_id,
-				session_id: $session_id
-			}')
-
-		# Canonicalize
-		local canonical
-		canonical=$(qa_canonicalize_json "$input_json")
-
-		# Atomic write: temp file → mv
-		local tmp_input="${input_file}.tmp.$$"
-		local tmp_hash="${hash_file}.tmp.$$"
-
-		echo "$canonical" > "$tmp_input"
-		local input_hash
-		input_hash=$(qa_sha256_string "$canonical")
-		echo "$input_hash" > "$tmp_hash"
-
-		mv "$tmp_input" "$input_file"
-		mv "$tmp_hash" "$hash_file"
-
-	) 200>"$lock_file"
 }
 
 # =============================================================================
@@ -485,8 +360,8 @@ qa_sign_payload() {
 # Output: JSON written to /tmp/claude/qa/current/delta/<agent>.json
 # Returns: echoes the mode (FULL_REVIEW or DELTA_REVIEW)
 #
-# Intent determinism: If intent_id changed between prior and current, we fall back to
-# FULL_REVIEW because the user's intent might have changed.
+# Delta is purely commit-based: if prior commits are a subset of current commits,
+# we do DELTA_REVIEW on only the new commits. User prompts are context, not cache keys.
 qa_compute_delta() {
 	local agent="$1"
 	local current_commits="$2"
@@ -495,7 +370,6 @@ qa_compute_delta() {
 
 	local delta_file="$QA_DELTA_DIR/${agent}.json"
 	local prior_file="$QA_OUTPUT_DIR/${agent}.json"
-	local input_file="$QA_CURRENT_DIR/input.json"
 
 	# Default to full review
 	local mode="FULL_REVIEW"
@@ -503,12 +377,6 @@ qa_compute_delta() {
 	local prior_verdict=""
 	local prior_commits='[]'
 	local new_commits='[]'
-
-	# Read current intent_id from canonical input
-	local current_intent_id=""
-	if [[ -f "$input_file" ]]; then
-		current_intent_id=$(jq -r '.intent_id // ""' "$input_file" 2>/dev/null || echo "")
-	fi
 
 	if [[ ! -f "$prior_file" ]]; then
 		reason="no prior state"
@@ -532,13 +400,7 @@ qa_compute_delta() {
 				prior_commits=$(jq -c '.payload_json.input.commits // []' "$prior_file" 2>/dev/null || echo '[]')
 				prior_verdict=$(jq -r '.payload_json.verdict.verdict // ""' "$prior_file" 2>/dev/null || echo "")
 
-				# Check intent_id match (intent determinism)
-				local prior_intent_id
-				prior_intent_id=$(jq -r '.payload_json.input.intent_id // ""' "$prior_file" 2>/dev/null || echo "")
-
-				if [[ -n "$current_intent_id" && -n "$prior_intent_id" && "$current_intent_id" != "$prior_intent_id" ]]; then
-					reason="intent changed (intent_id mismatch)"
-				elif [[ -z "$prior_commits" || "$prior_commits" == "[]" ]]; then
+				if [[ -z "$prior_commits" || "$prior_commits" == "[]" ]]; then
 					reason="prior state has no commits"
 				else
 					# Check if prior commits are subset of current

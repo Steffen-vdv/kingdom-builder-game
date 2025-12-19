@@ -28,9 +28,18 @@ log_session "subagent:$AGENT_TYPE" "SubagentStart" "completed"
 
 QA_CURRENT_DIR="/tmp/claude/qa/current"
 QA_OUTPUT_DIR="/tmp/claude/sub-agents/output"
+SHARED_CONTEXT_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/sub-agent/docs/shared-context.md"
 
 case "$AGENT_TYPE" in
 	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry)
+		# Inject shared context FIRST (weaker than identity doc which comes later)
+		if [[ -f "$SHARED_CONTEXT_DOC" ]]; then
+			cat "$SHARED_CONTEXT_DOC"
+			echo ""
+			echo "---"
+			echo ""
+		fi
+
 		echo "=== QA Phase 1 Reviewer Context ==="
 		echo ""
 
@@ -88,6 +97,14 @@ QA_PHASE1_FOOTER
 		;;
 
 	review-lead)
+		# Inject shared context FIRST (weaker than identity doc which comes later)
+		if [[ -f "$SHARED_CONTEXT_DOC" ]]; then
+			cat "$SHARED_CONTEXT_DOC"
+			echo ""
+			echo "---"
+			echo ""
+		fi
+
 		echo "=== QA Review Lead Context (Phase 2) ==="
 		echo ""
 
