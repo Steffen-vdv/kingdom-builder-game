@@ -69,6 +69,13 @@ function generateMockSignature(payload: string, sigType: string): string {
  * This ensures tests always use the mock for signature verification.
  */
 function installMockCryptoGate(): 'installed' | 'skipped' | 'orphan_recovered' {
+	// Ensure bin directory exists before trying to acquire lock
+	// (CI environments may not have bin/ directory at all)
+	const binDir = path.dirname(MOCK_LOCK_PATH);
+	if (!fs.existsSync(binDir)) {
+		fs.mkdirSync(binDir, { recursive: true });
+	}
+
 	// Use flock for exclusive access
 	const lockResult = execSync(
 		`
