@@ -71,8 +71,9 @@ fi
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # Parse prior commits from payload
-PRIOR_COMMITS=$(echo "$PRIOR_PAYLOAD" | jq -c '.commits // []' 2>/dev/null)
-PRIOR_VERDICT=$(echo "$PRIOR_PAYLOAD" | jq -r '.verdict // empty' 2>/dev/null)
+# Commits are nested under .input.commits, verdict under .verdict.verdict
+PRIOR_COMMITS=$(echo "$PRIOR_PAYLOAD" | jq -c '.input.commits // []' 2>/dev/null)
+PRIOR_VERDICT=$(echo "$PRIOR_PAYLOAD" | jq -r '.verdict.verdict // empty' 2>/dev/null)
 
 if [[ -z "$PRIOR_COMMITS" || "$PRIOR_COMMITS" == "[]" ]]; then
 	echo '{"mode":"FULL_REVIEW","reason":"prior state has no commits"}'
