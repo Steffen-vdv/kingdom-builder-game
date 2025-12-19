@@ -51,6 +51,31 @@ When in doubt: **ASK. WAIT. DO NOT IMPLEMENT.**
 
 ---
 
+## 1.1 Configuration Changes Require New Session
+
+**Changes to Claude Code configuration do NOT apply until the next session.**
+
+This includes:
+
+- `.claude/settings.json` (hooks, permissions, matchers)
+- Subagent identity docs (`.claude/agents/*/docs/*.md`)
+- Hook scripts (`.claude/hooks/*.sh`)
+- Scripts called by hooks (e.g., session start, pre/post tool hooks)
+
+**Why:** Claude Code loads configuration at session start. In-session edits to
+these files are saved to disk but not re-loaded by the runtime.
+
+**Implications:**
+
+- If you modify hook behavior, the old behavior persists until session restart
+- If you add new subagent types, they won't be recognized this session
+- If you fix a bug in a hook script, the fix won't apply this session
+
+**Workaround:** For urgent changes, ask user to start a new session or use
+override token to bypass affected workflows.
+
+---
+
 ## 2. Push Workflow (Three Phases)
 
 The QA workflow has three sequential phases:
