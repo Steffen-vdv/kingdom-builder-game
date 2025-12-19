@@ -51,6 +51,31 @@ When in doubt: **ASK. WAIT. DO NOT IMPLEMENT.**
 
 ---
 
+## 1.1 Configuration Changes Require New Session
+
+**Changes to Claude Code configuration do NOT apply until the next session.**
+
+This includes:
+
+- `.claude/settings.json` (hooks, permissions, matchers)
+- Subagent identity docs (`.claude/agents/*/docs/*.md`)
+- Hook scripts (`.claude/hooks/*.sh`)
+- Scripts called by hooks (e.g., session start, pre/post tool hooks)
+
+**Why:** Claude Code loads configuration at session start. In-session edits to
+these files are saved to disk but not re-loaded by the runtime.
+
+**Implications:**
+
+- If you modify hook behavior, the old behavior persists until session restart
+- If you add new subagent types, they won't be recognized this session
+- If you fix a bug in a hook script, the fix won't apply this session
+
+**Workaround:** For urgent changes, ask user to start a new session or use
+override token to bypass affected workflows.
+
+---
+
 ## 2. Push Workflow (Three Phases)
 
 The QA workflow has three sequential phases:
@@ -153,13 +178,60 @@ needs full re-analysis.
 
 ---
 
-## 3. Override Push
+## 3. Override Push (Expedited Workflow)
 
-If QA flow is unavailable, user can provide override token:
+If the full QA workflow is unavailable or user wants to bypass it, they can
+provide an override token. This is a two-step process:
+
+### Step 1: Store the Override Token
+
+When the user provides an override token, call the helper script:
+
+```bash
+.claude/agents/master-agent/scripts/set-override-token.sh '<token>'
+```
+
+The script:
+
+- Verifies the token via crypto-gate (rejects invalid tokens)
+- Binds the token to the current HEAD commit
+- Stores as JSON: `{"head":"<sha>","branch":"<branch>","token":"<token>"}`
+- Outputs success/failure message with the bound HEAD
+
+**If verification fails**, report the error to the user and do not proceed.
+
+**IMPORTANT:** The override is only valid for the HEAD at the time of storage.
+If you make new commits after storing the token, the override will be rejected.
+Request a new token from the user if this happens.
+
+### Step 2: Dispatch safe-deployment-gate
+
+After the token is stored, dispatch safe-deployment-gate with a minimal prompt:
 
 ```
-Task(subagent_type: "safe-deployment-gate", prompt: "{\"branch\": \"...\", \"override_token\": \"...\"}")
+Task(subagent_type: "safe-deployment-gate", prompt: "{\"branch\": \"...\"}")
 ```
+
+**Do NOT include the token in the prompt.** The pre-task hook reads the token
+from the file and verifies it before allowing the subagent to run. The subagent
+then runs verify-and-push.sh in override mode.
+
+### Cleanup
+
+After a successful push (via override or normal QA), the token file is
+automatically deleted by verify-and-push.sh. To manually clear the token:
+
+```bash
+.claude/agents/master-agent/scripts/set-override-token.sh --clear
+```
+
+### Security Notes
+
+- Tokens are bound to HEAD at storage time (prevents accidental misuse)
+- HEAD is verified in BOTH the pre-task hook AND verify-and-push.sh (defense in depth)
+- Tokens are also verified via crypto-gate at both checkpoints
+- Token file has 600 permissions (owner-only read/write)
+- Only subagents can execute crypto-gate and git push (trust boundary)
 
 ---
 

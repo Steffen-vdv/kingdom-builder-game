@@ -71,8 +71,9 @@ fi
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # Parse prior commits from payload
-PRIOR_COMMITS=$(echo "$PRIOR_PAYLOAD" | jq -c '.commits // []' 2>/dev/null)
-PRIOR_VERDICT=$(echo "$PRIOR_PAYLOAD" | jq -r '.verdict // empty' 2>/dev/null)
+# Commits are nested under .input.commits, verdict under .verdict.verdict
+PRIOR_COMMITS=$(echo "$PRIOR_PAYLOAD" | jq -c '.input.commits // []' 2>/dev/null)
+PRIOR_VERDICT=$(echo "$PRIOR_PAYLOAD" | jq -r '.verdict.verdict // empty' 2>/dev/null)
 
 if [[ -z "$PRIOR_COMMITS" || "$PRIOR_COMMITS" == "[]" ]]; then
 	echo '{"mode":"FULL_REVIEW","reason":"prior state has no commits"}'
@@ -80,11 +81,11 @@ if [[ -z "$PRIOR_COMMITS" || "$PRIOR_COMMITS" == "[]" ]]; then
 fi
 
 # Check if prior commits are a subset of current commits
-# (i.e., current has all prior commits plus possibly more)
+# Use order-preserving approach: check all prior commits exist in current
 IS_SUBSET=$(jq -n \
 	--argjson prior "$PRIOR_COMMITS" \
 	--argjson current "$CURRENT_COMMITS" \
-	'($prior | sort) as $p | ($current | sort) as $c | ($p - $c | length) == 0'
+	'[$prior[] | . as $p | $current | index($p) != null] | all'
 )
 
 if [[ "$IS_SUBSET" != "true" ]]; then
@@ -92,11 +93,11 @@ if [[ "$IS_SUBSET" != "true" ]]; then
 	exit 0
 fi
 
-# Find new commits (in current but not in prior)
+# Find new commits (in current but not in prior) - order-preserving
 NEW_COMMITS=$(jq -n -c \
 	--argjson prior "$PRIOR_COMMITS" \
 	--argjson current "$CURRENT_COMMITS" \
-	'$current - $prior'
+	'$current | map(select(. as $c | $prior | index($c) | not))'
 )
 
 # ═══════════════════════════════════════════════════════════════════════════════
