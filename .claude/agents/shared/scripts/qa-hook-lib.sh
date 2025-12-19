@@ -69,10 +69,11 @@ qa_is_qa_agent() {
 # PATH MANAGEMENT
 # =============================================================================
 
-QA_CURRENT_DIR="/tmp/claude/qa/current"
-QA_DELTA_DIR="/tmp/claude/qa/current/delta"
-QA_PROMPT_LOG_DIR="/tmp/claude/qa/prompt-log"
-QA_OUTPUT_DIR="/tmp/claude/sub-agents/output"
+# Allow environment overrides for testing
+QA_CURRENT_DIR="${QA_CURRENT_DIR:-/tmp/claude/qa/current}"
+QA_DELTA_DIR="${QA_DELTA_DIR:-/tmp/claude/qa/current/delta}"
+QA_PROMPT_LOG_DIR="${QA_PROMPT_LOG_DIR:-/tmp/claude/qa/prompt-log}"
+QA_OUTPUT_DIR="${QA_OUTPUT_DIR:-/tmp/claude/sub-agents/output}"
 
 # qa_paths_init() -> creates all required directories
 qa_paths_init() {
