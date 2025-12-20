@@ -40,6 +40,40 @@ if [[ ! "$COMMAND" == *"git"* ]]; then
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# SECURITY CHECK: Ensure bashlex is available for chain parsing
+# Without bashlex, commands like "git status && git push" are parsed as single
+# command, allowing the push to bypass this hook.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Check if command contains chain operators (pipe needs special handling to avoid || false positive)
+CONTAINS_CHAIN=false
+if [[ "$COMMAND" == *"&&"* ]] || [[ "$COMMAND" == *"||"* ]] || \
+   [[ "$COMMAND" == *";"* ]] || [[ "$COMMAND" =~ \|[^\|] ]]; then
+	CONTAINS_CHAIN=true
+fi
+
+# If command has chains, verify bashlex is available
+if [[ "$CONTAINS_CHAIN" == "true" ]]; then
+	if ! python3 -c "import bashlex" 2>/dev/null; then
+		cat >&2 << 'BLOCKED'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 BLOCKED — bashlex required for chained commands                           ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Your command contains shell operators (&&, ||, ;, |) but bashlex is not installed.
+Without bashlex, chained git push commands cannot be properly detected.
+
+TO FIX:
+  pip3 install bashlex
+
+Or start a new Claude Code session (SessionStart hook installs dependencies).
+
+BLOCKED
+		exit 2
+	fi
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # Parse the command using the command package (handles chains with bashlex)
 # ═══════════════════════════════════════════════════════════════════════════════
 PARSED=$(echo "$COMMAND" | PYTHONPATH="$SCRIPTS_DIR" python3 -m command 2>/dev/null)
