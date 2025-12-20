@@ -205,12 +205,52 @@ Look for contradictions:
 
 ```
 If ANY verdict == ERROR     → ERROR
-If ANY verdict == BLOCKED   → BLOCKED
+If ANY verdict == BLOCKED   → BLOCKED (but see Step 5.1)
 If ANY verdict == NEEDS_INPUT → NEEDS_INPUT
 ```
 
 You cannot override a Phase 1 BLOCK. But you CAN add your own BLOCK even if
 all Phase 1 reviewers approved.
+
+### Step 5.1: Evaluate Blockers for UAO Eligibility
+
+When a Phase 1 reviewer BLOCKs, critically evaluate whether the blockers are
+**factually correct and substantive**. If you determine blockers are debatable,
+you MUST note this in your summary and recommend UAO (User Acceptance Override).
+
+**Blockers eligible for UAO recommendation:**
+
+- Based on outdated information (e.g., citing pre-fix CI logs as current state)
+- Misinterpreting user requirements (e.g., treating a question as a mandate)
+- Citing DRY/pattern violations that are actually architectural necessities
+- Valid but minor concerns (e.g., missing tests for hard-to-test edge cases)
+- Contradicted by evidence you can verify (e.g., tests pass locally)
+
+**Blockers NOT eligible for UAO:**
+
+- Tests genuinely failing
+- Real bugs or regressions identified
+- Implementation doesn't match user intent
+- Security or data integrity concerns
+
+**When recommending UAO:**
+
+1. Still return `verdict: "BLOCKED"` (conservative aggregation rule)
+2. In your summary, explicitly state: "Recommend UAO: [reason]"
+3. Document which blockers are factually disputed and why
+4. Provide evidence for your rebuttal (e.g., "ran tests, 143/143 pass")
+
+**Example summary with UAO recommendation:**
+
+```
+"1/6 Phase 1 BLOCKED. HOWEVER, blocker is factually incorrect: reviewer
+claims 22 tests fail, but I verified all 143 tests pass locally. The
+'DRY violation' is actually a bootstrap ordering constraint, not duplication.
+Recommend UAO - master-agent should present rebuttal to user for acceptance."
+```
+
+The master-agent will see this recommendation and can initiate the UAO flow
+with the user.
 
 ### Step 6: Final Judgment
 

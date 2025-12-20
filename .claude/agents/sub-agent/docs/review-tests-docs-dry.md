@@ -63,16 +63,22 @@ You do NOT OWN:
 - Protocol semantics
 - Infra concurrency
 - Deep mechanics logic
+- **Test execution results** — Whether tests pass or fail is `review-ci-tests-required`'s
+  scope. You assess test DESIGN (coverage, strategy, integrity), not test RESULTS.
 
 ## Review Checklist
 
 ### Tests
 
+**IMPORTANT:** You review test DESIGN, not test RESULTS. Whether tests pass or fail
+is `review-ci-tests-required`'s scope. Never cite CI logs or test execution output
+as blockers.
+
 BLOCK if:
 
-- Tests were altered just to pass
-- New behavior lacks tests
-- Only happy-path coverage exists
+- Tests were altered just to pass (compare old vs new test code, not execution)
+- New behavior lacks tests (no test files for new functionality)
+- Only happy-path coverage exists (missing edge cases, error paths)
 
 ### Strategy
 
