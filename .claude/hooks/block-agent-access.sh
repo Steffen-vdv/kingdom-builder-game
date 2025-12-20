@@ -13,6 +13,9 @@
 # Commands like `rm .claude/hooks/file.sh` are ALLOWED because `rm` is the
 # executable, not the hook file. The hook file is just an argument.
 
+# Source paths.sh first - it sets CLAUDE_PROJECT_DIR if not already set
+source "${CLAUDE_PROJECT_DIR:-.}/.claude/config/paths.sh"
+
 SCRIPTS_DIR="$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts"
 
 # Read tool input from stdin

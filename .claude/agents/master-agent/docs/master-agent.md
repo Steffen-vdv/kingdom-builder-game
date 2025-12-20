@@ -175,6 +175,71 @@ To clear manually: `.claude/agents/master-agent/scripts/set-override-token.sh --
 
 ---
 
+## 3.1 User Acceptance Override (UAO)
+
+When Phase 1 or Phase 2 returns BLOCKED with **debatable blockers** (factual
+errors, misinterpretation of requirements, or overly conservative concerns),
+you can request a User Acceptance Override.
+
+### When to Use UAO
+
+UAO is appropriate when:
+
+- Blockers are based on factual errors (e.g., citing old CI logs as current state)
+- Blockers misinterpret user requirements (e.g., treating a question as a mandate)
+- Blockers are valid but minor (e.g., missing tests for edge-case CI behavior)
+- You and review-lead agree the blockers are rebuttable
+
+UAO is NOT appropriate when:
+
+- Blockers identify real bugs or regressions
+- Tests are genuinely failing
+- Implementation doesn't match user intent
+
+### UAO Procedure
+
+**Step 1: Present the case**
+
+Explain to the user:
+
+- Which reviewer(s) blocked and why
+- Your rebuttal to each blocker
+- Review-lead's assessment (if Phase 2 ran)
+- Frame as "master-agent + review-lead vs blocking-reviewer"
+
+**Step 2: Request UAO**
+
+Ask the user: "Would you like to approve a User Acceptance Override (UAO)?"
+
+**Step 3: User approves**
+
+User responds with approval (e.g., "UAO approved", "Yes, override approved").
+This message enters the prompt history.
+
+**Step 4: Regenerate input and re-run QA**
+
+```bash
+# Regenerate input.json to capture user's UAO approval in prompts
+.claude/agents/shared/scripts/qa-prepare.sh --summary "..."
+
+# Re-dispatch ALL 6 Phase 1 reviewers (required - new input hash)
+Task(subagent_type: "review-ci-tests-required", prompt: "{}")
+# ... (all 6)
+
+# Continue with Phase 2 and Phase 3 as normal
+```
+
+**Why this works:** The user's acceptance becomes part of the `prompts` array
+in input.json. Reviewers are instructed to treat user prompts as authoritative.
+The blocking reviewer, seeing explicit user acceptance of the rebuttal, should
+change their verdict.
+
+**Note:** Re-running all 6 reviewers is required because regenerating input.json
+creates a new hash, invalidating prior signatures. However, reviewers will run
+in fast DELTA_REVIEW mode since the commits haven't changed.
+
+---
+
 ## 4. Available Subagents
 
 | Subagent                    | Phase | Purpose                                     |

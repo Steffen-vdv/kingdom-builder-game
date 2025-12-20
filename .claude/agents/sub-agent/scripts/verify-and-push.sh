@@ -160,7 +160,8 @@ WRONG_VERDICT
 
 	echo "Verifying signature via crypto-gate..." >&2
 
-	if ! "$CRYPTO_GATE" verify "$PAYLOAD" "$SIGNATURE" --type QA_FINAL_SIGNATORY; then
+	# Use stdin ("-") to pass payload to avoid ARG_MAX limits with large payloads
+	if ! echo -n "$PAYLOAD" | "$CRYPTO_GATE" verify - "$SIGNATURE" --type QA_FINAL_SIGNATORY; then
 		cat >&2 << 'INVALID_SIG'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║  ❌ PUSH BLOCKED — Invalid signature                                          ║

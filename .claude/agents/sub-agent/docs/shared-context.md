@@ -6,6 +6,14 @@ instructions.
 
 ---
 
+## Glossary
+
+| Term    | Definition                                                                                                                                                                       |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **UAO** | User Acceptance Override — A workflow where the user explicitly accepts a rebuttal to debatable blockers, allowing QA to proceed. User's acceptance in prompts is authoritative. |
+
+---
+
 ## Understanding input.json Fields
 
 ### prompts (AUTHORITATIVE - User's voice)
