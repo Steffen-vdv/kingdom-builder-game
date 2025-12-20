@@ -18,14 +18,27 @@
 set -euo pipefail
 
 # =============================================================================
+# COMPUTE CLAUDE_PROJECT_DIR IF NOT SET
+# =============================================================================
+# qa-hook-lib.sh is at .claude/agents/shared/scripts/qa-hook-lib.sh
+# Project root is 4 levels up: ../../../..
+# This must happen BEFORE sourcing paths.sh to ensure reliable path resolution.
+
+if [[ -z "${CLAUDE_PROJECT_DIR:-}" ]]; then
+	_QA_HOOK_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	CLAUDE_PROJECT_DIR="$(cd "$_QA_HOOK_LIB_DIR/../../../.." && pwd)"
+	export CLAUDE_PROJECT_DIR
+fi
+
+# =============================================================================
 # LOAD CONSOLIDATED CONFIGS
 # =============================================================================
 
 # Source paths config (defines QA_CURRENT_DIR, QA_OUTPUT_DIR, etc.)
-source "${CLAUDE_PROJECT_DIR:-.}/.claude/config/paths.sh"
+source "$CLAUDE_PROJECT_DIR/.claude/config/paths.sh"
 
 # Load agent config from JSON
-_QA_CONFIG="${CLAUDE_PROJECT_DIR:-.}/.claude/config/qa-agents.json"
+_QA_CONFIG="$CLAUDE_PROJECT_DIR/.claude/config/qa-agents.json"
 
 # Build signature type mapping from JSON config
 declare -A QA_AGENT_SIG_TYPES
