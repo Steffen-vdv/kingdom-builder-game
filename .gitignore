@@ -2,6 +2,16 @@ node_modules
 dist
 packages/**/src/**/*.js
 packages/**/src/**/*.d.ts
+
+# Compiled test files (TypeScript → JavaScript)
+packages/**/tests/**/*.js
+tests/**/*.js
+.claude/tests/**/*.js
+
+# Vitest/Vite config compiled output
+vitest*.config.js
+packages/*/vitest.config.js
+packages/*/vite.config.js
 packages/**/package-lock.json
 coverage
 .DS_Store
