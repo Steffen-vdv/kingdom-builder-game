@@ -78,13 +78,40 @@ fi
 # ═══════════════════════════════════════════════════════════════════════════════
 PARSED=$(echo "$COMMAND" | PYTHONPATH="$SCRIPTS_DIR" python3 -m command 2>/dev/null)
 
-# If parse failed, allow (fail open - trust the package)
+# If parse failed, allow (fail-open for simple commands)
 if [[ -z "$PARSED" ]]; then
 	exit 0
 fi
 
 # Get number of commands in the chain
 NUM_COMMANDS=$(echo "$PARSED" | jq '.commands | length')
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# FAIL-CLOSED: Detect when bashlex failed and fell back to shlex
+# If command contains chain operators but parsing found only 1 command,
+# bashlex couldn't parse it (e.g., HEREDOC syntax) and shlex treated it as one.
+# ═══════════════════════════════════════════════════════════════════════════════
+if [[ "$CONTAINS_CHAIN" == "true" ]] && [[ "$NUM_COMMANDS" -eq 1 ]]; then
+	cat >&2 << 'BLOCKED'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 BLOCKED — Cannot parse chained command                                    ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Your command contains shell operators (&&, ||, ;, |) with syntax that bashlex
+cannot parse (e.g., HEREDOC, complex quoting). This prevents safe detection of
+dangerous git operations like push, commit --amend, rebase, or reset.
+
+SOLUTION:
+  Run the commands separately instead of chaining them:
+
+  1. git add <files>
+  2. git commit -m "message"
+
+This allows each command to be properly analyzed for safety.
+
+BLOCKED
+	exit 2
+fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Check ALL commands in chain for blocked operations
