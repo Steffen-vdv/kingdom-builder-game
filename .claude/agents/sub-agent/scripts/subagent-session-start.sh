@@ -276,8 +276,10 @@ fi
 
 # Output structured JSON with hookSpecificOutput.additionalContext
 # Using jq to properly escape the content for JSON
+# IMPORTANT: hookEventName is required by the schema
 jq -n --arg context "$CONTEXT" '{
   "hookSpecificOutput": {
+    "hookEventName": "SubagentStart",
     "additionalContext": $context
   }
 }'

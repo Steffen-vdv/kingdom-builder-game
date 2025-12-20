@@ -165,8 +165,10 @@ FULL_CONTEXT="${IDENTITY_HEADER}${IDENTITY_CONTENT}${PROTOCOL_HEADER}${PROTOCOL_
 
 # Output structured JSON with hookSpecificOutput.additionalContext
 # Using jq to properly escape the content for JSON
+# IMPORTANT: hookEventName is required by the schema
 jq -n --arg context "$FULL_CONTEXT" '{
   "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
     "additionalContext": $context
   }
 }'
