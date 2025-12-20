@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # qa-prepare.sh - Prepare canonical input for QA workflow
-# QA infrastructure test comment - safe to delete
+# Test comment for full QA workflow verification - safe to delete
 #
 # Master agent MUST run this before dispatching Phase 1 reviewers.
 # Creates /tmp/claude/qa/current/input.json with:
