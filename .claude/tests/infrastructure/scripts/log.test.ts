@@ -13,7 +13,7 @@ import * as path from 'path';
  * - Creates log directory if missing
  */
 
-const PROJECT_ROOT = path.resolve(__dirname, '../../..');
+const PROJECT_ROOT = path.resolve(__dirname, '../../../..');
 const SCRIPT_PATH = path.join(
 	PROJECT_ROOT,
 	'.claude/agents/shared/scripts/log.sh',

@@ -18,7 +18,7 @@ import * as path from 'path';
  * - Unsupported command fallback behavior
  */
 
-const PROJECT_ROOT = path.resolve(__dirname, '../../..');
+const PROJECT_ROOT = path.resolve(__dirname, '../../../..');
 const SCRIPTS_DIR = path.join(PROJECT_ROOT, '.claude/agents/shared/scripts');
 
 describe('Infrastructure: command/ package', () => {

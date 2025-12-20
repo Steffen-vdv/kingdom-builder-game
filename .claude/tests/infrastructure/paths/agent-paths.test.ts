@@ -10,7 +10,7 @@ import * as path from 'path';
  * refactoring or reorganization.
  */
 
-const PROJECT_ROOT = path.resolve(__dirname, '../../..');
+const PROJECT_ROOT = path.resolve(__dirname, '../../../..');
 
 const pathExists = (relativePath: string): boolean => {
 	const fullPath = path.join(PROJECT_ROOT, relativePath);

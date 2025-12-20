@@ -90,6 +90,44 @@ jobs:
           name: coverage-integration
           path: coverage/
 
+  test-infrastructure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Node deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python deps (bashlex for shell parsing)
+        run: pip install bashlex
+
+      - name: Download crypto-gate binary
+        run: |
+          mkdir -p bin
+          gh release download v0.5.0 \
+            --repo anthropics/crypto-gate \
+            --pattern "crypto-gate-linux-x64" \
+            --dir bin
+          chmod +x bin/crypto-gate-linux-x64
+          ln -sf crypto-gate-linux-x64 bin/crypto-gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Run infrastructure tests
+        run: pnpm test:infrastructure
+        env:
+          CLAUDE_PROJECT_DIR: ${{ github.workspace }}
+
   test-web:
     runs-on: ubuntu-latest
     steps:
@@ -135,6 +173,7 @@ jobs:
       - test-engine
       - test-protocol
       - test-integration
+      - test-infrastructure
       - test-web
       - test-server
     steps:

@@ -13,7 +13,7 @@ import * as path from 'path';
  * - Provides helpful three-phase workflow guidance
  */
 
-const PROJECT_ROOT = path.resolve(__dirname, '../../..');
+const PROJECT_ROOT = path.resolve(__dirname, '../../../..');
 const HOOK_SCRIPT = path.join(
 	PROJECT_ROOT,
 	'.claude/hooks/block-git-command.sh',

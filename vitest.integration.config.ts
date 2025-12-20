@@ -12,6 +12,7 @@ export default mergeConfig(
 				'regression/**/*.test.ts',
 				'types/**/*.test.ts',
 			],
+			exclude: ['**/node_modules/**'],
 			coverage: {
 				thresholds: {
 					statements: 80,

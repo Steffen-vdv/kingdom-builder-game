@@ -15,7 +15,7 @@ import * as path from 'path';
  * Canonical input is computed by the hook, not validated from the prompt.
  */
 
-const PROJECT_ROOT = path.resolve(__dirname, '../../..');
+const PROJECT_ROOT = path.resolve(__dirname, '../../../..');
 const HOOK_SCRIPT = path.join(PROJECT_ROOT, '.claude/hooks/pre-task-tool.sh');
 
 interface HookResult {
