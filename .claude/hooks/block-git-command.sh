@@ -19,8 +19,11 @@
 #   Override: I_ACCEPT_FULL_REANALYSIS=1 git commit --amend
 #
 
+# Source paths.sh first - it sets CLAUDE_PROJECT_DIR if not already set
+source "${CLAUDE_PROJECT_DIR:-.}/.claude/config/paths.sh"
+
 SCRIPTS_DIR="$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts"
-QA_OUTPUT_DIR="/tmp/claude/sub-agents/output"
+# QA_OUTPUT_DIR is now set by paths.sh
 
 # Read tool input from stdin
 JSON_INPUT=$(cat)

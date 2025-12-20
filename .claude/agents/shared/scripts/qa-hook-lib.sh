@@ -18,14 +18,27 @@
 set -euo pipefail
 
 # =============================================================================
+# COMPUTE CLAUDE_PROJECT_DIR IF NOT SET
+# =============================================================================
+# qa-hook-lib.sh is at .claude/agents/shared/scripts/qa-hook-lib.sh
+# Project root is 4 levels up: ../../../..
+# This must happen BEFORE sourcing paths.sh to ensure reliable path resolution.
+
+if [[ -z "${CLAUDE_PROJECT_DIR:-}" ]]; then
+	_QA_HOOK_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	CLAUDE_PROJECT_DIR="$(cd "$_QA_HOOK_LIB_DIR/../../../.." && pwd)"
+	export CLAUDE_PROJECT_DIR
+fi
+
+# =============================================================================
 # LOAD CONSOLIDATED CONFIGS
 # =============================================================================
 
 # Source paths config (defines QA_CURRENT_DIR, QA_OUTPUT_DIR, etc.)
-source "${CLAUDE_PROJECT_DIR:-.}/.claude/config/paths.sh"
+source "$CLAUDE_PROJECT_DIR/.claude/config/paths.sh"
 
 # Load agent config from JSON
-_QA_CONFIG="${CLAUDE_PROJECT_DIR:-.}/.claude/config/qa-agents.json"
+_QA_CONFIG="$CLAUDE_PROJECT_DIR/.claude/config/qa-agents.json"
 
 # Build signature type mapping from JSON config
 declare -A QA_AGENT_SIG_TYPES
@@ -176,6 +189,29 @@ qa_prompts_from_log() {
 # GIT HELPERS
 # =============================================================================
 
+# qa_is_already_pushed() -> returns 0 if HEAD matches last-pushed.sha, 1 otherwise
+# Used by Phase 1 reviewers to detect if they're reviewing already-pushed commits.
+qa_is_already_pushed() {
+	local last_pushed_file="$QA_CURRENT_DIR/last-pushed.sha"
+	if [[ ! -f "$last_pushed_file" ]]; then
+		return 1  # No record of last push, so not already pushed
+	fi
+
+	local last_pushed_sha
+	last_pushed_sha=$(cat "$last_pushed_file" 2>/dev/null || echo "")
+	if [[ -z "$last_pushed_sha" ]]; then
+		return 1
+	fi
+
+	local head_sha
+	head_sha=$(git rev-parse HEAD 2>/dev/null || echo "")
+	if [[ -z "$head_sha" ]]; then
+		return 1
+	fi
+
+	[[ "$head_sha" == "$last_pushed_sha" ]]
+}
+
 # qa_branch_guess_from_prompt(prompt_json) -> best-effort read .branch else empty
 qa_branch_guess_from_prompt() {
 	local prompt_json="$1"
@@ -183,19 +219,35 @@ qa_branch_guess_from_prompt() {
 }
 
 # qa_current_branch() -> best-effort current branch name
+# Handles detached HEAD state common in CI environments
 qa_current_branch() {
 	local branch
 	branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
-	if [[ "$branch" == "HEAD" ]]; then
-		# Detached HEAD
-		echo ""
-	else
+	if [[ "$branch" != "HEAD" ]]; then
 		echo "$branch"
+		return
 	fi
+
+	# Detached HEAD - try CI environment variables
+	# GitHub Actions: GITHUB_HEAD_REF (PRs) or GITHUB_REF_NAME (push)
+	if [[ -n "${GITHUB_HEAD_REF:-}" ]]; then
+		echo "$GITHUB_HEAD_REF"
+		return
+	fi
+	if [[ -n "${GITHUB_REF_NAME:-}" ]]; then
+		echo "$GITHUB_REF_NAME"
+		return
+	fi
+
+	# Fallback: use short SHA as identifier
+	local short_sha
+	short_sha=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+	echo "detached-$short_sha"
 }
 
 # qa_current_commits_json(branch_opt) -> output JSON array of SHAs
-# Simple and robust: always returns at least HEAD
+# Simple and robust: always returns at least HEAD or empty array
+# Limited to 100 commits to avoid shell ARG_MAX issues
 qa_current_commits_json() {
 	local branch_opt="${1:-}"
 	local head_sha
@@ -207,34 +259,52 @@ qa_current_commits_json() {
 	fi
 
 	# Try to get commits from origin/main...HEAD if origin/main exists
+	# Limit to 100 commits to avoid ARG_MAX issues in shell
 	if git rev-parse --verify origin/main >/dev/null 2>&1; then
 		local commits
-		commits=$(git log --format='%H' origin/main...HEAD 2>/dev/null | jq -R -s 'split("\n") | map(select(length > 0))' 2>/dev/null || echo "[]")
-		if [[ "$commits" != "[]" ]]; then
+		commits=$(git log --format='%H' -n 100 origin/main...HEAD 2>/dev/null | jq -R -s 'split("\n") | map(select(length > 0))' 2>/dev/null || echo "[]")
+		if [[ -n "$commits" && "$commits" != "[]" ]]; then
 			echo "$commits"
 			return
 		fi
 	fi
 
-	# Fallback: just HEAD
-	jq -n -c --arg head "$head_sha" '[$head]'
+	# Fallback: just HEAD as single-element array
+	# Use printf to build JSON manually if jq fails (more robust for CI)
+	local result
+	result=$(jq -n -c --arg head "$head_sha" '[$head]' 2>/dev/null) || result=""
+	if [[ -n "$result" ]]; then
+		echo "$result"
+	else
+		# Manual JSON construction as ultimate fallback
+		printf '["%s"]' "$head_sha"
+	fi
 }
 
 # qa_files_changed_json() -> JSON array of changed files
 # Fetches origin/main if not present, then compares HEAD to it.
+# Limited to 500 files to avoid shell ARG_MAX issues
+# Always returns valid JSON array (empty [] if unable to determine)
 qa_files_changed_json() {
 	# Ensure origin/main is available for comparison
 	if ! git rev-parse --verify origin/main >/dev/null 2>&1; then
 		# Fetch main branch from origin (silent, don't fail if network issues)
-		git fetch origin main >/dev/null 2>&1 || true
+		# Use timeout to prevent hanging in CI shallow clones
+		timeout 5 git fetch --depth=1 origin main >/dev/null 2>&1 || true
 	fi
 
-	# Now try to get the diff
+	# Now try to get the diff (limit to 500 files to avoid ARG_MAX)
 	if git rev-parse --verify origin/main >/dev/null 2>&1; then
-		git diff --name-only origin/main...HEAD 2>/dev/null | \
-			jq -R -s 'split("\n") | map(select(length > 0))' 2>/dev/null || echo '[]'
+		local result
+		result=$(git diff --name-only origin/main...HEAD 2>/dev/null | head -n 500 | \
+			jq -R -s 'split("\n") | map(select(length > 0))' 2>/dev/null) || result=""
+		if [[ -n "$result" ]]; then
+			echo "$result"
+		else
+			echo '[]'
+		fi
 	else
-		# Fallback: if still no origin/main, return empty (truly offline scenario)
+		# Fallback: if still no origin/main, return empty (truly offline/shallow scenario)
 		echo '[]'
 	fi
 }
@@ -319,6 +389,7 @@ qa_parse_footer_from_text() {
 # qa_build_payload(input_json_object, input_hash, agent, footer_json_object, delta_json_object)
 # -> prints compact JSON string:
 #   {"input":<input>,"input_hash":"...","agent":"...","verdict":<footer>,"delta":<delta>,"timestamp":"..."}
+# Uses temp files to avoid ARG_MAX limits with large input_json
 qa_build_payload() {
 	local input_json="$1"
 	local input_hash="$2"
@@ -329,25 +400,39 @@ qa_build_payload() {
 	local timestamp
 	timestamp=$(qa_now_utc)
 
-	jq -n -c \
-		--argjson input "$input_json" \
+	# Write JSON objects to temp files to avoid ARG_MAX
+	local tmp_input="/tmp/qa-payload-input.$$.json"
+	local tmp_verdict="/tmp/qa-payload-verdict.$$.json"
+	local tmp_delta="/tmp/qa-payload-delta.$$.json"
+
+	printf '%s' "$input_json" > "$tmp_input"
+	printf '%s' "$footer_json" > "$tmp_verdict"
+	printf '%s' "$delta_json" > "$tmp_delta"
+
+	local result
+	result=$(jq -n -c \
+		--slurpfile input "$tmp_input" \
 		--arg input_hash "$input_hash" \
 		--arg agent "$agent" \
-		--argjson verdict "$footer_json" \
-		--argjson delta "$delta_json" \
+		--slurpfile verdict "$tmp_verdict" \
+		--slurpfile delta "$tmp_delta" \
 		--arg timestamp "$timestamp" \
 		'{
-			input: $input,
+			input: $input[0],
 			input_hash: $input_hash,
 			agent: $agent,
-			verdict: $verdict,
-			delta: $delta,
+			verdict: $verdict[0],
+			delta: $delta[0],
 			timestamp: $timestamp
-		}'
+		}')
+
+	rm -f "$tmp_input" "$tmp_verdict" "$tmp_delta"
+	echo "$result"
 }
 
 # qa_verify_payload_signature(payload_str, signature, type) -> calls crypto-gate verify
 # Returns 0 if valid, 1 if invalid
+# Uses stdin ("-") to pass payload to avoid ARG_MAX limits
 qa_verify_payload_signature() {
 	local payload="$1"
 	local signature="$2"
@@ -357,7 +442,8 @@ qa_verify_payload_signature() {
 	crypto_gate=$(qa_crypto_gate_path) || return 1
 
 	local result
-	result=$("$crypto_gate" verify "$payload" "$signature" --type "$sig_type" 2>&1) || true
+	# Pass payload via stdin to avoid ARG_MAX limits
+	result=$(echo -n "$payload" | "$crypto_gate" verify - "$signature" --type "$sig_type" 2>&1) || true
 
 	if [[ "$result" == "valid" ]]; then
 		return 0
@@ -368,6 +454,7 @@ qa_verify_payload_signature() {
 
 # qa_sign_payload(payload_str, sig_type) -> prints hex signature
 # Returns 1 on failure
+# Uses stdin ("-") to pass payload to avoid ARG_MAX limits
 qa_sign_payload() {
 	local payload="$1"
 	local sig_type="$2"
@@ -376,7 +463,8 @@ qa_sign_payload() {
 	crypto_gate=$(qa_crypto_gate_path) || return 1
 
 	local signature
-	signature=$("$crypto_gate" sign "$payload" --type "$sig_type" 2>&1)
+	# Pass payload via stdin to avoid ARG_MAX limits
+	signature=$(echo -n "$payload" | "$crypto_gate" sign - --type "$sig_type" 2>&1)
 
 	if [[ ! "$signature" =~ ^[a-f0-9]{64}$ ]]; then
 		echo "ERROR: Invalid signature from crypto-gate: $signature" >&2
@@ -637,17 +725,24 @@ qa_write_signed_output() {
 	fi
 
 	# Store both payload (string for crypto) and payload_json (object for reading)
+	# Use temp files for large JSON objects to avoid ARG_MAX limits
+	local tmp_payload="/tmp/qa-output-payload.$$.json"
+	local tmp_delta="/tmp/qa-output-delta.$$.json"
+
+	printf '%s' "$payload" > "$tmp_payload"
+	printf '%s' "$delta_json" > "$tmp_delta"
+
 	jq -n -c \
 		--arg agent "$agent" \
 		--arg verdict "$verdict" \
 		--arg summary "$summary" \
 		--arg sig_type "$sig_type" \
-		--arg payload "$payload" \
-		--argjson payload_json "$payload" \
+		--rawfile payload "$tmp_payload" \
+		--slurpfile payload_json "$tmp_payload" \
 		--arg signature "$signature" \
 		--argjson blockers "$blockers" \
 		--argjson questions "$questions" \
-		--argjson delta "$delta_json" \
+		--slurpfile delta "$tmp_delta" \
 		--arg input_hash "$input_hash" \
 		'{
 			agent: $agent,
@@ -655,10 +750,12 @@ qa_write_signed_output() {
 			summary: $summary,
 			signature_type: $sig_type,
 			payload: $payload,
-			payload_json: $payload_json,
+			payload_json: $payload_json[0],
 			signature: $signature,
 			blockers: $blockers,
 			questions: $questions,
-			details: {input_hash: $input_hash, delta: $delta}
+			details: {input_hash: $input_hash, delta: $delta[0]}
 		}' > "$output_file"
+
+	rm -f "$tmp_payload" "$tmp_delta"
 }

@@ -22,6 +22,7 @@ const SCRIPT_PATH = path.join(
 // Use PID-namespaced directory to isolate tests from parallel test runs
 const TEST_QA_DIR = `/tmp/claude/test-qa-prepare-${process.pid}`;
 const TEST_INPUT_DIR = `${TEST_QA_DIR}/current`;
+const TEST_PROMPT_LOG = `${TEST_QA_DIR}/prompts.jsonl`;
 
 interface RunResult {
 	success: boolean;
@@ -43,21 +44,36 @@ function runScript(args: string[] = []): RunResult {
 				...process.env,
 				QA_CURRENT_DIR: TEST_INPUT_DIR,
 				QA_DELTA_DIR: `${TEST_INPUT_DIR}/delta`,
+				QA_PROMPT_LOG_FILE: TEST_PROMPT_LOG,
 			},
 		});
 		return { success: true, stdout, stderr: '', exitCode: 0 };
 	} catch (error: unknown) {
 		const err = error as {
 			status?: number;
-			stderr?: string;
-			stdout?: string;
+			stderr?: string | Buffer;
+			stdout?: string | Buffer;
 		};
 		return {
 			success: false,
-			stdout: err.stdout || '',
-			stderr: err.stderr || '',
+			stdout: err.stdout?.toString() || '',
+			stderr: err.stderr?.toString() || '',
 			exitCode: err.status || 1,
 		};
+	}
+}
+
+/**
+ * Helper that asserts success and provides useful error info on failure.
+ * Use instead of `expect(success).toBe(true)` for better debugging.
+ */
+function expectSuccess(result: RunResult): void {
+	if (!result.success) {
+		throw new Error(
+			`Script failed with exit code ${result.exitCode}\n` +
+				`stderr: ${result.stderr}\n` +
+				`stdout: ${result.stdout}`,
+		);
 	}
 }
 
@@ -109,13 +125,13 @@ describe('Infrastructure: qa-prepare.sh', () => {
 		});
 
 		it('should accept --summary with space separator', () => {
-			const { success } = runScript(['--summary', 'Test summary']);
-			expect(success).toBe(true);
+			const result = runScript(['--summary', 'Test summary']);
+			expectSuccess(result);
 		});
 
 		it('should accept --summary=value format', () => {
-			const { success } = runScript(['--summary=Test summary with equals']);
-			expect(success).toBe(true);
+			const result = runScript(['--summary=Test summary with equals']);
+			expectSuccess(result);
 		});
 	});
 
@@ -138,16 +154,16 @@ describe('Infrastructure: qa-prepare.sh', () => {
 
 	describe('Output Files', () => {
 		it('should create input.json file', () => {
-			const { success } = runScript(['--summary', 'Test summary']);
-			expect(success).toBe(true);
+			const result = runScript(['--summary', 'Test summary']);
+			expectSuccess(result);
 
 			const inputPath = path.join(TEST_INPUT_DIR, 'input.json');
 			expect(fs.existsSync(inputPath)).toBe(true);
 		});
 
 		it('should create input.sha256 hash file', () => {
-			const { success } = runScript(['--summary', 'Test summary']);
-			expect(success).toBe(true);
+			const result = runScript(['--summary', 'Test summary']);
+			expectSuccess(result);
 
 			const hashPath = path.join(TEST_INPUT_DIR, 'input.sha256');
 			expect(fs.existsSync(hashPath)).toBe(true);
@@ -158,8 +174,8 @@ describe('Infrastructure: qa-prepare.sh', () => {
 		});
 
 		it('should create delta directory', () => {
-			const { success } = runScript(['--summary', 'Test summary']);
-			expect(success).toBe(true);
+			const result = runScript(['--summary', 'Test summary']);
+			expectSuccess(result);
 
 			const deltaPath = path.join(TEST_INPUT_DIR, 'delta');
 			expect(fs.existsSync(deltaPath)).toBe(true);
@@ -169,8 +185,8 @@ describe('Infrastructure: qa-prepare.sh', () => {
 
 	describe('JSON Structure', () => {
 		it('should include all required fields', () => {
-			const { success } = runScript(['--summary', 'Test summary']);
-			expect(success).toBe(true);
+			const result = runScript(['--summary', 'Test summary']);
+			expectSuccess(result);
 
 			const input = readInputJson();
 			expect(input).not.toBeNull();
@@ -184,16 +200,16 @@ describe('Infrastructure: qa-prepare.sh', () => {
 
 		it('should include the provided summary', () => {
 			const testSummary = 'This is my test summary for QA';
-			const { success } = runScript(['--summary', testSummary]);
-			expect(success).toBe(true);
+			const result = runScript(['--summary', testSummary]);
+			expectSuccess(result);
 
 			const input = readInputJson();
 			expect(input?.summary).toBe(testSummary);
 		});
 
 		it('should have branch as a non-empty string', () => {
-			const { success } = runScript(['--summary', 'Test']);
-			expect(success).toBe(true);
+			const result = runScript(['--summary', 'Test']);
+			expectSuccess(result);
 
 			const input = readInputJson();
 			expect(typeof input?.branch).toBe('string');
@@ -201,8 +217,8 @@ describe('Infrastructure: qa-prepare.sh', () => {
 		});
 
 		it('should have head as a git SHA', () => {
-			const { success } = runScript(['--summary', 'Test']);
-			expect(success).toBe(true);
+			const result = runScript(['--summary', 'Test']);
+			expectSuccess(result);
 
 			const input = readInputJson();
 			expect(typeof input?.head).toBe('string');
@@ -211,24 +227,24 @@ describe('Infrastructure: qa-prepare.sh', () => {
 		});
 
 		it('should have commits as an array', () => {
-			const { success } = runScript(['--summary', 'Test']);
-			expect(success).toBe(true);
+			const result = runScript(['--summary', 'Test']);
+			expectSuccess(result);
 
 			const input = readInputJson();
 			expect(Array.isArray(input?.commits)).toBe(true);
 		});
 
 		it('should have files_changed as an array', () => {
-			const { success } = runScript(['--summary', 'Test']);
-			expect(success).toBe(true);
+			const result = runScript(['--summary', 'Test']);
+			expectSuccess(result);
 
 			const input = readInputJson();
 			expect(Array.isArray(input?.files_changed)).toBe(true);
 		});
 
 		it('should have prompts as an array', () => {
-			const { success } = runScript(['--summary', 'Test']);
-			expect(success).toBe(true);
+			const result = runScript(['--summary', 'Test']);
+			expectSuccess(result);
 
 			const input = readInputJson();
 			expect(Array.isArray(input?.prompts)).toBe(true);
@@ -237,46 +253,46 @@ describe('Infrastructure: qa-prepare.sh', () => {
 
 	describe('Output Message', () => {
 		it('should report preparation complete', () => {
-			const { success, stdout } = runScript(['--summary', 'Test summary']);
-			expect(success).toBe(true);
-			expect(stdout).toContain('QA preparation complete');
+			const result = runScript(['--summary', 'Test summary']);
+			expectSuccess(result);
+			expect(result.stdout).toContain('QA preparation complete');
 		});
 
 		it('should report branch name', () => {
-			const { success, stdout } = runScript(['--summary', 'Test summary']);
-			expect(success).toBe(true);
-			expect(stdout).toContain('Branch:');
+			const result = runScript(['--summary', 'Test summary']);
+			expectSuccess(result);
+			expect(result.stdout).toContain('Branch:');
 		});
 
 		it('should report HEAD SHA', () => {
-			const { success, stdout } = runScript(['--summary', 'Test summary']);
-			expect(success).toBe(true);
-			expect(stdout).toContain('HEAD:');
+			const result = runScript(['--summary', 'Test summary']);
+			expectSuccess(result);
+			expect(result.stdout).toContain('HEAD:');
 		});
 
 		it('should report commit count', () => {
-			const { success, stdout } = runScript(['--summary', 'Test summary']);
-			expect(success).toBe(true);
-			expect(stdout).toMatch(/Commits:\s+\d+\s+commit/);
+			const result = runScript(['--summary', 'Test summary']);
+			expectSuccess(result);
+			expect(result.stdout).toMatch(/Commits:\s+\d+\s+commit/);
 		});
 
 		it('should report files changed count', () => {
-			const { success, stdout } = runScript(['--summary', 'Test summary']);
-			expect(success).toBe(true);
-			expect(stdout).toMatch(/Files:\s+\d+\s+file/);
+			const result = runScript(['--summary', 'Test summary']);
+			expectSuccess(result);
+			expect(result.stdout).toMatch(/Files:\s+\d+\s+file/);
 		});
 
 		it('should report input file location', () => {
-			const { success, stdout } = runScript(['--summary', 'Test summary']);
-			expect(success).toBe(true);
-			expect(stdout).toContain('Input written to:');
-			expect(stdout).toContain('input.json');
+			const result = runScript(['--summary', 'Test summary']);
+			expectSuccess(result);
+			expect(result.stdout).toContain('Input written to:');
+			expect(result.stdout).toContain('input.json');
 		});
 
 		it('should advise dispatching Phase 1 reviewers', () => {
-			const { success, stdout } = runScript(['--summary', 'Test summary']);
-			expect(success).toBe(true);
-			expect(stdout).toContain('Phase 1 reviewers');
+			const result = runScript(['--summary', 'Test summary']);
+			expectSuccess(result);
+			expect(result.stdout).toContain('Phase 1 reviewers');
 		});
 	});
 
@@ -284,10 +300,12 @@ describe('Infrastructure: qa-prepare.sh', () => {
 		it('should produce consistent hash for same input', () => {
 			const summary = 'Consistent hash test summary';
 
-			runScript(['--summary', summary]);
+			const result1 = runScript(['--summary', summary]);
+			expectSuccess(result1);
 			const hash1 = readInputHash();
 
-			runScript(['--summary', summary]);
+			const result2 = runScript(['--summary', summary]);
+			expectSuccess(result2);
 			const hash2 = readInputHash();
 
 			// Note: Hash may differ if git state changes between runs,
@@ -299,11 +317,11 @@ describe('Infrastructure: qa-prepare.sh', () => {
 
 	describe('Special Characters', () => {
 		it('should handle summary with quotes', () => {
-			const { success } = runScript([
+			const result = runScript([
 				'--summary',
 				'Summary with "double quotes" and \'single quotes\'',
 			]);
-			expect(success).toBe(true);
+			expectSuccess(result);
 
 			const input = readInputJson();
 			expect(input?.summary).toContain('double quotes');
@@ -311,11 +329,11 @@ describe('Infrastructure: qa-prepare.sh', () => {
 		});
 
 		it('should handle summary with newlines', () => {
-			const { success } = runScript([
+			const result = runScript([
 				'--summary',
 				'Summary with\nnewline character',
 			]);
-			expect(success).toBe(true);
+			expectSuccess(result);
 
 			const input = readInputJson();
 			expect(input?.summary).toContain('newline');

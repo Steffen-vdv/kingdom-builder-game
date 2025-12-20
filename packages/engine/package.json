@@ -11,11 +11,11 @@
 	},
 	"dependencies": {
 		"@kingdom-builder/protocol": "workspace:*",
-		"zod": "^4.1.13"
+		"zod": "^4.2.1"
 	},
 	"devDependencies": {
 		"typescript": "5.9.3",
-		"vitest": "^4.0.2",
+		"vitest": "^4.0.16",
 		"@kingdom-builder/contents": "workspace:*"
 	}
 }

@@ -33,9 +33,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 SHARED_SCRIPTS="$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts"
 
-# QA paths
-QA_OUTPUT_DIR="/tmp/claude/sub-agents/output"
-QA_CURRENT_DIR="/tmp/claude/qa/current"
+# QA paths - source from config for consistency
+source "$CLAUDE_PROJECT_DIR/.claude/config/paths.sh"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # LOCATE CRYPTO-GATE BINARY
@@ -70,6 +69,18 @@ NO_BINARY
 # ═══════════════════════════════════════════════════════════════════════════════
 
 cleanup_qa_outputs() {
+	# Archive prompt log before cleanup (for audit trail)
+	if [[ -f "$QA_PROMPT_LOG_FILE" ]]; then
+		local archive_dir="/tmp/claude/qa/archive"
+		mkdir -p "$archive_dir"
+		local timestamp
+		timestamp=$(date -u +%Y%m%d-%H%M%S)
+		mv "$QA_PROMPT_LOG_FILE" "$archive_dir/prompts-$timestamp.jsonl"
+
+		# Keep only last 10 archived prompt logs
+		ls -t "$archive_dir"/prompts-*.jsonl 2>/dev/null | tail -n +11 | xargs rm -f 2>/dev/null || true
+	fi
+
 	# Clean up QA output files for next workflow
 	rm -f "$QA_OUTPUT_DIR"/*.json 2>/dev/null || true
 	rm -f "$QA_CURRENT_DIR/input.json" 2>/dev/null || true
@@ -160,7 +171,8 @@ WRONG_VERDICT
 
 	echo "Verifying signature via crypto-gate..." >&2
 
-	if ! "$CRYPTO_GATE" verify "$PAYLOAD" "$SIGNATURE" --type QA_FINAL_SIGNATORY; then
+	# Use stdin ("-") to pass payload to avoid ARG_MAX limits with large payloads
+	if ! echo -n "$PAYLOAD" | "$CRYPTO_GATE" verify - "$SIGNATURE" --type QA_FINAL_SIGNATORY; then
 		cat >&2 << 'INVALID_SIG'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║  ❌ PUSH BLOCKED — Invalid signature                                          ║
@@ -279,6 +291,10 @@ Branch: $BRANCH
 Commit: $HEAD_SHA
 SUCCESS
 		cleanup_qa_outputs
+
+		# Track last pushed SHA for stale data detection
+		echo "$HEAD_SHA" > "$QA_CURRENT_DIR/last-pushed.sha"
+
 		exit 0
 	else
 		cat >&2 << 'PUSH_FAILED'
@@ -386,6 +402,10 @@ Commit: $HEAD_SHA
 Note: This push bypassed normal QA workflow via user override.
 SUCCESS_OVERRIDE
 		cleanup_qa_outputs
+
+		# Track last pushed SHA for stale data detection
+		echo "$HEAD_SHA" > "$QA_CURRENT_DIR/last-pushed.sha"
+
 		exit 0
 	else
 		cat >&2 << 'PUSH_FAILED'

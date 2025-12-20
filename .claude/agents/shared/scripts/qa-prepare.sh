@@ -124,22 +124,34 @@ PROMPTS=$(qa_prompts_from_log)
 INPUT_FILE="$QA_CURRENT_DIR/input.json"
 HASH_FILE="$QA_CURRENT_DIR/input.sha256"
 
-# Build input JSON
+# Build input JSON using temp files to avoid ARG_MAX limits
+# Write JSON arrays to temp files, then use jq --slurpfile to read them
+TMP_COMMITS="${QA_CURRENT_DIR}/.commits.tmp.$$"
+TMP_FILES="${QA_CURRENT_DIR}/.files.tmp.$$"
+TMP_PROMPTS="${QA_CURRENT_DIR}/.prompts.tmp.$$"
+
+printf '%s' "$COMMITS" > "$TMP_COMMITS"
+printf '%s' "$FILES_CHANGED" > "$TMP_FILES"
+printf '%s' "$PROMPTS" > "$TMP_PROMPTS"
+
 INPUT_JSON=$(jq -n -c \
 	--arg branch "$BRANCH" \
 	--arg head "$HEAD_SHA" \
-	--argjson commits "$COMMITS" \
-	--argjson files_changed "$FILES_CHANGED" \
-	--argjson prompts "$PROMPTS" \
+	--slurpfile commits "$TMP_COMMITS" \
+	--slurpfile files_changed "$TMP_FILES" \
+	--slurpfile prompts "$TMP_PROMPTS" \
 	--arg summary "$SUMMARY" \
 	'{
 		branch: $branch,
 		head: $head,
-		commits: $commits,
-		files_changed: $files_changed,
-		prompts: $prompts,
+		commits: $commits[0],
+		files_changed: $files_changed[0],
+		prompts: $prompts[0],
 		summary: $summary
 	}')
+
+# Clean up temp files
+rm -f "$TMP_COMMITS" "$TMP_FILES" "$TMP_PROMPTS"
 
 # Canonicalize for consistent hashing
 CANONICAL=$(qa_canonicalize_json "$INPUT_JSON")
