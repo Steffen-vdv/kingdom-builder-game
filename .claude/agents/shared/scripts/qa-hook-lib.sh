@@ -176,6 +176,29 @@ qa_prompts_from_log() {
 # GIT HELPERS
 # =============================================================================
 
+# qa_is_already_pushed() -> returns 0 if HEAD matches last-pushed.sha, 1 otherwise
+# Used by Phase 1 reviewers to detect if they're reviewing already-pushed commits.
+qa_is_already_pushed() {
+	local last_pushed_file="$QA_CURRENT_DIR/last-pushed.sha"
+	if [[ ! -f "$last_pushed_file" ]]; then
+		return 1  # No record of last push, so not already pushed
+	fi
+
+	local last_pushed_sha
+	last_pushed_sha=$(cat "$last_pushed_file" 2>/dev/null || echo "")
+	if [[ -z "$last_pushed_sha" ]]; then
+		return 1
+	fi
+
+	local head_sha
+	head_sha=$(git rev-parse HEAD 2>/dev/null || echo "")
+	if [[ -z "$head_sha" ]]; then
+		return 1
+	fi
+
+	[[ "$head_sha" == "$last_pushed_sha" ]]
+}
+
 # qa_branch_guess_from_prompt(prompt_json) -> best-effort read .branch else empty
 qa_branch_guess_from_prompt() {
 	local prompt_json="$1"
