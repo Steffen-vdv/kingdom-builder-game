@@ -8,7 +8,8 @@
 		"**/*.tsx",
 		"**/*.d.ts",
 		"scripts/**/*.js",
-		"scripts/**/*.cjs"
+		"scripts/**/*.cjs",
+		".claude/**/*.ts"
 	],
 	"exclude": ["dist", "node_modules"]
 }

@@ -10,10 +10,24 @@ HOOK_INPUT=$(cat)
 cd "$CLAUDE_PROJECT_DIR" || exit 1
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
 
-# Extract agent_type from hook input
+# Extract agent_type and agent_id from hook input
 AGENT_TYPE=$(echo "$HOOK_INPUT" | jq -r '.agent_type // empty' 2>/dev/null)
+AGENT_ID=$(echo "$HOOK_INPUT" | jq -r '.agent_id // empty' 2>/dev/null)
 
 log_session "subagent:$AGENT_TYPE" "SubagentStart"
+
+# =============================================================================
+# AGENT ID → TYPE MAPPING
+# =============================================================================
+# Store mapping so SubagentStop can look up agent_type (SDK doesn't pass it)
+AGENT_MAP_DIR="/tmp/claude/context-manager"
+mkdir -p "$AGENT_MAP_DIR"
+
+if [[ -n "$AGENT_ID" && -n "$AGENT_TYPE" ]]; then
+	# Store mapping: agent_id -> agent_type
+	echo "$AGENT_TYPE" > "$AGENT_MAP_DIR/agent-$AGENT_ID.type"
+	log_hook "SubagentStart" "Stored mapping: agent_id=$AGENT_ID -> agent_type=$AGENT_TYPE"
+fi
 
 # Register subagent context (only for custom agents)
 "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager/register-subagent.sh" "$AGENT_TYPE"
@@ -28,9 +42,18 @@ log_session "subagent:$AGENT_TYPE" "SubagentStart" "completed"
 
 QA_CURRENT_DIR="/tmp/claude/qa/current"
 QA_OUTPUT_DIR="/tmp/claude/sub-agents/output"
+SHARED_CONTEXT_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/sub-agent/docs/shared-context.md"
 
 case "$AGENT_TYPE" in
 	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry)
+		# Inject shared context FIRST (weaker than identity doc which comes later)
+		if [[ -f "$SHARED_CONTEXT_DOC" ]]; then
+			cat "$SHARED_CONTEXT_DOC"
+			echo ""
+			echo "---"
+			echo ""
+		fi
+
 		echo "=== QA Phase 1 Reviewer Context ==="
 		echo ""
 
@@ -81,13 +104,21 @@ End your response with the strict footer line (hooks handle signing):
 QA_VERDICT:{"verdict":"APPROVED|BLOCKED|NEEDS_INPUT","summary":"...","blockers":[],"questions":[]}
 ```
 
-DO NOT call sign.sh or write-output.sh - the post-task hook handles signing.
+Signing is handled automatically by hooks.
 
 ===
 QA_PHASE1_FOOTER
 		;;
 
 	review-lead)
+		# Inject shared context FIRST (weaker than identity doc which comes later)
+		if [[ -f "$SHARED_CONTEXT_DOC" ]]; then
+			cat "$SHARED_CONTEXT_DOC"
+			echo ""
+			echo "---"
+			echo ""
+		fi
+
 		echo "=== QA Review Lead Context (Phase 2) ==="
 		echo ""
 
@@ -159,7 +190,7 @@ End your response with the strict footer line (hooks handle signing):
 QA_VERDICT:{"verdict":"APPROVED|BLOCKED|NEEDS_INPUT","summary":"...","blockers":[],"questions":[]}
 ```
 
-DO NOT call sign.sh or write-output.sh - the post-task hook handles signing.
+Signing is handled automatically by hooks.
 
 ===
 QA_REVIEW_LEAD_FOOTER
@@ -170,10 +201,14 @@ QA_REVIEW_LEAD_FOOTER
 		# File format: {"head":"<sha>","branch":"<branch>","token":"<token>"}
 		OVERRIDE_TOKEN_FILE="$QA_CURRENT_DIR/override-token"
 
+		log_hook "safe-deployment-gate" "Checking for override token at: $OVERRIDE_TOKEN_FILE"
+
 		if [[ -f "$OVERRIDE_TOKEN_FILE" ]]; then
 			# Extract token from JSON file
 			OVERRIDE_TOKEN=$(jq -r '.token // ""' "$OVERRIDE_TOKEN_FILE" 2>/dev/null || echo "")
 			STORED_HEAD=$(jq -r '.head // ""' "$OVERRIDE_TOKEN_FILE" 2>/dev/null || echo "")
+
+			log_hook "safe-deployment-gate" "OVERRIDE MODE: Token file exists, HEAD=$STORED_HEAD"
 
 			# OVERRIDE MODE: Inject token and skip normal QA context
 			echo "=== OVERRIDE MODE ACTIVE ==="
@@ -201,6 +236,8 @@ QA_REVIEW_LEAD_FOOTER
 			echo ""
 			echo "==="
 		else
+			log_hook "safe-deployment-gate" "NORMAL MODE: No override token file found"
+
 			# NORMAL QA MODE: Inject review-lead.json context
 			echo "=== QA Phase 3: Safe Deployment Gate ==="
 			echo ""
@@ -225,17 +262,5 @@ QA_REVIEW_LEAD_FOOTER
 		fi
 		;;
 esac
-
-# Output protocol spec (injected into subagent context)
-PROTOCOL_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/shared/docs/agent-intercommunication-protocols.md"
-
-cat << 'PROTOCOL_HEADER'
-=== Subagent Communication Protocol ===
-Your chat output can be free-form narrative. For QA agents, the post-task hook
-parses your QA_VERDICT footer line to create the signed output file.
-
-PROTOCOL_HEADER
-
-cat "$PROTOCOL_DOC"
 
 exit 0

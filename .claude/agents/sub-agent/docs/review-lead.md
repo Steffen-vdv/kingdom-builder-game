@@ -32,7 +32,12 @@ You try to be correct.
 ## Inputs (Injected by Hooks)
 
 The SubagentStart hook injects these files' contents directly into your context.
-You do NOT need to read them manually - they appear in your session context.
+You do NOT need to read them manually - they appear above in your session context.
+
+**If files are missing from context, use these paths:**
+
+- Input: `/tmp/claude/qa/current/input.json`
+- Phase 1 outputs: `/tmp/claude/sub-agents/output/<reviewer>.json`
 
 **Canonical Input (input.json):**
 
@@ -40,7 +45,8 @@ You do NOT need to read them manually - they appear in your session context.
 - `head`: Current HEAD commit SHA
 - `commits`: Array of commit SHAs in this review
 - `files_changed`: Array of files modified
-- `intent_id`: Hash of user's original intent
+- `prompts`: Array of user's actual prompts (AUTHORITATIVE - see shared-context.md)
+- `summary`: Master agent's description (INFORMATIONAL - see shared-context.md)
 - `session_id`: Current session identifier
 
 **Phase 1 Reviewer Outputs (6 files):**
@@ -137,7 +143,7 @@ You are not allowed to guess.
 
 ## What You Do NOT Do
 
-- ❌ Call sign.sh or write-output.sh (hooks handle signing)
+- ❌ Call any signing scripts (hooks handle this automatically)
 - ❌ Override specialist verdicts
 - ❌ Re-run analysis that specialists already did
 
@@ -176,8 +182,8 @@ QA_VERDICT:{"verdict":"BLOCKED","summary":"Blocked by review-claims-auditor","bl
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-1. ☐ Read input.json
-2. ☐ Read all 6 Phase 1 output files
+1. ☐ Review the injected input.json content above
+2. ☐ Review all 6 Phase 1 outputs injected above
 3. ☐ Applied conservative aggregation
 4. ☐ Performed final sanity checks
 5. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)

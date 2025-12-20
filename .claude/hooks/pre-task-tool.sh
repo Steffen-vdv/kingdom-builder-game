@@ -11,6 +11,7 @@
 #   3. Computes delta review info for Phase 1 reviewers
 #   4. Gates review-lead by verifying all 6 Phase 1 outputs
 #   5. Gates safe-deployment-gate by verifying review-lead signature
+#   6. INJECTS QA context into prompt via updatedInput (workaround for SDK issue)
 
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/qa-hook-lib.sh"
@@ -21,6 +22,65 @@ SUBAGENT=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // ""')
 PROMPT=$(echo "$INPUT" | jq -r '.tool_input.prompt // ""')
 MODEL_OVERRIDE=$(echo "$INPUT" | jq -r '.tool_input.model // ""')
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
+
+# =============================================================================
+# CONTEXT INJECTION VIA updatedInput
+# =============================================================================
+# Workaround for SubagentStart stdout not being injected into subagent context.
+# We use PreToolUse's updatedInput capability to inject context into the prompt.
+
+# Source the context builder (separate file for maintainability)
+source "$CLAUDE_PROJECT_DIR/.claude/hooks/lib/qa-context-builder.sh"
+
+# Helper to output allow decision with modified prompt
+# IMPORTANT: updatedInput replaces the entire tool_input, so we must preserve
+# all original parameters (subagent_type, description) and only modify prompt.
+allow_with_context() {
+	local agent="$1"
+	local original_prompt="$2"
+
+	local context
+	context=$(build_qa_context "$agent")
+
+	if [[ -z "$context" ]]; then
+		# No context to inject, just allow
+		exit 0
+	fi
+
+	# Build new prompt: context + original prompt
+	local new_prompt
+	if [[ -z "$original_prompt" || "$original_prompt" == "{}" ]]; then
+		new_prompt="$context"
+	else
+		new_prompt="${context}"$'\n\n'"--- Original Prompt ---"$'\n\n'"${original_prompt}"
+	fi
+
+	log_hook "$agent" "Injecting context via updatedInput (${#context} chars)"
+
+	# Extract original description to preserve it
+	local description
+	description=$(echo "$INPUT" | jq -r '.tool_input.description // ""')
+
+	# Output hookSpecificOutput with updatedInput
+	# MUST include subagent_type and description - updatedInput replaces entire tool_input
+	jq -n -c \
+		--arg prompt "$new_prompt" \
+		--arg subagent_type "$agent" \
+		--arg description "$description" \
+		'{
+			hookSpecificOutput: {
+				hookEventName: "PreToolUse",
+				permissionDecision: "allow",
+				permissionDecisionReason: "QA context injected into prompt",
+				updatedInput: {
+					subagent_type: $subagent_type,
+					description: $description,
+					prompt: $prompt
+				}
+			}
+		}'
+	exit 0
+}
 
 # =============================================================================
 # BLOCK MODEL OVERRIDES for QA subagents
@@ -91,7 +151,9 @@ EOF
 			fi
 
 			log_hook "safe-deployment-gate" "Override token and HEAD verified, allowing subagent"
-			exit 0
+			log_hook "safe-deployment-gate" "Checking for override token at: $OVERRIDE_TOKEN_FILE"
+			log_hook "safe-deployment-gate" "OVERRIDE MODE: Token file exists, HEAD=$STORED_HEAD"
+			allow_with_context "safe-deployment-gate" "$PROMPT"
 		fi
 	fi
 
@@ -178,7 +240,7 @@ EOF
 	fi
 
 	log_hook "safe-deployment-gate" "All gating checks passed, allowing subagent to run"
-	exit 0
+	allow_with_context "safe-deployment-gate" "$PROMPT"
 fi
 
 # =============================================================================
@@ -193,13 +255,19 @@ fi
 log_hook "$SUBAGENT" "Starting (pre-task)"
 
 # =============================================================================
-# INITIALIZE PATHS AND WRITE CANONICAL INPUT
+# VERIFY CANONICAL INPUT EXISTS (created by qa-prepare.sh)
 # =============================================================================
 
 qa_paths_init
 
-# Write canonical input (this becomes the source of truth for what's being reviewed)
-qa_write_canonical_input "$SESSION_ID" "$PROMPT" "$SUBAGENT"
+# Master agent MUST run qa-prepare.sh before dispatching Phase 1
+# The prep script creates input.json with prompts and summary
+if [[ ! -f "$QA_CURRENT_DIR/input.json" ]]; then
+	cat << 'EOF'
+{"decision":"block","reason":"input.json not found. Master agent must run qa-prepare.sh before dispatching Phase 1 reviewers.\n\nUsage:\n  .claude/agents/shared/scripts/qa-prepare.sh --summary \"Description of what was implemented...\"\n\nThen dispatch Phase 1 reviewers."}
+EOF
+	exit 1
+fi
 
 # =============================================================================
 # DELTA LOGIC FOR PHASE 1 REVIEWERS
@@ -234,5 +302,5 @@ EOF
 	log_hook "review-lead" "Phase 1 validation passed"
 fi
 
-# All checks passed
-exit 0
+# All checks passed - inject context and allow
+allow_with_context "$SUBAGENT" "$PROMPT"

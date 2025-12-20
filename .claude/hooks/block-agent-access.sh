@@ -22,8 +22,40 @@ JSON_INPUT=$(cat)
 COMMAND=$(echo "$JSON_INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
 TOOL_NAME=$(echo "$JSON_INPUT" | jq -r '.tool_name // empty' 2>/dev/null)
 
+# =============================================================================
+# BLOCK DIRECT WRITES TO QA INPUT FILE (master-agent must use qa-prepare.sh)
+# =============================================================================
+
+if [[ "$TOOL_NAME" == "Write" ]]; then
+	FILE_PATH=$(echo "$JSON_INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null)
+
+	# Block writes to /tmp/claude/qa/current/input.json
+	if [[ "$FILE_PATH" == "/tmp/claude/qa/current/input.json" ]]; then
+		cat >&2 << 'BLOCKED'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 BLOCKED — Direct write to QA input file not allowed                       ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+You cannot write directly to /tmp/claude/qa/current/input.json.
+
+Use the preparation script instead:
+
+  .claude/agents/shared/scripts/qa-prepare.sh --summary "Description..."
+
+This ensures proper structure with prompts and summary fields.
+
+BLOCKED
+		exit 2
+	fi
+	exit 0
+fi
+
 # Only restrict Bash execution - allow all file operations
-if [[ "$TOOL_NAME" != "Bash" ]] || [[ -z "$COMMAND" ]]; then
+if [[ "$TOOL_NAME" != "Bash" ]]; then
+	exit 0
+fi
+
+if [[ -z "$COMMAND" ]]; then
 	exit 0
 fi
 
