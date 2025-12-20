@@ -10,10 +10,24 @@ HOOK_INPUT=$(cat)
 cd "$CLAUDE_PROJECT_DIR" || exit 1
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
 
-# Extract agent_type from hook input
+# Extract agent_type and agent_id from hook input
 AGENT_TYPE=$(echo "$HOOK_INPUT" | jq -r '.agent_type // empty' 2>/dev/null)
+AGENT_ID=$(echo "$HOOK_INPUT" | jq -r '.agent_id // empty' 2>/dev/null)
 
 log_session "subagent:$AGENT_TYPE" "SubagentStart"
+
+# =============================================================================
+# AGENT ID → TYPE MAPPING
+# =============================================================================
+# Store mapping so SubagentStop can look up agent_type (SDK doesn't pass it)
+AGENT_MAP_DIR="/tmp/claude/context-manager"
+mkdir -p "$AGENT_MAP_DIR"
+
+if [[ -n "$AGENT_ID" && -n "$AGENT_TYPE" ]]; then
+	# Store mapping: agent_id -> agent_type
+	echo "$AGENT_TYPE" > "$AGENT_MAP_DIR/agent-$AGENT_ID.type"
+	log_hook "SubagentStart" "Stored mapping: agent_id=$AGENT_ID -> agent_type=$AGENT_TYPE"
+fi
 
 # Register subagent context (only for custom agents)
 "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager/register-subagent.sh" "$AGENT_TYPE"

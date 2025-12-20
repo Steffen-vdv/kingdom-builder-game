@@ -46,8 +46,31 @@ log_hook "SubagentStop" "First 500 chars: $TRUNCATED"
 
 log_hook "SubagentStop" "=== END DEBUG ==="
 
-# Extract agent_type from hook input
+# =============================================================================
+# AGENT TYPE LOOKUP
+# =============================================================================
+# SDK doesn't pass agent_type to SubagentStop, only to SubagentStart.
+# We stored the mapping in SubagentStart, now look it up.
+
+AGENT_ID=$(echo "$HOOK_INPUT" | jq -r '.agent_id // empty' 2>/dev/null)
+AGENT_MAP_DIR="/tmp/claude/context-manager"
+AGENT_MAP_FILE="$AGENT_MAP_DIR/agent-$AGENT_ID.type"
+
+# Try to get agent_type from hook input first (in case SDK behavior changes)
 AGENT_TYPE=$(echo "$HOOK_INPUT" | jq -r '.agent_type // empty' 2>/dev/null)
+
+# If not in hook input, look up from our mapping file
+if [[ -z "$AGENT_TYPE" && -n "$AGENT_ID" && -f "$AGENT_MAP_FILE" ]]; then
+	AGENT_TYPE=$(cat "$AGENT_MAP_FILE" 2>/dev/null || echo "")
+	log_hook "SubagentStop" "Looked up agent_type from mapping: $AGENT_TYPE (agent_id=$AGENT_ID)"
+
+	# Clean up the mapping file
+	rm -f "$AGENT_MAP_FILE"
+fi
+
+if [[ -z "$AGENT_TYPE" ]]; then
+	log_hook "SubagentStop" "WARNING: Could not determine agent_type (agent_id=$AGENT_ID)"
+fi
 
 log_session "subagent:$AGENT_TYPE" "SubagentStop"
 
