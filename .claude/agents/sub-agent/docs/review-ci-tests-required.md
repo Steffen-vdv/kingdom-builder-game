@@ -24,7 +24,12 @@ you report them for the master-agent to address.
 ## Inputs (Injected by Hooks)
 
 The SubagentStart hook injects these files' contents directly into your context.
-You do NOT need to read them manually - they appear in your session context.
+You do NOT need to read them manually - they appear above in your session context.
+
+**If files are missing from context, use these paths:**
+
+- Input: `/tmp/claude/qa/current/input.json`
+- Delta: `/tmp/claude/qa/current/delta/review-ci-tests-required.json`
 
 **Canonical Input (input.json):**
 
@@ -32,7 +37,8 @@ You do NOT need to read them manually - they appear in your session context.
 - `head`: Current HEAD commit SHA
 - `commits`: Array of commit SHAs in this review
 - `files_changed`: Array of files modified
-- `intent_id`: Hash of user's original intent
+- `prompts`: Array of user's actual prompts (AUTHORITATIVE - see shared-context.md)
+- `summary`: Master agent's description (INFORMATIONAL - see shared-context.md)
 - `session_id`: Current session identifier
 
 **Delta Info (delta/review-ci-tests-required.json):**
@@ -63,9 +69,9 @@ You do NOT need to read them manually - they appear in your session context.
 │ REVIEW-CI-TESTS-REQUIRED WORKFLOW                                               │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                 │
-│ 0. READ canonical input and delta info from disk                                │
+│ 0. REVIEW the injected input.json and delta content above                       │
 │    ↓                                                                            │
-│ 1. ANALYZE what changed (from input.json files_changed + git diff)              │
+│ 1. ANALYZE what changed (from injected files_changed + git diff)                │
 │    ↓                                                                            │
 │ 2. DETERMINE test strategy based on change scope                                │
 │    ↓                                                                            │
@@ -142,7 +148,7 @@ Apply the decision tree above based on your analysis.
 - ❌ Skip tests without explanation
 - ❌ Make assumptions about what "should" pass
 - ❌ Run tests without analyzing what changed first
-- ❌ Call sign.sh or write-output.sh (hooks handle signing)
+- ❌ Call any signing scripts (hooks handle this automatically)
 
 ---
 
@@ -191,7 +197,7 @@ QA_VERDICT:{"verdict":"BLOCKED","summary":"3 tests failed in engine package","bl
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-1. ☐ Read input.json and delta file
+1. ☐ Review the injected input.json and delta content above
 2. ☐ Analyzed changes and chose test strategy
 3. ☐ Ran appropriate tests
 4. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)

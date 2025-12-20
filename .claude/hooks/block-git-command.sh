@@ -3,7 +3,7 @@
 # PreToolUse hook — Block dangerous git commands
 #
 # HARD BLOCK (no override):
-#   - git push → must use verify-bulk-and-push.sh workflow
+#   - git push → must use verify-and-push.sh workflow
 #
 # CONDITIONAL BLOCK (when QA state exists):
 #   - git commit --amend
@@ -40,84 +40,42 @@ if [[ ! "$COMMAND" == *"git"* ]]; then
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Helper function: Check if a single command is a blocked git push
-# Uses the Python parser which properly handles global flags like -C
+# SECURITY CHECK: Ensure bashlex is available for chain parsing
+# Without bashlex, commands like "git status && git push" are parsed as single
+# command, allowing the push to bypass this hook.
 # ═══════════════════════════════════════════════════════════════════════════════
-check_git_push() {
-	local cmd="$1"
-	local parsed
-	local executable
-	local subcommand
 
-	parsed=$(echo "$cmd" | PYTHONPATH="$SCRIPTS_DIR" python3 -m command 2>/dev/null)
-	if [[ -z "$parsed" ]]; then
-		return 1  # Parse failed, not a blocked push
-	fi
-
-	executable=$(echo "$parsed" | jq -r '.executable // empty')
-	subcommand=$(echo "$parsed" | jq -r '.subcommand // empty')
-
-	if [[ "$executable" == "git" ]] && [[ "$subcommand" == "push" ]]; then
-		# Check for allowed contexts
-		if [[ "$cmd" == *"verify-bulk-and-push"* ]] || \
-		   [[ "$cmd" == *"verify-and-push"* ]]; then
-			return 1  # Allowed
-		fi
-
-		# Check for --dry-run
-		local has_dry_run
-		has_dry_run=$(echo "$parsed" | jq -r '.flags["dry-run"] // false')
-		if [[ "$has_dry_run" == "true" ]]; then
-			return 1  # Allowed
-		fi
-
-		return 0  # Blocked push detected
-	fi
-
-	return 1  # Not a blocked push
-}
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Check for git push in chained commands (e.g., "git status && git push")
-# Split by shell operators and check each segment with the parser
-# ═══════════════════════════════════════════════════════════════════════════════
+# Check if command contains chain operators (pipe needs special handling to avoid || false positive)
+CONTAINS_CHAIN=false
 if [[ "$COMMAND" == *"&&"* ]] || [[ "$COMMAND" == *"||"* ]] || \
-   [[ "$COMMAND" == *";"* ]] || [[ "$COMMAND" == *"|"* ]]; then
-	# Split command by shell operators and check each segment
-	# Use Python for reliable splitting (handles quoted strings)
-	while IFS= read -r segment; do
-		segment=$(echo "$segment" | xargs)  # Trim whitespace
-		if [[ -n "$segment" ]] && [[ "$segment" == *"git"* ]]; then
-			if check_git_push "$segment"; then
-				cat >&2 << 'BLOCKED'
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║  🛑 BLOCKED — git push requires QA workflow                                   ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-
-Direct git push is not allowed. You must use the verified push workflow.
-
-WORKFLOW:
-1. Phase 1: Run 6 reviewers in parallel
-2. Phase 2: Run review-lead with 6 signatures → produces final signature
-3. Phase 3: Run safe-deployment-gate with review-lead's signature to push
-
-BLOCKED
-				exit 2
-			fi
-		fi
-	done < <(echo "$COMMAND" | PYTHONPATH="$SCRIPTS_DIR" python3 -c "
-import sys
-import re
-# Split by shell operators, preserving quoted strings
-cmd = sys.stdin.read().strip()
-# Simple split - handles most cases
-segments = re.split(r'\s*(?:&&|\|\||[;|])\s*', cmd)
-for seg in segments:
-    print(seg)
-" 2>/dev/null)
+   [[ "$COMMAND" == *";"* ]] || [[ "$COMMAND" =~ \|[^\|] ]]; then
+	CONTAINS_CHAIN=true
 fi
 
-# Parse the command using the command package
+# If command has chains, verify bashlex is available
+if [[ "$CONTAINS_CHAIN" == "true" ]]; then
+	if ! python3 -c "import bashlex" 2>/dev/null; then
+		cat >&2 << 'BLOCKED'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 BLOCKED — bashlex required for chained commands                           ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Your command contains shell operators (&&, ||, ;, |) but bashlex is not installed.
+Without bashlex, chained git push commands cannot be properly detected.
+
+TO FIX:
+  pip3 install bashlex
+
+Or start a new Claude Code session (SessionStart hook installs dependencies).
+
+BLOCKED
+		exit 2
+	fi
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Parse the command using the command package (handles chains with bashlex)
+# ═══════════════════════════════════════════════════════════════════════════════
 PARSED=$(echo "$COMMAND" | PYTHONPATH="$SCRIPTS_DIR" python3 -m command 2>/dev/null)
 
 # If parse failed, allow (fail open - trust the package)
@@ -125,34 +83,44 @@ if [[ -z "$PARSED" ]]; then
 	exit 0
 fi
 
-# Extract parsed fields
-EXECUTABLE=$(echo "$PARSED" | jq -r '.executable // empty')
-SUBCOMMAND=$(echo "$PARSED" | jq -r '.subcommand // empty')
-
-# Only process git commands
-if [[ "$EXECUTABLE" != "git" ]]; then
-	exit 0
-fi
+# Get number of commands in the chain
+NUM_COMMANDS=$(echo "$PARSED" | jq '.commands | length')
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# HARD BLOCK: git push (no override)
+# Check ALL commands in chain for blocked operations
+# Parser uses bashlex for proper chain handling (&&, ||, ;, |)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-if [[ "$SUBCOMMAND" == "push" ]]; then
-	# Allow verify-bulk-and-push.sh or verify-and-push.sh
-	if [[ "$COMMAND" == *"verify-bulk-and-push"* ]] || \
-	   [[ "$COMMAND" == *"verify-and-push"* ]]; then
-		exit 0
+INVALIDATES_DELTA=false
+INVALIDATING_REASON=""
+
+for ((i=0; i<NUM_COMMANDS; i++)); do
+	CMD_JSON=$(echo "$PARSED" | jq ".commands[$i]")
+	EXECUTABLE=$(echo "$CMD_JSON" | jq -r '.executable // empty')
+	SUBCOMMAND=$(echo "$CMD_JSON" | jq -r '.subcommand // empty')
+
+	# Skip non-git commands
+	if [[ "$EXECUTABLE" != "git" ]]; then
+		continue
 	fi
 
-	# Allow --dry-run for testing
-	HAS_DRY_RUN=$(echo "$PARSED" | jq -r '.flags["dry-run"] // false')
-	if [[ "$HAS_DRY_RUN" == "true" ]]; then
-		exit 0
-	fi
+	# ═══════════════════════════════════════════════════════════════════════════
+	# HARD BLOCK: git push (no override)
+	# ═══════════════════════════════════════════════════════════════════════════
+	if [[ "$SUBCOMMAND" == "push" ]]; then
+		# Allow verify-and-push.sh
+		if [[ "$COMMAND" == *"verify-and-push"* ]]; then
+			continue
+		fi
 
-	# Block all other git push attempts
-	cat >&2 << 'BLOCKED'
+		# Allow --dry-run for testing
+		HAS_DRY_RUN=$(echo "$CMD_JSON" | jq -r '.flags["dry-run"] // false')
+		if [[ "$HAS_DRY_RUN" == "true" ]]; then
+			continue
+		fi
+
+		# Block all other git push attempts
+		cat >&2 << 'BLOCKED'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║  🛑 BLOCKED — git push requires QA workflow                                   ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
@@ -165,45 +133,41 @@ WORKFLOW:
 3. Phase 3: Run safe-deployment-gate with review-lead's signature to push
 
 BLOCKED
-	exit 2
-fi
+		exit 2
+	fi
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# CONDITIONAL BLOCK: Delta-invalidating commands (when QA state exists)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-# Check if this is a delta-invalidating command
-INVALIDATES_DELTA=false
-INVALIDATING_REASON=""
-
-case "$SUBCOMMAND" in
-	commit)
-		HAS_AMEND=$(echo "$PARSED" | jq -r '.flags.amend // false')
-		if [[ "$HAS_AMEND" == "true" ]]; then
+	# ═══════════════════════════════════════════════════════════════════════════
+	# CONDITIONAL BLOCK: Delta-invalidating commands (when QA state exists)
+	# ═══════════════════════════════════════════════════════════════════════════
+	case "$SUBCOMMAND" in
+		commit)
+			HAS_AMEND=$(echo "$CMD_JSON" | jq -r '.flags.amend // false')
+			if [[ "$HAS_AMEND" == "true" ]]; then
+				INVALIDATES_DELTA=true
+				INVALIDATING_REASON="git commit --amend rewrites the last commit"
+			fi
+			;;
+		rebase)
 			INVALIDATES_DELTA=true
-			INVALIDATING_REASON="git commit --amend rewrites the last commit"
-		fi
-		;;
-	rebase)
-		INVALIDATES_DELTA=true
-		INVALIDATING_REASON="git rebase rewrites commit history"
-		;;
-	reset)
-		INVALIDATES_DELTA=true
-		INVALIDATING_REASON="git reset moves HEAD and can discard commits"
-		;;
-	merge)
-		HAS_SQUASH=$(echo "$PARSED" | jq -r '.flags.squash // false')
-		if [[ "$HAS_SQUASH" == "true" ]]; then
+			INVALIDATING_REASON="git rebase rewrites commit history"
+			;;
+		reset)
 			INVALIDATES_DELTA=true
-			INVALIDATING_REASON="git merge --squash combines commits into one"
-		fi
-		;;
-	cherry-pick)
-		INVALIDATES_DELTA=true
-		INVALIDATING_REASON="git cherry-pick creates new commits with different SHAs"
-		;;
-esac
+			INVALIDATING_REASON="git reset moves HEAD and can discard commits"
+			;;
+		merge)
+			HAS_SQUASH=$(echo "$CMD_JSON" | jq -r '.flags.squash // false')
+			if [[ "$HAS_SQUASH" == "true" ]]; then
+				INVALIDATES_DELTA=true
+				INVALIDATING_REASON="git merge --squash combines commits into one"
+			fi
+			;;
+		cherry-pick)
+			INVALIDATES_DELTA=true
+			INVALIDATING_REASON="git cherry-pick creates new commits with different SHAs"
+			;;
+	esac
+done
 
 # If not a delta-invalidating command, allow
 if [[ "$INVALIDATES_DELTA" != "true" ]]; then

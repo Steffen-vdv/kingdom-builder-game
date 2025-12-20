@@ -67,7 +67,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/agents/sub-agent/scripts/subagent-cleanup.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/agents/sub-agent/scripts/subagent-session-stop.sh"
 					}
 				]
 			}

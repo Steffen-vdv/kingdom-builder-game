@@ -21,7 +21,12 @@ Default stance: BLOCK.
 ## Inputs (Injected by Hooks)
 
 The SubagentStart hook injects these files' contents directly into your context.
-You do NOT need to read them manually - they appear in your session context.
+You do NOT need to read them manually - they appear above in your session context.
+
+**If files are missing from context, use these paths:**
+
+- Input: `/tmp/claude/qa/current/input.json`
+- Delta: `/tmp/claude/qa/current/delta/review-contracts-boundaries.json`
 
 **Canonical Input (input.json):**
 
@@ -29,7 +34,8 @@ You do NOT need to read them manually - they appear in your session context.
 - `head`: Current HEAD commit SHA
 - `commits`: Array of commit SHAs in this review
 - `files_changed`: Array of files modified
-- `intent_id`: Hash of user's original intent
+- `prompts`: Array of user's actual prompts (AUTHORITATIVE - see shared-context.md)
+- `summary`: Master agent's description (INFORMATIONAL - see shared-context.md)
 - `session_id`: Current session identifier
 
 **Delta Info (delta/review-contracts-boundaries.json):**
@@ -104,9 +110,18 @@ BLOCK if:
 
 See CLAUDE.md section 2.8 for details on extensible design.
 
+### Architectural Integration
+
+BLOCK if:
+
+- Solution "bolts on" rather than integrating with existing patterns
+- Proposal adds parallel path (new mode, flag) where extending abstraction is correct
+- Analysis is shallow — proposer didn't understand existing layer structure
+- "Good enough" hack proposed when proper solution exists and is tractable
+
 ## What You Do NOT Do
 
-- ❌ Call sign.sh or write-output.sh (hooks handle signing)
+- ❌ Call any signing scripts (hooks handle this automatically)
 - ❌ Modify code
 - ❌ Skip verification steps
 
@@ -145,7 +160,7 @@ QA_VERDICT:{"verdict":"BLOCKED","summary":"Contract violations found","blockers"
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-1. ☐ Read input.json and delta file
+1. ☐ Review the injected input.json and delta content above
 2. ☐ Checked strictness patterns
 3. ☐ Verified protocol/schema stability
 4. ☐ Verified domain boundaries

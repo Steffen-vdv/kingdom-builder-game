@@ -35,7 +35,7 @@ import * as fs from 'fs';
  * orphaned mocks (crash between cp and mv) from real binaries.
  */
 
-const PROJECT_ROOT = path.resolve(__dirname, '../../..');
+const PROJECT_ROOT = path.resolve(__dirname, '../../../..');
 const SCRIPT_PATH = path.join(
 	PROJECT_ROOT,
 	'.claude/agents/sub-agent/scripts/sign.sh',

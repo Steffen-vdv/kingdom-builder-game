@@ -90,6 +90,40 @@ jobs:
           name: coverage-integration
           path: coverage/
 
+  test-infrastructure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Node deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python deps (bashlex for shell parsing)
+        run: pip install bashlex
+
+      - name: Setup mock crypto-gate for CI
+        run: |
+          # Use existing mock crypto-gate for CI tests (no external binary needed)
+          # The mock simulates crypto-gate behavior for infrastructure tests
+          mkdir -p bin
+          chmod +x .claude/tests/infrastructure/mocks/crypto-gate-mock.sh
+          ln -sf "$PWD/.claude/tests/infrastructure/mocks/crypto-gate-mock.sh" bin/crypto-gate
+
+      - name: Run infrastructure tests
+        run: pnpm test:infrastructure
+        env:
+          CLAUDE_PROJECT_DIR: ${{ github.workspace }}
+
   test-web:
     runs-on: ubuntu-latest
     steps:
@@ -135,6 +169,7 @@ jobs:
       - test-engine
       - test-protocol
       - test-integration
+      - test-infrastructure
       - test-web
       - test-server
     steps:
