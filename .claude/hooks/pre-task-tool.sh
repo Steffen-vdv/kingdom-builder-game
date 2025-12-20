@@ -13,6 +13,9 @@
 #
 # Context injection is handled by SubagentStart hook via hookSpecificOutput.additionalContext
 
+# Source paths.sh first - it sets CLAUDE_PROJECT_DIR if not already set
+source "${CLAUDE_PROJECT_DIR:-.}/.claude/config/paths.sh"
+
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/qa-hook-lib.sh"
 
