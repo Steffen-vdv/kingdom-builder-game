@@ -28,16 +28,16 @@ SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
 # These subagents have model configured in frontmatter. Overriding degrades
 # reliability (e.g., haiku may skip tool invocations and output narrative).
 
-case "$SUBAGENT" in
-	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead|safe-deployment-gate)
-		if [[ -n "$MODEL_OVERRIDE" ]]; then
-			cat << EOF
+# QA_ALL_AGENTS is loaded from config by qa-hook-lib.sh
+# Also include safe-deployment-gate (Phase 3)
+_QA_ALL_WITH_GATE="$QA_ALL_AGENTS|safe-deployment-gate"
+
+if [[ "$SUBAGENT" =~ ^($_QA_ALL_WITH_GATE)$ ]] && [[ -n "$MODEL_OVERRIDE" ]]; then
+	cat << EOF
 {"decision":"block","reason":"Model override '$MODEL_OVERRIDE' not allowed for $SUBAGENT. These subagents have model configured in frontmatter. Remove the 'model' parameter from your Task invocation."}
 EOF
-			exit 1
-		fi
-		;;
-esac
+	exit 1
+fi
 
 # =============================================================================
 # PHASE 3: SAFE-DEPLOYMENT-GATE GATING

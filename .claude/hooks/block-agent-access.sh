@@ -2,7 +2,7 @@
 
 # Restrict EXECUTION based on agent context:
 # - bin/                         → subagent only (crypto tools)
-# - sub-agent/scripts/           → subagent only (sign.sh, verify scripts)
+# - sub-agent/scripts/           → subagent only (verify-and-push, session hooks)
 # - master-agent/scripts/        → master-agent only (session hooks)
 # - .claude/hooks/               → NOBODY (system-invoked only)
 #

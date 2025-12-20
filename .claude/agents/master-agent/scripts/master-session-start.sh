@@ -11,28 +11,6 @@ source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
 
 log_session "start" "SessionStart"
 
-# =============================================================================
-# DEBUG: Log full hook input structure to understand available fields
-# =============================================================================
-log_hook "SessionStart" "=== HOOK INPUT STRUCTURE DEBUG ==="
-log_hook "SessionStart" "Raw input length: ${#HOOK_INPUT} bytes"
-
-# Log top-level keys
-TOP_KEYS=$(echo "$HOOK_INPUT" | jq -r 'keys | join(", ")' 2>/dev/null || echo "jq_parse_failed")
-log_hook "SessionStart" "Top-level keys: $TOP_KEYS"
-
-# Check for specific fields we're interested in
-SYSTEM_MSG=$(echo "$HOOK_INPUT" | jq -r '.systemMessage // "MISSING"' 2>/dev/null)
-log_hook "SessionStart" "systemMessage: ${SYSTEM_MSG:0:200}..."
-
-HOOK_EVENT=$(echo "$HOOK_INPUT" | jq -r '.hook_event_name // "MISSING"' 2>/dev/null)
-log_hook "SessionStart" "hook_event_name: $HOOK_EVENT"
-
-# Log first 1000 chars of raw input for full inspection
-log_hook "SessionStart" "First 1000 chars: $(echo "$HOOK_INPUT" | head -c 1000)"
-
-log_hook "SessionStart" "=== END DEBUG ==="
-
 # Install dependencies if needed
 if [ ! -d "$CLAUDE_PROJECT_DIR/node_modules" ]; then
   log_hook "start" "Installing dependencies with pnpm..."
@@ -153,7 +131,6 @@ log_session "start" "SessionStart" "completed"
 # ═══════════════════════════════════════════════════════════════════════════════
 
 IDENTITY_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/docs/master-agent.md"
-PROTOCOL_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/shared/docs/agent-intercommunication-protocols.md"
 
 # Build the context string
 IDENTITY_HEADER="=== Master Agent Identity ===
@@ -162,19 +139,9 @@ Project rules in CLAUDE.md also apply.
 
 "
 
-PROTOCOL_HEADER="
-
-=== Subagent Communication Protocol ===
-When dispatching subagents (6 Phase 1 reviewers, review-lead, safe-deployment-gate),
-you MUST follow the INPUT/OUTPUT formats defined below. All communication is pure JSON.
-
-"
-
 IDENTITY_CONTENT=$(cat "$IDENTITY_DOC")
-PROTOCOL_CONTENT=$(cat "$PROTOCOL_DOC")
 
-# Combine into single context string
-FULL_CONTEXT="${IDENTITY_HEADER}${IDENTITY_CONTENT}${PROTOCOL_HEADER}${PROTOCOL_CONTENT}"
+FULL_CONTEXT="${IDENTITY_HEADER}${IDENTITY_CONTENT}"
 
 # Output structured JSON with hookSpecificOutput.additionalContext
 # Using jq to properly escape the content for JSON

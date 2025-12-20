@@ -45,16 +45,22 @@ log_session "subagent:$AGENT_TYPE" "SubagentStart" "completed"
 #
 # Uses hookSpecificOutput.additionalContext to bypass stdout injection bug.
 
-QA_CURRENT_DIR="/tmp/claude/qa/current"
-QA_OUTPUT_DIR="/tmp/claude/sub-agents/output"
+# Load paths from config
+source "$CLAUDE_PROJECT_DIR/.claude/config/paths.sh"
+_QA_CONFIG="$CLAUDE_PROJECT_DIR/.claude/config/qa-agents.json"
+
 SHARED_CONTEXT_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/sub-agent/docs/shared-context.md"
+
+# Build Phase 1 agents pattern for case matching (pipe-separated)
+_PHASE1_PATTERN=$(jq -r '.phase1_reviewers | join("|")' "$_QA_CONFIG" 2>/dev/null)
 
 # Build context string based on agent type
 CONTEXT=""
 
-case "$AGENT_TYPE" in
-	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry)
-		CONTEXT+="=== QA Phase 1 Reviewer Context ===
+# Use if-elif for pattern matching with config-loaded patterns
+if [[ "$AGENT_TYPE" =~ ^($_PHASE1_PATTERN)$ ]]; then
+	# Phase 1 reviewer
+	CONTEXT+="=== QA Phase 1 Reviewer Context ===
 
 "
 		# Inject shared context for interpreting input.json fields
@@ -145,14 +151,14 @@ End your response with the strict footer line (hooks handle signing):
 QA_VERDICT:{\"verdict\":\"APPROVED|BLOCKED|NEEDS_INPUT\",\"summary\":\"...\",\"blockers\":[],\"questions\":[]}
 \`\`\`
 
-DO NOT call sign.sh or write-output.sh - the post-task hook handles signing.
+The post-task hook handles signing automatically - do not call any signing scripts.
 
 ===
 "
-		;;
 
-	review-lead)
-		CONTEXT+="=== QA Review Lead Context (Phase 2) ===
+elif [[ "$AGENT_TYPE" == "review-lead" ]]; then
+	# Phase 2 aggregator
+	CONTEXT+="=== QA Review Lead Context (Phase 2) ===
 
 "
 		# Inject shared context for interpreting input.json fields
@@ -180,20 +186,12 @@ DO NOT call sign.sh or write-output.sh - the post-task hook handles signing.
 		CONTEXT+="
 "
 
-		# Inject all 6 Phase 1 output files
-		CONTEXT+="## Phase 1 Reviewer Outputs
+	# Inject all 6 Phase 1 output files
+	CONTEXT+="## Phase 1 Reviewer Outputs
 
 "
-		PHASE1_AGENTS=(
-			"review-ci-tests-required"
-			"review-claims-auditor"
-			"review-contracts-boundaries"
-			"review-mechanics-content"
-			"review-infra-concurrency"
-			"review-tests-docs-dry"
-		)
-
-		for agent in "${PHASE1_AGENTS[@]}"; do
+	# Load Phase 1 agents from config
+	while read -r agent; do
 			CONTEXT+="### $agent
 
 "
@@ -221,11 +219,11 @@ DO NOT call sign.sh or write-output.sh - the post-task hook handles signing.
 				CONTEXT+="**ERROR:** Output file not found: $OUTPUT_FILE
 "
 			fi
-			CONTEXT+="
+		CONTEXT+="
 "
-		done
+	done < <(jq -r '.phase1_reviewers[]' "$_QA_CONFIG" 2>/dev/null)
 
-		CONTEXT+="## Aggregation Logic
+	CONTEXT+="## Aggregation Logic
 
 Apply conservative aggregation:
 - If ANY verdict == ERROR → ERROR
@@ -241,14 +239,14 @@ End your response with the strict footer line (hooks handle signing):
 QA_VERDICT:{\"verdict\":\"APPROVED|BLOCKED|NEEDS_INPUT\",\"summary\":\"...\",\"blockers\":[],\"questions\":[]}
 \`\`\`
 
-DO NOT call sign.sh or write-output.sh - the post-task hook handles signing.
+The post-task hook handles signing automatically - do not call any signing scripts.
 
 ===
 "
-		;;
 
-	safe-deployment-gate)
-		# Check if override token file exists
+elif [[ "$AGENT_TYPE" == "safe-deployment-gate" ]]; then
+	# Phase 3 gate
+	# Check if override token file exists
 		# File format: {"head":"<sha>","branch":"<branch>","token":"<token>"}
 		OVERRIDE_TOKEN_FILE="$QA_CURRENT_DIR/override-token"
 
@@ -305,23 +303,15 @@ The script will:
 
 ===
 "
-		fi
-		;;
-esac
+	fi
+fi
 
-# Append protocol spec
-PROTOCOL_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/shared/docs/agent-intercommunication-protocols.md"
-
+# Append protocol note
 CONTEXT+="
 === Subagent Communication Protocol ===
 Your chat output can be free-form narrative. For QA agents, the post-task hook
 parses your QA_VERDICT footer line to create the signed output file.
-
 "
-
-if [[ -f "$PROTOCOL_DOC" ]]; then
-	CONTEXT+="$(cat "$PROTOCOL_DOC")"
-fi
 
 # Output structured JSON with hookSpecificOutput.additionalContext
 # Using jq to properly escape the content for JSON

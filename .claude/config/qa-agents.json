@@ -1,0 +1,22 @@
+{
+	"$comment": "Single source of truth for QA agent types and signature mappings",
+	"phase1_reviewers": [
+		"review-ci-tests-required",
+		"review-claims-auditor",
+		"review-contracts-boundaries",
+		"review-mechanics-content",
+		"review-infra-concurrency",
+		"review-tests-docs-dry"
+	],
+	"phase2_aggregator": "review-lead",
+	"phase3_gate": "safe-deployment-gate",
+	"signature_types": {
+		"review-ci-tests-required": "QA_CI_REQUIRED_TESTS",
+		"review-claims-auditor": "QA_CLAIMS_AUDITOR",
+		"review-contracts-boundaries": "QA_CONTRACTS_BOUNDARIES",
+		"review-mechanics-content": "QA_MECHANICS_CONTENT",
+		"review-infra-concurrency": "QA_INFRA_CONCURRENCY",
+		"review-tests-docs-dry": "QA_TESTS_DOCS_DRY",
+		"review-lead": "QA_FINAL_SIGNATORY"
+	}
+}
