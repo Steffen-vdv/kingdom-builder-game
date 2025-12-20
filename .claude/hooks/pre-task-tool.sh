@@ -33,6 +33,8 @@ SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
 source "$CLAUDE_PROJECT_DIR/.claude/hooks/lib/qa-context-builder.sh"
 
 # Helper to output allow decision with modified prompt
+# IMPORTANT: updatedInput replaces the entire tool_input, so we must preserve
+# all original parameters (subagent_type, description) and only modify prompt.
 allow_with_context() {
 	local agent="$1"
 	local original_prompt="$2"
@@ -55,16 +57,24 @@ allow_with_context() {
 
 	log_hook "$agent" "Injecting context via updatedInput (${#context} chars)"
 
+	# Extract original description to preserve it
+	local description
+	description=$(echo "$INPUT" | jq -r '.tool_input.description // ""')
+
 	# Output hookSpecificOutput with updatedInput
-	# Use jq to properly escape the prompt for JSON
+	# MUST include subagent_type and description - updatedInput replaces entire tool_input
 	jq -n -c \
 		--arg prompt "$new_prompt" \
+		--arg subagent_type "$agent" \
+		--arg description "$description" \
 		'{
 			hookSpecificOutput: {
 				hookEventName: "PreToolUse",
 				permissionDecision: "allow",
 				permissionDecisionReason: "QA context injected into prompt",
 				updatedInput: {
+					subagent_type: $subagent_type,
+					description: $description,
 					prompt: $prompt
 				}
 			}
