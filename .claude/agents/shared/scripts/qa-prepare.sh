@@ -88,25 +88,10 @@ ERROR
 fi
 
 # =============================================================================
-# GET SESSION ID
-# =============================================================================
-
-# Try to get session ID from environment or prompt log directory
-SESSION_ID=""
-PROMPT_LOG_DIR="/tmp/claude/prompts"
-
-if [[ -d "$PROMPT_LOG_DIR" ]]; then
-	# Find most recent prompt log file
-	LATEST_LOG=$(ls -t "$PROMPT_LOG_DIR"/*.jsonl 2>/dev/null | head -1 || echo "")
-	if [[ -n "$LATEST_LOG" ]]; then
-		SESSION_ID=$(basename "$LATEST_LOG" .jsonl)
-	fi
-fi
-
-# =============================================================================
 # GATHER DATA
 # =============================================================================
 
+# Initialize paths first (creates directories if needed)
 qa_paths_init
 
 # Get current HEAD
@@ -129,11 +114,8 @@ COMMITS=$(qa_current_commits_json "$BRANCH")
 # Get files changed
 FILES_CHANGED=$(qa_files_changed_json)
 
-# Get user prompts from session log
-PROMPTS='[]'
-if [[ -n "$SESSION_ID" ]]; then
-	PROMPTS=$(qa_prompts_from_log "$SESSION_ID")
-fi
+# Get user prompts from session log (fixed file, no session ID needed)
+PROMPTS=$(qa_prompts_from_log)
 
 # =============================================================================
 # WRITE CANONICAL INPUT
