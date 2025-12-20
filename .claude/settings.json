@@ -143,7 +143,6 @@
 		],
 		"PostToolUse": [
 			{
-				"matcher": "Task",
 				"hooks": [
 					{
 						"type": "command",

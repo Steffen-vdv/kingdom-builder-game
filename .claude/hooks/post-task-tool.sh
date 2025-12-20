@@ -18,7 +18,23 @@ source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/qa-hook-lib.sh"
 
 INPUT=$(cat)
 
+# Debug: log that hook fired (before any filtering)
+TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // "unknown"')
+log_hook "post-task" "Hook fired for tool: $TOOL_NAME"
+
+# =============================================================================
+# FILTER TO TASK TOOL ONLY
+# =============================================================================
+# Matcher removed from settings.json to debug hook not firing issue.
+# Manual filtering done here after logging.
+
+if [[ "$TOOL_NAME" != "Task" ]]; then
+	exit 0
+fi
+
 SUBAGENT=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // ""')
+
+log_hook "post-task" "Task tool detected, subagent: $SUBAGENT"
 
 # =============================================================================
 # CHECK IF THIS IS A QA SUBAGENT
