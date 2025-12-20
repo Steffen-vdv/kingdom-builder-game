@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { execSync } from 'child_process';
 import * as path from 'path';
+import * as fs from 'fs';
 
 /**
  * Infrastructure Test: Pre-Task-Tool Hook
@@ -17,6 +18,10 @@ import * as path from 'path';
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../../..');
 const HOOK_SCRIPT = path.join(PROJECT_ROOT, '.claude/hooks/pre-task-tool.sh');
+// Use PID-namespaced directory to isolate tests from parallel test runs
+const TEST_QA_DIR = `/tmp/claude/test-pre-task-tool-${process.pid}`;
+const TEST_QA_CURRENT_DIR = `${TEST_QA_DIR}/current`;
+const TEST_QA_OUTPUT_DIR = `${TEST_QA_DIR}/output`;
 
 interface HookResult {
 	blocked: boolean;
@@ -24,10 +29,15 @@ interface HookResult {
 	exitCode: number;
 }
 
+interface TestOptions {
+	withInputJson?: boolean;
+}
+
 const testTaskInput = (
 	subagentType: string,
 	prompt: string | object,
 	modelOverride?: string,
+	options: TestOptions = {},
 ): HookResult => {
 	const toolInput: {
 		tool_name: string;
@@ -50,11 +60,36 @@ const testTaskInput = (
 
 	const inputJson = JSON.stringify(toolInput);
 
+	// Set up environment for test isolation
+	const env: Record<string, string> = {
+		...(process.env as Record<string, string>),
+		QA_CURRENT_DIR: TEST_QA_CURRENT_DIR,
+		QA_OUTPUT_DIR: TEST_QA_OUTPUT_DIR,
+		QA_DELTA_DIR: `${TEST_QA_CURRENT_DIR}/delta`,
+	};
+
+	// Create input.json if requested
+	if (options.withInputJson) {
+		fs.mkdirSync(TEST_QA_CURRENT_DIR, { recursive: true });
+		fs.writeFileSync(
+			path.join(TEST_QA_CURRENT_DIR, 'input.json'),
+			JSON.stringify({
+				branch: 'test-branch',
+				head: 'abc123',
+				commits: ['abc123'],
+				files_changed: [],
+				prompts: [],
+				summary: 'Test summary',
+			}),
+		);
+	}
+
 	try {
 		const result = execSync(`echo '${inputJson}' | bash "${HOOK_SCRIPT}"`, {
 			encoding: 'utf-8',
 			stdio: 'pipe',
 			cwd: PROJECT_ROOT,
+			env,
 		});
 		return { blocked: false, output: result, exitCode: 0 };
 	} catch (error: unknown) {
@@ -71,7 +106,16 @@ const testTaskInput = (
 	}
 };
 
+function cleanTestDirectories(): void {
+	if (fs.existsSync(TEST_QA_DIR)) {
+		fs.rmSync(TEST_QA_DIR, { recursive: true });
+	}
+}
+
 describe('Infrastructure: Pre-Task-Tool Hook', () => {
+	beforeEach(cleanTestDirectories);
+	afterEach(cleanTestDirectories);
+
 	describe('Model Override Blocking', () => {
 		// QA subagents that should block model overrides
 		// Includes Phase 1 reviewers, review-lead, and safe-deployment-gate
@@ -98,10 +142,16 @@ describe('Infrastructure: Pre-Task-Tool Hook', () => {
 		});
 
 		it('should allow QA subagents without model override', () => {
-			const { blocked } = testTaskInput('review-ci-tests-required', {
-				branch: 'test',
-				commits: ['abc123'],
-			});
+			// QA subagents require input.json to exist (created by qa-prepare.sh)
+			const { blocked } = testTaskInput(
+				'review-ci-tests-required',
+				{
+					branch: 'test',
+					commits: ['abc123'],
+				},
+				undefined,
+				{ withInputJson: true },
+			);
 			expect(blocked).toBe(false);
 		});
 
@@ -150,10 +200,16 @@ describe('Infrastructure: Pre-Task-Tool Hook', () => {
 		});
 
 		it('should exit 0 when allowing valid input', () => {
-			const { exitCode } = testTaskInput('review-ci-tests-required', {
-				branch: 'test',
-				commits: ['abc123'],
-			});
+			// QA subagents require input.json to exist (created by qa-prepare.sh)
+			const { exitCode } = testTaskInput(
+				'review-ci-tests-required',
+				{
+					branch: 'test',
+					commits: ['abc123'],
+				},
+				undefined,
+				{ withInputJson: true },
+			);
 			expect(exitCode).toBe(0);
 		});
 

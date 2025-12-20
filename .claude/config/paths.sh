@@ -3,10 +3,23 @@
 # paths.sh — Single source of truth for QA workflow paths
 #
 # Source this file in any script that needs QA paths:
-#   source "$CLAUDE_PROJECT_DIR/.claude/config/paths.sh"
+#   source "${CLAUDE_PROJECT_DIR:-.}/.claude/config/paths.sh"
 #
 # All paths can be overridden via environment variables for testing.
 #
+
+# =============================================================================
+# CLAUDE_PROJECT_DIR - Compute if not set
+# =============================================================================
+# This must come first. Compute from this script's location if not already set.
+# paths.sh is at .claude/config/paths.sh, so project root is ../..
+# Use ${VAR:-} syntax to safely handle unset variable when 'set -u' is active.
+
+if [[ -z "${CLAUDE_PROJECT_DIR:-}" ]]; then
+	_PATHS_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	CLAUDE_PROJECT_DIR="$(cd "$_PATHS_SCRIPT_DIR/../.." && pwd)"
+	export CLAUDE_PROJECT_DIR
+fi
 
 # QA workflow directories
 QA_CURRENT_DIR="${QA_CURRENT_DIR:-/tmp/claude/qa/current}"
