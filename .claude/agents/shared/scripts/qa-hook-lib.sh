@@ -183,15 +183,30 @@ qa_branch_guess_from_prompt() {
 }
 
 # qa_current_branch() -> best-effort current branch name
+# Handles detached HEAD state common in CI environments
 qa_current_branch() {
 	local branch
 	branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
-	if [[ "$branch" == "HEAD" ]]; then
-		# Detached HEAD
-		echo ""
-	else
+	if [[ "$branch" != "HEAD" ]]; then
 		echo "$branch"
+		return
 	fi
+
+	# Detached HEAD - try CI environment variables
+	# GitHub Actions: GITHUB_HEAD_REF (PRs) or GITHUB_REF_NAME (push)
+	if [[ -n "${GITHUB_HEAD_REF:-}" ]]; then
+		echo "$GITHUB_HEAD_REF"
+		return
+	fi
+	if [[ -n "${GITHUB_REF_NAME:-}" ]]; then
+		echo "$GITHUB_REF_NAME"
+		return
+	fi
+
+	# Fallback: use short SHA as identifier
+	local short_sha
+	short_sha=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+	echo "detached-$short_sha"
 }
 
 # qa_current_commits_json(branch_opt) -> output JSON array of SHAs
