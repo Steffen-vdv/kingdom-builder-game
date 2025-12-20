@@ -3,10 +3,35 @@
 # Session start hook for Kingdom Builder
 # Runs on first session start - installs dependencies
 
+# Capture stdin FIRST before cd (stdin may not survive cd in some shells)
+HOOK_INPUT=$(cat)
+
 cd "$CLAUDE_PROJECT_DIR" || exit 1
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
 
 log_session "start" "SessionStart"
+
+# =============================================================================
+# DEBUG: Log full hook input structure to understand available fields
+# =============================================================================
+log_hook "SessionStart" "=== HOOK INPUT STRUCTURE DEBUG ==="
+log_hook "SessionStart" "Raw input length: ${#HOOK_INPUT} bytes"
+
+# Log top-level keys
+TOP_KEYS=$(echo "$HOOK_INPUT" | jq -r 'keys | join(", ")' 2>/dev/null || echo "jq_parse_failed")
+log_hook "SessionStart" "Top-level keys: $TOP_KEYS"
+
+# Check for specific fields we're interested in
+SYSTEM_MSG=$(echo "$HOOK_INPUT" | jq -r '.systemMessage // "MISSING"' 2>/dev/null)
+log_hook "SessionStart" "systemMessage: ${SYSTEM_MSG:0:200}..."
+
+HOOK_EVENT=$(echo "$HOOK_INPUT" | jq -r '.hook_event_name // "MISSING"' 2>/dev/null)
+log_hook "SessionStart" "hook_event_name: $HOOK_EVENT"
+
+# Log first 1000 chars of raw input for full inspection
+log_hook "SessionStart" "First 1000 chars: $(echo "$HOOK_INPUT" | head -c 1000)"
+
+log_hook "SessionStart" "=== END DEBUG ==="
 
 # Install dependencies if needed
 if [ ! -d "$CLAUDE_PROJECT_DIR/node_modules" ]; then
