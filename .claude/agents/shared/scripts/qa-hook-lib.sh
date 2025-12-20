@@ -126,6 +126,37 @@ qa_canonicalize_json() {
 	echo "$json" | jq -cS '.'
 }
 
+# qa_extract_response_from_transcript(transcript_path) -> prints response text
+# Reads a Claude Agent SDK transcript file (JSONL format) and extracts
+# all text content from the final assistant message.
+#
+# The transcript is newline-delimited JSON where each line is a message.
+# We find the last assistant message with text content and join all text blocks.
+qa_extract_response_from_transcript() {
+	local transcript_path="$1"
+
+	if [[ ! -f "$transcript_path" ]]; then
+		echo "ERROR: Transcript file not found: $transcript_path" >&2
+		return 1
+	fi
+
+	# Get the last line of the JSONL file (final message in conversation)
+	# Extract all text content from .message.content[] where type=="text"
+	local text
+	text=$(tail -1 "$transcript_path" | jq -r '
+		.message.content // []
+		| map(select(.type == "text") | .text)
+		| join("\n")
+	' 2>/dev/null)
+
+	if [[ -z "$text" ]]; then
+		echo "ERROR: No text content found in final message" >&2
+		return 1
+	fi
+
+	echo "$text"
+}
+
 # =============================================================================
 # PROMPT LOGGING
 # =============================================================================
