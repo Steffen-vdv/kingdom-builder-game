@@ -179,7 +179,7 @@ QA_VERDICT:{"verdict":"APPROVED","summary":"All 47 tests passed","blockers":[],"
 - Prefix: `QA_VERDICT:` (no space after colon)
 - JSON fields: `verdict`, `summary`, `blockers`, `questions`
 - `verdict`: one of `APPROVED`, `BLOCKED`, `NEEDS_INPUT`
-- `summary`: concise description (max 400 chars)
+- `summary`: concise description (max 4096 chars)
 - `blockers`: array of issues (required if BLOCKED, empty otherwise)
 - `questions`: array of questions (required if NEEDS_INPUT, empty otherwise)
 
