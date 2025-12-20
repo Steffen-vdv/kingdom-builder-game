@@ -66,8 +66,42 @@ is to catch drift between what user asked for and what was actually done.
 
 When you receive delta info indicating `DELTA_REVIEW`:
 
-- **Trust prior verdict** on commits that were already reviewed
-- **Focus only on new commits** listed in `new_commits`
-- **Check for conflicts** between old and new changes (usually none)
+### Core Optimization Rules
+
+1. **DO NOT re-analyze `prior_commits`** — They were already reviewed and approved.
+   Skip all analysis on commits listed in `prior_commits`. Only analyze `new_commits`.
+
+2. **Focus ONLY on `new_commits`** — Run your full review process, but scoped only
+   to changes introduced by commits in the `new_commits` array.
+
+3. **Check for conflicts** — Verify new commits don't break previously-approved
+   behavior (usually trivial — most new commits are additive).
+
+### Handling Prior Blockers
+
+If `prior_blockers` is non-empty, the previous review was BLOCKED. Your job:
+
+1. **For each prior blocker:** Verify the new commits resolve it
+2. **If resolved:** Note it in your summary ("Prior blocker X resolved by commit Y")
+3. **If NOT resolved:** Keep the blocker in your verdict
+4. **Check for new issues:** The new commits may introduce fresh blockers
+
+### Handling Prior Questions
+
+If `prior_questions` is non-empty, the previous review needed input. Your job:
+
+1. **Check prompts:** See if new user prompts answer the question
+2. **Check commits:** See if the changes themselves clarify the question
+3. **If answered:** Note it in your summary
+4. **If NOT answered:** Keep the question in your verdict
+
+### Full Review Fallback
+
+If `mode` is `FULL_REVIEW`, ignore delta optimizations and analyze everything.
+Common reasons for full review:
+
+- No prior state exists
+- Prior commits not a subset of current (branch was rebased/reset)
+- Prior signature verification failed
 
 Delta is purely commit-based. User prompts are context, not cache keys.

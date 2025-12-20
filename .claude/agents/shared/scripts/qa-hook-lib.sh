@@ -160,12 +160,15 @@ qa_extract_response_from_transcript() {
 # Returns the last 100 prompts from the session log as a JSON array of strings.
 # Each session gets fresh /tmp, so we use a fixed file path.
 # If missing log => empty array [].
+#
+# NOTE: Each line in the JSONL file is one prompt entry. We use jq -s (slurp)
+# to read all JSONL lines as an array, then extract the .prompt field from each.
+# This correctly handles multi-line prompts without splitting them.
 qa_prompts_from_log() {
 	if [[ -f "$QA_PROMPT_LOG_FILE" ]]; then
-		# Get last 100 prompts, extract prompt field, output as JSON array
+		# Get last 100 JSONL entries, slurp into array, extract prompt fields
 		tail -n 100 "$QA_PROMPT_LOG_FILE" 2>/dev/null | \
-			jq -r '.prompt // empty' 2>/dev/null | \
-			jq -R -s -c 'split("\n") | map(select(length > 0))'
+			jq -s '[.[].prompt | select(. != null and . != "")]' 2>/dev/null || echo '[]'
 	else
 		echo '[]'
 	fi
@@ -395,6 +398,15 @@ qa_sign_payload() {
 #
 # Delta is purely commit-based: if prior commits are a subset of current commits,
 # we do DELTA_REVIEW on only the new commits. User prompts are context, not cache keys.
+#
+# For DELTA_REVIEW, the delta file includes:
+#   - prior_verdict: what the reviewer decided before
+#   - prior_commits: commits already reviewed
+#   - new_commits: only these need analysis
+#   - prior_blockers: issues that caused BLOCKED verdict (if any)
+#   - prior_questions: questions that caused NEEDS_INPUT verdict (if any)
+#
+# Reviewers should verify that new commits resolve any prior blockers/questions.
 qa_compute_delta() {
 	local agent="$1"
 	local current_commits="$2"
@@ -410,6 +422,8 @@ qa_compute_delta() {
 	local prior_verdict=""
 	local prior_commits='[]'
 	local new_commits='[]'
+	local prior_blockers='[]'
+	local prior_questions='[]'
 
 	if [[ ! -f "$prior_file" ]]; then
 		reason="no prior state"
@@ -432,6 +446,11 @@ qa_compute_delta() {
 				# Read fields from payload_json (the pre-parsed object)
 				prior_commits=$(jq -c '.payload_json.input.commits // []' "$prior_file" 2>/dev/null || echo '[]')
 				prior_verdict=$(jq -r '.payload_json.verdict.verdict // ""' "$prior_file" 2>/dev/null || echo "")
+
+				# Extract prior blockers and questions for delta review
+				# These help reviewers verify that new commits resolve prior issues
+				prior_blockers=$(jq -c '.payload_json.verdict.blockers // []' "$prior_file" 2>/dev/null || echo '[]')
+				prior_questions=$(jq -c '.payload_json.verdict.questions // []' "$prior_file" 2>/dev/null || echo '[]')
 
 				if [[ -z "$prior_commits" || "$prior_commits" == "[]" ]]; then
 					reason="prior state has no commits"
@@ -468,11 +487,15 @@ qa_compute_delta() {
 			--arg prior_verdict "$prior_verdict" \
 			--argjson prior_commits "$prior_commits" \
 			--argjson new_commits "$new_commits" \
+			--argjson prior_blockers "$prior_blockers" \
+			--argjson prior_questions "$prior_questions" \
 			'{
 				mode: $mode,
 				prior_verdict: $prior_verdict,
 				prior_commits: $prior_commits,
-				new_commits: $new_commits
+				new_commits: $new_commits,
+				prior_blockers: $prior_blockers,
+				prior_questions: $prior_questions
 			}' > "$delta_file"
 	else
 		jq -n -c \

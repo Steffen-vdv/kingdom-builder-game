@@ -1,6 +1,5 @@
 #!/bin/bash
 # Centralized logging for Claude hooks
-# QA infrastructure test - safe to remove
 #
 # Usage:
 #   source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
