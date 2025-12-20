@@ -75,26 +75,31 @@ When modifying or extending existing code:
 
 ## 1.1 Configuration Changes Require New Session
 
-**Changes to Claude Code configuration do NOT apply until the next session.**
+**Some changes apply immediately, others require a new session.**
 
-This includes:
+**Requires new session (cached at start):**
 
 - `.claude/settings.json` (hooks, permissions, matchers)
 - Subagent identity docs (`.claude/agents/*/docs/*.md`)
-- Hook scripts (`.claude/hooks/*.sh`)
-- Scripts called by hooks (e.g., session start, pre/post tool hooks)
+- SessionStart hook scripts (only run once)
 
-**Why:** Claude Code loads configuration at session start. In-session edits to
-these files are saved to disk but not re-loaded by the runtime.
+**Takes effect immediately (re-read on each execution):**
+
+- Hook scripts for recurring events (PreToolUse, PostToolUse, SubagentStart,
+  SubagentStop, UserPromptSubmit) — script content is re-read each execution
+- Library scripts sourced by hooks (e.g., `qa-hook-lib.sh`)
+- Utility scripts called directly (e.g., `qa-prepare.sh`)
+
+**Key distinction:** The hook _configuration_ in settings.json is cached, but
+the _script content_ is re-read each time the hook fires. Editing a hook
+script's logic takes effect on the next hook event.
 
 **Implications:**
 
-- If you modify hook behavior, the old behavior persists until session restart
-- If you add new subagent types, they won't be recognized this session
-- If you fix a bug in a hook script, the fix won't apply this session
-
-**Workaround:** For urgent changes, ask user to start a new session or use
-override token to bypass affected workflows.
+- Changing settings.json hook config → needs new session
+- Fixing bug in existing hook script → test immediately
+- Adding new subagent type → needs new session
+- Modifying identity doc instructions → needs new session
 
 ---
 

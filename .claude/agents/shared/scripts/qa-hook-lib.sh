@@ -72,14 +72,14 @@ qa_is_qa_agent() {
 # Allow environment overrides for testing
 QA_CURRENT_DIR="${QA_CURRENT_DIR:-/tmp/claude/qa/current}"
 QA_DELTA_DIR="${QA_DELTA_DIR:-/tmp/claude/qa/current/delta}"
-QA_PROMPT_LOG_DIR="${QA_PROMPT_LOG_DIR:-/tmp/claude/qa/prompt-log}"
+QA_PROMPT_LOG_FILE="${QA_PROMPT_LOG_FILE:-/tmp/claude/qa/prompts.jsonl}"
 QA_OUTPUT_DIR="${QA_OUTPUT_DIR:-/tmp/claude/sub-agents/output}"
 
 # qa_paths_init() -> creates all required directories
 qa_paths_init() {
 	mkdir -p "$QA_CURRENT_DIR"
 	mkdir -p "$QA_DELTA_DIR"
-	mkdir -p "$QA_PROMPT_LOG_DIR"
+	mkdir -p "$(dirname "$QA_PROMPT_LOG_FILE")"
 	mkdir -p "$QA_OUTPUT_DIR"
 }
 
@@ -93,11 +93,6 @@ qa_crypto_gate_path() {
 	echo "$path"
 }
 
-# qa_prompt_log_path(session_id) -> prints path to prompt log file
-qa_prompt_log_path() {
-	local session_id="$1"
-	echo "$QA_PROMPT_LOG_DIR/${session_id}.jsonl"
-}
 
 # =============================================================================
 # UTILITY FUNCTIONS
@@ -161,17 +156,14 @@ qa_extract_response_from_transcript() {
 # PROMPT LOGGING
 # =============================================================================
 
-# qa_prompts_from_log(session_id) -> outputs JSON array of user prompts
+# qa_prompts_from_log() -> outputs JSON array of user prompts
 # Returns the last 100 prompts from the session log as a JSON array of strings.
+# Each session gets fresh /tmp, so we use a fixed file path.
 # If missing log => empty array [].
 qa_prompts_from_log() {
-	local session_id="$1"
-	local log_path
-	log_path=$(qa_prompt_log_path "$session_id")
-
-	if [[ -f "$log_path" ]]; then
+	if [[ -f "$QA_PROMPT_LOG_FILE" ]]; then
 		# Get last 100 prompts, extract prompt field, output as JSON array
-		tail -n 100 "$log_path" 2>/dev/null | \
+		tail -n 100 "$QA_PROMPT_LOG_FILE" 2>/dev/null | \
 			jq -r '.prompt // empty' 2>/dev/null | \
 			jq -R -s -c 'split("\n") | map(select(length > 0))'
 	else
@@ -227,12 +219,21 @@ qa_current_commits_json() {
 	jq -n -c --arg head "$head_sha" '[$head]'
 }
 
-# qa_files_changed_json() -> JSON array of changed files; best effort
+# qa_files_changed_json() -> JSON array of changed files
+# Fetches origin/main if not present, then compares HEAD to it.
 qa_files_changed_json() {
+	# Ensure origin/main is available for comparison
+	if ! git rev-parse --verify origin/main >/dev/null 2>&1; then
+		# Fetch main branch from origin (silent, don't fail if network issues)
+		git fetch origin main >/dev/null 2>&1 || true
+	fi
+
+	# Now try to get the diff
 	if git rev-parse --verify origin/main >/dev/null 2>&1; then
 		git diff --name-only origin/main...HEAD 2>/dev/null | \
 			jq -R -s 'split("\n") | map(select(length > 0))' 2>/dev/null || echo '[]'
 	else
+		# Fallback: if still no origin/main, return empty (truly offline scenario)
 		echo '[]'
 	fi
 }

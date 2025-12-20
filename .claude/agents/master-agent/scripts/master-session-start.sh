@@ -47,6 +47,19 @@ fi
 log_hook "start" "Context set to master-agent"
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# INSTALL BASHLEX (required by block-git-command.sh for parsing chained commands)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+if ! python3 -c "import bashlex" 2>/dev/null; then
+  log_hook "start" "Installing bashlex (Python package for command parsing)..."
+  pip3 install --quiet bashlex >> "$LOG_FILE" 2>&1 || {
+    log_hook "start" "WARNING: Failed to install bashlex. Chained git commands may be blocked."
+  }
+else
+  log_hook "start" "bashlex already installed"
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # DOWNLOAD CRYPTO-GATE BINARY (if not present)
 # Downloaded once by master-agent, used by all subagents for signing
 # Config: config/crypto-gate.json
