@@ -187,10 +187,14 @@ QA_REVIEW_LEAD_FOOTER
 		# File format: {"head":"<sha>","branch":"<branch>","token":"<token>"}
 		OVERRIDE_TOKEN_FILE="$QA_CURRENT_DIR/override-token"
 
+		log_hook "safe-deployment-gate" "Checking for override token at: $OVERRIDE_TOKEN_FILE"
+
 		if [[ -f "$OVERRIDE_TOKEN_FILE" ]]; then
 			# Extract token from JSON file
 			OVERRIDE_TOKEN=$(jq -r '.token // ""' "$OVERRIDE_TOKEN_FILE" 2>/dev/null || echo "")
 			STORED_HEAD=$(jq -r '.head // ""' "$OVERRIDE_TOKEN_FILE" 2>/dev/null || echo "")
+
+			log_hook "safe-deployment-gate" "OVERRIDE MODE: Token file exists, HEAD=$STORED_HEAD"
 
 			# OVERRIDE MODE: Inject token and skip normal QA context
 			echo "=== OVERRIDE MODE ACTIVE ==="
@@ -218,6 +222,8 @@ QA_REVIEW_LEAD_FOOTER
 			echo ""
 			echo "==="
 		else
+			log_hook "safe-deployment-gate" "NORMAL MODE: No override token file found"
+
 			# NORMAL QA MODE: Inject review-lead.json context
 			echo "=== QA Phase 3: Safe Deployment Gate ==="
 			echo ""
