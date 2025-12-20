@@ -224,6 +224,7 @@ qa_current_branch() {
 
 # qa_current_commits_json(branch_opt) -> output JSON array of SHAs
 # Simple and robust: always returns at least HEAD
+# Limited to 100 commits to avoid shell ARG_MAX issues
 qa_current_commits_json() {
 	local branch_opt="${1:-}"
 	local head_sha
@@ -235,9 +236,10 @@ qa_current_commits_json() {
 	fi
 
 	# Try to get commits from origin/main...HEAD if origin/main exists
+	# Limit to 100 commits to avoid ARG_MAX issues in shell
 	if git rev-parse --verify origin/main >/dev/null 2>&1; then
 		local commits
-		commits=$(git log --format='%H' origin/main...HEAD 2>/dev/null | jq -R -s 'split("\n") | map(select(length > 0))' 2>/dev/null || echo "[]")
+		commits=$(git log --format='%H' -n 100 origin/main...HEAD 2>/dev/null | jq -R -s 'split("\n") | map(select(length > 0))' 2>/dev/null || echo "[]")
 		if [[ "$commits" != "[]" ]]; then
 			echo "$commits"
 			return
@@ -250,6 +252,7 @@ qa_current_commits_json() {
 
 # qa_files_changed_json() -> JSON array of changed files
 # Fetches origin/main if not present, then compares HEAD to it.
+# Limited to 500 files to avoid shell ARG_MAX issues
 qa_files_changed_json() {
 	# Ensure origin/main is available for comparison
 	if ! git rev-parse --verify origin/main >/dev/null 2>&1; then
@@ -257,9 +260,9 @@ qa_files_changed_json() {
 		git fetch origin main >/dev/null 2>&1 || true
 	fi
 
-	# Now try to get the diff
+	# Now try to get the diff (limit to 500 files to avoid ARG_MAX)
 	if git rev-parse --verify origin/main >/dev/null 2>&1; then
-		git diff --name-only origin/main...HEAD 2>/dev/null | \
+		git diff --name-only origin/main...HEAD 2>/dev/null | head -n 500 | \
 			jq -R -s 'split("\n") | map(select(length > 0))' 2>/dev/null || echo '[]'
 	else
 		# Fallback: if still no origin/main, return empty (truly offline scenario)
