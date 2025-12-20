@@ -106,51 +106,44 @@ download_crypto_gate() {
 
 download_crypto_gate
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# INSTALL PYTHON DEPENDENCIES (for command parser)
-# Config: config/python-deps.json
-# ═══════════════════════════════════════════════════════════════════════════════
-
-PYTHON_DEPS_CONFIG="$CLAUDE_PROJECT_DIR/config/python-deps.json"
-
-install_python_deps() {
-  if [[ ! -f "$PYTHON_DEPS_CONFIG" ]]; then
-    log_hook "start" "No Python deps config found"
-    return 0
-  fi
-
-  # Check if bashlex is installed
-  if python3 -c "import bashlex" 2>/dev/null; then
-    log_hook "start" "Python deps already installed"
-    return 0
-  fi
-
-  log_hook "start" "Installing Python dependencies..."
-
-  # Build pip install arguments from JSON config
-  local DEPS
-  DEPS=$(jq -r 'to_entries | map("\(.key)\(.value)") | .[]' "$PYTHON_DEPS_CONFIG" 2>/dev/null)
-
-  if [[ -n "$DEPS" ]]; then
-    echo "$DEPS" | xargs pip3 install -q >> "$LOG_FILE" 2>&1
-    log_hook "start" "Python deps installed"
-  fi
-}
-
-install_python_deps
-
 log_session "start" "SessionStart" "completed"
 
-# Output identity doc (injected into agent context)
-IDENTITY_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/docs/master-agent.md"
+# ═══════════════════════════════════════════════════════════════════════════════
+# OUTPUT STRUCTURED JSON FOR CONTEXT INJECTION
+# Uses hookSpecificOutput.additionalContext to bypass SessionStart stdout bug
+# See: https://github.com/anthropics/claude-code/issues/10373
+# ═══════════════════════════════════════════════════════════════════════════════
 
-cat << 'HEADER'
-=== Master Agent Identity ===
+IDENTITY_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/docs/master-agent.md"
+PROTOCOL_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/shared/docs/agent-intercommunication-protocols.md"
+
+# Build the context string
+IDENTITY_HEADER="=== Master Agent Identity ===
 The following is your identity document. You MUST follow these instructions.
 Project rules in CLAUDE.md also apply.
 
-HEADER
+"
 
-cat "$IDENTITY_DOC"
+PROTOCOL_HEADER="
+
+=== Subagent Communication Protocol ===
+When dispatching subagents (6 Phase 1 reviewers, review-lead, safe-deployment-gate),
+you MUST follow the INPUT/OUTPUT formats defined below. All communication is pure JSON.
+
+"
+
+IDENTITY_CONTENT=$(cat "$IDENTITY_DOC")
+PROTOCOL_CONTENT=$(cat "$PROTOCOL_DOC")
+
+# Combine into single context string
+FULL_CONTEXT="${IDENTITY_HEADER}${IDENTITY_CONTENT}${PROTOCOL_HEADER}${PROTOCOL_CONTENT}"
+
+# Output structured JSON with hookSpecificOutput.additionalContext
+# Using jq to properly escape the content for JSON
+jq -n --arg context "$FULL_CONTEXT" '{
+  "hookSpecificOutput": {
+    "additionalContext": $context
+  }
+}'
 
 exit 0
