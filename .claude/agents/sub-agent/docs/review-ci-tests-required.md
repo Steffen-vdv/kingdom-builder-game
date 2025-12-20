@@ -69,9 +69,9 @@ You do NOT need to read them manually - they appear above in your session contex
 │ REVIEW-CI-TESTS-REQUIRED WORKFLOW                                               │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                 │
-│ 0. READ canonical input and delta info from disk                                │
+│ 0. REVIEW the injected input.json and delta content above                       │
 │    ↓                                                                            │
-│ 1. ANALYZE what changed (from input.json files_changed + git diff)              │
+│ 1. ANALYZE what changed (from injected files_changed + git diff)                │
 │    ↓                                                                            │
 │ 2. DETERMINE test strategy based on change scope                                │
 │    ↓                                                                            │

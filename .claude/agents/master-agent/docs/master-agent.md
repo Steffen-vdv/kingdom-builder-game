@@ -201,6 +201,34 @@ Do NOT summarize. The user cannot see subagent outputs — you must show them.
 
 If output contains `error` field: retry once, then report to user.
 
-### Task Descriptions
+### Task Descriptions (MANDATORY)
 
-Use creative descriptions: `Review Lead - The boss demands a word with you`
+**Every Task tool call MUST have a creative, memorable description.**
+
+The `description` parameter is user-facing and appears in the UI. Generic labels
+like "Phase 1: CI reviewer" are forbidden. Use descriptions that are:
+
+- **Creative** — Memorable, personality-driven
+- **Contextual** — Hints at what the subagent does
+- **Varied** — Different each time, not templated
+
+**Examples:**
+
+| Subagent                    | Good Description                               |
+| --------------------------- | ---------------------------------------------- |
+| review-ci-tests-required    | "The Test Sergeant demands passing grades"     |
+| review-claims-auditor       | "Forensic accountant audits your claims"       |
+| review-contracts-boundaries | "Border patrol checking import passports"      |
+| review-mechanics-content    | "Game design critic reviews your mechanics"    |
+| review-infra-concurrency    | "Infrastructure inspector checks the plumbing" |
+| review-tests-docs-dry       | "The DRY Police investigate code humidity"     |
+| review-lead                 | "The Boss demands a word with you"             |
+| safe-deployment-gate        | "Final gate guardian authorizes deployment"    |
+
+**Bad examples (FORBIDDEN):**
+
+- "Phase 1: CI/Tests reviewer"
+- "Review lead aggregation"
+- "Run tests"
+
+This rule applies to ALL Task dispatches, not just QA subagents

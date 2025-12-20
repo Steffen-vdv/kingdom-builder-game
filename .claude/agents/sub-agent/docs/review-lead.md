@@ -183,7 +183,7 @@ QA_VERDICT:{"verdict":"BLOCKED","summary":"Blocked by review-claims-auditor","bl
 ## BEFORE YOU FINISH (MANDATORY)
 
 1. ☐ Review the injected input.json content above
-2. ☐ Review all 6 Phase 1 outputs above (or read from `/tmp/claude/sub-agents/output/`)
+2. ☐ Review all 6 Phase 1 outputs injected above
 3. ☐ Applied conservative aggregation
 4. ☐ Performed final sanity checks
 5. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)

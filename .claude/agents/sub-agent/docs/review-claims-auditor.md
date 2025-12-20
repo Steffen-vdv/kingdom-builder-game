@@ -69,8 +69,9 @@ You do NOT OWN:
 
 ## Review Procedure
 
-1. Read input.json for:
-   - intent_text (what was requested)
+1. From the injected input.json above, extract:
+   - summary (what was implemented)
+   - prompts (user requests)
    - files_changed
 
 2. Inspect git diff and file stats
