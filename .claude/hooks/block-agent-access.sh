@@ -2,7 +2,7 @@
 
 # Restrict EXECUTION based on agent context:
 # - bin/                         → subagent only (crypto tools)
-# - sub-agent/scripts/           → subagent only (sign.sh, verify scripts)
+# - sub-agent/scripts/           → subagent only (verify-and-push, session hooks)
 # - master-agent/scripts/        → master-agent only (session hooks)
 # - .claude/hooks/               → NOBODY (system-invoked only)
 #
@@ -13,6 +13,9 @@
 # Commands like `rm .claude/hooks/file.sh` are ALLOWED because `rm` is the
 # executable, not the hook file. The hook file is just an argument.
 
+# Source paths.sh first - it sets CLAUDE_PROJECT_DIR if not already set
+source "${CLAUDE_PROJECT_DIR:-.}/.claude/config/paths.sh"
+
 SCRIPTS_DIR="$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts"
 
 # Read tool input from stdin
@@ -22,8 +25,40 @@ JSON_INPUT=$(cat)
 COMMAND=$(echo "$JSON_INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
 TOOL_NAME=$(echo "$JSON_INPUT" | jq -r '.tool_name // empty' 2>/dev/null)
 
+# =============================================================================
+# BLOCK DIRECT WRITES TO QA INPUT FILE (master-agent must use qa-prepare.sh)
+# =============================================================================
+
+if [[ "$TOOL_NAME" == "Write" ]]; then
+	FILE_PATH=$(echo "$JSON_INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null)
+
+	# Block writes to /tmp/claude/qa/current/input.json
+	if [[ "$FILE_PATH" == "/tmp/claude/qa/current/input.json" ]]; then
+		cat >&2 << 'BLOCKED'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 BLOCKED — Direct write to QA input file not allowed                       ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+You cannot write directly to /tmp/claude/qa/current/input.json.
+
+Use the preparation script instead:
+
+  .claude/agents/shared/scripts/qa-prepare.sh --summary "Description..."
+
+This ensures proper structure with prompts and summary fields.
+
+BLOCKED
+		exit 2
+	fi
+	exit 0
+fi
+
 # Only restrict Bash execution - allow all file operations
-if [[ "$TOOL_NAME" != "Bash" ]] || [[ -z "$COMMAND" ]]; then
+if [[ "$TOOL_NAME" != "Bash" ]]; then
+	exit 0
+fi
+
+if [[ -z "$COMMAND" ]]; then
 	exit 0
 fi
 

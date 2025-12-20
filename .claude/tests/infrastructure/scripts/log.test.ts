@@ -13,7 +13,7 @@ import * as path from 'path';
  * - Creates log directory if missing
  */
 
-const PROJECT_ROOT = path.resolve(__dirname, '../../..');
+const PROJECT_ROOT = path.resolve(__dirname, '../../../..');
 const SCRIPT_PATH = path.join(
 	PROJECT_ROOT,
 	'.claude/agents/shared/scripts/log.sh',
@@ -116,23 +116,26 @@ describe('Infrastructure: log.sh', () => {
 			runWithLog('log_session "start" "SessionStart"');
 			const log = readLog();
 
-			expect(log).toContain('=== SessionStart');
-			expect(log).toContain('===');
+			// Format: ===    <timestamp>    <event>     <tag>   ===
+			expect(log).toContain('SessionStart');
+			expect(log).toMatch(/^===.*===$/m);
 		});
 
 		it('should include status when provided', () => {
 			runWithLog('log_session "start" "SessionStart" "completed"');
 			const log = readLog();
 
-			expect(log).toContain('=== SessionStart completed');
+			// Format: ===    <timestamp>    <event> <status>     <tag>   ===
+			expect(log).toContain('SessionStart completed');
 		});
 
 		it('should work without status', () => {
 			runWithLog('log_session "start" "SessionStart"');
 			const log = readLog();
 
-			// Should not have extra space before timestamp
-			expect(log).toMatch(/=== SessionStart \d{4}/);
+			// Format: ===    <timestamp>    <event>     <tag>   ===
+			// Should contain tag and event with timestamp in between
+			expect(log).toMatch(/===.*\d{4}-\d{2}-\d{2}T.*SessionStart.*start.*===/);
 		});
 	});
 

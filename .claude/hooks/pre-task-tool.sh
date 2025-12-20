@@ -1,18 +1,29 @@
 #!/bin/bash
-# PreToolUse hook for Task - validates subagent INPUT format
-# Only validates QA reviewers and safe-deployment-gate subagents
+# PreToolUse hook for Task - validates and prepares QA workflow
 #
 # Phase 1 reviewers: review-ci-tests-required + 5 specialist reviewers
 # Phase 2 reviewer: review-lead (aggregates Phase 1)
-# Phase 3: safe-deployment-gate (pushes with review-lead's signature)
+# Phase 3: safe-deployment-gate (subagent runs verify-and-push.sh)
+#
+# This hook:
+#   1. Blocks model overrides for QA subagents
+#   2. Computes delta review info for Phase 1 reviewers
+#   3. Gates review-lead by verifying all 6 Phase 1 outputs
+#   4. Gates safe-deployment-gate by verifying review-lead signature
+#
+# Context injection is handled by SubagentStart hook via hookSpecificOutput.additionalContext
+
+# Source paths.sh first - it sets CLAUDE_PROJECT_DIR if not already set
+source "${CLAUDE_PROJECT_DIR:-.}/.claude/config/paths.sh"
 
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
+source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/qa-hook-lib.sh"
 
 INPUT=$(cat)
 
 SUBAGENT=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // ""')
-PROMPT=$(echo "$INPUT" | jq -r '.tool_input.prompt // ""')
 MODEL_OVERRIDE=$(echo "$INPUT" | jq -r '.tool_input.model // ""')
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
 
 # =============================================================================
 # BLOCK MODEL OVERRIDES for QA subagents
@@ -20,104 +31,219 @@ MODEL_OVERRIDE=$(echo "$INPUT" | jq -r '.tool_input.model // ""')
 # These subagents have model configured in frontmatter. Overriding degrades
 # reliability (e.g., haiku may skip tool invocations and output narrative).
 
-case "$SUBAGENT" in
-	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead|safe-deployment-gate)
-		if [[ -n "$MODEL_OVERRIDE" ]]; then
-			cat << EOF
+# QA_ALL_AGENTS is loaded from config by qa-hook-lib.sh
+# Also include safe-deployment-gate (Phase 3)
+_QA_ALL_WITH_GATE="$QA_ALL_AGENTS|safe-deployment-gate"
+
+if [[ "$SUBAGENT" =~ ^($_QA_ALL_WITH_GATE)$ ]] && [[ -n "$MODEL_OVERRIDE" ]]; then
+	cat << EOF
 {"decision":"block","reason":"Model override '$MODEL_OVERRIDE' not allowed for $SUBAGENT. These subagents have model configured in frontmatter. Remove the 'model' parameter from your Task invocation."}
 EOF
-			exit 1
+	exit 1
+fi
+
+# =============================================================================
+# PHASE 3: SAFE-DEPLOYMENT-GATE GATING
+# =============================================================================
+# Verify review-lead signature before allowing safe-deployment-gate to run.
+# The actual push is performed by the subagent via verify-and-push.sh.
+#
+# Override mode: If override token file exists, verify via crypto-gate.
+# Token file: /tmp/claude/qa/current/override-token
+# Set by master-agent via: .claude/agents/master-agent/scripts/set-override-token.sh
+
+OVERRIDE_TOKEN_FILE="$QA_CURRENT_DIR/override-token"
+
+if [[ "$SUBAGENT" == "safe-deployment-gate" ]]; then
+	log_hook "safe-deployment-gate" "Gating check started"
+
+	# Check for override mode - read token from file (not from prompt)
+	# File format: {"head":"<sha>","branch":"<branch>","token":"<token>"}
+	if [[ -f "$OVERRIDE_TOKEN_FILE" ]]; then
+		log_hook "safe-deployment-gate" "Override token file found, verifying"
+
+		# Parse JSON file
+		OVERRIDE_JSON=$(cat "$OVERRIDE_TOKEN_FILE" 2>/dev/null || echo "{}")
+		OVERRIDE_TOKEN=$(echo "$OVERRIDE_JSON" | jq -r '.token // ""' 2>/dev/null || echo "")
+		STORED_HEAD=$(echo "$OVERRIDE_JSON" | jq -r '.head // ""' 2>/dev/null || echo "")
+
+		if [[ -n "$OVERRIDE_TOKEN" ]]; then
+			# Verify HEAD matches what was stored (binding check)
+			CURRENT_HEAD=$(git rev-parse HEAD 2>/dev/null || echo "")
+			if [[ -n "$STORED_HEAD" && "$STORED_HEAD" != "$CURRENT_HEAD" ]]; then
+				cat << EOF
+{"decision":"block","reason":"Override HEAD mismatch. Stored: '$STORED_HEAD', current: '$CURRENT_HEAD'. New commits added since override was authorized."}
+EOF
+				exit 1
+			fi
+
+			# Verify override token via crypto-gate
+			CRYPTO_GATE=$(qa_crypto_gate_path 2>/dev/null) || CRYPTO_GATE=""
+			if [[ -z "$CRYPTO_GATE" || ! -x "$CRYPTO_GATE" ]]; then
+				cat << EOF
+{"decision":"block","reason":"crypto-gate binary not found. Cannot verify override token."}
+EOF
+				exit 1
+			fi
+
+			if ! "$CRYPTO_GATE" verify-override "$OVERRIDE_TOKEN" >/dev/null 2>&1; then
+				cat << EOF
+{"decision":"block","reason":"Invalid override token. Token verification failed via crypto-gate."}
+EOF
+				exit 1
+			fi
+
+			log_hook "safe-deployment-gate" "Override token and HEAD verified, allowing subagent"
+			log_hook "safe-deployment-gate" "Checking for override token at: $OVERRIDE_TOKEN_FILE"
+			log_hook "safe-deployment-gate" "OVERRIDE MODE: Token file exists, HEAD=$STORED_HEAD"
+			exit 0
 		fi
-		;;
-esac
+	fi
 
-# Only validate specific subagent types
-case "$SUBAGENT" in
-	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead|safe-deployment-gate)
-		log_hook "$SUBAGENT" "Starting"
-		;;
-	*)
-		# Not a tracked subagent, allow silently
-		exit 0
-		;;
-esac
-
-# Validate prompt is valid JSON (per protocol: pure JSON, no markdown)
-if ! echo "$PROMPT" | jq '.' >/dev/null 2>&1; then
-	cat << 'EOF'
-{"decision":"block","reason":"INPUT is not valid JSON. Prompt must be a pure JSON object.\n\nExample: {\"branch\": \"...\", \"commits\": [...]}"}
-EOF
-	exit 1
-fi
-
-# Parse the JSON for field validation
-PARSED=$(echo "$PROMPT" | jq '.')
-
-# Validate INPUT contains required branch field (common to all subagents)
-if ! echo "$PARSED" | jq -e '.branch' >/dev/null 2>&1; then
-	cat << 'EOF'
-{"decision":"block","reason":"INPUT JSON missing required 'branch' field."}
-EOF
-	exit 1
-fi
-
-# Validate commits field for agents that require it (all except safe-deployment-gate)
-# safe-deployment-gate uses approval.payload which contains commits internally
-if [[ "$SUBAGENT" != "safe-deployment-gate" ]]; then
-	if ! echo "$PARSED" | jq -e '.commits | type == "array"' >/dev/null 2>&1; then
+	# Normal QA mode - verify review-lead.json
+	# Check 1: review-lead.json must exist
+	REVIEW_LEAD_FILE="$QA_OUTPUT_DIR/review-lead.json"
+	if [[ ! -f "$REVIEW_LEAD_FILE" ]]; then
 		cat << EOF
-{"decision":"block","reason":"INPUT JSON missing or invalid 'commits' field. Must be a JSON array of commit SHAs.\n\nExample: {\"branch\": \"...\", \"commits\": [\"abc123\", \"def456\"], ...}"}
+{"decision":"block","reason":"Missing review-lead.json. Run Phase 2 (review-lead) before Phase 3."}
 EOF
 		exit 1
 	fi
 
-	# Validate commits array is non-empty
-	COMMITS_COUNT=$(echo "$PARSED" | jq '.commits | length' 2>/dev/null)
-	if [[ "$COMMITS_COUNT" == "0" ]]; then
-		cat << 'EOF'
-{"decision":"block","reason":"INPUT JSON 'commits' array is empty. At least one commit SHA is required."}
+	# Check 2: Extract required fields
+	VERDICT=$(jq -r '.verdict // ""' "$REVIEW_LEAD_FILE" 2>/dev/null || echo "")
+	PAYLOAD=$(jq -r '.payload // ""' "$REVIEW_LEAD_FILE" 2>/dev/null || echo "")
+	SIGNATURE=$(jq -r '.signature // ""' "$REVIEW_LEAD_FILE" 2>/dev/null || echo "")
+	SIG_TYPE=$(jq -r '.signature_type // ""' "$REVIEW_LEAD_FILE" 2>/dev/null || echo "")
+
+	# Check 3: Signature type must be QA_FINAL_SIGNATORY
+	if [[ "$SIG_TYPE" != "QA_FINAL_SIGNATORY" ]]; then
+		cat << EOF
+{"decision":"block","reason":"Review-lead signature_type is '$SIG_TYPE', expected 'QA_FINAL_SIGNATORY'."}
 EOF
 		exit 1
 	fi
+
+	# Check 4: Payload and signature must exist
+	if [[ -z "$PAYLOAD" || -z "$SIGNATURE" ]]; then
+		cat << EOF
+{"decision":"block","reason":"Review-lead output missing payload or signature."}
+EOF
+		exit 1
+	fi
+
+	# Check 5: Verdict must be APPROVED
+	if [[ "$VERDICT" != "APPROVED" ]]; then
+		cat << EOF
+{"decision":"block","reason":"Review-lead verdict is '$VERDICT', expected 'APPROVED'. Cannot push without approval."}
+EOF
+		exit 1
+	fi
+
+	# Check 6: Verify signature via crypto-gate
+	if ! qa_verify_payload_signature "$PAYLOAD" "$SIGNATURE" "$SIG_TYPE"; then
+		cat << EOF
+{"decision":"block","reason":"Review-lead signature verification failed via crypto-gate."}
+EOF
+		exit 1
+	fi
+
+	# Check 7: Verify input hash matches current canonical input
+	CURRENT_INPUT_HASH=""
+	if [[ -f "$QA_CURRENT_DIR/input.sha256" ]]; then
+		CURRENT_INPUT_HASH=$(cat "$QA_CURRENT_DIR/input.sha256")
+	fi
+
+	# Extract input_hash from payload_json (the pre-parsed object in the output file)
+	PAYLOAD_INPUT_HASH=$(jq -r '.payload_json.input_hash // ""' "$REVIEW_LEAD_FILE" 2>/dev/null || echo "")
+
+	if [[ -z "$CURRENT_INPUT_HASH" ]]; then
+		cat << EOF
+{"decision":"block","reason":"Missing canonical input.sha256. Re-run QA workflow from Phase 1."}
+EOF
+		exit 1
+	fi
+
+	if [[ "$PAYLOAD_INPUT_HASH" != "$CURRENT_INPUT_HASH" ]]; then
+		cat << EOF
+{"decision":"block","reason":"Input hash mismatch. Signed hash: '$PAYLOAD_INPUT_HASH', current: '$CURRENT_INPUT_HASH'. Review may be stale."}
+EOF
+		exit 1
+	fi
+
+	# Check 8: Verify HEAD matches what was signed (optional but recommended)
+	CURRENT_HEAD=$(git rev-parse HEAD 2>/dev/null || echo "")
+	INPUT_HEAD=$(jq -r '.head // ""' "$QA_CURRENT_DIR/input.json" 2>/dev/null || echo "")
+
+	if [[ -n "$INPUT_HEAD" && "$CURRENT_HEAD" != "$INPUT_HEAD" ]]; then
+		cat << EOF
+{"decision":"block","reason":"HEAD mismatch. Signed HEAD: '$INPUT_HEAD', current: '$CURRENT_HEAD'. New commits added after review."}
+EOF
+		exit 1
+	fi
+
+	log_hook "safe-deployment-gate" "All gating checks passed, allowing subagent to run"
+	exit 0
 fi
 
-# Subagent-specific validation
-case "$SUBAGENT" in
-	review-ci-tests-required)
-		if ! echo "$PARSED" | jq -e '.files_changed' >/dev/null 2>&1; then
-			cat << 'EOF'
-{"decision":"block","reason":"review-ci-tests-required INPUT missing 'files_changed' field. Required: { branch, commits, files_changed }"}
-EOF
-			exit 1
-		fi
-		;;
-	review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry)
-		if ! echo "$PARSED" | jq -e '.original_request' >/dev/null 2>&1; then
-			cat << 'EOF'
-{"decision":"block","reason":"QA reviewer INPUT missing 'original_request' field. Required: { branch, commits, original_request, changes_summary, user_approval, files_changed }"}
-EOF
-			exit 1
-		fi
-		;;
-	review-lead)
-		# Phase 2: review-lead needs approvals_json from Phase 1 reviewers
-		if ! echo "$PARSED" | jq -e '.approvals_json' >/dev/null 2>&1; then
-			cat << 'EOF'
-{"decision":"block","reason":"review-lead INPUT missing 'approvals_json' field. Required: { branch, commits, approvals_json, original_request, changes_summary }"}
-EOF
-			exit 1
-		fi
-		;;
-	safe-deployment-gate)
-		# Phase 3: safe-deployment-gate needs single approval or override token
-		if ! echo "$PARSED" | jq -e '.approval // .override_token' >/dev/null 2>&1; then
-			cat << 'EOF'
-{"decision":"block","reason":"safe-deployment-gate INPUT missing 'approval' or 'override_token' field. Required: { branch, approval } OR { branch, override_token }"}
-EOF
-			exit 1
-		fi
-		;;
-esac
+# =============================================================================
+# CHECK IF THIS IS A QA SUBAGENT (Phase 1 or Phase 2)
+# =============================================================================
 
-# All checks passed
+if ! qa_is_qa_agent "$SUBAGENT"; then
+	# Not a tracked subagent, allow silently
+	exit 0
+fi
+
+log_hook "$SUBAGENT" "Starting (pre-task)"
+
+# =============================================================================
+# VERIFY CANONICAL INPUT EXISTS (created by qa-prepare.sh)
+# =============================================================================
+
+qa_paths_init
+
+# Master agent MUST run qa-prepare.sh before dispatching Phase 1
+# The prep script creates input.json with prompts and summary
+if [[ ! -f "$QA_CURRENT_DIR/input.json" ]]; then
+	cat << 'EOF'
+{"decision":"block","reason":"input.json not found. Master agent must run qa-prepare.sh before dispatching Phase 1 reviewers.\n\nUsage:\n  .claude/agents/shared/scripts/qa-prepare.sh --summary \"Description of what was implemented...\"\n\nThen dispatch Phase 1 reviewers."}
+EOF
+	exit 1
+fi
+
+# =============================================================================
+# DELTA LOGIC FOR PHASE 1 REVIEWERS
+# =============================================================================
+
+if qa_is_phase1_reviewer "$SUBAGENT"; then
+	# Read commits from canonical input
+	CURRENT_COMMITS=$(jq -c '.commits' "$QA_CURRENT_DIR/input.json" 2>/dev/null || echo '[]')
+
+	# Compute delta and write to delta file
+	MODE=$(qa_compute_delta "$SUBAGENT" "$CURRENT_COMMITS")
+
+	log_hook "$SUBAGENT" "Delta mode: $MODE"
+fi
+
+# =============================================================================
+# GATING FOR REVIEW-LEAD (PHASE 2)
+# =============================================================================
+
+if qa_is_review_lead "$SUBAGENT"; then
+	log_hook "review-lead" "Validating Phase 1 outputs"
+
+	# Validate all 6 Phase 1 output files
+	ERROR_MSG=""
+	if ! ERROR_MSG=$(qa_validate_phase1_outputs 2>&1); then
+		cat << EOF
+{"decision":"block","reason":"Phase 1 validation failed: $ERROR_MSG"}
+EOF
+		exit 1
+	fi
+
+	log_hook "review-lead" "Phase 1 validation passed"
+fi
+
+# All checks passed - context injection handled by SubagentStart hook
 exit 0

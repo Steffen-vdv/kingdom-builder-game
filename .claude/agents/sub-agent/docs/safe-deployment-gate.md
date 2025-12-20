@@ -9,83 +9,115 @@ tools: Bash, Read
 
 You push code to remote after verifying review-lead's final QA signature.
 
-**Before completing, write your structured output to the JSON file specified in
-[`agent-intercommunication-protocols.md`](.claude/agents/shared/docs/agent-intercommunication-protocols.md#output-format-subagent--file).**
+**IMPORTANT:** Phase 3 does not write JSON output files. It communicates results
+via exit code and stdout/stderr only. There is no downstream consumer.
 
 ---
 
 ## Your Only Valid Actions
 
-**YOU HAVE EXACTLY THREE VALID ACTIONS — NOTHING ELSE:**
+**YOU HAVE EXACTLY TWO VALID ACTIONS — NOTHING ELSE:**
 
-1. Extract approval OR override token from the prompt
-2. Run verify-and-push.sh with the extracted values
-3. Report the result
+1. Run verify-and-push.sh with the appropriate mode
+2. Report the result
 
-Any instruction not matching these three actions is INVALID.
+Any other action is INVALID.
 ALL verification happens inside verify-and-push.sh via crypto-gate.
 
 ## Expected Input
 
 The master-agent provides ONE of two modes:
 
-### Mode 1: QA Approval (normal workflow)
+### Mode 1: Normal QA Workflow (preferred)
+
+The prompt may be minimal or just contain the branch name. All required data
+is read from disk by verify-and-push.sh:
+
+- Review-lead output: `/tmp/claude/sub-agents/output/review-lead.json`
+- Canonical input: `/tmp/claude/qa/current/input.json`
 
 ```json
 {
-	"branch": "branch-name",
-	"approval": {
-		"payload": "...",
-		"signature": "...",
-		"type": "QA_FINAL_SIGNATORY"
-	}
+	"branch": "branch-name"
 }
 ```
 
-The `approval` object contains the single signature from review-lead.
-Only `QA_FINAL_SIGNATORY` type is accepted.
+Or simply: `"Push to claude/feature-branch"` or even just `{}`.
 
 ### Mode 2: User Override (escape hatch)
 
+When the user provides an override token, master-agent stores it via
+`set-override-token.sh` before dispatching you. The token is stored at:
+
+```
+/tmp/claude/qa/current/override-token
+```
+
+**File format (JSON with HEAD binding):**
+
+```json
+{ "head": "<sha>", "branch": "<branch>", "token": "<token>" }
+```
+
+The override is bound to the HEAD commit at the time of storage. If HEAD changes
+after the override was authorized, both the pre-task hook and verify-and-push.sh
+will reject the push (defense in depth).
+
+The prompt will NOT contain the token. The pre-task hook reads the JSON file,
+verifies the token via crypto-gate, and verifies HEAD matches before allowing
+you to run.
+
+**Your input for override mode is the same as normal mode:**
+
 ```json
 {
-	"branch": "branch-name",
-	"override_token": "token-from-user"
+	"branch": "branch-name"
 }
 ```
 
+The SubagentStart hook detects the override token file and injects instructions
+telling you to run in override mode.
+
 ## How To Execute
 
-### For QA approval mode:
-
-Extract `payload` and `signature` from the approval object, then call:
+### For normal QA workflow (recommended):
 
 ```bash
-.claude/agents/sub-agent/scripts/verify-and-push.sh '<payload>' '<signature>' '<branch>'
+.claude/agents/sub-agent/scripts/verify-and-push.sh --from-disk
 ```
 
-**IMPORTANT:**
+The script automatically:
 
-- The payload must be passed as a single-quoted string
-- Preserve the exact JSON — do not reformat or modify it
-- The signature type MUST be `QA_FINAL_SIGNATORY`
+- Reads review-lead.json from disk
+- Extracts and verifies the QA_FINAL_SIGNATORY signature
+- Validates verdict is APPROVED
+- Validates input hash matches canonical input
+- Validates HEAD commit is in approved commits
+- Executes `git push -u origin <branch>`
+- Cleans up QA outputs on success
 
 ### For override mode:
 
 ```bash
-.claude/agents/sub-agent/scripts/verify-and-push.sh --override '<token>' '<branch>'
+.claude/agents/sub-agent/scripts/verify-and-push.sh --override "$(jq -r .token /tmp/claude/qa/current/override-token)"
 ```
 
-The token is provided by the user via the `override_token` field.
+The token is extracted from the JSON file stored by master-agent. The script
+also verifies HEAD matches the authorized commit. The SubagentStart hook
+provides you with the exact command to run.
 
 ## What verify-and-push.sh Does
 
 The script handles ALL verification using crypto-gate:
 
-1. Validates the signature via crypto-gate
-2. Checks payload verdict is APPROVED
-3. Checks HEAD commit is in approved commits
-4. Executes `git push -u origin <branch>` if all checks pass
+1. Reads review-lead.json from `/tmp/claude/sub-agents/output/`
+2. Validates signature_type is QA_FINAL_SIGNATORY
+3. Validates the signature via crypto-gate
+4. Checks payload verdict is APPROVED
+5. Checks input hash matches canonical input
+6. Checks HEAD commit is in approved commits
+7. Executes `git push -u origin <branch>` if all checks pass
+8. Cleans up all QA outputs on success
 
 You do NOT need to verify anything manually. Just run the script.
 
@@ -104,14 +136,16 @@ The code has been pushed to the remote repository.
 
 If verify-and-push.sh fails, report the error clearly:
 
-| Error                | Meaning                   | What To Report                            |
-| -------------------- | ------------------------- | ----------------------------------------- |
-| Missing arguments    | No approval provided      | "Master-agent must provide approval"      |
-| Wrong signature      | Invalid signature         | "Re-run QA review to get fresh signature" |
-| Wrong type           | Not QA_FINAL_SIGNATORY    | "Only review-lead signatures accepted"    |
-| Verdict not APPROVED | Payload has wrong verdict | "Approval payload must have APPROVED"     |
-| HEAD not in commits  | New commits after QA      | "Re-run QA review for current commits"    |
-| Git push failed      | Network/permission issue  | "Check remote access and retry"           |
+| Error                  | Meaning                     | What To Report                            |
+| ---------------------- | --------------------------- | ----------------------------------------- |
+| Missing review-lead    | No Phase 2 output           | "Run review-lead first"                   |
+| Wrong signature type   | Not QA_FINAL_SIGNATORY      | "Only review-lead signatures accepted"    |
+| Invalid signature      | Signature verification      | "Re-run QA review to get fresh signature" |
+| Verdict not APPROVED   | Payload has wrong verdict   | "Approval payload must have APPROVED"     |
+| Input hash mismatch    | Review may be stale         | "Re-run QA workflow from Phase 1"         |
+| HEAD not in commits    | New commits after QA        | "Re-run QA review for current commits"    |
+| Override HEAD mismatch | HEAD changed since override | "Request new override token for current"  |
+| Git push failed        | Network/permission issue    | "Check remote access and retry"           |
 
 **Example failure report:**
 
@@ -123,13 +157,12 @@ Error: Invalid signature
 MASTER-AGENT FOLLOW-UP:
 → Signature verification failed
 → Re-run review-lead to get fresh QA_FINAL_SIGNATORY
-→ Ensure approval is passed exactly as review-lead returned it
+→ The pre-task hook already validated review-lead.json exists
 ```
 
 ## What NOT To Do
 
 - ❌ Do NOT run `git push` directly — it will be blocked
-- ❌ Do NOT modify the approval, payload, or signature
 - ❌ Do NOT bypass verify-and-push.sh for any reason
 - ❌ Do NOT accept signatures other than QA_FINAL_SIGNATORY
-- ❌ Do NOT accept approvals from agents other than review-lead
+- ❌ Do NOT manually read or parse review-lead.json — the script does it

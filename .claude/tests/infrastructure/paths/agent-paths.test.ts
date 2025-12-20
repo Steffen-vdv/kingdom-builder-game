@@ -10,7 +10,7 @@ import * as path from 'path';
  * refactoring or reorganization.
  */
 
-const PROJECT_ROOT = path.resolve(__dirname, '../../..');
+const PROJECT_ROOT = path.resolve(__dirname, '../../../..');
 
 const pathExists = (relativePath: string): boolean => {
 	const fullPath = path.join(PROJECT_ROOT, relativePath);
@@ -31,9 +31,10 @@ describe('Infrastructure: Agent Path Validation', () => {
 			expect(pathExists('.claude/agents/sub-agent/scripts')).toBe(true);
 		});
 
-		it('should have shared directory with docs', () => {
+		it('should have shared directory with scripts and config', () => {
 			expect(pathExists('.claude/agents/shared')).toBe(true);
-			expect(pathExists('.claude/agents/shared/docs')).toBe(true);
+			expect(pathExists('.claude/agents/shared/scripts')).toBe(true);
+			expect(pathExists('.claude/agents/shared/config')).toBe(true);
 		});
 	});
 
@@ -86,15 +87,8 @@ describe('Infrastructure: Agent Path Validation', () => {
 		});
 
 		it('should have subagent scripts', () => {
-			expect(pathExists('.claude/agents/sub-agent/scripts/sign.sh')).toBe(true);
 			expect(
 				pathExists('.claude/agents/sub-agent/scripts/verify-and-push.sh'),
-			).toBe(true);
-			expect(
-				pathExists('.claude/agents/sub-agent/scripts/verify-bulk-and-push.sh'),
-			).toBe(true);
-			expect(
-				pathExists('.claude/agents/sub-agent/scripts/verify-bulk.sh'),
 			).toBe(true);
 			expect(
 				pathExists(
@@ -102,18 +96,7 @@ describe('Infrastructure: Agent Path Validation', () => {
 				),
 			).toBe(true);
 			expect(
-				pathExists('.claude/agents/sub-agent/scripts/subagent-cleanup.sh'),
-			).toBe(true);
-			expect(
-				pathExists('.claude/agents/sub-agent/scripts/write-output.sh'),
-			).toBe(true);
-			expect(
-				pathExists(
-					'.claude/agents/master-agent/scripts/collect-phase1-assessments.sh',
-				),
-			).toBe(true);
-			expect(
-				pathExists('.claude/agents/sub-agent/scripts/check-prior-state.sh'),
+				pathExists('.claude/agents/sub-agent/scripts/subagent-session-stop.sh'),
 			).toBe(true);
 			expect(
 				pathExists('.claude/agents/shared/scripts/cleanup-qa-outputs.sh'),
@@ -128,12 +111,10 @@ describe('Infrastructure: Agent Path Validation', () => {
 	});
 
 	describe('Shared Files', () => {
-		it('should have shared protocol documentation with new name', () => {
-			expect(
-				pathExists(
-					'.claude/agents/shared/docs/agent-intercommunication-protocols.md',
-				),
-			).toBe(true);
+		it('should have shared directory structure', () => {
+			expect(pathExists('.claude/agents/shared')).toBe(true);
+			expect(pathExists('.claude/agents/shared/scripts')).toBe(true);
+			expect(pathExists('.claude/agents/shared/config')).toBe(true);
 		});
 
 		it('should NOT have old protocol doc name', () => {

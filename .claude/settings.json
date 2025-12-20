@@ -9,7 +9,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/scripts/test.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/scripts/user-prompt-submit.sh"
 					}
 				]
 			}
@@ -67,7 +67,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/agents/sub-agent/scripts/subagent-cleanup.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/agents/sub-agent/scripts/subagent-session-stop.sh"
 					}
 				]
 			}
@@ -137,17 +137,6 @@
 					{
 						"type": "command",
 						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-task-tool.sh"
-					}
-				]
-			}
-		],
-		"PostToolUse": [
-			{
-				"matcher": "Task",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/post-task-tool.sh"
 					}
 				]
 			}

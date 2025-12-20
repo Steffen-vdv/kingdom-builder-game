@@ -22,17 +22,16 @@ log_hook "handover" "Context reset to master-agent"
 
 log_session "handover" "SessionHandover" "completed"
 
-# Output identity docs (re-injected into agent context on handover)
+# Output identity doc (re-injected into agent context on handover)
 IDENTITY_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/docs/master-agent.md"
-PROTOCOL_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/shared/docs/agent-intercommunication-protocols.md"
 
 cat << 'HEADER'
 ╔════════════════════════════════════════════════════════════════════════════════════╗
-║  SESSION HANDOVER - Re-injecting identity and protocol docs                        ║
+║  SESSION HANDOVER - Re-injecting identity doc                                      ║
 ╚════════════════════════════════════════════════════════════════════════════════════╝
 
 If your last session ended with Task outputs containing instructions to you
-(master-agent), FOLLOW THEM after reviewing the re-injected docs below.
+(master-agent), FOLLOW THEM after reviewing the re-injected doc below.
 
 === Master Agent Identity ===
 The following is your identity document. You MUST follow these instructions.
@@ -41,15 +40,5 @@ Project rules in CLAUDE.md also apply.
 HEADER
 
 cat "$IDENTITY_DOC"
-
-cat << 'PROTOCOL_HEADER'
-
-=== Subagent Communication Protocol ===
-When dispatching subagents (6 Phase 1 reviewers, review-lead, safe-deployment-gate),
-you MUST follow the INPUT/OUTPUT formats defined below.
-
-PROTOCOL_HEADER
-
-cat "$PROTOCOL_DOC"
 
 exit 0

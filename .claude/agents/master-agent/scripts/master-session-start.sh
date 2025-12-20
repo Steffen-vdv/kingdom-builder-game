@@ -3,6 +3,9 @@
 # Session start hook for Kingdom Builder
 # Runs on first session start - installs dependencies
 
+# Capture stdin FIRST before cd (stdin may not survive cd in some shells)
+HOOK_INPUT=$(cat)
+
 cd "$CLAUDE_PROJECT_DIR" || exit 1
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
 
@@ -20,6 +23,19 @@ fi
 # Register master-agent context
 "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager/register-master-agent.sh"
 log_hook "start" "Context set to master-agent"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# INSTALL BASHLEX (required by block-git-command.sh for parsing chained commands)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+if ! python3 -c "import bashlex" 2>/dev/null; then
+  log_hook "start" "Installing bashlex (Python package for command parsing)..."
+  pip3 install --quiet bashlex >> "$LOG_FILE" 2>&1 || {
+    log_hook "start" "WARNING: Failed to install bashlex. Chained git commands may be blocked."
+  }
+else
+  log_hook "start" "bashlex already installed"
+fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # DOWNLOAD CRYPTO-GATE BINARY (if not present)
@@ -108,27 +124,33 @@ download_crypto_gate
 
 log_session "start" "SessionStart" "completed"
 
-# Output identity docs (injected into agent context)
-IDENTITY_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/docs/master-agent.md"
-PROTOCOL_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/shared/docs/agent-intercommunication-protocols.md"
+# ═══════════════════════════════════════════════════════════════════════════════
+# OUTPUT STRUCTURED JSON FOR CONTEXT INJECTION
+# Uses hookSpecificOutput.additionalContext to bypass SessionStart stdout bug
+# See: https://github.com/anthropics/claude-code/issues/10373
+# ═══════════════════════════════════════════════════════════════════════════════
 
-cat << 'HEADER'
-=== Master Agent Identity ===
+IDENTITY_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/docs/master-agent.md"
+
+# Build the context string
+IDENTITY_HEADER="=== Master Agent Identity ===
 The following is your identity document. You MUST follow these instructions.
 Project rules in CLAUDE.md also apply.
 
-HEADER
+"
 
-cat "$IDENTITY_DOC"
+IDENTITY_CONTENT=$(cat "$IDENTITY_DOC")
 
-cat << 'PROTOCOL_HEADER'
+FULL_CONTEXT="${IDENTITY_HEADER}${IDENTITY_CONTENT}"
 
-=== Subagent Communication Protocol ===
-When dispatching subagents (6 Phase 1 reviewers, review-lead, safe-deployment-gate),
-you MUST follow the INPUT/OUTPUT formats defined below. All communication is pure JSON.
-
-PROTOCOL_HEADER
-
-cat "$PROTOCOL_DOC"
+# Output structured JSON with hookSpecificOutput.additionalContext
+# Using jq to properly escape the content for JSON
+# IMPORTANT: hookEventName is required by the schema
+jq -n --arg context "$FULL_CONTEXT" '{
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": $context
+  }
+}'
 
 exit 0

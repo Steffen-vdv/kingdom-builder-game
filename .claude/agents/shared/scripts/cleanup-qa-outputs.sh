@@ -13,25 +13,35 @@
 
 set -euo pipefail
 
-# Allow override for testing
-OUTPUT_DIR="${QA_OUTPUT_DIR:-/tmp/claude/sub-agents/output}"
+# Load paths from config
+source "${CLAUDE_PROJECT_DIR:-.}/.claude/config/paths.sh"
 
-if [[ ! -d "$OUTPUT_DIR" ]]; then
+# Load agent list from config
+_CONFIG="${CLAUDE_PROJECT_DIR:-.}/.claude/config/qa-agents.json"
+
+if [[ ! -d "$QA_OUTPUT_DIR" ]]; then
 	echo "✓ No output directory to clean"
 	exit 0
 fi
 
-# Remove all reviewer JSON files
+# Remove all reviewer JSON files (Phase 1 + Phase 2)
 REMOVED=0
-for agent in review-ci-tests-required review-claims-auditor review-contracts-boundaries \
-             review-mechanics-content review-infra-concurrency review-tests-docs-dry \
-             review-lead; do
-	FILE="$OUTPUT_DIR/${agent}.json"
+
+# Get Phase 1 agents from config
+while read -r agent; do
+	FILE="$QA_OUTPUT_DIR/${agent}.json"
 	if [[ -f "$FILE" ]]; then
 		rm -f "$FILE"
 		((REMOVED++)) || true
 	fi
-done
+done < <(jq -r '.phase1_reviewers[]' "$_CONFIG" 2>/dev/null)
+
+# Also remove Phase 2 aggregator output
+PHASE2=$(jq -r '.phase2_aggregator' "$_CONFIG" 2>/dev/null)
+if [[ -n "$PHASE2" && -f "$QA_OUTPUT_DIR/${PHASE2}.json" ]]; then
+	rm -f "$QA_OUTPUT_DIR/${PHASE2}.json"
+	((REMOVED++)) || true
+fi
 
 if [[ $REMOVED -gt 0 ]]; then
 	echo "✓ Cleaned $REMOVED QA output file(s)"

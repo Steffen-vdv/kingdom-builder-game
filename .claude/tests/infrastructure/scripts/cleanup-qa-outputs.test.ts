@@ -14,7 +14,7 @@ import * as path from 'path';
  * - Reports cleanup count
  */
 
-const PROJECT_ROOT = path.resolve(__dirname, '../../..');
+const PROJECT_ROOT = path.resolve(__dirname, '../../../..');
 const SCRIPT_PATH = path.join(
 	PROJECT_ROOT,
 	'.claude/agents/shared/scripts/cleanup-qa-outputs.sh',

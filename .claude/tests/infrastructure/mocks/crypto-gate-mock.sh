@@ -3,7 +3,7 @@
 # Mock crypto-gate binary for testing
 #
 # This mock produces deterministic signatures based on the input payload.
-# It allows sign.sh and write-output.sh tests to run without the real crypto-gate binary.
+# It allows tests to run without the real crypto-gate binary.
 #
 # Usage (matches real crypto-gate binary interface):
 #   crypto-gate-mock.sh sign <payload> --type <type>
@@ -23,13 +23,22 @@ PAYLOAD=""
 SIGNATURE=""
 
 # Parse positional arguments based on command
+# If payload is "-", read from stdin to avoid ARG_MAX limits
 if [[ "$COMMAND" == "sign" ]]; then
 	# sign <payload> --type <type>
+	# sign - --type <type>  (read payload from stdin)
 	PAYLOAD="${1:-}"
+	if [[ "$PAYLOAD" == "-" ]]; then
+		PAYLOAD=$(cat)
+	fi
 	shift 1 2>/dev/null || true
 elif [[ "$COMMAND" == "verify" ]]; then
 	# verify <payload> <sig> --type <type>
+	# verify - <sig> --type <type>  (read payload from stdin)
 	PAYLOAD="${1:-}"
+	if [[ "$PAYLOAD" == "-" ]]; then
+		PAYLOAD=$(cat)
+	fi
 	SIGNATURE="${2:-}"
 	shift 2 2>/dev/null || true
 fi
@@ -69,6 +78,19 @@ case "$COMMAND" in
 			echo "invalid"
 			exit 1
 		fi
+		;;
+	verify-override)
+		# For testing: accept any token except "MOCK_INVALID_TOKEN"
+		TOKEN="${PAYLOAD:-$1}"
+		if [[ -z "$TOKEN" ]]; then
+			echo "ERROR: verify-override requires <token>" >&2
+			exit 1
+		fi
+		if [[ "$TOKEN" == "MOCK_INVALID_TOKEN" ]]; then
+			echo "invalid"
+			exit 1
+		fi
+		echo "valid"
 		;;
 	*)
 		echo "ERROR: Unknown command: $COMMAND" >&2

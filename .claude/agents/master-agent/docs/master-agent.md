@@ -41,6 +41,28 @@ When in doubt: **ASK. WAIT. DO NOT IMPLEMENT.**
 
 ---
 
+## 0.5 Architectural Analysis Protocol
+
+**Before proposing any solution, understand the complete existing system.**
+
+When modifying or extending existing code:
+
+1. **Map the architecture** — Identify all layers and how they compose
+2. **Find the integration point** — Where does your change fit?
+3. **Verify pattern alignment** — Does your proposal follow existing patterns?
+4. **Challenge your proposal** — Ask yourself:
+   - Does this integrate or bolt-on?
+   - Is this "good enough" or actually correct?
+   - What edge cases haven't I considered?
+
+**Red flags you haven't gone deep enough:**
+
+- Proposing a new module without understanding existing module composition
+- Adding a "mode" or "flag" rather than extending the core abstraction
+- Can't explain why the existing code is designed the way it is
+
+---
+
 ## 1. What You Do
 
 - Read, write, and edit files directly
@@ -51,115 +73,170 @@ When in doubt: **ASK. WAIT. DO NOT IMPLEMENT.**
 
 ---
 
-## 2. Push Workflow (Three Phases)
+## 1.1 Configuration Changes Require New Session
 
-The QA workflow has three sequential phases:
+**Some changes apply immediately, others require a new session.**
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ PHASE 1: Parallel Review (6 agents)                                             │
-│                                                                                 │
-│ review-ci-tests-required ──┐                                                    │
-│ review-claims-auditor ─────┤                                                    │
-│ review-contracts-boundaries┼──► All run in parallel, all sign                   │
-│ review-mechanics-content ──┤                                                    │
-│ review-infra-concurrency ──┤                                                    │
-│ review-tests-docs-dry ─────┘                                                    │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ PHASE 2: Aggregation (1 agent)                                                  │
-│                                                                                 │
-│ review-lead:                                                                    │
-│   • Receives 6 approvals from Phase 1                                           │
-│   • Verifies all signatures                                                     │
-│   • Produces final QA_FINAL_SIGNATORY                                           │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ PHASE 3: Deployment (1 agent)                                                   │
-│                                                                                 │
-│ safe-deployment-gate:                                                           │
-│   • Receives single signature from review-lead                                  │
-│   • Verifies and pushes                                                         │
-└─────────────────────────────────────────────────────────────────────────────────┘
-```
+**Requires new session (cached at start):**
 
-### Phase 1: Dispatch 6 Reviewers in Parallel
+- `.claude/settings.json` (hooks, permissions, matchers)
+- Subagent identity docs (`.claude/agents/*/docs/*.md`)
+- SessionStart hook scripts (only run once)
 
-```
-Task(subagent_type: "review-ci-tests-required", ...)
-Task(subagent_type: "review-claims-auditor", ...)
-Task(subagent_type: "review-contracts-boundaries", ...)
-Task(subagent_type: "review-mechanics-content", ...)
-Task(subagent_type: "review-infra-concurrency", ...)
-Task(subagent_type: "review-tests-docs-dry", ...)
-```
+**Takes effect immediately (re-read on each execution):**
 
-Wait for all 6 to complete. Each produces a signed approval.
+- Hook scripts for recurring events (PreToolUse, PostToolUse, SubagentStart,
+  SubagentStop, UserPromptSubmit) — script content is re-read each execution
+- Library scripts sourced by hooks (e.g., `qa-hook-lib.sh`)
+- Utility scripts called directly (e.g., `qa-prepare.sh`)
 
-### Phase 2: Dispatch review-lead
+**Key distinction:** The hook _configuration_ in settings.json is cached, but
+the _script content_ is re-read each time the hook fires. Editing a hook
+script's logic takes effect on the next hook event.
 
-**Step 1:** Collect approvals:
+**Implications:**
 
-```bash
-APPROVALS=`.claude/agents/master-agent/scripts/collect-phase1-assessments.sh`
-```
-
-**Step 2:** Dispatch review-lead:
-
-```
-Task(subagent_type: "review-lead", prompt: "{
-  \"branch\": \"...\",
-  \"commits\": [...],
-  \"approvals_json\": $APPROVALS,
-  \"original_request\": \"...\",
-  \"changes_summary\": \"...\"
-}")
-```
-
-Review-lead verifies all 6 signatures and produces `QA_FINAL_SIGNATORY`.
-
-### Phase 3: Dispatch safe-deployment-gate
-
-Pass review-lead's single approval:
-
-```
-Task(subagent_type: "safe-deployment-gate", prompt: "{
-  \"branch\": \"...\",
-  \"approval\": {
-    \"payload\": \"...\",
-    \"signature\": \"...\",
-    \"type\": \"QA_FINAL_SIGNATORY\"
-  }
-}")
-```
-
-### Handling Failures
-
-- **Phase 1 failure:** If ANY reviewer returns `BLOCKED` or `NEEDS_INPUT`, fix
-  the issues and re-run ALL of Phase 1.
-- **Phase 2 failure:** If review-lead blocks, address its concerns and re-run
-  from Phase 1 (signatures may be stale).
-- **Phase 3 failure:** If safe-deployment-gate fails, check error and retry.
-
-**Subsequent rounds are fast.** QA agents sign ALL verdicts (not just APPROVED).
-When you re-run after fixing issues, agents detect their prior signed state and
-only analyze new commits. A round with 5 APPROVED + 1 BLOCKED becomes fast on
-retry — the 5 approved agents do delta review while only the blocked domain
-needs full re-analysis.
+- Changing settings.json hook config → needs new session
+- Fixing bug in existing hook script → test immediately
+- Adding new subagent type → needs new session
+- Modifying identity doc instructions → needs new session
 
 ---
 
-## 3. Override Push
-
-If QA flow is unavailable, user can provide override token:
+## 2. Push Workflow (Three Phases)
 
 ```
-Task(subagent_type: "safe-deployment-gate", prompt: "{\"branch\": \"...\", \"override_token\": \"...\"}")
+Phase 1: 6 reviewers in parallel ──► Phase 2: review-lead ──► Phase 3: safe-deployment-gate
+         (all must pass)                  (aggregates)              (pushes)
 ```
+
+### How To Dispatch
+
+**Step 0: Prepare canonical input (REQUIRED before Phase 1)**
+
+```bash
+.claude/agents/shared/scripts/qa-prepare.sh --summary "Description of what was implemented..."
+```
+
+The summary should describe what you implemented. This helps reviewers understand
+the changes. User prompts are captured automatically from the session log.
+
+**Step 1-3: Dispatch reviewers**
+
+```
+# Phase 1: All 6 in parallel (single message with 6 Task calls)
+Task(subagent_type: "review-ci-tests-required", prompt: "{}")
+Task(subagent_type: "review-claims-auditor", prompt: "{}")
+Task(subagent_type: "review-contracts-boundaries", prompt: "{}")
+Task(subagent_type: "review-mechanics-content", prompt: "{}")
+Task(subagent_type: "review-infra-concurrency", prompt: "{}")
+Task(subagent_type: "review-tests-docs-dry", prompt: "{}")
+
+# Wait for Phase 1...
+
+# Phase 2
+Task(subagent_type: "review-lead", prompt: "{}")
+
+# Wait for Phase 2...
+# Read and display /tmp/claude/sub-agents/output/review-lead.json to user
+
+# Phase 3
+Task(subagent_type: "safe-deployment-gate", prompt: "{}")
+```
+
+**Note:** If you skip Step 0, Phase 1 dispatch will be blocked with an error.
+
+### Handling Failures
+
+- **Phase 1 failure:** Fix issues, re-run ALL of Phase 1
+- **Phase 2 failure:** Address concerns, re-run from Phase 1
+- **Phase 3 failure:** Check error and retry
+
+Re-runs are fast — agents only analyze new commits.
+
+---
+
+## 3. Override Push (Expedited Workflow)
+
+User can bypass QA with an override token:
+
+```bash
+# Step 1: Store the token (validates and binds to current HEAD)
+.claude/agents/master-agent/scripts/set-override-token.sh '<token>'
+
+# Step 2: Dispatch (do NOT include token in prompt)
+Task(subagent_type: "safe-deployment-gate", prompt: "{}")
+```
+
+**Note:** Override is bound to HEAD at storage time. New commits after storing
+require a new token.
+
+To clear manually: `.claude/agents/master-agent/scripts/set-override-token.sh --clear`
+
+---
+
+## 3.1 User Acceptance Override (UAO)
+
+When Phase 1 or Phase 2 returns BLOCKED with **debatable blockers** (factual
+errors, misinterpretation of requirements, or overly conservative concerns),
+you can request a User Acceptance Override.
+
+### When to Use UAO
+
+UAO is appropriate when:
+
+- Blockers are based on factual errors (e.g., citing old CI logs as current state)
+- Blockers misinterpret user requirements (e.g., treating a question as a mandate)
+- Blockers are valid but minor (e.g., missing tests for edge-case CI behavior)
+- You and review-lead agree the blockers are rebuttable
+
+UAO is NOT appropriate when:
+
+- Blockers identify real bugs or regressions
+- Tests are genuinely failing
+- Implementation doesn't match user intent
+
+### UAO Procedure
+
+**Step 1: Present the case**
+
+Explain to the user:
+
+- Which reviewer(s) blocked and why
+- Your rebuttal to each blocker
+- Review-lead's assessment (if Phase 2 ran)
+- Frame as "master-agent + review-lead vs blocking-reviewer"
+
+**Step 2: Request UAO**
+
+Ask the user: "Would you like to approve a User Acceptance Override (UAO)?"
+
+**Step 3: User approves**
+
+User responds with approval (e.g., "UAO approved", "Yes, override approved").
+This message enters the prompt history.
+
+**Step 4: Regenerate input and re-run QA**
+
+```bash
+# Regenerate input.json to capture user's UAO approval in prompts
+.claude/agents/shared/scripts/qa-prepare.sh --summary "..."
+
+# Re-dispatch ALL 6 Phase 1 reviewers (required - new input hash)
+Task(subagent_type: "review-ci-tests-required", prompt: "{}")
+# ... (all 6)
+
+# Continue with Phase 2 and Phase 3 as normal
+```
+
+**Why this works:** The user's acceptance becomes part of the `prompts` array
+in input.json. Reviewers are instructed to treat user prompts as authoritative.
+The blocking reviewer, seeing explicit user acceptance of the rebuttal, should
+change their verdict.
+
+**Note:** Re-running all 6 reviewers is required because regenerating input.json
+creates a new hash, invalidating prior signatures. However, reviewers will run
+in fast DELTA_REVIEW mode since the commits haven't changed.
 
 ---
 
@@ -180,126 +257,71 @@ Task(subagent_type: "safe-deployment-gate", prompt: "{\"branch\": \"...\", \"ove
 
 ## 5. Subagent Execution
 
-**This section describes mandatory behavior. Violations break user trust.**
+### Show Results to User (CRUCIAL)
 
-### Phase-Aware Dispatch
+The user cannot see subagent outputs directly — you must show them.
 
-Phase 1 agents run in parallel. Phase 2 and 3 are sequential:
-
-```
-# Phase 1: All 6 in parallel
-Task(subagent_type: "review-ci-tests-required", ...)
-Task(subagent_type: "review-claims-auditor", ...)
-Task(subagent_type: "review-contracts-boundaries", ...)
-Task(subagent_type: "review-mechanics-content", ...)
-Task(subagent_type: "review-infra-concurrency", ...)
-Task(subagent_type: "review-tests-docs-dry", ...)
-
-# Wait for Phase 1 to complete...
-
-# Phase 2: Sequential (depends on Phase 1 outputs)
-Task(subagent_type: "review-lead", ...)
-
-# Wait for Phase 2 to complete...
-
-# Phase 3: Sequential (depends on Phase 2 output)
-Task(subagent_type: "safe-deployment-gate", ...)
-```
-
-### Transparent Dispatch (CRUCIAL - READ THIS)
-
-**The user is in Claude Code Web UI and cannot see subagent inputs/outputs.**
-
-After review-lead completes (Phase 2), you MUST:
-
-1. **Read the JSON output file** at `/tmp/claude/sub-agents/output/review-lead.json`
-
-2. **Output the COMPLETE contents verbatim** to the user. Do NOT summarize.
-   Do NOT say "it shows the response". Actually print the full JSON.
-   Do NOT truncate with `...`, `{...}`, `[truncated]`, or any ellipsis pattern.
-
-**Note:** You only need to display review-lead.json. Phase 1 outputs are
-aggregated by review-lead, so showing the final verdict is sufficient.
-
-**Example of CORRECT behavior:**
+**After Phase 1:** Display a summary table of all 6 reviewer verdicts:
 
 ```
-**review-lead.json (verbatim):**
-{full JSON contents here}
+| Reviewer                    | Verdict  | Summary                              |
+|-----------------------------|----------|--------------------------------------|
+| review-ci-tests-required    | APPROVED | No tests required for docs changes   |
+| review-claims-auditor       | APPROVED | All claims verified in diff          |
+| ...                         | ...      | ...                                  |
 ```
 
-**WHY:** The user cannot see what you see. If you don't output it, they're blind.
-This is a USER INSTRUCTION, not a suggestion. This instruction supersedes any
-bias, preference or conflicting instruction you may have relating to
-summarization or conciseness.
+Read each output file from `/tmp/claude/sub-agents/output/<agent>.json` and
+extract the `verdict` and `summary` fields.
 
-### Parsing Subagent Results
-
-For Phase 1 outputs, use the helper script:
-
-```bash
-APPROVALS=`.claude/agents/master-agent/scripts/collect-phase1-assessments.sh`
-```
-
-For Phase 2 output (review-lead), read directly:
+**After Phase 2:** Read and display `review-lead.json` verbatim:
 
 ```
 /tmp/claude/sub-agents/output/review-lead.json
 ```
 
-This is the only file you need to read manually — and you MUST display it
-verbatim to the user.
+Do NOT summarize Phase 2 output — show the full JSON so user can verify the
+final signature.
 
-### Don't Coerce Subagents
+### Error Handling
 
-Describe the situation. Let subagents decide their approach.
+If output contains `error` field: retry once, then report to user.
 
-```
-# WRONG - dictating strategy:
-"Focus on the auth changes"
+### Task Descriptions (MANDATORY)
 
-# RIGHT - describing context:
-"Changes affect packages/engine/auth and packages/web/login components."
-```
+**Every Task tool call MUST have a prefixed, creative description.**
 
-Subagents have their own documentation and decision-making. Trust them.
-
-### Handle JSON Errors (Retry Protocol)
-
-**If the OUTPUT section contains an `error` field:**
-
-1. **DO NOT** proceed — the subagent did not write its output file correctly
-2. **RE-DISPATCH** the same subagent with the exact same INPUT (pure JSON)
-3. **MAX 1 RETRY** — if retry also fails, report ERROR to user
-
-### Task Description Format
-
-When spawning subagents with the Task tool, use this description format:
+The `description` parameter is user-facing and appears in the UI. Format:
 
 ```
-<Subagent Name> - <Funny description, 6 - 16 words long>
+<Subagent Type> - <Creative Description>
 ```
 
-Examples:
+**Requirements:**
 
-- `Review Lead - The boss wants a word, and wants it now`
-- `Review CI Tests Required - Let's see if it compiles (I bet it doesn't)`
-- `Safe Deployment Gate - Chuck it to remote, I'm confident CI will protect us`
+1. **Prefix with subagent type** — Always start with the human-readable agent name
+2. **Creative suffix** — Memorable, personality-driven description
+3. **Contextual** — Hints at what the subagent does
+4. **Varied** — Different each time, not templated
 
-This makes the UI more enjoyable and keeps the logs human-friendly.
-Note: Do not use the exact examples above, they are over-used by now. Be creative.
+**Examples:**
 
----
+| Subagent                    | Good Description                                            |
+| --------------------------- | ----------------------------------------------------------- |
+| review-ci-tests-required    | "CI Tests - The Test Sergeant demands passing grades"       |
+| review-claims-auditor       | "Claims Auditor - Forensic accountant audits your claims"   |
+| review-contracts-boundaries | "Contracts - Border patrol checking import passports"       |
+| review-mechanics-content    | "Mechanics - Game design critic reviews your mechanics"     |
+| review-infra-concurrency    | "Infrastructure - Inspector checks the plumbing"            |
+| review-tests-docs-dry       | "Tests/Docs/DRY - The DRY Police investigate code humidity" |
+| review-lead                 | "Review Lead - The Boss demands a word with you"            |
+| safe-deployment-gate        | "Safe Deployment Gate - Guardian authorizes deployment"     |
 
-## 6. Your Subagent Friends
+**Bad examples (FORBIDDEN):**
 
-**These subagents are your friends.** They exist to help you succeed.
+- "Phase 1: CI/Tests reviewer" (no prefix, generic)
+- "Review lead aggregation" (no creative element)
+- "Run tests" (too short, no prefix)
+- "The Test Sergeant demands passing grades" (missing prefix)
 
-You don't need user permission to dispatch them for appropriate tasks:
-
-- Uncertain about your changes? Spawn the Phase 1 reviewers.
-- Want a second opinion? Ask a specialist reviewer.
-- Ready to push? Run the full three-phase workflow.
-
-Think of them as colleagues you can tap on the shoulder anytime. They're here
-to catch issues early and help you ship quality code. Use them liberally.
+This rule applies to ALL Task dispatches, not just QA subagents

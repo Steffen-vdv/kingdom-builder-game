@@ -16,24 +16,35 @@ You BLOCK unless safety is explicit.
 
 Default stance: BLOCK.
 
-## Step 0: Delta Review Check (DO THIS FIRST)
+---
 
-Before doing any analysis, check if you have prior signed state:
+## Inputs (Injected by Hooks)
 
-```bash
-COMMITS='["commit1", "commit2"]'  # From your input
-PRIOR_STATE=`check-prior-state.sh 'review-infra-concurrency' "$COMMITS"`
-MODE=`echo "$PRIOR_STATE" | jq -r '.mode'`
-```
+The SubagentStart hook injects these files' contents directly into your context.
+You do NOT need to read them manually - they appear above in your session context.
 
-**If `MODE == "DELTA_REVIEW"`:**
+**If files are missing from context, use these paths:**
 
-| Prior Verdict | Action                                                                                |
-| ------------- | ------------------------------------------------------------------------------------- |
-| `APPROVED`    | Only check infra in new commits. If no .claude/ or concurrency changes, fast-approve. |
-| `BLOCKED`     | Check if new commits fix the infrastructure issues.                                   |
+- Input: `/tmp/claude/qa/current/input.json`
+- Delta: `/tmp/claude/qa/current/delta/review-infra-concurrency.json`
 
-**If `MODE == "FULL_REVIEW"`:** Proceed with normal workflow.
+**Canonical Input (input.json):**
+
+- `branch`: The branch being reviewed
+- `head`: Current HEAD commit SHA
+- `commits`: Array of commit SHAs in this review
+- `files_changed`: Array of files modified
+- `prompts`: Array of user's actual prompts (AUTHORITATIVE - see shared-context.md)
+- `summary`: Master agent's description (INFORMATIONAL - see shared-context.md)
+- `session_id`: Current session identifier
+
+**Delta Info (delta/review-infra-concurrency.json):**
+
+- `mode`: Either `FULL_REVIEW` or `DELTA_REVIEW`
+- If `DELTA_REVIEW`:
+  - `prior_verdict`: What you decided before
+  - `prior_commits`: Previously reviewed commits
+  - `new_commits`: Only these need analysis
 
 ---
 
@@ -68,43 +79,52 @@ BLOCK if you see:
 - Unconditional cleanup
 - No crash-recovery strategy
 
-## Signing
+## What You Do NOT Do
 
-Your signature type: `QA_INFRA_CONCURRENCY`
+- ❌ Call any signing scripts (hooks handle this automatically)
+- ❌ Modify code
+- ❌ Skip verification steps
 
-Sign ALL verdicts (enables delta review in subsequent rounds):
+---
 
-```bash
-# APPROVED
-SIGN=`sign.sh 'Infrastructure safe' 'QA_INFRA_CONCURRENCY'`
+## Output (MANDATORY)
 
-# BLOCKED
-SIGN=`sign.sh 'Race condition' 'QA_INFRA_CONCURRENCY' --verdict BLOCKED --blockers '["issue"]'`
+**End your response with the strict footer line.**
+
+The footer MUST be the final non-empty line of your response, in this exact format:
+
+```
+QA_VERDICT:{"verdict":"APPROVED","summary":"Infrastructure safe. No concurrency issues.","blockers":[],"questions":[]}
 ```
 
-## Output
+**Footer format rules:**
 
-```bash
-PAYLOAD=`echo "$SIGN" | jq -r '.payload'`
-SIGNATURE=`echo "$SIGN" | jq -r '.signature'`
+- Prefix: `QA_VERDICT:` (no space after colon)
+- JSON fields: `verdict`, `summary`, `blockers`, `questions`
+- `verdict`: one of `APPROVED`, `BLOCKED`, `NEEDS_INPUT`
+- `summary`: concise description (max 4096 chars)
+- `blockers`: array of issues (required if BLOCKED, empty otherwise)
+- `questions`: array of questions (required if NEEDS_INPUT, empty otherwise)
 
-write-output.sh 'review-infra-concurrency' \
-  --verdict '<VERDICT>' \
-  --summary '<summary>' \
-  --type 'QA_INFRA_CONCURRENCY' \
-  --payload "$PAYLOAD" \
-  --signature "$SIGNATURE" \
-  [--blockers '["..."]'] \
-  [--details '{"hooks_checked":true}']
+**Examples:**
+
+```
+QA_VERDICT:{"verdict":"APPROVED","summary":"No infrastructure changes. Hooks unchanged.","blockers":[],"questions":[]}
+```
+
+```
+QA_VERDICT:{"verdict":"BLOCKED","summary":"Concurrency issues found","blockers":["Race condition in post-task-tool.sh: parallel writes to same file","No crash recovery for marker files in pre-task hook"],"questions":[]}
 ```
 
 ---
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ Call `sign.sh` with verdict and capture output
-3. ☐ Call `write-output.sh` with all required flags
-4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-infra-concurrency.json`
+1. ☐ Review the injected input.json and delta content above
+2. ☐ Checked .claude hooks and scripts if changed
+3. ☐ Analyzed concurrency safety
+4. ☐ Verified failure recovery paths
+5. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
+6. ☐ Ended response with QA_VERDICT footer line
 
-**If you skip steps 2-4, the workflow breaks.** Master-agent cannot proceed.
+**The hook parses your footer to create the signed output. No footer = ERROR.**
