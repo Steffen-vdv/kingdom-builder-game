@@ -100,12 +100,32 @@ case "$AGENT_TYPE" in
 			MODE=$(jq -r '.mode // ""' "$DELTA_FILE" 2>/dev/null || echo "")
 			if [[ "$MODE" == "DELTA_REVIEW" ]]; then
 				PRIOR_VERDICT=$(jq -r '.prior_verdict // ""' "$DELTA_FILE" 2>/dev/null || echo "")
+				PRIOR_BLOCKERS=$(jq -r '.prior_blockers // []' "$DELTA_FILE" 2>/dev/null || echo "[]")
+				PRIOR_QUESTIONS=$(jq -r '.prior_questions // []' "$DELTA_FILE" 2>/dev/null || echo "[]")
 				CONTEXT+="- Mode: DELTA_REVIEW - Focus only on new_commits
 "
 				CONTEXT+="- Prior verdict: $PRIOR_VERDICT
 "
 				CONTEXT+="- Only analyze changes since prior review
 "
+				# Show prior blockers if any existed
+				if [[ "$PRIOR_BLOCKERS" != "[]" && "$PRIOR_BLOCKERS" != "null" ]]; then
+					CONTEXT+="
+**Prior Blockers (verify these are resolved by new commits):**
+"
+					# Format blockers as a bulleted list using jq
+					CONTEXT+="$(echo "$PRIOR_BLOCKERS" | jq -r '.[] | "- " + .' 2>/dev/null)
+"
+				fi
+				# Show prior questions if any existed
+				if [[ "$PRIOR_QUESTIONS" != "[]" && "$PRIOR_QUESTIONS" != "null" ]]; then
+					CONTEXT+="
+**Prior Questions (check if answered by new commits/prompts):**
+"
+					# Format questions as a bulleted list using jq
+					CONTEXT+="$(echo "$PRIOR_QUESTIONS" | jq -r '.[] | "- " + .' 2>/dev/null)
+"
+				fi
 			else
 				CONTEXT+="- Mode: FULL_REVIEW - Complete analysis required
 "
