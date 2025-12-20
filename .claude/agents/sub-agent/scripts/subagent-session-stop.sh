@@ -1,50 +1,26 @@
 #!/usr/bin/env bash
-# Unregister subagent when it completes
+# SubagentStop hook - Extract verdict, sign output, and unregister subagent
 #
-# Atomically decrements the subagent counter. Only when the counter
-# reaches 0 (all parallel subagents have completed) will the context
-# be restored to master-agent.
+# This hook handles two responsibilities:
+# 1. For QA agents: Extract QA_VERDICT from transcript, sign, and write output
+# 2. For all agents: Unregister from context manager
 #
-# Only acts on custom subagents (6 Phase 1 reviewers, review-lead, safe-deployment-gate).
+# PostToolUse hooks do not fire in Claude Code SDK (known bug), so we extract
+# the subagent response from agent_transcript_path instead of tool_response.
 
 # Read stdin FIRST before cd (stdin may not survive cd in some shells)
 HOOK_INPUT=$(cat)
 
 cd "$CLAUDE_PROJECT_DIR" || exit 1
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
+source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/qa-hook-lib.sh"
 
 # =============================================================================
-# DEBUG: Log full hook input structure to understand available fields
+# EXTRACT HOOK INPUT FIELDS
 # =============================================================================
-log_hook "SubagentStop" "=== HOOK INPUT STRUCTURE DEBUG ==="
-log_hook "SubagentStop" "Raw input length: ${#HOOK_INPUT} bytes"
 
-# Log top-level keys
-TOP_KEYS=$(echo "$HOOK_INPUT" | jq -r 'keys | join(", ")' 2>/dev/null || echo "jq_parse_failed")
-log_hook "SubagentStop" "Top-level keys: $TOP_KEYS"
-
-# Log agent_type field specifically
-AGENT_TYPE_RAW=$(echo "$HOOK_INPUT" | jq -r '.agent_type // "MISSING"' 2>/dev/null)
-log_hook "SubagentStop" "agent_type value: $AGENT_TYPE_RAW"
-
-# Log tool_response structure if present (this would contain subagent output)
-HAS_RESPONSE=$(echo "$HOOK_INPUT" | jq -r 'has("tool_response")' 2>/dev/null || echo "false")
-log_hook "SubagentStop" "has tool_response: $HAS_RESPONSE"
-
-if [[ "$HAS_RESPONSE" == "true" ]]; then
-	RESPONSE_KEYS=$(echo "$HOOK_INPUT" | jq -r '.tool_response | keys | join(", ")' 2>/dev/null || echo "none")
-	log_hook "SubagentStop" "tool_response keys: $RESPONSE_KEYS"
-
-	# Check for content array (where subagent response text would be)
-	CONTENT_LENGTH=$(echo "$HOOK_INPUT" | jq -r '.tool_response.content | length' 2>/dev/null || echo "0")
-	log_hook "SubagentStop" "tool_response.content length: $CONTENT_LENGTH"
-fi
-
-# Log first 500 chars of raw input for inspection
-TRUNCATED=$(echo "$HOOK_INPUT" | head -c 500)
-log_hook "SubagentStop" "First 500 chars: $TRUNCATED"
-
-log_hook "SubagentStop" "=== END DEBUG ==="
+AGENT_ID=$(echo "$HOOK_INPUT" | jq -r '.agent_id // empty' 2>/dev/null)
+TRANSCRIPT_PATH=$(echo "$HOOK_INPUT" | jq -r '.agent_transcript_path // empty' 2>/dev/null)
 
 # =============================================================================
 # AGENT TYPE LOOKUP
@@ -52,7 +28,6 @@ log_hook "SubagentStop" "=== END DEBUG ==="
 # SDK doesn't pass agent_type to SubagentStop, only to SubagentStart.
 # We stored the mapping in SubagentStart, now look it up.
 
-AGENT_ID=$(echo "$HOOK_INPUT" | jq -r '.agent_id // empty' 2>/dev/null)
 AGENT_MAP_DIR="/tmp/claude/context-manager"
 AGENT_MAP_FILE="$AGENT_MAP_DIR/agent-$AGENT_ID.type"
 
@@ -73,6 +48,158 @@ if [[ -z "$AGENT_TYPE" ]]; then
 fi
 
 log_session "subagent:$AGENT_TYPE" "SubagentStop"
+
+# =============================================================================
+# QA VERDICT EXTRACTION AND SIGNING
+# =============================================================================
+# Only process QA agents (Phase 1 reviewers and review-lead).
+# safe-deployment-gate does not need signing - it just runs verify-and-push.sh.
+
+if qa_is_qa_agent "$AGENT_TYPE"; then
+	log_hook "$AGENT_TYPE" "Processing QA verdict from transcript"
+
+	# -------------------------------------------------------------------------
+	# EXTRACT RESPONSE FROM TRANSCRIPT
+	# -------------------------------------------------------------------------
+
+	if [[ -z "$TRANSCRIPT_PATH" ]]; then
+		log_hook "$AGENT_TYPE" "ERROR: No transcript path provided"
+		qa_write_error_output "$AGENT_TYPE" "no_transcript_path"
+	elif [[ ! -f "$TRANSCRIPT_PATH" ]]; then
+		log_hook "$AGENT_TYPE" "ERROR: Transcript file not found: $TRANSCRIPT_PATH"
+		qa_write_error_output "$AGENT_TYPE" "transcript_not_found"
+	else
+		RESPONSE_TEXT=""
+		if ! RESPONSE_TEXT=$(qa_extract_response_from_transcript "$TRANSCRIPT_PATH" 2>&1); then
+			log_hook "$AGENT_TYPE" "ERROR: Failed to extract response - $RESPONSE_TEXT"
+			qa_write_error_output "$AGENT_TYPE" "extract_failed"
+		else
+			log_hook "$AGENT_TYPE" "Extracted response (${#RESPONSE_TEXT} chars)"
+
+			# -----------------------------------------------------------------
+			# PARSE QA_VERDICT FOOTER
+			# -----------------------------------------------------------------
+
+			FOOTER_JSON=""
+			if ! FOOTER_JSON=$(qa_parse_footer_from_text "$RESPONSE_TEXT" 2>&1); then
+				log_hook "$AGENT_TYPE" "ERROR: Footer parsing failed - $FOOTER_JSON"
+				qa_write_error_output "$AGENT_TYPE" "invalid_footer"
+			else
+				log_hook "$AGENT_TYPE" "Footer parsed: $(echo "$FOOTER_JSON" | jq -c '.verdict')"
+
+				# -------------------------------------------------------------
+				# FOOTER HARDENING (size limits)
+				# -------------------------------------------------------------
+
+				MAX_FOOTER_SIZE=4096
+				MAX_SUMMARY_LENGTH=400
+				MAX_BLOCKERS_COUNT=20
+				MAX_QUESTIONS_COUNT=10
+
+				FOOTER_SIZE=${#FOOTER_JSON}
+				FOOTER_VALID=true
+
+				if [[ $FOOTER_SIZE -gt $MAX_FOOTER_SIZE ]]; then
+					log_hook "$AGENT_TYPE" "ERROR: Footer too large ($FOOTER_SIZE > $MAX_FOOTER_SIZE bytes)"
+					qa_write_error_output "$AGENT_TYPE" "footer_too_large"
+					FOOTER_VALID=false
+				fi
+
+				if [[ "$FOOTER_VALID" == "true" ]]; then
+					SUMMARY_LENGTH=$(echo "$FOOTER_JSON" | jq -r '.summary // "" | length')
+					if [[ $SUMMARY_LENGTH -gt $MAX_SUMMARY_LENGTH ]]; then
+						log_hook "$AGENT_TYPE" "ERROR: Summary too long ($SUMMARY_LENGTH > $MAX_SUMMARY_LENGTH chars)"
+						qa_write_error_output "$AGENT_TYPE" "summary_too_long"
+						FOOTER_VALID=false
+					fi
+				fi
+
+				if [[ "$FOOTER_VALID" == "true" ]]; then
+					BLOCKERS_COUNT=$(echo "$FOOTER_JSON" | jq -r '.blockers // [] | length')
+					if [[ $BLOCKERS_COUNT -gt $MAX_BLOCKERS_COUNT ]]; then
+						log_hook "$AGENT_TYPE" "ERROR: Too many blockers ($BLOCKERS_COUNT > $MAX_BLOCKERS_COUNT)"
+						qa_write_error_output "$AGENT_TYPE" "too_many_blockers"
+						FOOTER_VALID=false
+					fi
+				fi
+
+				if [[ "$FOOTER_VALID" == "true" ]]; then
+					QUESTIONS_COUNT=$(echo "$FOOTER_JSON" | jq -r '.questions // [] | length')
+					if [[ $QUESTIONS_COUNT -gt $MAX_QUESTIONS_COUNT ]]; then
+						log_hook "$AGENT_TYPE" "ERROR: Too many questions ($QUESTIONS_COUNT > $MAX_QUESTIONS_COUNT)"
+						qa_write_error_output "$AGENT_TYPE" "too_many_questions"
+						FOOTER_VALID=false
+					fi
+				fi
+
+				# -------------------------------------------------------------
+				# LOAD CANONICAL INPUT AND SIGN
+				# -------------------------------------------------------------
+
+				if [[ "$FOOTER_VALID" == "true" ]]; then
+					INPUT_JSON=""
+					INPUT_HASH=""
+
+					if [[ -f "$QA_CURRENT_DIR/input.json" ]]; then
+						INPUT_JSON=$(cat "$QA_CURRENT_DIR/input.json")
+					else
+						log_hook "$AGENT_TYPE" "ERROR: Missing input.json"
+						qa_write_error_output "$AGENT_TYPE" "missing_input_json"
+						FOOTER_VALID=false
+					fi
+
+					if [[ "$FOOTER_VALID" == "true" && -f "$QA_CURRENT_DIR/input.sha256" ]]; then
+						INPUT_HASH=$(cat "$QA_CURRENT_DIR/input.sha256")
+					elif [[ "$FOOTER_VALID" == "true" ]]; then
+						log_hook "$AGENT_TYPE" "ERROR: Missing input.sha256"
+						qa_write_error_output "$AGENT_TYPE" "missing_input_hash"
+						FOOTER_VALID=false
+					fi
+
+					if [[ "$FOOTER_VALID" == "true" ]]; then
+						# Load delta info
+						DELTA_JSON='{"mode":"FULL_REVIEW"}'
+						DELTA_FILE="$QA_DELTA_DIR/${AGENT_TYPE}.json"
+						if [[ -f "$DELTA_FILE" ]]; then
+							DELTA_JSON=$(cat "$DELTA_FILE")
+						fi
+
+						# Build payload
+						PAYLOAD=$(qa_build_payload "$INPUT_JSON" "$INPUT_HASH" "$AGENT_TYPE" "$FOOTER_JSON" "$DELTA_JSON")
+
+						if [[ -z "$PAYLOAD" ]]; then
+							log_hook "$AGENT_TYPE" "ERROR: Failed to build payload"
+							qa_write_error_output "$AGENT_TYPE" "payload_build_failed"
+						else
+							# Get signature type
+							SIG_TYPE=$(qa_sig_type_for_subagent "$AGENT_TYPE")
+
+							if [[ -z "$SIG_TYPE" ]]; then
+								log_hook "$AGENT_TYPE" "ERROR: Unknown signature type for $AGENT_TYPE"
+								qa_write_error_output "$AGENT_TYPE" "unknown_sig_type"
+							else
+								# Sign payload
+								SIGNATURE=""
+								if ! SIGNATURE=$(qa_sign_payload "$PAYLOAD" "$SIG_TYPE" 2>&1); then
+									log_hook "$AGENT_TYPE" "ERROR: Signing failed - $SIGNATURE"
+									qa_write_error_output "$AGENT_TYPE" "signing_failed"
+								else
+									# Write signed output
+									qa_write_signed_output "$AGENT_TYPE" "$FOOTER_JSON" "$PAYLOAD" "$SIGNATURE" "$SIG_TYPE" "$DELTA_JSON" "$INPUT_HASH"
+									log_hook "$AGENT_TYPE" "Output written: $QA_OUTPUT_DIR/${AGENT_TYPE}.json"
+								fi
+							fi
+						fi
+					fi
+				fi
+			fi
+		fi
+	fi
+fi
+
+# =============================================================================
+# UNREGISTER SUBAGENT
+# =============================================================================
 
 CTX_MGR="$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager"
 "$CTX_MGR/unregister-subagent.sh" "$AGENT_TYPE"
