@@ -31,9 +31,10 @@ describe('Infrastructure: Agent Path Validation', () => {
 			expect(pathExists('.claude/agents/sub-agent/scripts')).toBe(true);
 		});
 
-		it('should have shared directory with docs', () => {
+		it('should have shared directory with scripts and config', () => {
 			expect(pathExists('.claude/agents/shared')).toBe(true);
-			expect(pathExists('.claude/agents/shared/docs')).toBe(true);
+			expect(pathExists('.claude/agents/shared/scripts')).toBe(true);
+			expect(pathExists('.claude/agents/shared/config')).toBe(true);
 		});
 	});
 
@@ -96,7 +97,7 @@ describe('Infrastructure: Agent Path Validation', () => {
 				),
 			).toBe(true);
 			expect(
-				pathExists('.claude/agents/sub-agent/scripts/subagent-cleanup.sh'),
+				pathExists('.claude/agents/sub-agent/scripts/subagent-session-stop.sh'),
 			).toBe(true);
 			expect(
 				pathExists('.claude/agents/shared/scripts/cleanup-qa-outputs.sh'),
