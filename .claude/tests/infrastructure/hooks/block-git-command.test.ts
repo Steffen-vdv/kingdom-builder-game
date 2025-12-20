@@ -31,9 +31,11 @@ describe('Infrastructure: Block Git Command Hook', () => {
 		});
 
 		try {
-			const result = execSync(`echo '${toolInput}' | bash "${HOOK_SCRIPT}"`, {
+			// Pass JSON via stdin to avoid shell escaping issues with quotes
+			const result = execSync(`bash "${HOOK_SCRIPT}"`, {
+				input: toolInput,
 				encoding: 'utf-8',
-				stdio: 'pipe',
+				stdio: ['pipe', 'pipe', 'pipe'],
 				cwd: PROJECT_ROOT,
 				env: {
 					...process.env,
@@ -44,12 +46,14 @@ describe('Infrastructure: Block Git Command Hook', () => {
 		} catch (error: unknown) {
 			const err = error as {
 				status?: number;
-				stderr?: string;
-				stdout?: string;
+				stderr?: Buffer | string;
+				stdout?: Buffer | string;
 			};
+			const stderr = err.stderr?.toString() || '';
+			const stdout = err.stdout?.toString() || '';
 			return {
 				blocked: err.status === 2,
-				output: err.stderr || err.stdout || '',
+				output: stderr || stdout,
 			};
 		}
 	};
@@ -140,6 +144,41 @@ describe('Infrastructure: Block Git Command Hook', () => {
 
 		it('should allow push in quoted string (not a command)', () => {
 			expect(testCommand('git commit -m "fix: push"').blocked).toBe(false);
+		});
+	});
+
+	describe('Fail-closed for Unparseable Chains', () => {
+		// When bashlex cannot parse complex syntax (e.g., HEREDOC), it falls back
+		// to shlex which treats the entire chain as one command. The hook must
+		// detect this mismatch (chain operators present, but only 1 command parsed)
+		// and BLOCK rather than silently allow potential bypasses.
+
+		it('should block chained command with HEREDOC that bashlex cannot parse', () => {
+			// HEREDOC with actual newlines causes bashlex to fail
+			// Using template literal to get real newlines
+			const heredocCmd = `git add file && git commit -m "$(cat <<'EOF'
+test message
+EOF
+)"`;
+			const { blocked, output } = testCommand(heredocCmd);
+			expect(blocked).toBe(true);
+			expect(output).toContain('Cannot parse chained command');
+		});
+
+		it('should explain the solution in error message', () => {
+			const heredocCmd = `git status && git commit -m "$(cat <<'EOF'
+test
+EOF
+)"`;
+			const { blocked, output } = testCommand(heredocCmd);
+			expect(blocked).toBe(true);
+			expect(output).toContain('Run the commands separately');
+		});
+
+		it('should still allow simple chains that bashlex can parse', () => {
+			// Simple chain without HEREDOC - bashlex can parse this
+			const { blocked } = testCommand('git status && git fetch');
+			expect(blocked).toBe(false);
 		});
 	});
 
