@@ -111,17 +111,13 @@ jobs:
       - name: Install Python deps (bashlex for shell parsing)
         run: pip install bashlex
 
-      - name: Download crypto-gate binary
+      - name: Setup mock crypto-gate for CI
         run: |
+          # Use existing mock crypto-gate for CI tests (no external binary needed)
+          # The mock simulates crypto-gate behavior for infrastructure tests
           mkdir -p bin
-          gh release download v0.5.0 \
-            --repo anthropics/crypto-gate \
-            --pattern "crypto-gate-linux-x64" \
-            --dir bin
-          chmod +x bin/crypto-gate-linux-x64
-          ln -sf crypto-gate-linux-x64 bin/crypto-gate
-        env:
-          GH_TOKEN: ${{ github.token }}
+          chmod +x .claude/tests/infrastructure/mocks/crypto-gate-mock.sh
+          ln -sf "$PWD/.claude/tests/infrastructure/mocks/crypto-gate-mock.sh" bin/crypto-gate
 
       - name: Run infrastructure tests
         run: pnpm test:infrastructure

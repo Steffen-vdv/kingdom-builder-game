@@ -169,6 +169,7 @@ export default [
 			'packages/**/tests/**/*.tsx',
 			'tests/**/*.ts',
 			'tests/**/*.tsx',
+			'.claude/tests/**/*.ts',
 		],
 		rules: {
 			'@typescript-eslint/no-unsafe-assignment': 'off',

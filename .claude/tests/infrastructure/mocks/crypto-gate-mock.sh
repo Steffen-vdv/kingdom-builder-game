@@ -70,6 +70,19 @@ case "$COMMAND" in
 			exit 1
 		fi
 		;;
+	verify-override)
+		# For testing: accept any token except "MOCK_INVALID_TOKEN"
+		TOKEN="${PAYLOAD:-$1}"
+		if [[ -z "$TOKEN" ]]; then
+			echo "ERROR: verify-override requires <token>" >&2
+			exit 1
+		fi
+		if [[ "$TOKEN" == "MOCK_INVALID_TOKEN" ]]; then
+			echo "invalid"
+			exit 1
+		fi
+		echo "valid"
+		;;
 	*)
 		echo "ERROR: Unknown command: $COMMAND" >&2
 		exit 1

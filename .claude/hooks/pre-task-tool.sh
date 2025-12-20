@@ -11,6 +11,7 @@
 #   3. Computes delta review info for Phase 1 reviewers
 #   4. Gates review-lead by verifying all 6 Phase 1 outputs
 #   5. Gates safe-deployment-gate by verifying review-lead signature
+#   6. INJECTS QA context into prompt via updatedInput (workaround for SDK issue)
 
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/qa-hook-lib.sh"
@@ -21,6 +22,55 @@ SUBAGENT=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // ""')
 PROMPT=$(echo "$INPUT" | jq -r '.tool_input.prompt // ""')
 MODEL_OVERRIDE=$(echo "$INPUT" | jq -r '.tool_input.model // ""')
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
+
+# =============================================================================
+# CONTEXT INJECTION VIA updatedInput
+# =============================================================================
+# Workaround for SubagentStart stdout not being injected into subagent context.
+# We use PreToolUse's updatedInput capability to inject context into the prompt.
+
+# Source the context builder (separate file for maintainability)
+source "$CLAUDE_PROJECT_DIR/.claude/hooks/lib/qa-context-builder.sh"
+
+# Helper to output allow decision with modified prompt
+allow_with_context() {
+	local agent="$1"
+	local original_prompt="$2"
+
+	local context
+	context=$(build_qa_context "$agent")
+
+	if [[ -z "$context" ]]; then
+		# No context to inject, just allow
+		exit 0
+	fi
+
+	# Build new prompt: context + original prompt
+	local new_prompt
+	if [[ -z "$original_prompt" || "$original_prompt" == "{}" ]]; then
+		new_prompt="$context"
+	else
+		new_prompt="${context}"$'\n\n'"--- Original Prompt ---"$'\n\n'"${original_prompt}"
+	fi
+
+	log_hook "$agent" "Injecting context via updatedInput (${#context} chars)"
+
+	# Output hookSpecificOutput with updatedInput
+	# Use jq to properly escape the prompt for JSON
+	jq -n -c \
+		--arg prompt "$new_prompt" \
+		'{
+			hookSpecificOutput: {
+				hookEventName: "PreToolUse",
+				permissionDecision: "allow",
+				permissionDecisionReason: "QA context injected into prompt",
+				updatedInput: {
+					prompt: $prompt
+				}
+			}
+		}'
+	exit 0
+}
 
 # =============================================================================
 # BLOCK MODEL OVERRIDES for QA subagents
@@ -91,7 +141,9 @@ EOF
 			fi
 
 			log_hook "safe-deployment-gate" "Override token and HEAD verified, allowing subagent"
-			exit 0
+			log_hook "safe-deployment-gate" "Checking for override token at: $OVERRIDE_TOKEN_FILE"
+			log_hook "safe-deployment-gate" "OVERRIDE MODE: Token file exists, HEAD=$STORED_HEAD"
+			allow_with_context "safe-deployment-gate" "$PROMPT"
 		fi
 	fi
 
@@ -178,7 +230,7 @@ EOF
 	fi
 
 	log_hook "safe-deployment-gate" "All gating checks passed, allowing subagent to run"
-	exit 0
+	allow_with_context "safe-deployment-gate" "$PROMPT"
 fi
 
 # =============================================================================
@@ -240,5 +292,5 @@ EOF
 	log_hook "review-lead" "Phase 1 validation passed"
 fi
 
-# All checks passed
-exit 0
+# All checks passed - inject context and allow
+allow_with_context "$SUBAGENT" "$PROMPT"
