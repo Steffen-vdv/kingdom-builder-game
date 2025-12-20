@@ -1,6 +1,5 @@
 #!/bin/bash
 # Centralized logging for Claude hooks
-# QA infrastructure test - safe to remove
 #
 # Usage:
 #   source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
@@ -44,6 +43,3 @@ log_session() {
 		echo "===    $timestamp    $event$suffix     $tag   ===" >> "$LOG_FILE"
 	) 200>"$LOG_LOCK"
 }
-# QA test comment 1766242065
-# Delta mode test 1766242339
-# Override test 1766242626

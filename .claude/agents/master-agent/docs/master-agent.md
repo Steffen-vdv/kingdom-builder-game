@@ -194,13 +194,29 @@ To clear manually: `.claude/agents/master-agent/scripts/set-override-token.sh --
 
 ### Show Results to User (CRUCIAL)
 
-After Phase 2, **read and display review-lead.json verbatim**:
+The user cannot see subagent outputs directly — you must show them.
+
+**After Phase 1:** Display a summary table of all 6 reviewer verdicts:
+
+```
+| Reviewer                    | Verdict  | Summary                              |
+|-----------------------------|----------|--------------------------------------|
+| review-ci-tests-required    | APPROVED | No tests required for docs changes   |
+| review-claims-auditor       | APPROVED | All claims verified in diff          |
+| ...                         | ...      | ...                                  |
+```
+
+Read each output file from `/tmp/claude/sub-agents/output/<agent>.json` and
+extract the `verdict` and `summary` fields.
+
+**After Phase 2:** Read and display `review-lead.json` verbatim:
 
 ```
 /tmp/claude/sub-agents/output/review-lead.json
 ```
 
-Do NOT summarize. The user cannot see subagent outputs — you must show them.
+Do NOT summarize Phase 2 output — show the full JSON so user can verify the
+final signature.
 
 ### Error Handling
 
@@ -208,32 +224,39 @@ If output contains `error` field: retry once, then report to user.
 
 ### Task Descriptions (MANDATORY)
 
-**Every Task tool call MUST have a creative, memorable description.**
+**Every Task tool call MUST have a prefixed, creative description.**
 
-The `description` parameter is user-facing and appears in the UI. Generic labels
-like "Phase 1: CI reviewer" are forbidden. Use descriptions that are:
+The `description` parameter is user-facing and appears in the UI. Format:
 
-- **Creative** — Memorable, personality-driven
-- **Contextual** — Hints at what the subagent does
-- **Varied** — Different each time, not templated
+```
+<Subagent Type> - <Creative Description>
+```
+
+**Requirements:**
+
+1. **Prefix with subagent type** — Always start with the human-readable agent name
+2. **Creative suffix** — Memorable, personality-driven description
+3. **Contextual** — Hints at what the subagent does
+4. **Varied** — Different each time, not templated
 
 **Examples:**
 
-| Subagent                    | Good Description                               |
-| --------------------------- | ---------------------------------------------- |
-| review-ci-tests-required    | "The Test Sergeant demands passing grades"     |
-| review-claims-auditor       | "Forensic accountant audits your claims"       |
-| review-contracts-boundaries | "Border patrol checking import passports"      |
-| review-mechanics-content    | "Game design critic reviews your mechanics"    |
-| review-infra-concurrency    | "Infrastructure inspector checks the plumbing" |
-| review-tests-docs-dry       | "The DRY Police investigate code humidity"     |
-| review-lead                 | "The Boss demands a word with you"             |
-| safe-deployment-gate        | "Final gate guardian authorizes deployment"    |
+| Subagent                    | Good Description                                            |
+| --------------------------- | ----------------------------------------------------------- |
+| review-ci-tests-required    | "CI Tests - The Test Sergeant demands passing grades"       |
+| review-claims-auditor       | "Claims Auditor - Forensic accountant audits your claims"   |
+| review-contracts-boundaries | "Contracts - Border patrol checking import passports"       |
+| review-mechanics-content    | "Mechanics - Game design critic reviews your mechanics"     |
+| review-infra-concurrency    | "Infrastructure - Inspector checks the plumbing"            |
+| review-tests-docs-dry       | "Tests/Docs/DRY - The DRY Police investigate code humidity" |
+| review-lead                 | "Review Lead - The Boss demands a word with you"            |
+| safe-deployment-gate        | "Safe Deployment Gate - Guardian authorizes deployment"     |
 
 **Bad examples (FORBIDDEN):**
 
-- "Phase 1: CI/Tests reviewer"
-- "Review lead aggregation"
-- "Run tests"
+- "Phase 1: CI/Tests reviewer" (no prefix, generic)
+- "Review lead aggregation" (no creative element)
+- "Run tests" (too short, no prefix)
+- "The Test Sergeant demands passing grades" (missing prefix)
 
 This rule applies to ALL Task dispatches, not just QA subagents
