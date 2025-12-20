@@ -2,9 +2,9 @@
 #
 # qa-hook-lib.sh — Shared library for QA workflow hooks
 #
-# This is the single source of truth for:
-#   - QA agent type mapping and validation
-#   - Canonical input/output path management
+# Provides:
+#   - QA agent type validation (loaded from config/qa-agents.json)
+#   - Canonical input/output path management (from config/paths.sh)
 #   - Delta review computation
 #   - Footer parsing and payload building
 #   - Cryptographic operations
@@ -18,21 +18,23 @@
 set -euo pipefail
 
 # =============================================================================
-# SIGNATURE TYPE MAPPING (hardcoded, never from model output)
+# LOAD CONSOLIDATED CONFIGS
 # =============================================================================
 
-declare -A QA_AGENT_SIG_TYPES=(
-	["review-ci-tests-required"]="QA_CI_REQUIRED_TESTS"
-	["review-claims-auditor"]="QA_CLAIMS_AUDITOR"
-	["review-contracts-boundaries"]="QA_CONTRACTS_BOUNDARIES"
-	["review-mechanics-content"]="QA_MECHANICS_CONTENT"
-	["review-infra-concurrency"]="QA_INFRA_CONCURRENCY"
-	["review-tests-docs-dry"]="QA_TESTS_DOCS_DRY"
-	["review-lead"]="QA_FINAL_SIGNATORY"
-)
+# Source paths config (defines QA_CURRENT_DIR, QA_OUTPUT_DIR, etc.)
+source "${CLAUDE_PROJECT_DIR:-.}/.claude/config/paths.sh"
 
-# Phase 1 reviewers (all except review-lead)
-QA_PHASE1_AGENTS="review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry"
+# Load agent config from JSON
+_QA_CONFIG="${CLAUDE_PROJECT_DIR:-.}/.claude/config/qa-agents.json"
+
+# Build signature type mapping from JSON config
+declare -A QA_AGENT_SIG_TYPES
+while IFS='=' read -r agent sig_type; do
+	QA_AGENT_SIG_TYPES["$agent"]="$sig_type"
+done < <(jq -r '.signature_types | to_entries[] | "\(.key)=\(.value)"' "$_QA_CONFIG" 2>/dev/null)
+
+# Build phase1 agents list (pipe-separated for regex matching)
+QA_PHASE1_AGENTS=$(jq -r '.phase1_reviewers | join("|")' "$_QA_CONFIG" 2>/dev/null)
 
 # All QA agents (Phase 1 + review-lead)
 QA_ALL_AGENTS="$QA_PHASE1_AGENTS|review-lead"
@@ -65,22 +67,18 @@ qa_is_qa_agent() {
 	[[ "$agent" =~ ^($QA_ALL_AGENTS)$ ]]
 }
 
-# =============================================================================
-# PATH MANAGEMENT
-# =============================================================================
+# qa_phase1_agents_array() -> outputs array of phase1 agent names
+qa_phase1_agents_array() {
+	jq -r '.phase1_reviewers[]' "$_QA_CONFIG" 2>/dev/null
+}
 
-# Allow environment overrides for testing
-QA_CURRENT_DIR="${QA_CURRENT_DIR:-/tmp/claude/qa/current}"
-QA_DELTA_DIR="${QA_DELTA_DIR:-/tmp/claude/qa/current/delta}"
-QA_PROMPT_LOG_FILE="${QA_PROMPT_LOG_FILE:-/tmp/claude/qa/prompts.jsonl}"
-QA_OUTPUT_DIR="${QA_OUTPUT_DIR:-/tmp/claude/sub-agents/output}"
+# =============================================================================
+# PATH MANAGEMENT (paths loaded from config/paths.sh)
+# =============================================================================
 
 # qa_paths_init() -> creates all required directories
 qa_paths_init() {
-	mkdir -p "$QA_CURRENT_DIR"
-	mkdir -p "$QA_DELTA_DIR"
-	mkdir -p "$(dirname "$QA_PROMPT_LOG_FILE")"
-	mkdir -p "$QA_OUTPUT_DIR"
+	qa_init_dirs  # Defined in paths.sh
 }
 
 # qa_crypto_gate_path() -> prints path to crypto-gate; exits 1 if not executable

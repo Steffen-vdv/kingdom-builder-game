@@ -87,7 +87,6 @@ describe('Infrastructure: Agent Path Validation', () => {
 		});
 
 		it('should have subagent scripts', () => {
-			expect(pathExists('.claude/agents/sub-agent/scripts/sign.sh')).toBe(true);
 			expect(
 				pathExists('.claude/agents/sub-agent/scripts/verify-and-push.sh'),
 			).toBe(true);

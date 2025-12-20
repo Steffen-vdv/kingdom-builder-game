@@ -3,7 +3,7 @@
 # Mock crypto-gate binary for testing
 #
 # This mock produces deterministic signatures based on the input payload.
-# It allows sign.sh and write-output.sh tests to run without the real crypto-gate binary.
+# It allows tests to run without the real crypto-gate binary.
 #
 # Usage (matches real crypto-gate binary interface):
 #   crypto-gate-mock.sh sign <payload> --type <type>

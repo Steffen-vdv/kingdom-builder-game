@@ -3,22 +3,16 @@
 # verify-and-push.sh — Cryptographically verified git push
 #
 # Usage:
-#   verify-and-push.sh --from-disk [branch]           # Read review-lead.json from disk (preferred)
-#   verify-and-push.sh '<payload-json>' '<signature>' [branch]
-#   verify-and-push.sh --override '<token>' [branch]
+#   verify-and-push.sh --from-disk [branch]     # Read review-lead.json (preferred)
+#   verify-and-push.sh --override '<token>'     # Bypass QA with override token
 #
-# From-disk mode (recommended for safe-deployment-gate):
+# From-disk mode (recommended):
 #   1. Reads review-lead.json from /tmp/claude/sub-agents/output/
 #   2. Extracts payload and signature
 #   3. Verifies signature via crypto-gate
 #   4. Validates verdict, commits, and input hash
 #   5. Executes git push if all checks pass
 #   6. Cleans up QA outputs on success
-#
-# Normal mode:
-#   1. Calls crypto-gate to verify the signature
-#   2. Validates HEAD commit is in the approved payload
-#   3. Executes git push if all checks pass
 #
 # Override mode (escape hatch):
 #   1. Calls crypto-gate to verify the override token
@@ -411,175 +405,20 @@ PUSH_FAILED
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# NORMAL MODE — SIGNATURE VERIFICATION (legacy, kept for compatibility)
+# NO RECOGNIZED MODE — Show usage error
 # ═══════════════════════════════════════════════════════════════════════════════
 
-PAYLOAD="${1:-}"
-SIGNATURE="${2:-}"
-BRANCH="${3:-}"
-
-if [[ -z "$PAYLOAD" || -z "$SIGNATURE" ]]; then
-	cat >&2 << 'USAGE'
+cat >&2 << 'USAGE'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
-║  ❌ USAGE ERROR — Missing required arguments                                  ║
+║  ❌ USAGE ERROR — Missing required mode                                       ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-Usage: verify-and-push.sh --from-disk [branch]           # Preferred
-       verify-and-push.sh '<payload-json>' '<signature>' [branch]
-       verify-and-push.sh --override '<token>' [branch]
+Usage:
+  verify-and-push.sh --from-disk [branch]     # Read review-lead.json (preferred)
+  verify-and-push.sh --override '<token>'     # Bypass QA with override token
 
-Modes:
-  --from-disk  Read review-lead.json from disk (recommended)
-  --override   Bypass QA with user-provided override token
-  (default)    Pass payload and signature as arguments
-
-Example:
+Examples:
   verify-and-push.sh --from-disk
   verify-and-push.sh --override 'user-secret-token'
 USAGE
-	exit 1
-fi
-
-CRYPTO_GATE=$(find_crypto_gate) || exit 1
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# VERIFY SIGNATURE VIA CRYPTO-GATE
-# ═══════════════════════════════════════════════════════════════════════════════
-
-echo "Verifying signature via crypto-gate..." >&2
-
-# Note: Signatures are type-specific. QA_FINAL_SIGNATORY is required for deployment.
-if ! "$CRYPTO_GATE" verify "$PAYLOAD" "$SIGNATURE" --type QA_FINAL_SIGNATORY; then
-	cat >&2 << 'INVALID_SIG'
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║  ❌ PUSH BLOCKED — Invalid signature                                          ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-
-The cryptographic signature verification failed.
-
-Possible causes:
-  - Signature was not created by crypto-gate
-  - Payload was modified after signing
-  - Wrong signature provided
-
-WHAT TO DO:
-→ Re-run QA review to get a fresh signature
-→ Ensure payload is passed exactly as signed
-INVALID_SIG
-	exit 1
-fi
-
-echo "✓ Signature valid" >&2
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# VERIFY VERDICT IS APPROVED
-# ═══════════════════════════════════════════════════════════════════════════════
-
-# Verdict is nested: .verdict.verdict (the outer .verdict is the footer object)
-VERDICT=$(echo "$PAYLOAD" | jq -r '.verdict.verdict // empty' 2>/dev/null)
-
-if [[ "$VERDICT" != "APPROVED" ]]; then
-	cat >&2 << WRONG_VERDICT
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║  ❌ PUSH BLOCKED — Verdict is not APPROVED                                    ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-
-Payload verdict: ${VERDICT:-<missing>}
-Expected verdict: APPROVED
-
-Only payloads with verdict "APPROVED" can be pushed.
-A signed payload with BLOCKED or NEEDS_INPUT verdict cannot authorize a push.
-
-WHAT TO DO:
-→ Re-run QA review and address any blocking issues
-→ Get a fresh signature with APPROVED verdict
-WRONG_VERDICT
-	exit 1
-fi
-
-echo "✓ Verdict is APPROVED" >&2
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# VERIFY HEAD COMMIT IS IN APPROVED COMMITS
-# ═══════════════════════════════════════════════════════════════════════════════
-
-HEAD_SHA=$(git rev-parse HEAD 2>/dev/null)
-# Commits are nested under input.commits in the payload structure
-APPROVED_COMMITS=$(echo "$PAYLOAD" | jq -r '.input.commits[]?' 2>/dev/null)
-
-if [[ -z "$APPROVED_COMMITS" ]]; then
-	cat >&2 << 'NO_COMMITS'
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║  ❌ PUSH BLOCKED — No commits in payload                                      ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-
-The payload does not contain commits at 'input.commits'.
-
-Expected payload format:
-  {"input": {"commits": ["<sha1>", ...], ...}, "verdict": {...}, ...}
-NO_COMMITS
-	exit 1
-fi
-
-if ! echo "$APPROVED_COMMITS" | grep -q "^${HEAD_SHA}$"; then
-	cat >&2 << COMMIT_MISMATCH
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║  ❌ PUSH BLOCKED — HEAD not in approved commits                               ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-
-Current HEAD: $HEAD_SHA
-Approved commits: $(echo "$APPROVED_COMMITS" | tr '\n' ' ')
-
-New commits were added after QA approval.
-
-WHAT TO DO:
-→ Re-run QA review for the current commits
-→ Get fresh signature that includes HEAD
-COMMIT_MISMATCH
-	exit 1
-fi
-
-echo "✓ HEAD commit is approved" >&2
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# EXECUTE GIT PUSH
-# ═══════════════════════════════════════════════════════════════════════════════
-
-# Determine branch
-if [[ -z "$BRANCH" ]]; then
-	BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-fi
-
-echo "Pushing to origin/$BRANCH..." >&2
-
-if git push -u origin "$BRANCH"; then
-	cat >&2 << SUCCESS
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║  ✅ PUSH SUCCESSFUL                                                           ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-
-Branch: $BRANCH
-Commit: $HEAD_SHA
-SUCCESS
-	cleanup_qa_outputs
-	exit 0
-else
-	cat >&2 << 'PUSH_FAILED'
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║  ❌ GIT PUSH FAILED                                                           ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-
-The signature was valid, but git push failed.
-
-Possible causes:
-  - Network issues
-  - Permission denied
-  - Branch protection rules
-
-WHAT TO DO:
-→ Check network connectivity
-→ Verify you have push access to the remote
-→ Retry the push
-PUSH_FAILED
-	exit 1
-fi
+exit 1

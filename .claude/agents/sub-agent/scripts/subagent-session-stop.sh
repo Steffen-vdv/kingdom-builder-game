@@ -91,8 +91,8 @@ if qa_is_qa_agent "$AGENT_TYPE"; then
 				# FOOTER HARDENING (size limits)
 				# -------------------------------------------------------------
 
-				MAX_FOOTER_SIZE=4096
-				MAX_SUMMARY_LENGTH=400
+				MAX_FOOTER_SIZE=8192
+				MAX_SUMMARY_LENGTH=4096
 				MAX_BLOCKERS_COUNT=20
 				MAX_QUESTIONS_COUNT=10
 

@@ -270,7 +270,7 @@ QA_VERDICT:{"verdict":"APPROVED","summary":"...","blockers":[],"questions":[]}
 
 - Prefix: `QA_VERDICT:` (no space after colon)
 - `verdict`: APPROVED, BLOCKED, or NEEDS_INPUT
-- `summary`: Your assessment (max 400 chars) — be specific, not generic
+- `summary`: Your assessment (max 4096 chars) — be specific, not generic
 - `blockers`: Array of specific issues (if BLOCKED)
 - `questions`: Array of specific questions (if NEEDS_INPUT)
 
