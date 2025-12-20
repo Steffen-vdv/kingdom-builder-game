@@ -3,6 +3,9 @@
 # Subagent setup hook for Kingdom Builder
 # Registers subagent context and outputs protocol documentation
 # Note: crypto-gate binary is downloaded by master-agent at session start
+#
+# Uses hookSpecificOutput.additionalContext for context injection
+# to work around SubagentStart stdout injection bug (same as SessionStart)
 
 # Read stdin FIRST before cd (stdin may not survive cd in some shells)
 HOOK_INPUT=$(cat)
@@ -25,89 +28,113 @@ log_session "subagent:$AGENT_TYPE" "SubagentStart" "completed"
 # =============================================================================
 # For QA agents, inject the ACTUAL CONTENTS of canonical input and delta files.
 # Agents should NEVER be required to open files manually for critical context.
+#
+# Uses hookSpecificOutput.additionalContext to bypass stdout injection bug.
 
 QA_CURRENT_DIR="/tmp/claude/qa/current"
 QA_OUTPUT_DIR="/tmp/claude/sub-agents/output"
 
+# Build context string based on agent type
+CONTEXT=""
+
 case "$AGENT_TYPE" in
 	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry)
-		echo "=== QA Phase 1 Reviewer Context ==="
-		echo ""
+		CONTEXT+="=== QA Phase 1 Reviewer Context ===
 
+"
 		# Inject canonical input contents
-		echo "## Canonical Input (input.json)"
-		echo ""
+		CONTEXT+="## Canonical Input (input.json)
+
+"
 		if [[ -f "$QA_CURRENT_DIR/input.json" ]]; then
-			echo '```json'
-			cat "$QA_CURRENT_DIR/input.json"
-			echo ""
-			echo '```'
+			CONTEXT+="\`\`\`json
+"
+			CONTEXT+="$(cat "$QA_CURRENT_DIR/input.json")
+"
+			CONTEXT+="\`\`\`
+"
 		else
-			echo "WARNING: input.json not found at $QA_CURRENT_DIR/input.json"
+			CONTEXT+="WARNING: input.json not found at $QA_CURRENT_DIR/input.json
+"
 		fi
-		echo ""
+		CONTEXT+="
+"
 
 		# Inject delta file contents
 		DELTA_FILE="$QA_CURRENT_DIR/delta/${AGENT_TYPE}.json"
-		echo "## Delta Review Info (delta/${AGENT_TYPE}.json)"
-		echo ""
+		CONTEXT+="## Delta Review Info (delta/${AGENT_TYPE}.json)
+
+"
 		if [[ -f "$DELTA_FILE" ]]; then
-			echo '```json'
-			cat "$DELTA_FILE"
-			echo ""
-			echo '```'
-			echo ""
-			echo "**Interpretation:**"
+			CONTEXT+="\`\`\`json
+"
+			CONTEXT+="$(cat "$DELTA_FILE")
+"
+			CONTEXT+="\`\`\`
+
+"
+			CONTEXT+="**Interpretation:**
+"
 			MODE=$(jq -r '.mode // ""' "$DELTA_FILE" 2>/dev/null || echo "")
 			if [[ "$MODE" == "DELTA_REVIEW" ]]; then
 				PRIOR_VERDICT=$(jq -r '.prior_verdict // ""' "$DELTA_FILE" 2>/dev/null || echo "")
-				echo "- Mode: DELTA_REVIEW - Focus only on new_commits"
-				echo "- Prior verdict: $PRIOR_VERDICT"
-				echo "- Only analyze changes since prior review"
+				CONTEXT+="- Mode: DELTA_REVIEW - Focus only on new_commits
+"
+				CONTEXT+="- Prior verdict: $PRIOR_VERDICT
+"
+				CONTEXT+="- Only analyze changes since prior review
+"
 			else
-				echo "- Mode: FULL_REVIEW - Complete analysis required"
+				CONTEXT+="- Mode: FULL_REVIEW - Complete analysis required
+"
 			fi
 		else
-			echo "No delta file found. This is a FULL_REVIEW."
+			CONTEXT+="No delta file found. This is a FULL_REVIEW.
+"
 		fi
-		echo ""
+		CONTEXT+="
+"
 
-		cat << 'QA_PHASE1_FOOTER'
-## Output Requirement
+		CONTEXT+="## Output Requirement
 
 End your response with the strict footer line (hooks handle signing):
 
-```
-QA_VERDICT:{"verdict":"APPROVED|BLOCKED|NEEDS_INPUT","summary":"...","blockers":[],"questions":[]}
-```
+\`\`\`
+QA_VERDICT:{\"verdict\":\"APPROVED|BLOCKED|NEEDS_INPUT\",\"summary\":\"...\",\"blockers\":[],\"questions\":[]}
+\`\`\`
 
 DO NOT call sign.sh or write-output.sh - the post-task hook handles signing.
 
 ===
-QA_PHASE1_FOOTER
+"
 		;;
 
 	review-lead)
-		echo "=== QA Review Lead Context (Phase 2) ==="
-		echo ""
+		CONTEXT+="=== QA Review Lead Context (Phase 2) ===
 
+"
 		# Inject canonical input contents
-		echo "## Canonical Input (input.json)"
-		echo ""
+		CONTEXT+="## Canonical Input (input.json)
+
+"
 		if [[ -f "$QA_CURRENT_DIR/input.json" ]]; then
-			echo '```json'
-			cat "$QA_CURRENT_DIR/input.json"
-			echo ""
-			echo '```'
+			CONTEXT+="\`\`\`json
+"
+			CONTEXT+="$(cat "$QA_CURRENT_DIR/input.json")
+"
+			CONTEXT+="\`\`\`
+"
 		else
-			echo "WARNING: input.json not found"
+			CONTEXT+="WARNING: input.json not found
+"
 		fi
-		echo ""
+		CONTEXT+="
+"
 
 		# Inject all 6 Phase 1 output files
-		echo "## Phase 1 Reviewer Outputs"
-		echo ""
+		CONTEXT+="## Phase 1 Reviewer Outputs
 
+"
 		PHASE1_AGENTS=(
 			"review-ci-tests-required"
 			"review-claims-auditor"
@@ -118,32 +145,38 @@ QA_PHASE1_FOOTER
 		)
 
 		for agent in "${PHASE1_AGENTS[@]}"; do
-			echo "### $agent"
-			echo ""
+			CONTEXT+="### $agent
+
+"
 			OUTPUT_FILE="$QA_OUTPUT_DIR/${agent}.json"
 			if [[ -f "$OUTPUT_FILE" ]]; then
 				# Extract key fields for quick summary
 				VERDICT=$(jq -r '.verdict // "UNKNOWN"' "$OUTPUT_FILE" 2>/dev/null || echo "ERROR")
 				SUMMARY=$(jq -r '.summary // ""' "$OUTPUT_FILE" 2>/dev/null || echo "")
-				echo "**Verdict:** $VERDICT"
-				echo "**Summary:** $SUMMARY"
-				echo ""
-				echo "<details>"
-				echo "<summary>Full output (click to expand)</summary>"
-				echo ""
-				echo '```json'
-				cat "$OUTPUT_FILE"
-				echo ""
-				echo '```'
-				echo "</details>"
+				CONTEXT+="**Verdict:** $VERDICT
+"
+				CONTEXT+="**Summary:** $SUMMARY
+
+"
+				CONTEXT+="<details>
+<summary>Full output (click to expand)</summary>
+
+\`\`\`json
+"
+				CONTEXT+="$(cat "$OUTPUT_FILE")
+"
+				CONTEXT+="\`\`\`
+</details>
+"
 			else
-				echo "**ERROR:** Output file not found: $OUTPUT_FILE"
+				CONTEXT+="**ERROR:** Output file not found: $OUTPUT_FILE
+"
 			fi
-			echo ""
+			CONTEXT+="
+"
 		done
 
-		cat << 'QA_REVIEW_LEAD_FOOTER'
-## Aggregation Logic
+		CONTEXT+="## Aggregation Logic
 
 Apply conservative aggregation:
 - If ANY verdict == ERROR → ERROR
@@ -155,14 +188,14 @@ Apply conservative aggregation:
 
 End your response with the strict footer line (hooks handle signing):
 
-```
-QA_VERDICT:{"verdict":"APPROVED|BLOCKED|NEEDS_INPUT","summary":"...","blockers":[],"questions":[]}
-```
+\`\`\`
+QA_VERDICT:{\"verdict\":\"APPROVED|BLOCKED|NEEDS_INPUT\",\"summary\":\"...\",\"blockers\":[],\"questions\":[]}
+\`\`\`
 
 DO NOT call sign.sh or write-output.sh - the post-task hook handles signing.
 
 ===
-QA_REVIEW_LEAD_FOOTER
+"
 		;;
 
 	safe-deployment-gate)
@@ -172,70 +205,81 @@ QA_REVIEW_LEAD_FOOTER
 
 		if [[ -f "$OVERRIDE_TOKEN_FILE" ]]; then
 			# Extract token from JSON file
-			OVERRIDE_TOKEN=$(jq -r '.token // ""' "$OVERRIDE_TOKEN_FILE" 2>/dev/null || echo "")
 			STORED_HEAD=$(jq -r '.head // ""' "$OVERRIDE_TOKEN_FILE" 2>/dev/null || echo "")
 
 			# OVERRIDE MODE: Inject token and skip normal QA context
-			echo "=== OVERRIDE MODE ACTIVE ==="
-			echo ""
-			echo "A verified override token has been provided by the user."
-			echo "The pre-task hook has verified the token and HEAD binding."
-			echo ""
-			echo "Authorized HEAD: $STORED_HEAD"
-			echo ""
-			echo "## Your ONLY Action"
-			echo ""
-			echo "Run verify-and-push.sh with --override mode:"
-			echo ""
-			echo '```bash'
-			echo ".claude/agents/sub-agent/scripts/verify-and-push.sh --override '\$(jq -r .token /tmp/claude/qa/current/override-token)'"
-			echo '```'
-			echo ""
-			echo "The script will:"
-			echo "- Re-verify the token (defense in depth)"
-			echo "- Verify HEAD matches authorized commit"
-			echo "- Execute git push"
-			echo "- Clean up all QA files including the token file"
-			echo ""
-			echo "DO NOT run the normal --from-disk mode. Override mode bypasses QA workflow."
-			echo ""
-			echo "==="
+			CONTEXT+="=== OVERRIDE MODE ACTIVE ===
+
+A verified override token has been provided by the user.
+The pre-task hook has verified the token and HEAD binding.
+
+Authorized HEAD: $STORED_HEAD
+
+## Your ONLY Action
+
+Run verify-and-push.sh with --override mode:
+
+\`\`\`bash
+.claude/agents/sub-agent/scripts/verify-and-push.sh --override \"\$(jq -r .token /tmp/claude/qa/current/override-token)\"
+\`\`\`
+
+The script will:
+- Re-verify the token (defense in depth)
+- Verify HEAD matches authorized commit
+- Execute git push
+- Clean up all QA files including the token file
+
+DO NOT run the normal --from-disk mode. Override mode bypasses QA workflow.
+
+===
+"
 		else
 			# NORMAL QA MODE: Inject review-lead.json context
-			echo "=== QA Phase 3: Safe Deployment Gate ==="
-			echo ""
-			echo "The pre-task hook has verified review-lead.json signature."
-			echo ""
-			echo "## Your ONLY Action"
-			echo ""
-			echo "Run verify-and-push.sh with --from-disk mode:"
-			echo ""
-			echo '```bash'
-			echo '.claude/agents/sub-agent/scripts/verify-and-push.sh --from-disk'
-			echo '```'
-			echo ""
-			echo "The script will:"
-			echo "- Read review-lead.json from disk"
-			echo "- Verify the QA_FINAL_SIGNATORY signature"
-			echo "- Validate input hash and HEAD commit"
-			echo "- Execute git push"
-			echo "- Clean up all QA files on success"
-			echo ""
-			echo "==="
+			CONTEXT+="=== QA Phase 3: Safe Deployment Gate ===
+
+The pre-task hook has verified review-lead.json signature.
+
+## Your ONLY Action
+
+Run verify-and-push.sh with --from-disk mode:
+
+\`\`\`bash
+.claude/agents/sub-agent/scripts/verify-and-push.sh --from-disk
+\`\`\`
+
+The script will:
+- Read review-lead.json from disk
+- Verify the QA_FINAL_SIGNATORY signature
+- Validate input hash and HEAD commit
+- Execute git push
+- Clean up all QA files on success
+
+===
+"
 		fi
 		;;
 esac
 
-# Output protocol spec (injected into subagent context)
+# Append protocol spec
 PROTOCOL_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/shared/docs/agent-intercommunication-protocols.md"
 
-cat << 'PROTOCOL_HEADER'
+CONTEXT+="
 === Subagent Communication Protocol ===
 Your chat output can be free-form narrative. For QA agents, the post-task hook
 parses your QA_VERDICT footer line to create the signed output file.
 
-PROTOCOL_HEADER
+"
 
-cat "$PROTOCOL_DOC"
+if [[ -f "$PROTOCOL_DOC" ]]; then
+	CONTEXT+="$(cat "$PROTOCOL_DOC")"
+fi
+
+# Output structured JSON with hookSpecificOutput.additionalContext
+# Using jq to properly escape the content for JSON
+jq -n --arg context "$CONTEXT" '{
+  "hookSpecificOutput": {
+    "additionalContext": $context
+  }
+}'
 
 exit 0

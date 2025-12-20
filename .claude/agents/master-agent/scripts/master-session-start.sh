@@ -108,27 +108,42 @@ download_crypto_gate
 
 log_session "start" "SessionStart" "completed"
 
-# Output identity docs (injected into agent context)
+# ═══════════════════════════════════════════════════════════════════════════════
+# OUTPUT STRUCTURED JSON FOR CONTEXT INJECTION
+# Uses hookSpecificOutput.additionalContext to bypass SessionStart stdout bug
+# See: https://github.com/anthropics/claude-code/issues/10373
+# ═══════════════════════════════════════════════════════════════════════════════
+
 IDENTITY_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/docs/master-agent.md"
 PROTOCOL_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/shared/docs/agent-intercommunication-protocols.md"
 
-cat << 'HEADER'
-=== Master Agent Identity ===
+# Build the context string
+IDENTITY_HEADER="=== Master Agent Identity ===
 The following is your identity document. You MUST follow these instructions.
 Project rules in CLAUDE.md also apply.
 
-HEADER
+"
 
-cat "$IDENTITY_DOC"
-
-cat << 'PROTOCOL_HEADER'
+PROTOCOL_HEADER="
 
 === Subagent Communication Protocol ===
 When dispatching subagents (6 Phase 1 reviewers, review-lead, safe-deployment-gate),
 you MUST follow the INPUT/OUTPUT formats defined below. All communication is pure JSON.
 
-PROTOCOL_HEADER
+"
 
-cat "$PROTOCOL_DOC"
+IDENTITY_CONTENT=$(cat "$IDENTITY_DOC")
+PROTOCOL_CONTENT=$(cat "$PROTOCOL_DOC")
+
+# Combine into single context string
+FULL_CONTEXT="${IDENTITY_HEADER}${IDENTITY_CONTENT}${PROTOCOL_HEADER}${PROTOCOL_CONTENT}"
+
+# Output structured JSON with hookSpecificOutput.additionalContext
+# Using jq to properly escape the content for JSON
+jq -n --arg context "$FULL_CONTEXT" '{
+  "hookSpecificOutput": {
+    "additionalContext": $context
+  }
+}'
 
 exit 0
