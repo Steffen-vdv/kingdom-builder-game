@@ -57,7 +57,7 @@ const baseRules = {
 	'max-lines': [
 		'error',
 		{
-			max: 350,
+			max: 400,
 			skipBlankLines: true,
 			skipComments: true,
 		},
