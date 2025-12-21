@@ -1,6 +1,7 @@
 import { action, actionParams, effect, requirement, compareRequirement, passiveParams, attackParams, happinessTier, actionMetaCategory } from '../src/infrastructure/builders';
 import { DEVELOPMENT_ACTION_IDS } from '../src/actions';
-import { Types, PassiveMethods, MetaCategory } from '../src/infrastructure/builderShared';
+import { Types, PassiveMethods } from '../src/infrastructure/builderShared';
+import { MetaCategory } from '../src/constants';
 import { describe, expect, it } from 'vitest';
 
 const firstDevelopmentActionId = DEVELOPMENT_ACTION_IDS[0];
@@ -13,7 +14,7 @@ const buildTierPassiveEffect = () => effect().type(Types.Passive).method(Passive
 
 describe('content builder safeguards', () => {
 	it('explains when an action id is missing', () => {
-		expect(() => action().name('Example').build()).toThrowError("Action is missing id(). Call id('unique-id') before build().");
+		expect(() => action().name('Example').metaCategory(MetaCategory.Commands).build()).toThrowError("Action is missing id(). Call id('unique-id') before build().");
 	});
 
 	it('blocks duplicate action ids', () => {
@@ -31,7 +32,7 @@ describe('content builder safeguards', () => {
 	});
 
 	it('reports missing action names', () => {
-		expect(() => action().id('example').build()).toThrowError("Action is missing name(). Call name('Readable name') before build().");
+		expect(() => action().id('example').metaCategory(MetaCategory.Commands).build()).toThrowError("Action is missing name(). Call name('Readable name') before build().");
 	});
 
 	it('flags empty effects', () => {
