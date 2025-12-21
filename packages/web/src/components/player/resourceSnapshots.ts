@@ -1,4 +1,5 @@
 import type {
+	ForecastBreakdownMap,
 	PlayerSnapshotDeltaBucket,
 	SessionPlayerStateSnapshot,
 	SessionResourceBounds,
@@ -9,6 +10,21 @@ import type {
 	ResourceValueSnapshot,
 } from '../../translation';
 import type { TranslationSignedResourceGainSelectors } from '../../translation/context';
+
+/**
+ * Checks if a resource has any forecast contributors (gains or losses).
+ * Returns true if there are contributors, even if net is zero.
+ */
+export function hasForecastContributors(
+	forecastBreakdown: ForecastBreakdownMap | undefined,
+	resourceId: string,
+): boolean {
+	const breakdown = forecastBreakdown?.[resourceId];
+	if (!breakdown) {
+		return false;
+	}
+	return breakdown.gains.length > 0 || breakdown.losses.length > 0;
+}
 
 interface SnapshotContext {
 	player: SessionPlayerStateSnapshot;

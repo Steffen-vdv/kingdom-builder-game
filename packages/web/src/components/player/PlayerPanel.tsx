@@ -15,6 +15,7 @@ import {
 	createForecastMap,
 	createResourceSnapshot,
 	formatResourceTitle,
+	hasForecastContributors,
 } from './resourceSnapshots';
 import { PLAYER_INFO_CARD_BG } from './infoCards';
 import { buildTierEntries } from './buildTierEntries';
@@ -83,8 +84,7 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 	);
 
 	// Tier display configuration for tiered resources (e.g., happiness)
-	const tierDefinitions = ruleSnapshot.tierDefinitions;
-	const tieredResourceKey = ruleSnapshot.tieredResourceKey;
+	const { tierDefinitions, tieredResourceKey } = ruleSnapshot;
 
 	const tieredResourceDescriptor = useMemo(
 		() =>
@@ -234,10 +234,14 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 				return null;
 			}
 
-			// Hide untouched resources at 0 - only show once they've been modified
+			// Hide untouched zero-value resources unless they have forecast contributors
 			const value = player.values?.[resourceId] ?? 0;
 			const touched = player.resourceTouched?.[resourceId] ?? false;
-			if (value === 0 && !touched) {
+			if (
+				value === 0 &&
+				!touched &&
+				!hasForecastContributors(forecastBreakdown, resourceId)
+			) {
 				return null;
 			}
 
@@ -298,6 +302,7 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 			showResourceCard,
 			clearHoverCard,
 			player,
+			forecastBreakdown,
 		],
 	);
 

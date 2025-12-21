@@ -85,9 +85,8 @@ function createCategoryDescriptor(
 	fallbackLabel: string,
 ): ActionCategoryDescriptor {
 	const label = definition?.title ?? fallbackLabel;
-	const subtitle = definition?.subtitle ?? fallbackLabel;
 	const icon = definition?.icon;
-	return { icon, label, subtitle };
+	return { icon, label };
 }
 
 export default function ActionsPanel() {
@@ -390,7 +389,6 @@ export default function ActionsPanel() {
 			player={selectedPlayer}
 			canInteract={canInteract}
 			selectResourceDescriptor={selectResourceDescriptor}
-			category={activeEntry.descriptor}
 		/>
 	) : null;
 	const toggleLabel = viewingOpponent
@@ -444,43 +442,45 @@ export default function ActionsPanel() {
 				</div>
 			</div>
 			<div className="relative">
-				<div
-					className={TAB_LIST_CLASSES}
-					role="tablist"
-					aria-label="Action categories"
-				>
-					{visibleCategoryEntries.map((entry) => {
-						const isActive = activeEntry?.id === entry.id;
-						const buttonId = `actions-panel-tab-${entry.id}`;
-						const counts = categoryCounts.get(entry.id) ?? {
-							performable: 0,
-							total: entry.visibleActions.length,
-						};
-						const buttonClasses = [
-							TAB_BUTTON_CLASSES,
-							isActive
-								? TAB_BUTTON_ACTIVE_CLASSES
-								: TAB_BUTTON_INACTIVE_CLASSES,
-						].join(' ');
-						return (
-							<button
-								key={entry.id}
-								id={buttonId}
-								type="button"
-								role="tab"
-								aria-selected={isActive}
-								aria-controls={tabPanelId}
-								className={buttonClasses}
-								onClick={() => setActiveCategoryId(entry.id)}
-							>
-								<ActionCategoryHeader
-									descriptor={entry.descriptor}
-									counts={counts}
-								/>
-							</button>
-						);
-					})}
-				</div>
+				{visibleCategoryEntries.length > 1 && (
+					<div
+						className={TAB_LIST_CLASSES}
+						role="tablist"
+						aria-label="Action categories"
+					>
+						{visibleCategoryEntries.map((entry) => {
+							const isActive = activeEntry?.id === entry.id;
+							const buttonId = `actions-panel-tab-${entry.id}`;
+							const counts = categoryCounts.get(entry.id) ?? {
+								performable: 0,
+								total: entry.visibleActions.length,
+							};
+							const buttonClasses = [
+								TAB_BUTTON_CLASSES,
+								isActive
+									? TAB_BUTTON_ACTIVE_CLASSES
+									: TAB_BUTTON_INACTIVE_CLASSES,
+							].join(' ');
+							return (
+								<button
+									key={entry.id}
+									id={buttonId}
+									type="button"
+									role="tab"
+									aria-selected={isActive}
+									aria-controls={tabPanelId}
+									className={buttonClasses}
+									onClick={() => setActiveCategoryId(entry.id)}
+								>
+									<ActionCategoryHeader
+										descriptor={entry.descriptor}
+										counts={counts}
+									/>
+								</button>
+							);
+						})}
+					</div>
+				)}
 				<div
 					ref={sectionRef}
 					role="tabpanel"

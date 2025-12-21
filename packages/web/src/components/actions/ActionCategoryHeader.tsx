@@ -8,7 +8,6 @@ import {
 export interface ActionCategoryDescriptor {
 	icon?: React.ReactNode;
 	label: string;
-	subtitle: string;
 }
 
 interface ActionCategoryHeaderProps {

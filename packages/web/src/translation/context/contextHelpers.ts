@@ -102,7 +102,6 @@ function normalizeActionCategoryDefinition(
 	return Object.freeze({
 		id: definition.id,
 		title: definition.title,
-		subtitle: definition.subtitle ?? definition.title,
 		...(definition.description !== undefined
 			? { description: definition.description }
 			: {}),

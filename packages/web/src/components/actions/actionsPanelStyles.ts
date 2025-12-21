@@ -166,14 +166,6 @@ export const TAB_LABEL_CLASS_NAMES = [
 	'dark:text-slate-100',
 ] as const;
 
-export const CATEGORY_SUBTITLE_CLASS_NAMES = [
-	'mb-2',
-	'text-sm',
-	'italic',
-	'text-slate-600',
-	'dark:text-slate-300',
-] as const;
-
 export const joinClassNames = (classNames: readonly string[]) =>
 	classNames.join(' ');
 
@@ -197,6 +189,3 @@ export const TAB_BUTTON_INACTIVE_CLASSES = joinClassNames(
 export const TAB_HEADER_CLASSES = joinClassNames(TAB_HEADER_CLASS_NAMES);
 export const TAB_ICON_CLASSES = joinClassNames(TAB_ICON_CLASS_NAMES);
 export const TAB_LABEL_CLASSES = joinClassNames(TAB_LABEL_CLASS_NAMES);
-export const CATEGORY_SUBTITLE_CLASSES = joinClassNames(
-	CATEGORY_SUBTITLE_CLASS_NAMES,
-);

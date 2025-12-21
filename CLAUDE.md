@@ -421,7 +421,7 @@ Action only happens when explicitly paired with action words: "check and fix",
 | ----------- | --------------------------------------------------- |
 | Braces      | Always use braces, even for single-statement bodies |
 | Line length | ≤80 characters                                      |
-| File length | ≤350 lines for new files (test files exempt)        |
+| File length | ≤400 lines for new files (test files exempt)        |
 | Naming      | Descriptive identifiers; camelCase/PascalCase       |
 | Indentation | Tabs (not spaces)                                   |
 

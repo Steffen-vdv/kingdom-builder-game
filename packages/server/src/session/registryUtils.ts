@@ -24,7 +24,6 @@ export const cloneActionCategoryRegistry = (
 		const entry: SessionActionCategoryRegistry[string] = {
 			id: definition.id,
 			title: definition.label,
-			subtitle: definition.subtitle ?? definition.label,
 			icon: definition.icon,
 			order: definition.order,
 			layout: definition.layout,

@@ -67,7 +67,6 @@ export type ActionMetaCategoryConfig = z.infer<typeof actionMetaCategorySchema>;
 export const actionCategorySchema = z.object({
 	id: z.string(),
 	title: z.string(),
-	subtitle: z.string().optional(),
 	description: z.string().optional(),
 	icon: z.string(),
 	order: z.number(),
