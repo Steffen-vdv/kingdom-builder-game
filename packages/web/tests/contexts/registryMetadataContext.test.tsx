@@ -64,7 +64,6 @@ function createTestSetup(): TestSetup {
 	const category: ActionCategoryConfig = {
 		id: nextKey('category'),
 		title: 'Arcane',
-		subtitle: 'Arcane Ops',
 		icon: '🔮',
 		order: 1,
 		layout: 'list',

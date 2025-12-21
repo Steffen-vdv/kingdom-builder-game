@@ -32,13 +32,7 @@ export function resolveActionCategoryIds(
 	return {
 		population: find(overrides?.population, (definition) => {
 			const title = toMatchable(definition.title);
-			const subtitle = toMatchable(definition.subtitle);
-			return (
-				title.includes('hire') ||
-				title.includes('population') ||
-				subtitle.includes('hire') ||
-				subtitle.includes('population')
-			);
+			return title.includes('hire') || title.includes('population');
 		}),
 		basic: find(overrides?.basic, (definition) =>
 			toMatchable(definition.title).includes('basic'),

@@ -63,12 +63,10 @@ describe('cloneActionCategoryRegistry', () => {
 			description: 'desc',
 			hideWhenEmpty: true,
 			analyticsKey: 'analytics-key',
-			subtitle: 'custom subtitle',
 		});
 		const categoryWithoutMetadata = factory.category({
 			hideWhenEmpty: false,
 			analyticsKey: '',
-			subtitle: undefined,
 		});
 
 		const cloned = cloneActionCategoryRegistry(factory.categories);
@@ -77,14 +75,10 @@ describe('cloneActionCategoryRegistry', () => {
 		expect(withMetadata.description).toBe(categoryWithMetadata.description);
 		expect(withMetadata.hideWhenEmpty).toBe(true);
 		expect(withMetadata.analyticsKey).toBe(categoryWithMetadata.analyticsKey);
-		expect(withMetadata.subtitle).toBe(categoryWithMetadata.subtitle);
 		expect(withMetadata.title).toBe(categoryWithMetadata.label);
 
 		const withoutMetadata = cloned[categoryWithoutMetadata.id];
 		expect(withoutMetadata.title).toBe(categoryWithoutMetadata.label);
-		expect(withoutMetadata.subtitle).toBe(
-			categoryWithoutMetadata.subtitle ?? categoryWithoutMetadata.label,
-		);
 		expect(withoutMetadata.description).toBeUndefined();
 		expect(withoutMetadata.hideWhenEmpty).toBeUndefined();
 		expect(withoutMetadata.analyticsKey).toBeUndefined();

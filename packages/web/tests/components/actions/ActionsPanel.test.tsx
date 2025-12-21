@@ -82,28 +82,20 @@ describe('ActionsPanel tabs', () => {
 		await within(basicTab).findByLabelText('1 of 1 actions performable');
 	});
 
-	it('places subtitles inside the tab panel and supports navigation', async () => {
+	it('supports navigation between category tabs', async () => {
 		renderPanel();
-		const raiseCategory = getCategoryDefinition(
-			mockGame.metadata.actions.raise.category,
-		);
 		const raiseTab = await findTabButton(
 			mockGame.metadata.actions.raise.category,
 		);
 		const basicTab = await findTabButton(
 			mockGame.metadata.actions.basic.category,
 		);
-		// When subtitle is non-empty, it should appear in panel, not in tab
-		const raiseSubtitle = raiseCategory.subtitle ?? '';
-		if (raiseSubtitle.length > 0) {
-			expect(raiseTab).not.toHaveTextContent(raiseSubtitle);
-		}
 		fireEvent.click(basicTab);
 		const panel = getTabPanel();
 		expect(basicTab).toHaveAttribute('aria-selected', 'true');
-		// Basic category may have empty subtitle after category merge changes
-		// Just verify navigation works - subtitle placement is tested when present
 		expect(panel).toBeInTheDocument();
+		fireEvent.click(raiseTab);
+		expect(raiseTab).toHaveAttribute('aria-selected', 'true');
 	});
 
 	it('renders generic action cards for each action entry', async () => {
@@ -169,10 +161,6 @@ function seedInitialMetadata() {
 			groups: [],
 		});
 	}
-}
-
-function getCategoryDefinition(categoryId: string) {
-	return mockGame.translationContext.actionCategories.get(categoryId);
 }
 
 async function findTabButton(categoryId: string) {

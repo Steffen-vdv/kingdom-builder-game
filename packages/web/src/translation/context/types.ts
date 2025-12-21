@@ -28,7 +28,6 @@ export interface TranslationRegistry<TDefinition> {
 export interface TranslationActionCategoryDefinition {
 	readonly id: string;
 	readonly title: string;
-	readonly subtitle: string;
 	readonly description?: string;
 	readonly icon: string;
 	readonly order: number;
