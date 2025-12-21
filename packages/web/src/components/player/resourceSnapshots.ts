@@ -115,8 +115,16 @@ export function createResourceSnapshot(
 	const current = typeof rawValue === 'number' ? rawValue : 0;
 	const resolvedCurrent = overrides?.current ?? current ?? 0;
 	const forecastDelta = overrides?.forecastDelta ?? forecastMap.get(resourceId);
+	// Skip positive forecasts for resources at their upper bound (maxed out)
+	const isAtUpperBound =
+		typeof bounds.upperBound === 'number' &&
+		resolvedCurrent >= bounds.upperBound;
+	const shouldSuppressForecast =
+		isAtUpperBound && typeof forecastDelta === 'number' && forecastDelta > 0;
 	const normalizedForecast =
-		typeof forecastDelta === 'number' && forecastDelta !== 0
+		typeof forecastDelta === 'number' &&
+		forecastDelta !== 0 &&
+		!shouldSuppressForecast
 			? forecastDelta
 			: undefined;
 	const deltaOverride = overrides?.delta;
