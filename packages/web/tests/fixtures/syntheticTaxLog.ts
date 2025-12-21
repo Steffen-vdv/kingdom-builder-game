@@ -163,7 +163,8 @@ export function buildStartConfigEffects(startConfig: StartConfig) {
 }
 
 export function createSyntheticTaxScenario(): SyntheticTaxScenario {
-	const factory = createContentFactory();
+	// Use isolated mode to avoid loading real actions with gold baseCosts
+	const factory = createContentFactory({ isolated: true });
 	factory.development({
 		id: SYNTHETIC_IDS.farmDevelopment,
 		icon: '🌾',

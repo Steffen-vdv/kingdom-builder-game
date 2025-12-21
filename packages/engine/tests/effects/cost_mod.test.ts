@@ -6,7 +6,8 @@ import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 
 describe('cost_mod effects', () => {
 	it('adds and removes cost modifiers', () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const targetAction = content.action({ baseCosts: { [CResource.gold]: 2 } });
 		const addModifierAction = content.action({
 			effects: [
@@ -55,7 +56,8 @@ describe('cost_mod effects', () => {
 	});
 
 	it('supports stacked percentage modifiers after flat adjustments', () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const targetAction = content.action({ baseCosts: { [CResource.gold]: 3 } });
 		const addModifiersAction = content.action({
 			locked: true,

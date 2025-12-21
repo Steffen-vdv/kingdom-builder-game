@@ -5,12 +5,9 @@ import {
 	getActionCosts,
 	getResourceValue,
 } from '../../src/index.ts';
-import {
-	createActionRegistry,
-	Resource as CResource,
-	MetaCategory,
-} from '@kingdom-builder/contents';
+import { Resource as CResource } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
+import { createContentFactory } from '@kingdom-builder/testing';
 import {
 	resourceAmountParams,
 	resourcePercentParams,
@@ -20,11 +17,12 @@ import {
 
 describe('resource:add effect', () => {
 	it('increments a resource via action effect', () => {
-		const actions = createActionRegistry();
-		actions.add('grant_gold', {
+		// Use isolated mode so actionCostResource returns command-points
+		// (the meta-category binding resource) instead of gold from real actions
+		const content = createContentFactory({ isolated: true });
+		const grantGold = content.action({
 			id: 'grant_gold',
 			name: 'Grant Gold',
-			metaCategory: MetaCategory.Commands,
 			effects: [
 				{
 					type: 'resource',
@@ -36,12 +34,11 @@ describe('resource:add effect', () => {
 				},
 			],
 		});
-		const engineContext = createTestEngine({ actions });
+		const engineContext = createTestEngine(content);
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
 		const before = getResourceValue(engineContext.activePlayer, CResource.gold);
-		const actionDefinition = actions.get('grant_gold');
-		const params = actionDefinition.effects.find(
+		const params = grantGold.effects.find(
 			(effect) =>
 				effect.type === 'resource' &&
 				effect.method === 'add' &&
@@ -57,11 +54,11 @@ describe('resource:add effect', () => {
 	});
 
 	it('rounds fractional amounts according to round setting', () => {
-		const actions = createActionRegistry();
-		actions.add('round_up', {
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
+		const roundUp = content.action({
 			id: 'round_up',
 			name: 'Round Up',
-			metaCategory: MetaCategory.Commands,
 			effects: [
 				{
 					type: 'resource',
@@ -74,10 +71,9 @@ describe('resource:add effect', () => {
 				},
 			],
 		});
-		actions.add('round_down', {
+		const roundDown = content.action({
 			id: 'round_down',
 			name: 'Round Down',
-			metaCategory: MetaCategory.Commands,
 			effects: [
 				{
 					type: 'resource',
@@ -90,18 +86,16 @@ describe('resource:add effect', () => {
 				},
 			],
 		});
-		const engineContext = createTestEngine({ actions });
+		const engineContext = createTestEngine(content);
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
 
-		const roundUpParams = actions
-			.get('round_up')
-			.effects.find(
-				(effect) =>
-					effect.type === 'resource' &&
-					effect.method === 'add' &&
-					effect.params?.resourceId === CResource.gold,
-			)?.params as ResourcePercentParamsResult | undefined;
+		const roundUpParams = roundUp.effects.find(
+			(effect) =>
+				effect.type === 'resource' &&
+				effect.method === 'add' &&
+				effect.params?.resourceId === CResource.gold,
+		)?.params as ResourcePercentParamsResult | undefined;
 		const roundUpBase = 5;
 		engineContext.activePlayer.resourceValues[CResource.gold] = roundUpBase;
 		engineContext.activePlayer.resourceValues[CResource.cp] =
@@ -112,14 +106,12 @@ describe('resource:add effect', () => {
 			roundUpBase + roundUpDelta,
 		);
 
-		const roundDownParams = actions
-			.get('round_down')
-			.effects.find(
-				(effect) =>
-					effect.type === 'resource' &&
-					effect.method === 'add' &&
-					effect.params?.resourceId === CResource.gold,
-			)?.params as ResourcePercentParamsResult | undefined;
+		const roundDownParams = roundDown.effects.find(
+			(effect) =>
+				effect.type === 'resource' &&
+				effect.method === 'add' &&
+				effect.params?.resourceId === CResource.gold,
+		)?.params as ResourcePercentParamsResult | undefined;
 		const roundDownBase = 11;
 		engineContext.activePlayer.resourceValues[CResource.gold] = roundDownBase;
 		engineContext.activePlayer.resourceValues[CResource.cp] =

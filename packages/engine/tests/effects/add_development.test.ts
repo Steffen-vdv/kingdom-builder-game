@@ -7,6 +7,7 @@ import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 describe('development:add effect', () => {
 	it('adds development and applies onBuild effects', () => {
+		// Use default mode to get initial setup (lands) from real game content
 		const content = createContentFactory();
 		const development = content.development({
 			onBuild: [
@@ -60,6 +61,7 @@ describe('development:add effect', () => {
 	});
 
 	it('throws if land does not exist', () => {
+		// Use default mode to get initial setup from real game content
 		const content = createContentFactory();
 		const development = content.development();
 		const action = content.action({
@@ -85,6 +87,7 @@ describe('development:add effect', () => {
 	});
 
 	it('throws if land has no free slots', () => {
+		// Use default mode to get initial setup (lands) from real game content
 		const content = createContentFactory();
 		const development = content.development();
 		const action = content.action({

@@ -11,12 +11,14 @@ import type { PlayerId } from '../../src/state/index.ts';
 import { createTestEngine } from '../helpers.ts';
 
 describe('action cost helpers', () => {
-	it('applies default AP cost only for non-system actions', () => {
-		const content = createContentFactory();
+	it('applies default CP cost only for non-system actions', () => {
+		// Use isolated mode to get empty registries, ensuring actionCostResource
+		// falls back to the meta-category binding resource (command-points)
+		const content = createContentFactory({ isolated: true });
 		const standardAction = content.action({ baseCosts: {} });
 		const systemAction = content.action({ baseCosts: {}, system: true });
 		const engineContext = createTestEngine({ actions: content.actions });
-		const apKey = engineContext.actionCostResource;
+		const cpKey = engineContext.actionCostResource;
 
 		const standardCosts = applyCostsWithPassives(
 			standardAction.id,
@@ -29,10 +31,12 @@ describe('action cost helpers', () => {
 			engineContext,
 		);
 
-		expect(standardCosts[apKey]).toBe(
+		// Standard actions get the meta-category cost (1 CP from Commands)
+		expect(standardCosts[cpKey]).toBe(
 			engineContext.services.rules.defaultActionAPCost,
 		);
-		expect(systemCosts[apKey]).toBe(0);
+		// System actions have no action cost entry (not 0, just absent)
+		expect(cpKey in systemCosts).toBe(false);
 	});
 
 	it('resolves costs for alternate players without mutating state', () => {

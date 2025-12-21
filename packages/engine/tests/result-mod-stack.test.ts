@@ -12,7 +12,8 @@ describe('result modifiers', () => {
 		const modGainA = 2;
 		const modGainB = 3;
 
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const base = resourceAmountParams({
 			resourceId: resourceKey,
 			amount: baseGain,

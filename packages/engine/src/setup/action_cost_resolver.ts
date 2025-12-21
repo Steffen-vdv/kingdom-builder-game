@@ -1,4 +1,5 @@
 import type {
+	ActionMetaCategoryConfig,
 	Registry,
 	ActionConfig as ActionDef,
 } from '@kingdom-builder/protocol';
@@ -10,13 +11,12 @@ export interface ActionCostConfiguration {
 
 /**
  * Determines the common action cost resource by finding the intersection
- * of baseCosts across all non-system actions.
- *
- * Note: This is a fallback mechanism. The primary cost model is defined
- * at the meta-category level.
+ * of baseCosts across all non-system actions. If no common baseCost is found,
+ * falls back to the first 'global' cost model meta-category's binding resource.
  */
 export function determineCommonActionCostResource(
 	actions: Registry<ActionDef>,
+	actionMetaCategories?: Registry<ActionMetaCategoryConfig>,
 ): ActionCostConfiguration {
 	let intersection: string[] | null = null;
 	for (const [, actionDefinition] of actions.entries()) {
@@ -35,5 +35,18 @@ export function determineCommonActionCostResource(
 		const resourceId = intersection[0]!;
 		return { resourceId, amount: null };
 	}
+
+	// Fallback: use the binding resource from first global cost meta-category
+	if (actionMetaCategories) {
+		for (const [, metaCategory] of actionMetaCategories.entries()) {
+			if (metaCategory.costModel === 'global') {
+				return {
+					resourceId: metaCategory.bindingResourceId,
+					amount: metaCategory.globalCostAmount ?? null,
+				};
+			}
+		}
+	}
+
 	return { resourceId: '', amount: null };
 }

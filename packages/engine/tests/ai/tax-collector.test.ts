@@ -10,8 +10,10 @@ import { createTestEngine } from '../helpers';
 import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 describe('tax collector AI controller', () => {
-	function createControllerFixture(actionPoints: number = 2) {
-		const content = createContentFactory();
+	function createControllerFixture(commandPoints: number = 2) {
+		// Use isolated mode so actionCostResource returns command-points
+		// (the meta-category binding resource) instead of gold from real actions
+		const content = createContentFactory({ isolated: true });
 		content.action({
 			id: TAX_ACTION_ID,
 			effects: [
@@ -42,19 +44,19 @@ describe('tax collector AI controller', () => {
 		engineContext.game.currentStep =
 			engineContext.phases[actionPhaseIndex]!.steps[0]?.id ?? '';
 
-		const apKey = engineContext.actionCostResource;
-		// PlayerState uses resourceValues, not resources
-		engineContext.activePlayer.resourceValues[apKey] = actionPoints;
+		// Use CResource.cp directly - actions cost command-points via meta-category
+		const cpKey = CResource.cp;
+		engineContext.activePlayer.resourceValues[cpKey] = commandPoints;
 
 		const controller = createTaxCollectorController(
 			engineContext.activePlayer.id,
 		);
 
-		return { engineContext, apKey, controller } as const;
+		return { engineContext, cpKey, controller } as const;
 	}
 
-	it('collects tax until AP are spent then ends the turn', async () => {
-		const { engineContext, apKey, controller } = createControllerFixture();
+	it('collects tax until CP are spent then ends the turn', async () => {
+		const { engineContext, cpKey, controller } = createControllerFixture();
 		const perform = vi.fn((actionId: string) =>
 			performAction(actionId, engineContext),
 		);
@@ -68,7 +70,7 @@ describe('tax collector AI controller', () => {
 		expect(perform).toHaveBeenCalledTimes(2);
 		expect(perform).toHaveBeenNthCalledWith(1, TAX_ACTION_ID, engineContext);
 		expect(perform).toHaveBeenNthCalledWith(2, TAX_ACTION_ID, engineContext);
-		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[cpKey]).toBe(0);
 		expect(endPhase).toHaveBeenCalledTimes(1);
 	});
 
@@ -114,7 +116,7 @@ describe('tax collector AI controller', () => {
 
 	// Note: actionCostResource is now a derived getter from action costs,
 	// so it cannot be set to empty. This edge case no longer applies.
-	it.skip('skips when the action point resource key is missing', async () => {
+	it.skip('skips when the command point resource key is missing', async () => {
 		const { engineContext, controller } = createControllerFixture();
 		// engineContext.actionCostResource is now read-only (derived from actions)
 		const perform = vi.fn();
@@ -130,7 +132,7 @@ describe('tax collector AI controller', () => {
 	});
 
 	it('stops when continuation declines without advancing', async () => {
-		const { engineContext, apKey, controller } = createControllerFixture();
+		const { engineContext, cpKey, controller } = createControllerFixture();
 		const perform = vi.fn((actionId: string) =>
 			performAction(actionId, engineContext),
 		);
@@ -155,11 +157,11 @@ describe('tax collector AI controller', () => {
 		);
 		expect(shouldAdvancePhase).not.toHaveBeenCalled();
 		expect(endPhase).not.toHaveBeenCalled();
-		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(1);
+		expect(engineContext.activePlayer.resourceValues[cpKey]).toBe(1);
 	});
 
 	it('continues through the full turn when callbacks allow', async () => {
-		const { engineContext, apKey, controller } = createControllerFixture();
+		const { engineContext, cpKey, controller } = createControllerFixture();
 		const perform = vi.fn((actionId: string) =>
 			performAction(actionId, engineContext),
 		);
@@ -191,11 +193,11 @@ describe('tax collector AI controller', () => {
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(shouldAdvancePhase).toHaveBeenCalledWith(engineContext);
 		expect(endPhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[cpKey]).toBe(0);
 	});
 
 	it('advances the phase when the tax action definition is missing', async () => {
-		const { engineContext, apKey, controller } = createControllerFixture();
+		const { engineContext, cpKey, controller } = createControllerFixture();
 		engineContext.actions.remove(TAX_ACTION_ID);
 		const perform = vi.fn();
 		const shouldAdvancePhase = vi.fn().mockResolvedValue(true);
@@ -210,12 +212,12 @@ describe('tax collector AI controller', () => {
 		expect(perform).not.toHaveBeenCalled();
 		expect(shouldAdvancePhase).toHaveBeenCalledWith(engineContext);
 		expect(endPhase).toHaveBeenCalledTimes(1);
-		// After phase advances, player may change so AP could be undefined
-		expect(engineContext.activePlayer.resourceValues[apKey] ?? 0).toBe(0);
+		// After phase advances, player may change so CP could be undefined
+		expect(engineContext.activePlayer.resourceValues[cpKey] ?? 0).toBe(0);
 	});
 
 	it('advances when system-only tax action is unavailable to the player', async () => {
-		const { engineContext, apKey, controller } = createControllerFixture();
+		const { engineContext, cpKey, controller } = createControllerFixture();
 		const definition = engineContext.actions.get(TAX_ACTION_ID);
 		if (!definition) {
 			throw new Error('Tax action not found');
@@ -235,12 +237,12 @@ describe('tax collector AI controller', () => {
 		expect(perform).not.toHaveBeenCalled();
 		expect(shouldAdvancePhase).toHaveBeenCalledWith(engineContext);
 		expect(endPhase).toHaveBeenCalledTimes(1);
-		// After phase advances, player may change so AP could be undefined
-		expect(engineContext.activePlayer.resourceValues[apKey] ?? 0).toBe(0);
+		// After phase advances, player may change so CP could be undefined
+		expect(engineContext.activePlayer.resourceValues[cpKey] ?? 0).toBe(0);
 	});
 
-	it('clears remaining AP without advancing when phase advancement is denied', async () => {
-		const { engineContext, apKey, controller } = createControllerFixture();
+	it('clears remaining CP without advancing when phase advancement is denied', async () => {
+		const { engineContext, cpKey, controller } = createControllerFixture();
 		const perform = vi.fn((actionId: string) =>
 			performAction(actionId, engineContext),
 		);
@@ -256,11 +258,11 @@ describe('tax collector AI controller', () => {
 		expect(perform).toHaveBeenCalledTimes(2);
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(endPhase).not.toHaveBeenCalled();
-		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[cpKey]).toBe(0);
 	});
 
 	it('finishes the phase when performAction throws expected error', async () => {
-		const { engineContext, apKey, controller } = createControllerFixture();
+		const { engineContext, cpKey, controller } = createControllerFixture();
 		// Requirement failures and affordability issues should be handled gracefully
 		const error = Object.assign(new Error('Requirement not met'), {
 			requirementFailure: { message: 'Requirement not met' },
@@ -277,8 +279,8 @@ describe('tax collector AI controller', () => {
 
 		expect(perform).toHaveBeenCalledTimes(1);
 		expect(endPhase).toHaveBeenCalledTimes(1);
-		// After phase advances, player may change so AP could be undefined
-		expect(engineContext.activePlayer.resourceValues[apKey] ?? 0).toBe(0);
+		// After phase advances, player may change so CP could be undefined
+		expect(engineContext.activePlayer.resourceValues[cpKey] ?? 0).toBe(0);
 	});
 
 	it('re-throws unexpected errors', async () => {

@@ -118,6 +118,7 @@ export function buildActionsPanelContent({
 	});
 	Object.assign(raisePopulationAction, {
 		category: categories.population,
+		metaCategory: 'meta:commands',
 		order: 1,
 		focus: 'economy',
 	});
@@ -129,6 +130,7 @@ export function buildActionsPanelContent({
 	});
 	Object.assign(basicAction, {
 		category: categories.basic,
+		metaCategory: 'meta:commands',
 		order: 2,
 		focus: 'economy',
 	});
@@ -143,6 +145,7 @@ export function buildActionsPanelContent({
 		});
 		Object.assign(buildingAction, {
 			category: categories.building,
+			metaCategory: 'meta:commands',
 			order: 3,
 			focus: 'economy',
 		});

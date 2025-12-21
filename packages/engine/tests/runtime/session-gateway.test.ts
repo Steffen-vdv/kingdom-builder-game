@@ -16,6 +16,7 @@ import {
 	RULES as REAL_RULES,
 	PhaseId,
 	ACTIONS as REAL_ACTIONS,
+	ACTION_META_CATEGORIES as REAL_ACTION_META_CATEGORIES,
 	BUILDINGS as REAL_BUILDINGS,
 	DEVELOPMENTS as REAL_DEVELOPMENTS,
 } from '@kingdom-builder/contents';
@@ -52,7 +53,9 @@ interface CreateGatewayOptions {
 }
 
 function createGateway(options?: CreateGatewayOptions) {
-	const content = createContentFactory();
+	// Use isolated mode so actionCostResource returns command-points
+	// (the meta-category binding resource) instead of gold from real actions
+	const content = createContentFactory({ isolated: true });
 	const gainGold = content.action({
 		effects: [
 			{
@@ -80,6 +83,7 @@ function createGateway(options?: CreateGatewayOptions) {
 
 	const session = createEngineSession({
 		actions: REAL_ACTIONS,
+		actionMetaCategories: REAL_ACTION_META_CATEGORIES,
 		buildings: REAL_BUILDINGS,
 		developments: REAL_DEVELOPMENTS,
 		phases: REAL_PHASES,

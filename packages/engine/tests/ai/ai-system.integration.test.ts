@@ -16,11 +16,12 @@ describe('AISystem with tax collector controller', () => {
 	>;
 
 	function createEngineFixture(
-		actionPoints = 2,
+		commandPoints = 2,
 		options: { playerIndex?: number; action?: ActionOverrides } = {},
 	) {
 		const { playerIndex = 1, action = {} } = options;
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		content.action({
 			id: TAX_ACTION_ID,
 			baseCosts: {},
@@ -53,16 +54,16 @@ describe('AISystem with tax collector controller', () => {
 		engineContext.game.currentStep =
 			engineContext.phases[actionPhaseIndex]!.steps[0]?.id ?? '';
 
-		const apKey = engineContext.actionCostResource;
-		// PlayerState uses resourceValues, not resources
-		engineContext.activePlayer.resourceValues[apKey] = actionPoints;
+		// Use CResource.cp directly - actions cost command-points via meta-category
+		const cpKey = CResource.cp;
+		engineContext.activePlayer.resourceValues[cpKey] = commandPoints;
 		engineContext.activePlayer.actions.add(TAX_ACTION_ID);
 
-		return { engineContext, apKey, actionPhaseIndex } as const;
+		return { engineContext, cpKey, actionPhaseIndex } as const;
 	}
 
-	it('runs registered controller draining AP and advancing phase', async () => {
-		const { engineContext, apKey, actionPhaseIndex } = createEngineFixture(2);
+	it('runs registered controller draining CP and advancing phase', async () => {
+		const { engineContext, cpKey, actionPhaseIndex } = createEngineFixture(2);
 		const perform = vi.fn((actionId: string) =>
 			performAction(actionId, engineContext),
 		);
@@ -93,7 +94,7 @@ describe('AISystem with tax collector controller', () => {
 		expect(continueAfterAction).toHaveBeenCalledTimes(2);
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(advancePhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[cpKey]).toBe(0);
 		expect(engineContext.game.phaseIndex).not.toBe(actionPhaseIndex);
 	});
 
@@ -187,7 +188,7 @@ describe('AISystem with tax collector controller', () => {
 	});
 
 	it('finishes the phase when the tax action is locked to the system', async () => {
-		const { engineContext, apKey } = createEngineFixture(2, {
+		const { engineContext, cpKey } = createEngineFixture(2, {
 			action: { system: true },
 		});
 		const perform = vi.fn();
@@ -210,11 +211,11 @@ describe('AISystem with tax collector controller', () => {
 		expect(perform).not.toHaveBeenCalled();
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(advancePhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[cpKey]).toBe(0);
 	});
 
 	it('terminates the loop when continuation declines further actions', async () => {
-		const { engineContext, apKey } = createEngineFixture(3);
+		const { engineContext, cpKey } = createEngineFixture(3);
 		const perform = vi.fn((actionId: string) =>
 			performAction(actionId, engineContext),
 		);
@@ -236,11 +237,11 @@ describe('AISystem with tax collector controller', () => {
 		expect(perform).toHaveBeenCalledTimes(1);
 		expect(continueAfterAction).toHaveBeenCalledTimes(1);
 		expect(advancePhase).not.toHaveBeenCalled();
-		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(2);
+		expect(engineContext.activePlayer.resourceValues[cpKey]).toBe(2);
 	});
 
-	it('recovers from expected errors by draining AP and advancing', async () => {
-		const { engineContext, apKey } = createEngineFixture(2);
+	it('recovers from expected errors by draining CP and advancing', async () => {
+		const { engineContext, cpKey } = createEngineFixture(2);
 		// Requirement failure errors should be swallowed gracefully
 		const error = Object.assign(new Error('Requirement not met'), {
 			requirementFailure: { message: 'Requirement not met' },
@@ -265,7 +266,7 @@ describe('AISystem with tax collector controller', () => {
 		expect(perform).toHaveBeenCalledTimes(1);
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(advancePhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[cpKey]).toBe(0);
 	});
 
 	it('re-throws unexpected errors', async () => {

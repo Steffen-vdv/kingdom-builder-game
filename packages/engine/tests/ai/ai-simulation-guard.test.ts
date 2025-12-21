@@ -16,7 +16,9 @@ import { resourceAmountParams } from '../helpers/resourceParams';
 
 describe('AI simulation guard', () => {
 	function createEngineWithAction(effectParams: Record<string, unknown>) {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		// (the meta-category binding resource) instead of gold from real actions
+		const content = createContentFactory({ isolated: true });
 		content.action({
 			id: TAX_ACTION_ID,
 			baseCosts: {},
@@ -41,20 +43,19 @@ describe('AI simulation guard', () => {
 		engineContext.game.phaseIndex = actionPhaseIndex;
 		engineContext.game.stepIndex = 0;
 
-		const apKey = engineContext.actionCostResource;
-		if (!apKey) {
-			throw new Error('No action cost resource');
-		}
-		engineContext.activePlayer.resourceValues[apKey] = 2;
+		// Use CResource.cp directly - actions cost command-points via meta-category
+		const cpKey = CResource.cp;
+		engineContext.activePlayer.resourceValues[cpKey] = 2;
 
-		return { engineContext, content, apKey };
+		return { engineContext, content, cpKey };
 	}
 
 	it('AI uses simulation before execution (same as player flow)', () => {
 		// Verify that the AI system is configured to simulate before performing
 		// by checking the create_engine.ts setup wraps performAction with
 		// simulateAction first
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		content.action({
 			id: TAX_ACTION_ID,
 			baseCosts: {},
@@ -78,8 +79,9 @@ describe('AI simulation guard', () => {
 		engineContext.game.phaseIndex = actionPhaseIndex;
 		engineContext.game.stepIndex = 0;
 
-		const apKey = engineContext.actionCostResource!;
-		engineContext.activePlayer.resourceValues[apKey] = 2;
+		// Use CResource.cp directly - actions cost command-points via meta-category
+		const cpKey = CResource.cp;
+		engineContext.activePlayer.resourceValues[cpKey] = 2;
 
 		// The AI system created by createTestEngine should have simulation guard
 		expect(engineContext.aiSystem).toBeDefined();
@@ -89,7 +91,7 @@ describe('AI simulation guard', () => {
 	});
 
 	it('simulation failure prevents costs from being deducted', async () => {
-		const { engineContext, apKey } = createEngineWithAction(
+		const { engineContext, cpKey } = createEngineWithAction(
 			// Invalid effect that will fail during execution
 			resourceAmountParams({ resourceId: CResource.gold, amount: 1 }),
 		);
@@ -111,22 +113,22 @@ describe('AI simulation guard', () => {
 		);
 		system.register(engineContext.activePlayer.id, controller);
 
-		const apBefore = engineContext.activePlayer.resourceValues[apKey];
+		const cpBefore = engineContext.activePlayer.resourceValues[cpKey];
 
 		// Run should throw the error
 		await expect(
 			system.run(engineContext.activePlayer.id, engineContext),
 		).rejects.toThrow('Simulated action would fail');
 
-		// AP should not have been deducted since simulation failed before execution
-		// Note: The AI controller itself doesn't deduct AP, the action execution does
+		// CP should not have been deducted since simulation failed before execution
+		// Note: The AI controller itself doesn't deduct CP, the action execution does
 		// But since we're throwing before any action runs, state should be unchanged
-		// The controller zeroes AP on expected errors, but not on unexpected errors
-		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(apBefore);
+		// The controller zeroes CP on expected errors, but not on unexpected errors
+		expect(engineContext.activePlayer.resourceValues[cpKey]).toBe(cpBefore);
 	});
 
 	it('expected errors (requirements) are handled gracefully', async () => {
-		const { engineContext, apKey } = createEngineWithAction(
+		const { engineContext, cpKey } = createEngineWithAction(
 			resourceAmountParams({ resourceId: CResource.gold, amount: 1 }),
 		);
 
@@ -156,9 +158,9 @@ describe('AI simulation guard', () => {
 			system.run(engineContext.activePlayer.id, engineContext),
 		).resolves.toBe(true);
 
-		// Should have advanced phase and drained AP
+		// Should have advanced phase and drained CP
 		expect(advanceFn).toHaveBeenCalled();
-		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[cpKey]).toBe(0);
 	});
 
 	it('unexpected errors propagate to caller', async () => {
@@ -198,7 +200,8 @@ describe('AI simulation guard', () => {
 describe('AI action error types', () => {
 	it('affordability errors are expected', async () => {
 		// Errors containing "Cannot afford" should be swallowed
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		content.action({ id: TAX_ACTION_ID, baseCosts: {}, effects: [] });
 		const engineContext = createTestEngine(content);
 
@@ -208,9 +211,8 @@ describe('AI action error types', () => {
 		engineContext.game.currentPlayerIndex = 1;
 		engineContext.game.phaseIndex = actionPhaseIndex;
 		engineContext.game.stepIndex = 0;
-		engineContext.activePlayer.resourceValues[
-			engineContext.actionCostResource!
-		] = 1;
+		// Use CResource.cp directly - actions cost command-points via meta-category
+		engineContext.activePlayer.resourceValues[CResource.cp] = 1;
 
 		const error = new Error('Cannot afford this action');
 		const perform = vi.fn(() => {
@@ -236,7 +238,8 @@ describe('AI action error types', () => {
 	});
 
 	it('requirement not met errors are expected', async () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		content.action({ id: TAX_ACTION_ID, baseCosts: {}, effects: [] });
 		const engineContext = createTestEngine(content);
 
@@ -246,9 +249,8 @@ describe('AI action error types', () => {
 		engineContext.game.currentPlayerIndex = 1;
 		engineContext.game.phaseIndex = actionPhaseIndex;
 		engineContext.game.stepIndex = 0;
-		engineContext.activePlayer.resourceValues[
-			engineContext.actionCostResource!
-		] = 1;
+		// Use CResource.cp directly - actions cost command-points via meta-category
+		engineContext.activePlayer.resourceValues[CResource.cp] = 1;
 
 		const error = new Error('Requirement not met');
 		const perform = vi.fn(() => {
@@ -274,7 +276,8 @@ describe('AI action error types', () => {
 	});
 
 	it('integer validation errors are unexpected and re-thrown', async () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		content.action({ id: TAX_ACTION_ID, baseCosts: {}, effects: [] });
 		const engineContext = createTestEngine(content);
 
@@ -284,9 +287,8 @@ describe('AI action error types', () => {
 		engineContext.game.currentPlayerIndex = 1;
 		engineContext.game.phaseIndex = actionPhaseIndex;
 		engineContext.game.stepIndex = 0;
-		engineContext.activePlayer.resourceValues[
-			engineContext.actionCostResource!
-		] = 1;
+		// Use CResource.cp directly - actions cost command-points via meta-category
+		engineContext.activePlayer.resourceValues[CResource.cp] = 1;
 
 		// This is the actual error that would occur with the 0.5 happiness bug
 		const error = new Error(

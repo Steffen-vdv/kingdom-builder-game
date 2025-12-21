@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { createEngineSession, type EngineSession } from '../../src/index.ts';
 import {
 	ACTIONS,
+	ACTION_META_CATEGORIES,
 	BUILDINGS,
 	DEVELOPMENTS,
 	PHASES,
@@ -28,12 +29,14 @@ import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 const BASE: {
 	actions: Registry<ActionDef>;
+	actionMetaCategories: typeof ACTION_META_CATEGORIES;
 	buildings: Registry<BuildingDef>;
 	developments: Registry<DevelopmentDef>;
 	phases: PhaseDef[];
 	resourceCatalog: RuntimeResourceContent;
 } = {
 	actions: ACTIONS,
+	actionMetaCategories: ACTION_META_CATEGORIES,
 	buildings: BUILDINGS,
 	developments: DEVELOPMENTS,
 	phases: PHASES,
@@ -49,6 +52,8 @@ function createTestSession(overrides: EngineOverrides = {}) {
 	const { rules, ...rest } = overrides;
 	return createEngineSession({
 		actions: rest.actions ?? BASE.actions,
+		actionMetaCategories:
+			rest.actionMetaCategories ?? BASE.actionMetaCategories,
 		buildings: rest.buildings ?? BASE.buildings,
 		developments: rest.developments ?? BASE.developments,
 		phases: rest.phases ?? BASE.phases,
@@ -86,7 +91,8 @@ function advanceToPlayerMain(session: EngineSession, playerId: string) {
 
 describe('EngineSession', () => {
 	it('performs actions without exposing the context', () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const gainGold = content.action({
 			effects: [
 				{
@@ -126,7 +132,8 @@ describe('EngineSession', () => {
 	});
 
 	it('simulates actions before executing to avoid partial failures', () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const failingAction = content.action({
 			effects: Array.from({ length: 3 }, () => ({
 				type: 'land',
@@ -250,7 +257,8 @@ describe('EngineSession', () => {
 	});
 
 	it('clones action cost lookups from the session', () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const goldCost = 5;
 		const action = content.action({
 			baseCosts: { [CResource.gold]: goldCost },
@@ -270,7 +278,8 @@ describe('EngineSession', () => {
 	});
 
 	it('unlocks non-system actions at session start', () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const unlocked = content.action({ name: 'Unlocked Action' });
 		const locked = content.action({
 			name: 'Locked System',
@@ -298,7 +307,8 @@ describe('EngineSession', () => {
 				message: requirementMessage,
 			}));
 		}
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const action = content.action({
 			requirements: [
 				{
@@ -348,7 +358,8 @@ describe('EngineSession', () => {
 				message: context.activePlayer.id,
 			}));
 		}
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const action = content.action({
 			requirements: [
 				{
@@ -379,7 +390,8 @@ describe('EngineSession', () => {
 	});
 
 	it('summarizes action definitions with optional system flags', () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const categorized = content.action({
 			system: true,
 		});
@@ -553,7 +565,8 @@ it('returns cloned simulation previews for upcoming phases', () => {
 });
 
 it('delegates AI turns with overrides while preserving controllers', async () => {
-	const content = createContentFactory();
+	// Use isolated mode so actionCostResource returns command-points
+	const content = createContentFactory({ isolated: true });
 	const taxAction = content.action({
 		id: TAX_ACTION_ID,
 		baseCosts: {},
@@ -588,10 +601,11 @@ it('delegates AI turns with overrides while preserving controllers', async () =>
 		Parameters<PerformActionFn>,
 		ReturnType<PerformActionFn>
 	>((actionId, engineContext) => {
-		const apKey = engineContext.actionCostResource;
+		// Use CResource.cp directly - actions cost command-points via meta-category
+		const cpKey = CResource.cp;
 		// PlayerState uses resourceValues, not resources
-		const current = engineContext.activePlayer.resourceValues[apKey] ?? 0;
-		engineContext.activePlayer.resourceValues[apKey] = Math.max(0, current - 1);
+		const current = engineContext.activePlayer.resourceValues[cpKey] ?? 0;
+		engineContext.activePlayer.resourceValues[cpKey] = Math.max(0, current - 1);
 		return [];
 	});
 	const continueAfterAction = vi.fn().mockResolvedValue(true);

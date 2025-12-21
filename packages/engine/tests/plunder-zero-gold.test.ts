@@ -22,7 +22,8 @@ function grantAP(
 
 describe('plunder action with zero opponent resource', () => {
 	it("doesn't modify resources when opponent has none", () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const transferAmount = 5; // Transfer 5 gold from opponent to active player
 		const action = content.action({
 			effects: [

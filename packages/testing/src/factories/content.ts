@@ -6,13 +6,21 @@ import {
 	type ActionCategoryConfig as ContentActionCategoryConfig,
 	MetaCategory,
 } from '@kingdom-builder/contents';
-import type {
-	ActionCategoryConfig as SessionActionCategoryConfig,
-	ActionConfig,
-	BuildingConfig,
-	DevelopmentConfig,
+import {
 	Registry,
+	type ActionCategoryConfig as SessionActionCategoryConfig,
+	type ActionConfig,
+	type BuildingConfig,
+	type DevelopmentConfig,
 } from '@kingdom-builder/protocol';
+
+export interface ContentFactoryOptions {
+	/**
+	 * When true, creates empty registries for isolated testing.
+	 * When false (default), uses pre-populated registries from contents.
+	 */
+	isolated?: boolean;
+}
 
 let seq = 0;
 function nextId(prefix: string) {
@@ -33,11 +41,23 @@ export interface ContentFactory {
 	development(definition?: Partial<DevelopmentConfig>): DevelopmentConfig;
 }
 
-export function createContentFactory(): ContentFactory {
-	const categories = createActionCategoryRegistry();
-	const actions = createActionRegistry();
-	const buildings = createBuildingRegistry();
-	const developments = createDevelopmentRegistry();
+export function createContentFactory(
+	options: ContentFactoryOptions = {},
+): ContentFactory {
+	// Default: use pre-populated registries from contents package
+	// When isolated=true: use empty registries for isolated testing
+	const categories = options.isolated
+		? new Registry<ContentActionCategoryConfig>()
+		: createActionCategoryRegistry();
+	const actions = options.isolated
+		? new Registry<ActionConfig>()
+		: createActionRegistry();
+	const buildings = options.isolated
+		? new Registry<BuildingConfig>()
+		: createBuildingRegistry();
+	const developments = options.isolated
+		? new Registry<DevelopmentConfig>()
+		: createDevelopmentRegistry();
 
 	let nextCategoryOrder = categories.values().length;
 

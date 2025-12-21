@@ -91,7 +91,8 @@ export function teardownResourceOverrides() {
 }
 
 function createBaseEngine() {
-	const factory = createContentFactory();
+	// Use isolated mode to avoid loading real actions with gold baseCosts
+	const factory = createContentFactory({ isolated: true });
 	const engineContext = createEngine({
 		actions: factory.actions,
 		buildings: factory.buildings,
