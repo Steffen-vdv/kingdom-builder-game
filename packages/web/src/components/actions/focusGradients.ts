@@ -1,45 +1,47 @@
 import type { ActionFocus } from './types';
 
-type GradientMap = Record<ActionFocus | string, string>;
+type GradientMap = Record<ActionFocus | string, string> & { default: string };
+
+function joinGradient(parts: readonly string[]): string {
+	return parts.join(' ');
+}
 
 /**
  * Focus gradients for action cards.
  * Presentation-layer styling based on focus type.
  * Semantic focus data (id, label, color) lives in @kingdom-builder/contents.
+ *
+ * Mapping from old focus names:
+ * - economy → economy (emerald/green)
+ * - aggressive → combat (amber/orange)
+ * - defense → research (blue/sky)
  */
-const FOCUS_GRADIENT_DEFINITIONS = {
-	economy: {
-		light: 'from-emerald-200',
-		dark: 'to-emerald-900',
-	},
-	combat: {
-		light: 'from-amber-200',
-		dark: 'to-amber-900',
-	},
-	research: {
-		light: 'from-blue-200',
-		dark: 'to-blue-900',
-	},
-} as const;
-
-function buildFocusGradients(): GradientMap {
-	const gradients: GradientMap = {};
-	for (const [id, gradient] of Object.entries(FOCUS_GRADIENT_DEFINITIONS)) {
-		gradients[id] = `${gradient.light} ${gradient.dark}`;
-	}
-	return gradients;
-}
-
-export const FOCUS_GRADIENTS = buildFocusGradients();
+export const FOCUS_GRADIENTS: GradientMap = {
+	economy: joinGradient([
+		'from-emerald-200/70 to-emerald-100/40',
+		'dark:from-emerald-900/40 dark:to-emerald-800/20',
+	]),
+	combat: joinGradient([
+		'from-amber-200/70 to-orange-100/40',
+		'dark:from-amber-900/40 dark:to-orange-900/20',
+	]),
+	research: joinGradient([
+		'from-blue-200/70 to-sky-100/40',
+		'dark:from-blue-900/40 dark:to-sky-900/20',
+	]),
+	default: joinGradient([
+		'from-emerald-200/70 to-emerald-100/40',
+		'dark:from-emerald-900/40 dark:to-emerald-800/20',
+	]),
+};
 
 /**
  * Gets the gradient class for a focus value.
- * Returns the Economy focus gradient as default fallback.
+ * Returns the default (economy) gradient as fallback.
  */
 export function getFocusGradient(focus: ActionFocus | undefined): string {
 	if (focus && focus in FOCUS_GRADIENTS) {
 		return FOCUS_GRADIENTS[focus] as string;
 	}
-	// Fallback to Economy focus
-	return FOCUS_GRADIENTS['economy'] as string;
+	return FOCUS_GRADIENTS.default;
 }
