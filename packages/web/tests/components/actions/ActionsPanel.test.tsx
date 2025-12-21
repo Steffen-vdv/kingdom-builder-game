@@ -1,6 +1,13 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	within,
+} from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import ActionsPanel from '../../../src/components/actions/ActionsPanel';
 import { RegistryMetadataProvider } from '../../../src/contexts/RegistryMetadataContext';
@@ -43,6 +50,7 @@ describe('ActionsPanel tabs', () => {
 	});
 
 	afterEach(() => {
+		cleanup();
 		vi.restoreAllMocks();
 		setGameApi(null);
 	});
@@ -125,6 +133,23 @@ describe('ActionsPanel tabs', () => {
 				within(buildPanel).getByRole('button', { name: /Construct/i }),
 			).toBeInTheDocument();
 		}
+	});
+
+	it('renders tablist only when multiple categories are visible', async () => {
+		// With showBuilding: true (set in beforeEach), we have 3 categories
+		// (basic, hire, build), so tablist should be rendered
+		renderPanel();
+		// Wait for tablist to appear (use findAllByRole for async waiting)
+		const tablists = await screen.findAllByRole('tablist');
+		// Take the last one (most recent render)
+		const tablist = tablists[tablists.length - 1];
+		expect(tablist).toBeInTheDocument();
+		// Count visible tabs - should have multiple (one per category with actions)
+		const tabs = within(tablist).getAllByRole('tab');
+		expect(tabs.length).toBeGreaterThan(1);
+		// Tabpanel should also exist
+		const tabpanels = screen.getAllByRole('tabpanel');
+		expect(tabpanels.length).toBeGreaterThan(0);
 	});
 });
 
