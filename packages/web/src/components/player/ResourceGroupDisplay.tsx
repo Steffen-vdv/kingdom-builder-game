@@ -9,7 +9,11 @@ import {
 	type ResourceMetadataSnapshot,
 	type ResourceValueSnapshot,
 } from '../../translation';
-import { formatResourceMagnitude } from './ResourceButton';
+import {
+	formatResourceMagnitude,
+	formatSignedResourceMagnitude,
+} from './ResourceButton';
+import { getForecastDisplay } from '../../utils/forecast';
 import {
 	createForecastMap,
 	createResourceSnapshot,
@@ -234,6 +238,13 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 		(entry) => entry.snapshot.current > 0,
 	);
 
+	// Compute forecast display for the group total
+	const groupForecastDelta = groupTotalEntry?.snapshot.forecastDelta;
+	const groupForecastDisplay = getForecastDisplay(
+		groupForecastDelta === null ? undefined : groupForecastDelta,
+		(delta) => formatSignedResourceMagnitude(delta, displayMetadata),
+	);
+
 	const toggleExpanded = () => setExpanded(!expanded);
 
 	return (
@@ -258,6 +269,13 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 				<span className="flex-1 text-left text-sm font-semibold text-slate-100">
 					{displayValue}
 				</span>
+				{groupForecastDisplay && (
+					<span
+						className={`text-[11px] font-semibold ${groupForecastDisplay.toneClass}`}
+					>
+						{groupForecastDisplay.label}
+					</span>
+				)}
 				{activeMembers.length > 0 && (
 					<span className="pop-chevron" aria-hidden="true">
 						▼
@@ -278,6 +296,12 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 								event.stopPropagation();
 								showGroupCard();
 							};
+							// Compute forecast for this member
+							const memberForecastDelta = entry.snapshot.forecastDelta;
+							const memberForecast = getForecastDisplay(
+								memberForecastDelta === null ? undefined : memberForecastDelta,
+								(delta) => formatSignedResourceMagnitude(delta, entry.metadata),
+							);
 							return (
 								<button
 									key={entry.snapshot.id}
@@ -293,6 +317,11 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 										<span aria-hidden="true">{entry.metadata.icon}</span>
 									)}
 									<span>{entry.snapshot.current}</span>
+									{memberForecast && (
+										<span className={`text-[9px] ${memberForecast.toneClass}`}>
+											{memberForecast.label}
+										</span>
+									)}
 								</button>
 							);
 						})}

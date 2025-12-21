@@ -135,6 +135,8 @@ export function useNextTurnForecast(): NextTurnForecast {
 	const cacheRef = useRef<{ key: string; value: NextTurnForecast } | null>(
 		null,
 	);
+	// Track the last valid forecast to return while new data is fetching
+	const lastValidForecastRef = useRef<NextTurnForecast | null>(null);
 	const requestKeyRef = useRef<string | null>(null);
 
 	useEffect(() => {
@@ -197,6 +199,7 @@ export function useNextTurnForecast(): NextTurnForecast {
 					value: merged,
 				};
 				cacheRef.current = entry;
+				lastValidForecastRef.current = merged;
 				forecastCache.set(sessionId, entry);
 				resolvedRequests.set(sessionId, hashKey);
 				inflightRequests.delete(requestKey);
@@ -223,13 +226,16 @@ export function useNextTurnForecast(): NextTurnForecast {
 			cacheRef.current = sessionEntry;
 			return sessionEntry.value;
 		}
+		// Return the last valid forecast while new data is being fetched
+		// This prevents the "flicker" of empty forecasts during refetch
+		if (lastValidForecastRef.current) {
+			return lastValidForecastRef.current;
+		}
+		// Only create empty forecast on initial load before any data arrives
 		const forecast: NextTurnForecast = {};
 		for (const player of players) {
 			forecast[player.id] = cloneEmptyDelta();
 		}
-		const entry: ForecastCacheEntry = { key: hashKey, value: forecast };
-		cacheRef.current = entry;
-		forecastCache.set(sessionId, entry);
 		return forecast;
 	}, [hashKey, players, revision, sessionId]);
 }
