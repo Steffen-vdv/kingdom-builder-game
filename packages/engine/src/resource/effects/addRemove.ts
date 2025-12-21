@@ -371,8 +371,12 @@ function applyResourceEffect(
 	// Validate that the change won't violate the group parent's bounds.
 	// This is a systematic rejection to maintain computed value integrity.
 	validateGroupParentBounds(player, catalog, resourceId, result.finalValue);
-	// Pass mode bypasses bounds - tell setResourceValue to skip clamping
-	const skipBoundClamp = reconciliationMode === 'pass';
+	// Pass mode bypasses bounds - tell setResourceValue to skip clamping.
+	// Check both effect-level mode and bound-level modes.
+	const skipBoundClamp =
+		reconciliationMode === 'pass' ||
+		bounds.lowerBoundReconciliation === 'pass' ||
+		bounds.upperBoundReconciliation === 'pass';
 	// Only track resource:add effects in recentResourceGains for evaluation
 	// modifiers. resource:remove effects should not be subject to result mods.
 	const suppressRecentEntry = kind === 'remove';
