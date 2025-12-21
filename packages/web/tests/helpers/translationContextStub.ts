@@ -91,7 +91,6 @@ const EMPTY_ACTION_CATEGORIES: TranslationActionCategoryRegistry = {
 		return Object.freeze({
 			id,
 			title: id,
-			subtitle: id,
 			icon: '',
 			order: 0,
 			layout: 'list',

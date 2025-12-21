@@ -1635,7 +1635,6 @@
 		"basic": {
 			"id": "basic",
 			"label": "Basic",
-			"subtitle": "",
 			"icon": "⚙️",
 			"order": 0,
 			"layout": "grid-primary",
@@ -1646,7 +1645,6 @@
 		"hire": {
 			"id": "hire",
 			"label": "Hire",
-			"subtitle": "(Effects take place immediately and last until the population is removed or reassigned)",
 			"icon": "🧑‍🤝‍🧑",
 			"order": 1,
 			"layout": "grid-primary",
@@ -1657,7 +1655,6 @@
 		"build": {
 			"id": "build",
 			"label": "Build",
-			"subtitle": "(Effects take place immediately build and last until the building is removed)",
 			"icon": "🏗️",
 			"order": 2,
 			"layout": "grid-secondary",

@@ -43,7 +43,6 @@ function cloneActionCategoryDefinition(
 	const clone: ActionCategoryConfig = {
 		id: parsed.id,
 		title: parsed.title,
-		subtitle: parsed.subtitle ?? parsed.title,
 		icon: parsed.icon,
 		order: parsed.order,
 		layout: parsed.layout,

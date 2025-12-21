@@ -1,6 +1,13 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	within,
+} from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import ActionsPanel from '../../../src/components/actions/ActionsPanel';
 import { RegistryMetadataProvider } from '../../../src/contexts/RegistryMetadataContext';
@@ -43,6 +50,7 @@ describe('ActionsPanel tabs', () => {
 	});
 
 	afterEach(() => {
+		cleanup();
 		vi.restoreAllMocks();
 		setGameApi(null);
 	});
@@ -82,28 +90,20 @@ describe('ActionsPanel tabs', () => {
 		await within(basicTab).findByLabelText('1 of 1 actions performable');
 	});
 
-	it('places subtitles inside the tab panel and supports navigation', async () => {
+	it('supports navigation between category tabs', async () => {
 		renderPanel();
-		const raiseCategory = getCategoryDefinition(
-			mockGame.metadata.actions.raise.category,
-		);
 		const raiseTab = await findTabButton(
 			mockGame.metadata.actions.raise.category,
 		);
 		const basicTab = await findTabButton(
 			mockGame.metadata.actions.basic.category,
 		);
-		// When subtitle is non-empty, it should appear in panel, not in tab
-		const raiseSubtitle = raiseCategory.subtitle ?? '';
-		if (raiseSubtitle.length > 0) {
-			expect(raiseTab).not.toHaveTextContent(raiseSubtitle);
-		}
 		fireEvent.click(basicTab);
 		const panel = getTabPanel();
 		expect(basicTab).toHaveAttribute('aria-selected', 'true');
-		// Basic category may have empty subtitle after category merge changes
-		// Just verify navigation works - subtitle placement is tested when present
 		expect(panel).toBeInTheDocument();
+		fireEvent.click(raiseTab);
+		expect(raiseTab).toHaveAttribute('aria-selected', 'true');
 	});
 
 	it('renders generic action cards for each action entry', async () => {
@@ -133,6 +133,47 @@ describe('ActionsPanel tabs', () => {
 				within(buildPanel).getByRole('button', { name: /Construct/i }),
 			).toBeInTheDocument();
 		}
+	});
+
+	it('renders tablist only when multiple categories are visible', async () => {
+		// With showBuilding: true (set in beforeEach), we have 3 categories
+		// (basic, hire, build), so tablist should be rendered
+		renderPanel();
+		// Wait for tablist to appear (use findAllByRole for async waiting)
+		const tablists = await screen.findAllByRole('tablist');
+		// Take the last one (most recent render)
+		const tablist = tablists[tablists.length - 1];
+		expect(tablist).toBeInTheDocument();
+		// Count visible tabs - should have multiple (one per category with actions)
+		const tabs = within(tablist).getAllByRole('tab');
+		expect(tabs.length).toBeGreaterThan(1);
+		// Tabpanel should also exist
+		const tabpanels = screen.getAllByRole('tabpanel');
+		expect(tabpanels.length).toBeGreaterThan(0);
+	});
+
+	it('hides tablist when only a single category is visible', () => {
+		// Override the translation context to return only one category
+		const basicCategoryId = mockGame.metadata.actions.basic.category;
+		const originalList = mockGame.translationContext.actionCategories.list();
+		const singleCategory = originalList.filter(
+			(category) => category.id === basicCategoryId,
+		);
+		const originalRegistry = mockGame.translationContext.actionCategories;
+		// Replace actionCategories with a mock that returns only one category
+		(
+			mockGame.translationContext as { actionCategories: unknown }
+		).actionCategories = {
+			...originalRegistry,
+			list: () => singleCategory,
+		};
+		renderPanel();
+		// With only one category, tablist should NOT be rendered
+		const tablist = screen.queryByRole('tablist');
+		expect(tablist).not.toBeInTheDocument();
+		// But the tabpanel content should still be visible
+		const tabpanel = screen.getByRole('tabpanel');
+		expect(tabpanel).toBeInTheDocument();
 	});
 });
 
@@ -169,10 +210,6 @@ function seedInitialMetadata() {
 			groups: [],
 		});
 	}
-}
-
-function getCategoryDefinition(categoryId: string) {
-	return mockGame.translationContext.actionCategories.get(categoryId);
 }
 
 async function findTabButton(categoryId: string) {

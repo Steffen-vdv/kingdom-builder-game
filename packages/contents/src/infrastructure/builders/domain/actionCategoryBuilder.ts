@@ -3,7 +3,6 @@ export type ActionCategoryLayout = 'grid-primary' | 'grid-secondary' | 'list';
 export interface ActionCategoryConfig {
 	id: string;
 	label: string;
-	subtitle: string;
 	icon: string;
 	order: number;
 	layout: ActionCategoryLayout;
@@ -31,10 +30,6 @@ export class ActionCategoryBuilder {
 
 	label(label: string) {
 		return this.set('label', label, 'Action category already set label(). Remove the extra label() call.');
-	}
-
-	subtitle(subtitle: string) {
-		return this.set('subtitle', subtitle, 'Action category already set subtitle(). Remove the extra subtitle() call.');
 	}
 
 	icon(icon: string) {
@@ -79,12 +74,10 @@ export class ActionCategoryBuilder {
 		if (!this.config.layout) {
 			throw new Error("Action category is missing layout(). Call layout('grid-primary') before build().");
 		}
-		const subtitle = this.config.subtitle || this.config.label;
 		const analyticsKey = this.config.analyticsKey || this.config.id;
 		const built: ActionCategoryConfig = {
 			id: this.config.id,
 			label: this.config.label,
-			subtitle,
 			icon: this.config.icon,
 			order: this.config.order,
 			layout: this.config.layout,

@@ -50,7 +50,6 @@ describe('translation diff resource source context', () => {
 				get: vi.fn(() => ({
 					id: 'synthetic',
 					title: 'Synthetic',
-					subtitle: 'Synthetic',
 					icon: '',
 					order: 0,
 					layout: 'list',
