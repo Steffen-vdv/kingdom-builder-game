@@ -599,7 +599,7 @@ export function createActionRegistry() {
 			.free()
 			// Resources
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.gold).amount(10).reject().build()).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.castleHP).amount(10).reject().build()).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.castleHP).amount(100).reject().build()).build())
 			// Stats
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.populationMax).amount(1).reject().build()).build())
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.growth).amount(0.25).reject().build()).build())
@@ -623,7 +623,7 @@ export function createActionRegistry() {
 			// Resources (dev mode gets more)
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.gold).amount(100).reject().build()).build())
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.happiness).amount(10).reject().build()).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.castleHP).amount(10).reject().build()).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.castleHP).amount(100).reject().build()).build())
 			// Stats
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.populationMax).amount(1).reject().build()).build())
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.growth).amount(0.25).reject().build()).build())
