@@ -5,6 +5,11 @@
 # This hook logs user prompts to enable intent reconstruction for QA.
 # The prompt log is used by qa-prepare.sh to build canonical QA input.
 #
+# Also handles stale context recovery: if context says "subagent" but we're
+# receiving a user prompt (which only happens in master-agent), reset it.
+# This fixes orphaned state from interrupted Task calls (SubagentStop doesn't
+# fire on interruption).
+#
 # MUST NEVER BLOCK (exit 0 always).
 #
 # Each session gets a fresh /tmp, so we use a fixed filename.
@@ -14,6 +19,22 @@
 set +e
 
 cd "$CLAUDE_PROJECT_DIR" 2>/dev/null || cd "$(pwd)"
+
+# Source paths for CLAUDE_PROJECT_DIR
+source "${CLAUDE_PROJECT_DIR:-.}/.claude/config/paths.sh" 2>/dev/null
+
+# =============================================================================
+# STALE CONTEXT RECOVERY
+# =============================================================================
+# UserPromptSubmit only fires in master-agent context. If state says "subagent",
+# it's stale from an interrupted Task - reset it.
+
+CTX_MGR="$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager"
+CURRENT_CONTEXT=$("$CTX_MGR/get-context.sh" 2>/dev/null)
+
+if [[ "$CURRENT_CONTEXT" == "subagent" ]]; then
+	"$CTX_MGR/register-master-agent.sh" 2>/dev/null
+fi
 
 # Read stdin JSON
 INPUT=$(cat)
