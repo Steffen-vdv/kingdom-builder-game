@@ -8,7 +8,6 @@ import {
 import type {
         PhasedDef,
 } from '@kingdom-builder/web/translation/content/phased';
-import { resolvePhasedTriggerTitle } from '@kingdom-builder/web/translation/content/phased';
 // prettier-ignore
 import {
         createContentFactory,
@@ -17,27 +16,34 @@ import { buildSyntheticTranslationContext } from '../../packages/web/tests/helpe
 
 type Entry = string | { title: string; items: Entry[] };
 
-function findEntry(
+/**
+ * Checks if any entry contains the given phase suffix.
+ * After the inline format change, step triggers produce effects like:
+ * "🪙 +1 per 🧪 Phase Label Phase" instead of section groups.
+ */
+function hasEntryWithPhaseSuffix(
 	entries: Entry[],
-	title: string,
-): { title: string; items: Entry[] } | undefined {
+	phaseSuffix: string,
+): boolean {
 	for (const entry of entries) {
 		if (typeof entry === 'string') {
+			if (entry.includes(phaseSuffix)) {
+				return true;
+			}
 			continue;
 		}
-		if (entry.title === title) {
-			return entry;
+		if (entry.title.includes(phaseSuffix)) {
+			return true;
 		}
-		const nested = findEntry(entry.items, title);
-		if (nested) {
-			return nested;
+		if (hasEntryWithPhaseSuffix(entry.items, phaseSuffix)) {
+			return true;
 		}
 	}
-	return undefined;
+	return false;
 }
 
 describe('PhasedTranslator step triggers', () => {
-	it('renders dynamic step metadata from trigger info', () => {
+	it('renders dynamic step metadata with inline phase suffix', () => {
 		const content = createContentFactory();
 		const stepMetadata = {
 			onTestStep: {
@@ -52,7 +58,7 @@ describe('PhasedTranslator step triggers', () => {
 			},
 		} as const;
 		let developmentId = '';
-		let stepKeys: string[] = [];
+		let phaseLabel = '';
 
 		const { translationContext } = buildSyntheticTranslationContext(
 			({ registries, session }) => {
@@ -84,6 +90,7 @@ describe('PhasedTranslator step triggers', () => {
 
 				const targetPhase = session.phases[0];
 				if (targetPhase) {
+					phaseLabel = targetPhase.label ?? targetPhase.id;
 					const existingSteps = targetPhase.steps ?? [];
 					targetPhase.steps = [
 						...existingSteps,
@@ -96,14 +103,14 @@ describe('PhasedTranslator step triggers', () => {
 					];
 				}
 
-				stepKeys = Object.keys(stepMetadata);
+				const stepKeys = Object.keys(stepMetadata);
 				stepKeys.forEach((key, index) => {
 					stored[key as keyof PhasedDef] = [makeEffect(index + 1)];
 				});
 			},
 		);
 
-		expect(stepKeys).toHaveLength(2);
+		expect(phaseLabel).toBeTruthy();
 
 		const summary = summarizeContent(
 			'development',
@@ -116,24 +123,17 @@ describe('PhasedTranslator step triggers', () => {
 			translationContext,
 		) as unknown as Entry[];
 
-		for (const key of stepKeys) {
-			const expectedTitle = resolvePhasedTriggerTitle(
-				translationContext,
-				key,
-				key,
-			);
-			expect(expectedTitle, `expected title for ${key}`).toBeTruthy();
-			const summaryEntry = expectedTitle
-				? findEntry(summary, expectedTitle)
-				: undefined;
-			expect(summaryEntry, `summary entry for ${key}`).toBeDefined();
+		// Step triggers now produce inline phase suffixes like "per 🌱 Growth Phase"
+		// instead of section grouping with titles.
+		const expectedPhaseSuffix = `${phaseLabel} Phase`;
 
-			const describeEntry = expectedTitle
-				? findEntry(details, expectedTitle)
-				: undefined;
-			expect(describeEntry, `describe entry for ${key}`).toBeDefined();
-
-			expect(describeEntry?.title).toBe(summaryEntry?.title);
-		}
+		expect(
+			hasEntryWithPhaseSuffix(summary, expectedPhaseSuffix),
+			`summary should contain phase suffix "${expectedPhaseSuffix}"`,
+		).toBe(true);
+		expect(
+			hasEntryWithPhaseSuffix(details, expectedPhaseSuffix),
+			`describe should contain phase suffix "${expectedPhaseSuffix}"`,
+		).toBe(true);
 	});
 });

@@ -1,5 +1,6 @@
 import { registerEffectFormatter } from '../factory';
 import type { TranslationContext } from '../../context';
+import { selectSlotDisplay } from '../../context/assetSelectors';
 
 interface DevelopmentChangeVerbs {
 	describe: string;
@@ -12,11 +13,10 @@ interface DevelopmentChangeCopy {
 	log?: string;
 }
 
-function renderDevelopmentChange(
+function getDevelopmentDisplay(
 	id: string | undefined,
 	context: TranslationContext,
-	verbs: DevelopmentChangeVerbs,
-): DevelopmentChangeCopy {
+): { name: string; icon: string } {
 	const safeId = typeof id === 'string' && id.length ? id : 'development';
 	let name = safeId;
 	let icon = '';
@@ -31,6 +31,16 @@ function renderDevelopmentChange(
 	} catch {
 		/* ignore missing development definitions */
 	}
+	return { name, icon };
+}
+
+function renderDevelopmentChange(
+	id: string | undefined,
+	context: TranslationContext,
+	verbs: DevelopmentChangeVerbs,
+): DevelopmentChangeCopy {
+	const { name, icon } = getDevelopmentDisplay(id, context);
+	const safeId = typeof id === 'string' && id.length ? id : 'development';
 	const decorated = [icon, name].filter(Boolean).join(' ').trim();
 	const label = decorated || safeId;
 	const summary = label;
@@ -42,16 +52,46 @@ function renderDevelopmentChange(
 	return copy;
 }
 
+/**
+ * Renders slot transformation for development:add effect.
+ * - Summarize: "🧩 → 🌾"
+ * - Describe: "🧩 Empty Development Slot → 🌾 Farm"
+ */
+function renderSlotTransformation(
+	id: string | undefined,
+	context: TranslationContext,
+	mode: 'summarize' | 'describe',
+): string {
+	const slot = selectSlotDisplay(context.assets);
+	const slotIcon = slot.icon?.trim() || '🧩';
+	const slotLabel = `Empty ${slot.label}`.trim();
+	const { name, icon: devIcon } = getDevelopmentDisplay(id, context);
+
+	if (mode === 'summarize') {
+		// Concise: "🧩 → 🌾"
+		const target = devIcon?.trim() || name;
+		return `${slotIcon} → ${target}`;
+	}
+	// Describe: "🧩 Empty Development Slot → 🌾 Farm"
+	const slotDisplay = `${slotIcon} ${slotLabel}`.trim();
+	const devDisplay = devIcon ? `${devIcon} ${name}`.trim() : name;
+	return `${slotDisplay} → ${devDisplay}`;
+}
+
 registerEffectFormatter('development', 'add', {
 	summarize: (effect, context) => {
-		return renderDevelopmentChange(effect.params?.['id'] as string, context, {
-			describe: 'Add',
-		}).summary;
+		return renderSlotTransformation(
+			effect.params?.['id'] as string,
+			context,
+			'summarize',
+		);
 	},
 	describe: (effect, context) => {
-		return renderDevelopmentChange(effect.params?.['id'] as string, context, {
-			describe: 'Add',
-		}).description;
+		return renderSlotTransformation(
+			effect.params?.['id'] as string,
+			context,
+			'describe',
+		);
 	},
 	log: () => {
 		return '';

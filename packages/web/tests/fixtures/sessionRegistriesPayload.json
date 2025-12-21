@@ -47,8 +47,8 @@
 					}
 				}
 			],
-			"category": "develop",
-			"order": 2,
+			"category": "basic",
+			"order": 200,
 			"focus": "economy"
 		},
 		"develop_farm": {
@@ -69,8 +69,8 @@
 					}
 				}
 			],
-			"category": "develop",
-			"order": 3,
+			"category": "basic",
+			"order": 201,
 			"focus": "economy"
 		},
 		"develop_outpost": {
@@ -91,8 +91,8 @@
 					}
 				}
 			],
-			"category": "develop",
-			"order": 4,
+			"category": "basic",
+			"order": 202,
 			"focus": "combat"
 		},
 		"develop_watchtower": {
@@ -113,8 +113,8 @@
 					}
 				}
 			],
-			"category": "develop",
-			"order": 5,
+			"category": "basic",
+			"order": 203,
 			"focus": "combat"
 		},
 		"tax": {
@@ -1635,7 +1635,7 @@
 		"basic": {
 			"id": "basic",
 			"label": "Basic",
-			"subtitle": "(Effects take place immediately, unless stated otherwise)",
+			"subtitle": "",
 			"icon": "⚙️",
 			"order": 0,
 			"layout": "grid-primary",
@@ -1654,23 +1654,12 @@
 			"analyticsKey": "hire",
 			"description": "Actions that add population or assign roles."
 		},
-		"develop": {
-			"id": "develop",
-			"label": "Develop",
-			"subtitle": "(Effects take place immediately and last until the development is removed)",
-			"icon": "🛠️",
-			"order": 2,
-			"layout": "grid-secondary",
-			"hideWhenEmpty": false,
-			"analyticsKey": "develop",
-			"description": "Developments that upgrade existing buildings or lands."
-		},
 		"build": {
 			"id": "build",
 			"label": "Build",
 			"subtitle": "(Effects take place immediately build and last until the building is removed)",
 			"icon": "🏗️",
-			"order": 3,
+			"order": 2,
 			"layout": "grid-secondary",
 			"hideWhenEmpty": false,
 			"analyticsKey": "build",

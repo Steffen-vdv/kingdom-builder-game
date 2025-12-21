@@ -466,8 +466,10 @@ describe('GenericActions effect group handling', () => {
 		});
 		fireEvent.click(actionButton);
 
+		// Since Develop category was merged into Basic, the format is now
+		// "⚙️ Basic - 🏠 House" instead of "🏗️ Develop - 🏠 House"
 		const optionButton = await screen.findByRole('button', {
-			name: /🏗️ Develop - 🏠 House/,
+			name: /⚙️ Basic - 🏠 House/,
 		});
 		fireEvent.click(optionButton);
 
