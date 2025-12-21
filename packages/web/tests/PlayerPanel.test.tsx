@@ -25,7 +25,8 @@ const renderPanel = () =>
 
 const forecastByPlayerId = {
 	[activePlayerSnapshot.id]: {
-		values: forecast,
+		delta: { values: forecast },
+		breakdown: {},
 	},
 };
 
@@ -80,7 +81,8 @@ describe('<PlayerPanel />', () => {
 		);
 		// Find first resource with a positive forecast - use V2 ID directly
 		const resourceWithPositiveForecast = ungroupedResources.find((def) => {
-			const delta = forecastByPlayerId[activePlayerSnapshot.id].values[def.id];
+			const delta =
+				forecastByPlayerId[activePlayerSnapshot.id].delta.values[def.id];
 			return (delta ?? 0) > 0;
 		});
 		if (resourceWithPositiveForecast) {
@@ -91,7 +93,9 @@ describe('<PlayerPanel />', () => {
 				activePlayerSnapshot.values?.[firstV2Resource.id] ?? 0;
 			// Get forecast using V2 ID directly
 			const resourceDelta =
-				forecastByPlayerId[activePlayerSnapshot.id].values[firstV2Resource.id];
+				forecastByPlayerId[activePlayerSnapshot.id].delta.values[
+					firstV2Resource.id
+				];
 			// Component uses signed delta without parentheses
 			const signedDelta = `${resourceDelta > 0 ? '+' : ''}${resourceDelta}`;
 			const resourceLabel =
@@ -110,7 +114,8 @@ describe('<PlayerPanel />', () => {
 		}
 		// Find a resource with negative forecast
 		const negativeV2Resource = ungroupedResources.find((def) => {
-			const delta = forecastByPlayerId[activePlayerSnapshot.id].values[def.id];
+			const delta =
+				forecastByPlayerId[activePlayerSnapshot.id].delta.values[def.id];
 			return (delta ?? 0) < 0;
 		});
 		if (negativeV2Resource) {
@@ -120,7 +125,7 @@ describe('<PlayerPanel />', () => {
 			const negValue =
 				activePlayerSnapshot.values?.[negativeV2Resource.id] ?? 0;
 			const negDelta =
-				forecastByPlayerId[activePlayerSnapshot.id].values[
+				forecastByPlayerId[activePlayerSnapshot.id].delta.values[
 					negativeV2Resource.id
 				]!;
 			// Component uses signed delta without parentheses

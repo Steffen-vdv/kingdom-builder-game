@@ -1,19 +1,7 @@
-export type {
-	DescriptorRegistryEntry,
-	ResolveResult,
-	SourceDescriptor,
-} from './types';
-export {
-	defaultFormatDetail,
-	formatKindLabel,
-	getDescriptor,
-} from './descriptorRegistry';
-export {
-	formatLinkLabel,
-	formatDependency,
-	formatSourceTitle,
-	getSourceDescriptor,
-} from './dependencyFormatters';
+/**
+ * Re-exports formatting utilities that are still used across the codebase.
+ * The historic breakdown descriptor system has been removed.
+ */
 export {
 	formatDetailText,
 	formatPhaseStep,
@@ -21,4 +9,3 @@ export {
 	formatStepLabel,
 	resourceDisplaysAsPercent,
 } from './format';
-export { formatTriggerLabel } from './triggerLabels';

@@ -120,10 +120,10 @@ export type {
 } from './services';
 export type {
 	SessionPlayerId,
-	SessionResourceSourceLink,
-	SessionResourceSourceMeta,
-	SessionResourceSourceContribution,
 	SessionLandSnapshot,
+	ForecastContribution,
+	ResourceForecastBreakdown,
+	ForecastBreakdownMap,
 	SessionPassiveSummary,
 	SessionPlayerStateSnapshot,
 	SessionGameConclusionSnapshot,

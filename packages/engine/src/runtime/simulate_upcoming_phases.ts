@@ -1,7 +1,11 @@
+import type {
+	ForecastBreakdownMap,
+	ForecastContribution,
+} from '@kingdom-builder/protocol';
 import { cloneEngineContext } from '../actions/context_clone';
 import type { EngineContext } from '../context';
 import { advance } from '../phases/advance';
-import type { PlayerId } from '../state';
+import type { PlayerId, ResourceSourceContribution } from '../state';
 import { snapshotPlayer } from './player_snapshot';
 import { snapshotAdvance } from './engine_snapshot';
 import type { EngineAdvanceResult, PlayerStateSnapshot } from './types';
@@ -30,6 +34,8 @@ export interface SimulateUpcomingPhasesResult {
 	after: PlayerStateSnapshot;
 	delta: PlayerSnapshotDeltaBucket;
 	steps: EngineAdvanceResult[];
+	/** Breakdown of forecast contributions per resource (gains/losses/net). */
+	forecastBreakdown: ForecastBreakdownMap;
 }
 
 function ensurePhaseExists(
@@ -87,6 +93,66 @@ function buildDelta(
 	return { values };
 }
 
+/**
+ * Convert a ResourceSourceContribution to a ForecastContribution.
+ */
+function toForecastContribution(
+	contribution: ResourceSourceContribution,
+): ForecastContribution {
+	const { amount, meta } = contribution;
+	return {
+		amount,
+		sourceKey: meta.sourceKey,
+		...(meta.kind ? { kind: meta.kind } : {}),
+		...(meta.id ? { id: meta.id } : {}),
+	};
+}
+
+/**
+ * Build the forecast breakdown from accumulated resource sources.
+ * Aggregates contributions by sourceKey, splits into gains/losses.
+ */
+function buildForecastBreakdown(
+	resourceSources: Record<string, Record<string, ResourceSourceContribution>>,
+): ForecastBreakdownMap {
+	const breakdown: ForecastBreakdownMap = {};
+
+	for (const resourceId of Object.keys(resourceSources)) {
+		const sources = resourceSources[resourceId];
+		if (!sources) {
+			continue;
+		}
+
+		const contributions = Object.values(sources);
+		if (contributions.length === 0) {
+			continue;
+		}
+
+		const gains: ForecastContribution[] = [];
+		const losses: ForecastContribution[] = [];
+		let net = 0;
+
+		for (const contribution of contributions) {
+			const forecast = toForecastContribution(contribution);
+			net += forecast.amount;
+
+			if (forecast.amount > 0) {
+				gains.push(forecast);
+			} else if (forecast.amount < 0) {
+				losses.push(forecast);
+			}
+			// Zero-amount contributions are skipped
+		}
+
+		// Only include resources that have at least one contributor
+		if (gains.length > 0 || losses.length > 0) {
+			breakdown[resourceId] = { gains, losses, net };
+		}
+	}
+
+	return breakdown;
+}
+
 function hasReachedIterationLimit(iterations: number, limit: number): boolean {
 	return iterations >= limit;
 }
@@ -104,7 +170,14 @@ export function simulateUpcomingPhases(
 	if (playerIndex === -1) {
 		throw new Error(`Player ${playerId} does not exist in this context.`);
 	}
-	const before = snapshotPlayer(clone, clone.game.players[playerIndex]!);
+
+	// Clear resourceSources on the cloned player to capture only simulation
+	// changes. The existing machinery will accumulate contributions during
+	// simulation, which we'll extract afterward for the forecast breakdown.
+	const clonedPlayer = clone.game.players[playerIndex]!;
+	clonedPlayer.resourceSources = {};
+
+	const before = snapshotPlayer(clone, clonedPlayer);
 	const steps: EngineAdvanceResult[] = [];
 	let growthComplete = false;
 	let upkeepComplete = false;
@@ -142,12 +215,20 @@ export function simulateUpcomingPhases(
 			}
 		}
 	}
-	const after = snapshotPlayer(clone, clone.game.players[playerIndex]!);
+
+	const after = snapshotPlayer(clone, clonedPlayer);
+
+	// Build forecast breakdown from accumulated resource sources
+	const forecastBreakdown = buildForecastBreakdown(
+		clonedPlayer.resourceSources,
+	);
+
 	return {
 		playerId,
 		before,
 		after,
 		delta: buildDelta(before, after),
 		steps,
+		forecastBreakdown,
 	};
 }
