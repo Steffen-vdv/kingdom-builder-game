@@ -1,17 +1,13 @@
 import type { BuildingConfig, DevelopmentConfig, EffectDef } from '@kingdom-builder/protocol';
+import { Focus, type FocusValue } from '../constants';
 
 export const BROOM_ICON = '🧹';
 export const GENERAL_RESOURCE_ICON = '🧺';
 export const RESOURCE_TRANSFER_ICON = '🔁';
 
-export const Focus = {
-	Economy: 'economy',
-	Aggressive: 'aggressive',
-	Defense: 'defense',
-	Other: 'other',
-} as const;
-
-export type Focus = (typeof Focus)[keyof typeof Focus];
+// Re-export Focus from constants (single source of truth)
+export { Focus };
+export type Focus = FocusValue;
 
 export interface Triggered {
 	onBeforeAttacked?: EffectDef[] | undefined;

@@ -103,7 +103,7 @@ export function createBuildingRegistry() {
 	registry.add(BuildingId.CastleGardens, building().id(BuildingId.CastleGardens).name('Castle Gardens').icon('🌷').cost(Resource.gold, 15).focus(Focus.Economy).build());
 
 	// ═══════════════════════════════════════════════════════════════════════════
-	// AGGRESSIVE BUILDINGS
+	// COMBAT BUILDINGS
 	// ═══════════════════════════════════════════════════════════════════════════
 
 	registry.add(
@@ -119,15 +119,11 @@ export function createBuildingRegistry() {
 					.params(resultModParams().id('raiders_guild_plunder_bonus').evaluation(evaluationTarget(TRANSFER_PCT_EVALUATION_TYPE).id(TRANSFER_PCT_EVALUATION_ID)).adjust(25))
 					.build(),
 			)
-			.focus(Focus.Aggressive)
+			.focus(Focus.Combat)
 			.build(),
 	);
 
-	registry.add(BuildingId.Barracks, building().id(BuildingId.Barracks).name('Barracks').icon('🪖').cost(Resource.gold, 12).focus(Focus.Aggressive).build());
-
-	// ═══════════════════════════════════════════════════════════════════════════
-	// DEFENSE BUILDINGS
-	// ═══════════════════════════════════════════════════════════════════════════
+	registry.add(BuildingId.Barracks, building().id(BuildingId.Barracks).name('Barracks').icon('🪖').cost(Resource.gold, 12).focus(Focus.Combat).build());
 
 	registry.add(
 		BuildingId.CastleWalls,
@@ -143,21 +139,17 @@ export function createBuildingRegistry() {
 					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.absorption).amount(0.2).build()).build())
 					.build(),
 			)
-			.focus(Focus.Defense)
+			.focus(Focus.Combat)
 			.build(),
 	);
 
-	registry.add(BuildingId.Citadel, building().id(BuildingId.Citadel).name('Citadel').icon('🏯').cost(Resource.gold, 12).focus(Focus.Defense).build());
+	registry.add(BuildingId.Citadel, building().id(BuildingId.Citadel).name('Citadel').icon('🏯').cost(Resource.gold, 12).focus(Focus.Combat).build());
 
-	// ═══════════════════════════════════════════════════════════════════════════
-	// OTHER BUILDINGS
-	// ═══════════════════════════════════════════════════════════════════════════
+	registry.add(BuildingId.Temple, building().id(BuildingId.Temple).name('Temple').icon('⛪').cost(Resource.gold, 16).focus(Focus.Economy).build());
 
-	registry.add(BuildingId.Temple, building().id(BuildingId.Temple).name('Temple').icon('⛪').cost(Resource.gold, 16).focus(Focus.Other).build());
+	registry.add(BuildingId.Palace, building().id(BuildingId.Palace).name('Palace').icon('👑').cost(Resource.gold, 20).focus(Focus.Economy).build());
 
-	registry.add(BuildingId.Palace, building().id(BuildingId.Palace).name('Palace').icon('👑').cost(Resource.gold, 20).focus(Focus.Other).build());
-
-	registry.add(BuildingId.GreatHall, building().id(BuildingId.GreatHall).name('Great Hall').icon('🏟️').cost(Resource.gold, 22).focus(Focus.Other).build());
+	registry.add(BuildingId.GreatHall, building().id(BuildingId.GreatHall).name('Great Hall').icon('🏟️').cost(Resource.gold, 22).focus(Focus.Economy).build());
 
 	return registry;
 }

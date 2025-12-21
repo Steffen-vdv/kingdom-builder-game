@@ -124,6 +124,14 @@ const warWearinessResource = resource('resource:core:war-weariness')
 	.secondary()
 	.build();
 
+const researchResource = resource('resource:core:research')
+	.icon('🧬')
+	.label('Research Points')
+	.description("Research Points represent your kingdom's scientific and technological " + 'advancement. Accumulate them to unlock new buildings and upgrade ' + 'existing actions.')
+	.lowerBound(0)
+	.section('economy')
+	.build();
+
 // Resources below are built lazily to avoid circular dependencies
 
 const POPULATION_GROUP_ID = 'population';
@@ -258,6 +266,7 @@ const primaryCategory = resourceCategory('resource-category:primary')
 	.resource('resource:core:action-points')
 	.resource('resource:core:castle-hp')
 	.resource('resource:core:happiness')
+	.resource('resource:core:research')
 	.group('population')
 	.build();
 
@@ -287,6 +296,7 @@ export function getResourceDefinitions(): readonly ResourceDefinition[] {
 		actionPointsResource,
 		castleHpResource,
 		getHappinessResourceDefinition(),
+		researchResource,
 		maxPopulationResource,
 		armyStrengthResource,
 		fortificationStrengthResource,

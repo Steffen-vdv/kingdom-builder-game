@@ -171,6 +171,12 @@ export function createActionRegistry() {
 				.params(actionEffectGroupOptionParams().actionId(DevelopActionIdValues.develop_farm).developmentId(DevelopmentId.Farm).landId('$landId')),
 		)
 		.option(
+			actionEffectGroupOption('royal_decree_science_lab')
+				.icon('🔬')
+				.action(DevelopActionIdValues.develop_science_lab)
+				.params(actionEffectGroupOptionParams().actionId(DevelopActionIdValues.develop_science_lab).developmentId(DevelopmentId.ScienceLab).landId('$landId')),
+		)
+		.option(
 			actionEffectGroupOption('royal_decree_outpost')
 				.icon('🏹')
 				.action(DevelopActionIdValues.develop_outpost)
@@ -226,7 +232,7 @@ export function createActionRegistry() {
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.warWeariness).amount(1).build()).build())
 			.category(ActionCategory.Basic)
 			.order(6)
-			.focus(Focus.Aggressive)
+			.focus(Focus.Combat)
 			.build(),
 	);
 
@@ -279,7 +285,7 @@ export function createActionRegistry() {
 					.build(),
 			)
 			.category(ActionCategory.Basic)
-			.focus(Focus.Aggressive)
+			.focus(Focus.Combat)
 			.build(),
 	);
 
@@ -369,21 +375,6 @@ export function createActionRegistry() {
 	// ═══════════════════════════════════════════════════════════════════════════
 
 	registry.add(
-		DevelopActionIdValues.develop_house,
-		action()
-			.id(DevelopActionIdValues.develop_house)
-			.name('House')
-			.icon('🏠')
-			.cost(Resource.gold, 3)
-			.requirement(developmentSlotRequirement)
-			.effect(effect(Types.Development, DevelopmentMethods.ADD).params(developmentParams().id(DevelopmentId.House).landId('$landId').build()).build())
-			.category(ActionCategory.Develop)
-			.order(200)
-			.focus(Focus.Economy)
-			.build(),
-	);
-
-	registry.add(
 		DevelopActionIdValues.develop_farm,
 		action()
 			.id(DevelopActionIdValues.develop_farm)
@@ -393,7 +384,37 @@ export function createActionRegistry() {
 			.requirement(developmentSlotRequirement)
 			.effect(effect(Types.Development, DevelopmentMethods.ADD).params(developmentParams().id(DevelopmentId.Farm).landId('$landId').build()).build())
 			.category(ActionCategory.Develop)
+			.order(200)
+			.focus(Focus.Economy)
+			.build(),
+	);
+
+	registry.add(
+		DevelopActionIdValues.develop_science_lab,
+		action()
+			.id(DevelopActionIdValues.develop_science_lab)
+			.name('Science Lab')
+			.icon('🔬')
+			.cost(Resource.gold, 3)
+			.requirement(developmentSlotRequirement)
+			.effect(effect(Types.Development, DevelopmentMethods.ADD).params(developmentParams().id(DevelopmentId.ScienceLab).landId('$landId').build()).build())
+			.category(ActionCategory.Develop)
 			.order(201)
+			.focus(Focus.Research)
+			.build(),
+	);
+
+	registry.add(
+		DevelopActionIdValues.develop_house,
+		action()
+			.id(DevelopActionIdValues.develop_house)
+			.name('House')
+			.icon('🏠')
+			.cost(Resource.gold, 3)
+			.requirement(developmentSlotRequirement)
+			.effect(effect(Types.Development, DevelopmentMethods.ADD).params(developmentParams().id(DevelopmentId.House).landId('$landId').build()).build())
+			.category(ActionCategory.Develop)
+			.order(202)
 			.focus(Focus.Economy)
 			.build(),
 	);
@@ -408,8 +429,8 @@ export function createActionRegistry() {
 			.requirement(developmentSlotRequirement)
 			.effect(effect(Types.Development, DevelopmentMethods.ADD).params(developmentParams().id(DevelopmentId.Outpost).landId('$landId').build()).build())
 			.category(ActionCategory.Develop)
-			.order(202)
-			.focus(Focus.Economy)
+			.order(204)
+			.focus(Focus.Combat)
 			.build(),
 	);
 
@@ -423,8 +444,8 @@ export function createActionRegistry() {
 			.requirement(developmentSlotRequirement)
 			.effect(effect(Types.Development, DevelopmentMethods.ADD).params(developmentParams().id(DevelopmentId.Watchtower).landId('$landId').build()).build())
 			.category(ActionCategory.Develop)
-			.order(203)
-			.focus(Focus.Economy)
+			.order(205)
+			.focus(Focus.Combat)
 			.build(),
 	);
 
@@ -470,7 +491,7 @@ export function createActionRegistry() {
 			.effect(effect(Types.Building, BuildingMethods.ADD).params(buildingParams().id(BuildingId.RaidersGuild).build()).build())
 			.category(ActionCategory.Build)
 			.order(302)
-			.focus(Focus.Aggressive)
+			.focus(Focus.Combat)
 			.build(),
 	);
 
@@ -512,7 +533,7 @@ export function createActionRegistry() {
 			.effect(effect(Types.Building, BuildingMethods.ADD).params(buildingParams().id(BuildingId.Barracks).build()).build())
 			.category(ActionCategory.Build)
 			.order(305)
-			.focus(Focus.Aggressive)
+			.focus(Focus.Combat)
 			.build(),
 	);
 
@@ -526,7 +547,7 @@ export function createActionRegistry() {
 			.effect(effect(Types.Building, BuildingMethods.ADD).params(buildingParams().id(BuildingId.Citadel).build()).build())
 			.category(ActionCategory.Build)
 			.order(306)
-			.focus(Focus.Defense)
+			.focus(Focus.Combat)
 			.build(),
 	);
 
@@ -540,7 +561,7 @@ export function createActionRegistry() {
 			.effect(effect(Types.Building, BuildingMethods.ADD).params(buildingParams().id(BuildingId.CastleWalls).build()).build())
 			.category(ActionCategory.Build)
 			.order(307)
-			.focus(Focus.Defense)
+			.focus(Focus.Combat)
 			.build(),
 	);
 
@@ -568,7 +589,7 @@ export function createActionRegistry() {
 			.effect(effect(Types.Building, BuildingMethods.ADD).params(buildingParams().id(BuildingId.Temple).build()).build())
 			.category(ActionCategory.Build)
 			.order(309)
-			.focus(Focus.Other)
+			.focus(Focus.Economy)
 			.build(),
 	);
 
@@ -582,7 +603,7 @@ export function createActionRegistry() {
 			.effect(effect(Types.Building, BuildingMethods.ADD).params(buildingParams().id(BuildingId.Palace).build()).build())
 			.category(ActionCategory.Build)
 			.order(310)
-			.focus(Focus.Other)
+			.focus(Focus.Economy)
 			.build(),
 	);
 
@@ -596,7 +617,7 @@ export function createActionRegistry() {
 			.effect(effect(Types.Building, BuildingMethods.ADD).params(buildingParams().id(BuildingId.GreatHall).build()).build())
 			.category(ActionCategory.Build)
 			.order(311)
-			.focus(Focus.Other)
+			.focus(Focus.Economy)
 			.build(),
 	);
 

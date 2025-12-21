@@ -11,6 +11,7 @@ export type { DevelopmentDef } from './infrastructure/defs';
 
 export const DevelopmentId = {
 	Farm: 'farm',
+	ScienceLab: 'science_lab',
 	House: 'house',
 	Outpost: 'outpost',
 	Watchtower: 'watchtower',
@@ -40,8 +41,22 @@ export function createDevelopmentRegistry() {
 			.name('Farm')
 			.icon('🌾')
 			.onGainIncomeStep(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountParams(Resource.gold, 2)).build())
-			.order(2)
+			.order(1)
 			.focus(Focus.Economy)
+			.build(),
+	);
+
+	// Science Lab: +1 research per turn, 1g upkeep
+	registry.add(
+		DevelopmentId.ScienceLab,
+		development()
+			.id(DevelopmentId.ScienceLab)
+			.name('Science Lab')
+			.icon('🔬')
+			.upkeep(Resource.gold, 1)
+			.onGainIncomeStep(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountParams(Resource.research, 1)).build())
+			.order(2)
+			.focus(Focus.Research)
 			.build(),
 	);
 
@@ -53,7 +68,7 @@ export function createDevelopmentRegistry() {
 			.icon('🏠')
 			.populationCap(1)
 			.onBuild(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountParams(Resource.populationMax, 1)).build())
-			.order(1)
+			.order(3)
 			.focus(Focus.Economy)
 			.build(),
 	);
@@ -66,8 +81,8 @@ export function createDevelopmentRegistry() {
 			.icon('🏹')
 			.onBuild(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountParams(Resource.armyStrength, 1)).build())
 			.onBuild(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountParams(Resource.fortificationStrength, 1)).build())
-			.order(3)
-			.focus(Focus.Defense)
+			.order(4)
+			.focus(Focus.Combat)
 			.build(),
 	);
 
@@ -82,8 +97,8 @@ export function createDevelopmentRegistry() {
 			.onBuild(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountParams(Resource.fortificationStrength, 2)).build())
 			.onBuild(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountParams(Resource.absorption, 0.5)).build())
 			.onAttackResolved(effect(Types.Development, DevelopmentMethods.REMOVE).params(watchtowerRemovalParams).build())
-			.order(4)
-			.focus(Focus.Defense)
+			.order(5)
+			.focus(Focus.Combat)
 			.build(),
 	);
 
