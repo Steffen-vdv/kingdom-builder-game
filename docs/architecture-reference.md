@@ -105,22 +105,35 @@ unavailable but can be unlocked via the `action:add` effect. Once unlocked, they
 behave like normal actions. Examples: plow, build actions, hire actions.
 
 **Action meta-categories** group actions by activity type and define their cost
-model:
+model. Each meta-category specifies:
 
-- **`meta:commands`** - Command-point actions with global cost model. Every
-  action costs 1 command-point (CP) regardless of the specific action. The
-  binding resource is `resource:core:command-points`.
-- **`meta:research`** - Research actions with per-item cost model. Each research
-  action defines its own cost for research-points in `baseCosts`.
+- **Binding resource**: The resource used for action costs in this category
+- **Cost model**: Either `global` (fixed cost per action) or `per-item` (each
+  action defines its own cost)
+- **Visibility trigger**: When the category appears in UI (`always` or
+  `resource-touched`)
 
-Meta-categories are defined in `actionMetaCategories.ts` using the
-`actionMetaCategory()` builder. Every action must specify a meta-category via
-`.metaCategory(MetaCategory.Commands)` or `.metaCategory(MetaCategory.Research)`.
+Meta-categories are defined using the `actionMetaCategory()` builder. Every
+action must specify a meta-category via `.metaCategory(MetaCategory.X)`.
 
-The engine resolves action costs through `determineCommonActionCostResource()`:
+**Cost resolution** (via `determineCommonActionCostResource()`):
 
-1. If action has explicit baseCosts, use the first cost resource
+1. If action has explicit `baseCosts`, use the first cost resource
 2. Otherwise, look up the action's meta-category and use its binding resource
+
+Example meta-category definition:
+
+```typescript
+actionMetaCategory()
+	.id('meta:example')
+	.label('Example Actions')
+	.icon('⚡')
+	.bindingResource('resource:example:points')
+	.costModel('global', 1) // Every action costs 1 point
+	.visibilityTrigger('resource-touched')
+	.order(0)
+	.build();
+```
 
 ### Effects
 
