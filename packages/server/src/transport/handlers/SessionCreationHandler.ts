@@ -83,6 +83,12 @@ export class SessionCreationHandler {
 			});
 		}
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
+		if (!snapshot) {
+			throw new TransportError(
+				'NOT_FOUND',
+				`Session "${sessionId}" was not found.`,
+			);
+		}
 		return sessionCreateResponseSchema.parse(
 			this.buildStateResponse(sessionId, snapshot),
 		);

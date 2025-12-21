@@ -170,10 +170,8 @@ describe('SessionManager', () => {
 		expect(manager.getMetadata()).toEqual(snapshotMetadata);
 	});
 
-	it('throws when retrieving snapshots for unknown sessions', () => {
+	it('returns undefined when retrieving snapshots for unknown sessions', () => {
 		const { manager } = createSyntheticSessionManager();
-		expect(() => manager.getSnapshot('missing')).toThrow(
-			'Session "missing" was not found.',
-		);
+		expect(manager.getSnapshot('missing')).toBeUndefined();
 	});
 });

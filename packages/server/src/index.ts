@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import fastify from 'fastify';
 import type { FastifyInstance, FastifyServerOptions } from 'fastify';
 import { SessionManager } from './session/SessionManager.js';
+import { SessionPersistence } from './session/SessionPersistence.js';
 import { createSessionTransportPlugin } from './transport/FastifySessionTransport.js';
 import type { FastifySessionTransportOptions } from './transport/FastifySessionTransport.js';
 import { createTokenAuthMiddleware } from './auth/tokenAuthMiddleware.js';
@@ -19,6 +20,12 @@ export type {
 	CreateSessionOptions,
 } from './session/SessionManager.js';
 export type { SessionStaticMetadataPayload } from './session/buildSessionMetadata.js';
+export { SessionPersistence } from './session/SessionPersistence.js';
+export type {
+	ActionLogEntry,
+	SessionCreationOptions,
+	PersistedSessionData,
+} from './session/SessionPersistence.js';
 export { SessionTransport } from './transport/SessionTransport.js';
 export type { SessionTransportOptions } from './transport/SessionTransport.js';
 export { HttpSessionGateway } from './client/HttpSessionGateway.js';
@@ -100,6 +107,10 @@ export interface StartServerResult {
 	 * Hourly scheduler. Call scheduler.stop() when shutting down the server.
 	 */
 	hourlyScheduler: HourlyScheduler;
+	/**
+	 * Session manager. Use to access session state and persistence.
+	 */
+	sessionManager: SessionManager;
 }
 
 export async function startServer(
@@ -108,7 +119,6 @@ export async function startServer(
 	const env = options.env ?? process.env;
 	const host = resolveHost(options.host, env);
 	const port = resolvePort(options.port, env);
-	const sessionManager = options.sessionManager ?? new SessionManager();
 	const tokens = resolveTokens(options.tokens, env, options.allowDevToken);
 	const middlewareOptions = tokens ? { env, tokens } : { env };
 	const authMiddleware = createTokenAuthMiddleware(middlewareOptions);
@@ -141,14 +151,27 @@ export async function startServer(
 		logger?.info('Database schema is up to date');
 	}
 
+	// Initialize session persistence
+	const sessionPersistence = new SessionPersistence(database);
+
+	// Initialize session manager with persistence
+	const sessionManager =
+		options.sessionManager ??
+		new SessionManager({ persistence: sessionPersistence });
+
 	// Initialize visitor tracker
 	const visitorTracker = new VisitorTracker({ database });
 
-	// Start hourly scheduler for persisting visitor stats
+	// Start hourly scheduler for persisting visitor stats and cleaning up sessions
 	const hourlyScheduler = new HourlyScheduler({
 		onHour: () => {
 			visitorTracker.persistCurrentHour();
 			logger?.info('Persisted hourly visitor stats');
+			// Clean up expired sessions from persistence (24h retention)
+			const purgedCount = sessionManager.purgeExpiredFromPersistence();
+			if (purgedCount > 0) {
+				logger?.info(`Purged ${purgedCount} expired session(s) from database`);
+			}
 		},
 		logger: (message) => logger?.info(message),
 	});
@@ -175,6 +198,7 @@ export async function startServer(
 			port: Number.parseInt(url.port, 10),
 			database,
 			hourlyScheduler,
+			sessionManager,
 		};
 	} catch (error) {
 		logger?.error(error, 'Failed to start Kingdom Builder server.');

@@ -3,6 +3,7 @@ import {
 	sessionUpdatePlayerNameResponseSchema,
 } from '@kingdom-builder/protocol';
 import type {
+	SessionPlayerId,
 	SessionSnapshot,
 	SessionStateResponse,
 	SessionUpdatePlayerNameResponse,
@@ -22,6 +23,12 @@ type BuildStateResponse = (
 	snapshot: SessionSnapshot,
 ) => SessionStateResponse;
 
+type RecordPlayerNameChange = (
+	sessionId: string,
+	playerId: SessionPlayerId,
+	name: string,
+) => void;
+
 interface SessionPlayerNameContext {
 	request: TransportRequest;
 	requireAuthorization: AuthorizationCallback;
@@ -32,12 +39,16 @@ export class SessionPlayerNameUpdateHandler {
 
 	private readonly buildStateResponse: BuildStateResponse;
 
+	private readonly recordPlayerNameChange: RecordPlayerNameChange;
+
 	public constructor(options: {
 		requireSession: RequireSession;
 		buildStateResponse: BuildStateResponse;
+		recordPlayerNameChange: RecordPlayerNameChange;
 	}) {
 		this.requireSession = options.requireSession;
 		this.buildStateResponse = options.buildStateResponse;
+		this.recordPlayerNameChange = options.recordPlayerNameChange;
 	}
 
 	public handle(
@@ -64,6 +75,8 @@ export class SessionPlayerNameUpdateHandler {
 		}
 		const session = this.requireSession(sessionId);
 		session.updatePlayerName(playerId, sanitizedName);
+		// Record the player name change for persistence
+		this.recordPlayerNameChange(sessionId, playerId, sanitizedName);
 		const snapshot = session.getSnapshot();
 		return sessionUpdatePlayerNameResponseSchema.parse(
 			this.buildStateResponse(sessionId, snapshot),

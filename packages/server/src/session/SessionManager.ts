@@ -2,58 +2,30 @@ import {
 	createEngineSession,
 	type EngineSession,
 } from '@kingdom-builder/engine';
-import {
-	ACTIONS,
-	ACTION_CATEGORIES,
-	BUILDINGS,
-	DEVELOPMENTS,
-	PHASES,
-	RULES,
-	PRIMARY_ICON_ID,
-	RESOURCE_REGISTRY,
-	RESOURCE_GROUP_REGISTRY,
-	RESOURCE_CATEGORY_REGISTRY,
-} from '@kingdom-builder/contents';
 import type {
 	SessionRegistriesPayload,
-	PhaseConfig,
-	RuleSet,
-	SessionActionCategoryRegistry,
-	SerializedRegistry,
-	ResourceDefinition,
-	ResourceGroupDefinition,
-	ResourceCategoryDefinition,
+	ActionParametersPayload,
+	SessionPlayerId,
 } from '@kingdom-builder/protocol';
-import {
-	buildSessionMetadata,
-	type SessionStaticMetadataPayload,
-} from './buildSessionMetadata.js';
-import {
-	cloneActionCategoryRegistry,
-	cloneRegistry,
-	freezeSerializedRegistry,
-} from './registryUtils.js';
+import type { SessionStaticMetadataPayload } from './buildSessionMetadata.js';
 import {
 	buildSessionAssets,
 	type SessionBaseOptions,
 	type SessionResourceRegistry,
 } from './sessionConfigAssets.js';
+import type {
+	SessionPersistence,
+	ActionLogEntry,
+	SessionCreationOptions,
+} from './SessionPersistence.js';
+import { SessionRestorer } from './SessionRestorer.js';
+import * as recorder from './SessionRecorder.js';
+import {
+	buildSessionManagerConfig,
+	type EngineSessionOverrideOptions,
+	type SessionRuntimeConfig,
+} from './SessionManagerConfig.js';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
-
-type EngineSessionOverrideOptions = Partial<SessionBaseOptions> & {
-	resourceRegistry?: SessionResourceRegistry;
-	actionCategoryRegistry?: SessionActionCategoryRegistry;
-	primaryIconId?: string | null;
-};
-
-type SessionRuntimeConfig = {
-	phases: PhaseConfig[];
-	rules: RuleSet;
-	primaryIconId: string | null;
-	resources: SerializedRegistry<ResourceDefinition>;
-	resourceGroups: SerializedRegistry<ResourceGroupDefinition>;
-	resourceCategories: SerializedRegistry<ResourceCategoryDefinition>;
-};
 
 type SessionRecord = {
 	session: EngineSession;
@@ -61,6 +33,8 @@ type SessionRecord = {
 	lastAccessedAt: number;
 	registries: SessionRegistriesPayload;
 	metadata: SessionStaticMetadataPayload;
+	creationOptions: SessionCreationOptions;
+	actionLog: ActionLogEntry[];
 };
 
 export interface SessionManagerOptions {
@@ -68,6 +42,7 @@ export interface SessionManagerOptions {
 	maxSessions?: number;
 	now?: () => number;
 	engineOptions?: EngineSessionOverrideOptions;
+	persistence?: SessionPersistence;
 }
 
 export interface CreateSessionOptions {
@@ -79,22 +54,16 @@ const DEFAULT_MAX_IDLE_DURATION_MS = 15 * 60 * 1000;
 
 export class SessionManager {
 	private readonly sessions = new Map<string, SessionRecord>();
-
 	private readonly maxIdleDurationMs: number;
-
 	private readonly maxSessions: number | undefined;
-
 	private readonly now: () => number;
-
 	private readonly baseOptions: SessionBaseOptions;
-
 	private readonly registries: SessionRegistriesPayload;
-
 	private readonly metadata: SessionStaticMetadataPayload;
-
 	private readonly resourceOverrides: SessionResourceRegistry | undefined;
-
 	private readonly runtimeConfig: SessionRuntimeConfig;
+	private readonly persistence: SessionPersistence | undefined;
+	private readonly restorer: SessionRestorer | undefined;
 
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
@@ -102,90 +71,31 @@ export class SessionManager {
 			maxSessions,
 			now = Date.now,
 			engineOptions = {},
+			persistence,
 		} = options;
-		const {
-			resourceRegistry,
-			actionCategoryRegistry,
-			primaryIconId: primaryIconOverride,
-			...engineOverrides
-		} = engineOptions;
+		this.persistence = persistence;
 		this.maxIdleDurationMs = maxIdleDurationMs;
 		this.maxSessions = maxSessions;
 		this.now = now;
-		const baseActionCategories =
-			engineOverrides.actionCategories ?? ACTION_CATEGORIES;
-		this.baseOptions = {
-			actions: engineOverrides.actions ?? ACTIONS,
-			actionCategories: baseActionCategories,
-			buildings: engineOverrides.buildings ?? BUILDINGS,
-			developments: engineOverrides.developments ?? DEVELOPMENTS,
-			phases: engineOverrides.phases ?? PHASES,
-			rules: engineOverrides.rules ?? RULES,
-			resourceCatalog: engineOverrides.resourceCatalog ?? {
-				resources: RESOURCE_REGISTRY,
-				groups: RESOURCE_GROUP_REGISTRY,
-				categories: RESOURCE_CATEGORY_REGISTRY,
-			},
-			...(engineOverrides.systemActionIds
-				? { systemActionIds: engineOverrides.systemActionIds }
-				: {}),
-		};
-		const primaryIconId = primaryIconOverride ?? PRIMARY_ICON_ID ?? null;
-		const resourceOverrideSnapshot = resourceRegistry
-			? freezeSerializedRegistry(structuredClone(resourceRegistry))
-			: undefined;
-		this.resourceOverrides = resourceOverrideSnapshot;
-		const resourceCatalog = this.baseOptions.resourceCatalog;
-		const resources = freezeSerializedRegistry(
-			structuredClone(resourceCatalog.resources.byId),
-		);
-		const resourceGroups = freezeSerializedRegistry(
-			structuredClone(resourceCatalog.groups.byId),
-		);
-		const resourceCategories = freezeSerializedRegistry(
-			structuredClone(resourceCatalog.categories?.byId ?? {}),
-		);
-		const actionCategories = actionCategoryRegistry
-			? (freezeSerializedRegistry(
-					structuredClone(actionCategoryRegistry),
-				) as SessionActionCategoryRegistry)
-			: (freezeSerializedRegistry(
-					cloneActionCategoryRegistry(this.baseOptions.actionCategories),
-				) as SessionActionCategoryRegistry);
-		this.registries = {
-			actions: cloneRegistry(this.baseOptions.actions),
-			actionCategories,
-			buildings: cloneRegistry(this.baseOptions.buildings),
-			developments: cloneRegistry(this.baseOptions.developments),
-			resources,
-			resourceGroups,
-			resourceCategories,
-		};
-		this.metadata = buildSessionMetadata({
-			buildings: this.baseOptions.buildings,
-			developments: this.baseOptions.developments,
-			resources,
-			phases: this.baseOptions.phases,
-		});
-		const frozenPhases = Object.freeze(
-			structuredClone(this.baseOptions.phases),
-		) as unknown as PhaseConfig[];
-		const frozenRules = Object.freeze(
-			structuredClone(this.baseOptions.rules),
-		) as unknown as RuleSet;
-		this.runtimeConfig = Object.freeze({
-			phases: frozenPhases,
-			rules: frozenRules,
-			primaryIconId,
-			resources,
-			resourceGroups,
-			resourceCategories,
-		});
+		const config = buildSessionManagerConfig(engineOptions);
+		this.baseOptions = config.baseOptions;
+		this.registries = config.registries;
+		this.metadata = config.metadata;
+		this.resourceOverrides = config.resourceOverrides;
+		this.runtimeConfig = config.runtimeConfig;
+		if (persistence) {
+			const { actionCategories: _, ...restoreBaseOptions } = this.baseOptions;
+			this.restorer = new SessionRestorer({
+				persistence,
+				baseOptions: restoreBaseOptions,
+			});
+		}
 	}
 
 	public createSession(
 		sessionId: string,
 		options: CreateSessionOptions = {},
+		playerNames?: Partial<Record<SessionPlayerId, string>>,
 	): EngineSession {
 		this.purgeExpiredSessions();
 		if (this.sessions.has(sessionId)) {
@@ -220,42 +130,152 @@ export class SessionManager {
 			},
 			config,
 		);
-		this.sessions.set(sessionId, {
+		const creationOptions: SessionCreationOptions = { devMode };
+		if (config !== undefined) {
+			creationOptions.config = config;
+		}
+		if (playerNames !== undefined) {
+			creationOptions.playerNames = playerNames;
+		}
+		const record: SessionRecord = {
 			session,
 			createdAt: timestamp,
 			lastAccessedAt: timestamp,
 			registries,
 			metadata,
-		});
+			creationOptions,
+			actionLog: [],
+		};
+		this.sessions.set(sessionId, record);
+		// Persist the new session if persistence is enabled
+		if (this.persistence) {
+			this.persistence.save({
+				sessionId,
+				creationOptions,
+				actionLog: [],
+				lastSnapshot: session.getSnapshot(),
+				registries,
+				metadata,
+				lastAccessedAt: timestamp,
+				createdAt: timestamp,
+			});
+		}
 		return session;
 	}
 
 	public getSession(sessionId: string): EngineSession | undefined {
 		this.purgeExpiredSessions();
-		const record = this.sessions.get(sessionId);
+		let record = this.sessions.get(sessionId);
 		if (!record) {
-			return undefined;
+			// Try to restore from persistence
+			record = this.tryRestoreFromPersistence(sessionId);
+			if (!record) {
+				return undefined;
+			}
 		}
 		record.lastAccessedAt = this.now();
 		return record.session;
 	}
 
 	public destroySession(sessionId: string): boolean {
-		return this.sessions.delete(sessionId);
+		const deleted = this.sessions.delete(sessionId);
+		// Also delete from persistence
+		if (this.persistence) {
+			this.persistence.delete(sessionId);
+		}
+		return deleted;
 	}
 
-	public getSnapshot(
+	/** Records an action for persistence. Call after performing an action. */
+	public recordAction(
 		sessionId: string,
-	): ReturnType<EngineSession['getSnapshot']> {
-		const session = this.requireSession(sessionId);
-		return session.getSnapshot();
+		actionId: string,
+		params?: ActionParametersPayload,
+	): void {
+		const record = this.sessions.get(sessionId);
+		if (!record) {
+			return;
+		}
+		const recObj = this.makeRecorderObject(record);
+		recorder.recordAction(
+			sessionId,
+			recObj,
+			this.persistence,
+			actionId,
+			params,
+		);
 	}
 
-	public getRuleSnapshot(
+	/** Records a phase advance for persistence. */
+	public recordAdvance(sessionId: string): void {
+		const record = this.sessions.get(sessionId);
+		if (!record) {
+			return;
+		}
+		const recObj = this.makeRecorderObject(record);
+		recorder.recordAdvance(sessionId, recObj, this.persistence);
+	}
+
+	/** Records a player name change for persistence. */
+	public recordPlayerNameChange(
 		sessionId: string,
-	): ReturnType<EngineSession['getRuleSnapshot']> {
-		const session = this.requireSession(sessionId);
-		return session.getRuleSnapshot();
+		playerId: SessionPlayerId,
+		name: string,
+	): void {
+		const record = this.sessions.get(sessionId);
+		if (!record) {
+			return;
+		}
+		const recObj = this.makeRecorderObject(record);
+		recorder.recordPlayerNameChange(
+			sessionId,
+			recObj,
+			this.persistence,
+			playerId,
+			name,
+		);
+	}
+
+	/** Records a dev mode change for persistence. */
+	public recordDevModeChange(sessionId: string, enabled: boolean): void {
+		const record = this.sessions.get(sessionId);
+		if (!record) {
+			return;
+		}
+		const recObj = this.makeRecorderObject(record);
+		recorder.recordDevModeChange(sessionId, recObj, this.persistence, enabled);
+	}
+
+	private makeRecorderObject(
+		record: SessionRecord,
+	): recorder.SessionRecordWithLog {
+		return {
+			actionLog: record.actionLog,
+			getSnapshot: () => record.session.getSnapshot(),
+			registries: record.registries,
+			metadata: record.metadata,
+		};
+	}
+
+	/**
+	 * Purges expired sessions from the database.
+	 * Call this periodically to clean up old sessions.
+	 */
+	public purgeExpiredFromPersistence(): number {
+		if (!this.persistence) {
+			return 0;
+		}
+		return this.persistence.purgeExpired();
+	}
+
+	public getSnapshot(sessionId: string) {
+		const session = this.getSession(sessionId);
+		return session ? session.getSnapshot() : undefined;
+	}
+
+	public getRuleSnapshot(sessionId: string) {
+		const session = this.getSession(sessionId);
+		return session ? session.getRuleSnapshot() : undefined;
 	}
 
 	public getSessionCount(): number {
@@ -263,42 +283,28 @@ export class SessionManager {
 		return this.sessions.size;
 	}
 
-	public getRegistries(): SessionRegistriesPayload {
+	public getRegistries() {
 		return structuredClone(this.registries);
 	}
-
-	public getMetadata(): SessionStaticMetadataPayload {
+	public getMetadata() {
 		return structuredClone(this.metadata);
 	}
-
-	public getSessionRegistries(sessionId: string): SessionRegistriesPayload {
-		const record = this.requireSessionRecord(sessionId);
-		return structuredClone(record.registries);
-	}
-
-	public getSessionMetadata(sessionId: string): SessionStaticMetadataPayload {
-		const record = this.requireSessionRecord(sessionId);
-		return structuredClone(record.metadata);
-	}
-
-	public getRuntimeConfig(): SessionRuntimeConfig {
+	public getRuntimeConfig() {
 		return this.runtimeConfig;
 	}
 
-	private requireSession(sessionId: string): EngineSession {
-		const session = this.getSession(sessionId);
-		if (!session) {
-			throw new Error(`Session "${sessionId}" was not found.`);
-		}
-		return session;
+	public getSessionRegistries(
+		sessionId: string,
+	): SessionRegistriesPayload | undefined {
+		const record = this.sessions.get(sessionId);
+		return record ? structuredClone(record.registries) : undefined;
 	}
 
-	private requireSessionRecord(sessionId: string): SessionRecord {
+	public getSessionMetadata(
+		sessionId: string,
+	): SessionStaticMetadataPayload | undefined {
 		const record = this.sessions.get(sessionId);
-		if (!record) {
-			throw new Error(`Session "${sessionId}" was not found.`);
-		}
-		return record;
+		return record ? structuredClone(record.metadata) : undefined;
 	}
 
 	private purgeExpiredSessions(): void {
@@ -308,6 +314,43 @@ export class SessionManager {
 				this.sessions.delete(sessionId);
 			}
 		}
+	}
+
+	/**
+	 * Attempts to restore a session from persistence.
+	 */
+	private tryRestoreFromPersistence(
+		sessionId: string,
+	): SessionRecord | undefined {
+		if (!this.restorer || !this.persistence) {
+			return undefined;
+		}
+		const restored = this.restorer.restore(sessionId);
+		if (!restored) {
+			return undefined;
+		}
+		const timestamp = this.now();
+		const { registries, metadata } = buildSessionAssets(
+			{
+				baseOptions: this.baseOptions,
+				resourceOverrides: this.resourceOverrides,
+				baseRegistries: this.registries,
+				baseMetadata: this.metadata,
+			},
+			restored.creationOptions.config,
+		);
+		const record: SessionRecord = {
+			session: restored.session,
+			createdAt: restored.createdAt,
+			lastAccessedAt: timestamp,
+			registries,
+			metadata,
+			creationOptions: restored.creationOptions,
+			actionLog: restored.actionLog,
+		};
+		this.sessions.set(sessionId, record);
+		this.persistence.touch(sessionId);
+		return record;
 	}
 }
 
