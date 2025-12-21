@@ -104,6 +104,24 @@ game operations like initial setup and compensation.
 unavailable but can be unlocked via the `action:add` effect. Once unlocked, they
 behave like normal actions. Examples: plow, build actions, hire actions.
 
+**Action meta-categories** group actions by activity type and define their cost
+model:
+
+- **`meta:commands`** - Command-point actions with global cost model. Every
+  action costs 1 command-point (CP) regardless of the specific action. The
+  binding resource is `resource:core:command-points`.
+- **`meta:research`** - Research actions with per-item cost model. Each research
+  action defines its own cost for research-points in `baseCosts`.
+
+Meta-categories are defined in `actionMetaCategories.ts` using the
+`actionMetaCategory()` builder. Every action must specify a meta-category via
+`.metaCategory(MetaCategory.Commands)` or `.metaCategory(MetaCategory.Research)`.
+
+The engine resolves action costs through `determineCommonActionCostResource()`:
+
+1. If action has explicit baseCosts, use the first cost resource
+2. Otherwise, look up the action's meta-category and use its binding resource
+
 ### Effects
 
 Atomic operations identified by `type:method` pairs. Registered in the `EFFECTS`
