@@ -5,10 +5,15 @@ import type { Summary, SummaryEntry } from './types';
 import type { TranslationContext } from '../context';
 import { selectTriggerDisplay } from '../context/assetSelectors';
 
-function formatStepTriggerLabel(
+interface StepTriggerInfo {
+	label: string;
+	icon?: string;
+}
+
+function getStepTriggerInfo(
 	context: TranslationContext,
 	triggerKey: string,
-): string | undefined {
+): StepTriggerInfo | undefined {
 	for (const phase of context.phases) {
 		const steps = phase.steps ?? [];
 		for (const step of steps) {
@@ -16,18 +21,33 @@ function formatStepTriggerLabel(
 			if (!triggers.includes(triggerKey)) {
 				continue;
 			}
-			// Concise format: just phase icon + label, no step text
-			const phaseParts = [phase.icon, phase.label ?? formatDetailText(phase.id)]
-				.filter((value) => typeof value === 'string' && value.trim().length > 0)
-				.map((value) => value!.trim());
-			const phaseLabel = phaseParts.join(' ');
-			if (!phaseLabel.length) {
+			const label = phase.label ?? formatDetailText(phase.id);
+			if (!label?.trim()) {
 				return undefined;
 			}
-			return `${phaseLabel} Phase`;
+			const result: StepTriggerInfo = {
+				label: `${label.trim()} Phase`,
+			};
+			const icon = phase.icon?.trim();
+			if (icon) {
+				result.icon = icon;
+			}
+			return result;
 		}
 	}
 	return undefined;
+}
+
+function formatStepTriggerLabel(
+	context: TranslationContext,
+	triggerKey: string,
+): string | undefined {
+	const info = getStepTriggerInfo(context, triggerKey);
+	if (!info) {
+		return undefined;
+	}
+	const parts = [info.icon, info.label].filter(Boolean);
+	return parts.join(' ');
 }
 
 function sanitize(value: string | undefined): string | undefined {
@@ -135,25 +155,88 @@ type PhaseEffectMapper = (
 	context: TranslationContext,
 ) => SummaryEntry[];
 
+/**
+ * Appends phase suffix to effect entries.
+ * - Summarize: "🪙 +2 per 🌱 Growth Phase"
+ * - Describe: "Gain 🪙 +2 Gold each 🌱 Growth Phase"
+ */
+function appendPhaseSuffix(
+	effects: SummaryEntry[],
+	phaseInfo: StepTriggerInfo,
+	mode: 'summarize' | 'describe',
+): SummaryEntry[] {
+	const phaseSuffix = phaseInfo.icon
+		? `${phaseInfo.icon} ${phaseInfo.label}`
+		: phaseInfo.label;
+	const prefix = mode === 'summarize' ? 'per' : 'each';
+	const suffix = ` ${prefix} ${phaseSuffix}`;
+
+	return effects.map((entry) => {
+		if (typeof entry === 'string') {
+			return `${entry}${suffix}`;
+		}
+		// For nested entries, append suffix to title
+		return {
+			...entry,
+			title: `${entry.title}${suffix}`,
+		};
+	});
+}
+
 export class PhasedTranslator {
 	summarize(phasedDefinition: PhasedDef, context: TranslationContext): Summary {
 		const mapper = summarizeEffects;
-		return this.translate(phasedDefinition, context, mapper);
+		return this.translate(phasedDefinition, context, mapper, 'summarize');
 	}
 
 	describe(phasedDefinition: PhasedDef, context: TranslationContext): Summary {
 		const mapper = describeEffects;
-		return this.translate(phasedDefinition, context, mapper);
+		return this.translate(phasedDefinition, context, mapper, 'describe');
 	}
 
 	private translate(
 		phasedDefinition: PhasedDef,
 		context: TranslationContext,
 		effectMapper: PhaseEffectMapper,
+		mode: 'summarize' | 'describe',
 	): Summary {
 		const root: SummaryEntry[] = [];
 		const handled = new Set<string>();
-		const applyTrigger = (
+
+		/**
+		 * Applies step trigger with inline phase suffix.
+		 * Effects become "🪙 +2 per 🌱 Growth Phase" instead of nested sections.
+		 */
+		const applyStepTrigger = (triggerKey: string): void => {
+			if (handled.has(triggerKey)) {
+				return;
+			}
+			handled.add(triggerKey);
+			const definitionEffects = phasedDefinition[triggerKey as keyof PhasedDef];
+			const effects = effectMapper(definitionEffects, context);
+			if (!effects.length) {
+				return;
+			}
+			const phaseInfo = getStepTriggerInfo(context, triggerKey);
+			if (phaseInfo) {
+				// Inline phase suffix with each effect
+				root.push(...appendPhaseSuffix(effects, phaseInfo, mode));
+			} else {
+				// Fallback: use trigger display as section title
+				const title = resolvePhasedTriggerTitle(context, triggerKey);
+				if (title) {
+					root.push({ title, items: effects });
+				} else {
+					root.push(...effects);
+				}
+			}
+		};
+
+		/**
+		 * Applies event trigger with section grouping.
+		 * Events like combat triggers remain grouped: "⚔️ Before attack: [effects]"
+		 */
+		const applyEventTrigger = (
 			key: keyof PhasedDef,
 			fallbackTitle?: string,
 		): void => {
@@ -179,30 +262,24 @@ export class PhasedTranslator {
 			root.push(...effects);
 		};
 
+		// onBuild effects are added directly (no wrapper needed)
 		const build = effectMapper(phasedDefinition.onBuild, context);
 		if (build.length) {
 			root.push(...build);
 		}
 		handled.add('onBuild');
 
-		for (const phase of context.phases) {
-			const capitalizedPhaseId =
-				phase.id.charAt(0).toUpperCase() + phase.id.slice(1);
-			const phaseKey = `on${capitalizedPhaseId}Phase` as keyof PhasedDef;
-			const icon = phase.icon ? `${phase.icon} ` : '';
-			const label = phase.label ?? formatDetailText(phase.id);
-			const phaseTitle = `${icon}On each ${label} Phase`.trim();
-			applyTrigger(phaseKey, phaseTitle);
-		}
-
+		// Step triggers: inline phase suffix with effects
 		const stepTriggerKeys = collectStepTriggerKeys(context);
 		for (const key of stepTriggerKeys) {
-			applyTrigger(key as keyof PhasedDef, key);
+			applyStepTrigger(key);
 		}
 
-		applyTrigger('onBeforeAttacked');
-		applyTrigger('onAttackResolved');
+		// Event triggers: keep section grouping
+		applyEventTrigger('onBeforeAttacked');
+		applyEventTrigger('onAttackResolved');
 
+		// Handle any remaining triggers
 		for (const key of Object.keys(phasedDefinition)) {
 			if (key === 'onBuild' || handled.has(key)) {
 				continue;
@@ -210,7 +287,13 @@ export class PhasedTranslator {
 			if (!key.startsWith('on')) {
 				continue;
 			}
-			applyTrigger(key as keyof PhasedDef, key);
+			// Check if it's a step trigger or event trigger
+			const phaseInfo = getStepTriggerInfo(context, key);
+			if (phaseInfo) {
+				applyStepTrigger(key);
+			} else {
+				applyEventTrigger(key as keyof PhasedDef, key);
+			}
 		}
 
 		return root;

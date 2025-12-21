@@ -32,6 +32,10 @@ interface RoyalDecreeActionInfo {
 	options: ActionEffectGroupOption[];
 }
 
+/**
+ * Combines labels, avoiding redundancy when entry starts with base.
+ * Mirrors the logic in optionLabel.ts combineLabels.
+ */
 function combineLabels(left: string, right: string): string {
 	const base = left.trim();
 	const entry = right.trim();
@@ -39,6 +43,10 @@ function combineLabels(left: string, right: string): string {
 		return base;
 	}
 	if (base.length === 0) {
+		return entry;
+	}
+	// Avoid duplication when entry starts with base
+	if (entry.startsWith(base)) {
 		return entry;
 	}
 	return `${base} - ${entry}`;

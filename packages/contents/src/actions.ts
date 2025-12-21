@@ -420,7 +420,7 @@ export function createActionRegistry() {
 			.cost(Resource.gold, 3)
 			.requirement(developmentSlotRequirement)
 			.effect(effect(Types.Development, DevelopmentMethods.ADD).params(developmentParams().id(DevelopmentId.Farm).landId('$landId').build()).build())
-			.category(ActionCategory.Develop)
+			.category(ActionCategory.Basic)
 			.order(200)
 			.focus(Focus.Economy)
 			.build(),
@@ -436,7 +436,7 @@ export function createActionRegistry() {
 			.cost(Resource.gold, 3)
 			.requirement(developmentSlotRequirement)
 			.effect(effect(Types.Development, DevelopmentMethods.ADD).params(developmentParams().id(DevelopmentId.ScienceLab).landId('$landId').build()).build())
-			.category(ActionCategory.Develop)
+			.category(ActionCategory.Basic)
 			.order(201)
 			.focus(Focus.Research)
 			.build(),
@@ -452,7 +452,7 @@ export function createActionRegistry() {
 			.cost(Resource.gold, 3)
 			.requirement(developmentSlotRequirement)
 			.effect(effect(Types.Development, DevelopmentMethods.ADD).params(developmentParams().id(DevelopmentId.House).landId('$landId').build()).build())
-			.category(ActionCategory.Develop)
+			.category(ActionCategory.Basic)
 			.order(202)
 			.focus(Focus.Economy)
 			.build(),
@@ -468,7 +468,7 @@ export function createActionRegistry() {
 			.cost(Resource.gold, 3)
 			.requirement(developmentSlotRequirement)
 			.effect(effect(Types.Development, DevelopmentMethods.ADD).params(developmentParams().id(DevelopmentId.Outpost).landId('$landId').build()).build())
-			.category(ActionCategory.Develop)
+			.category(ActionCategory.Basic)
 			.order(204)
 			.focus(Focus.Combat)
 			.build(),
@@ -484,7 +484,7 @@ export function createActionRegistry() {
 			.cost(Resource.gold, 3)
 			.requirement(developmentSlotRequirement)
 			.effect(effect(Types.Development, DevelopmentMethods.ADD).params(developmentParams().id(DevelopmentId.Watchtower).landId('$landId').build()).build())
-			.category(ActionCategory.Develop)
+			.category(ActionCategory.Basic)
 			.order(205)
 			.focus(Focus.Combat)
 			.build(),

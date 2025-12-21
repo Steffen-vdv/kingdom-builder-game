@@ -13,6 +13,7 @@ export {
 export type {
 	ComputeResourceDeltaInput,
 	ReconciliationStrategy,
+	ResolvedBounds,
 	ResourceAmountChangeParameters,
 	ResourceChangeParameters,
 	ResourceChangeRoundingMode,

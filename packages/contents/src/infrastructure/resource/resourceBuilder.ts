@@ -1,5 +1,5 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import type { ResourceBoundType, ResourceBoundValue, ResourceDefinition, ResourceDisplayHint, ResourceSection, ResourceTierTrack } from './types';
+import type { ResourceBoundType, ResourceBoundValue, ResourceDefinition, ResourceDisplayHint, ResourceReconciliationMode, ResourceSection, ResourceTierTrack } from './types';
 
 interface ResourceGroupOptions {
 	order?: number;
@@ -36,19 +36,25 @@ export interface ResourceBuilder {
 	/**
 	 * Sets the lower bound for this resource.
 	 * @param value - A static number or a ResourceBoundReference (use boundTo())
+	 * @param reconciliation - How to handle values that violate this bound (default: 'clamp')
 	 * @example
-	 * .lowerBound(0)  // Static: can't go below 0
+	 * .lowerBound(0)  // Static: can't go below 0, clamps by default
+	 * .lowerBound(0, ReconciliationMode.REJECT)  // Static: rejects changes that go below 0
 	 * .lowerBound(boundTo(Stat.minGold))  // Dynamic: bound to another resource
+	 * .lowerBound(boundTo(Stat.minGold), ReconciliationMode.REJECT)  // Dynamic with reject
 	 */
-	lowerBound(value: ResourceBoundValue): this;
+	lowerBound(value: ResourceBoundValue, reconciliation?: ResourceReconciliationMode): this;
 	/**
 	 * Sets the upper bound for this resource.
 	 * @param value - A static number or a ResourceBoundReference (use boundTo())
+	 * @param reconciliation - How to handle values that violate this bound (default: 'clamp')
 	 * @example
-	 * .upperBound(100)  // Static: can't exceed 100
+	 * .upperBound(100)  // Static: can't exceed 100, clamps by default
+	 * .upperBound(100, ReconciliationMode.REJECT)  // Static: rejects changes that exceed 100
 	 * .upperBound(boundTo(Stat.populationMax))  // Dynamic: bound to another resource
+	 * .upperBound(boundTo(Stat.populationMax), ReconciliationMode.REJECT)  // Dynamic with reject
 	 */
-	upperBound(value: ResourceBoundValue): this;
+	upperBound(value: ResourceBoundValue, reconciliation?: ResourceReconciliationMode): this;
 	trackValueBreakdown(enabled?: boolean): this;
 	trackBoundBreakdown(enabled?: boolean): this;
 	group(id: string, options?: ResourceGroupOptions): this;
@@ -192,23 +198,29 @@ class ResourceBuilderImpl implements ResourceBuilder {
 		return this;
 	}
 
-	lowerBound(value: ResourceBoundValue) {
+	lowerBound(value: ResourceBoundValue, reconciliation?: ResourceReconciliationMode) {
 		if (this.lowerBoundSet) {
 			throw new Error(`${builderName} already has lowerBound() set. Remove the duplicate call.`);
 		}
 		assertValidBoundValue(value, 'lowerBound');
 		this.definition.lowerBound = value;
+		if (reconciliation !== undefined) {
+			this.definition.lowerBoundReconciliation = reconciliation;
+		}
 		this.lowerBoundSet = true;
 		this.validateBounds();
 		return this;
 	}
 
-	upperBound(value: ResourceBoundValue) {
+	upperBound(value: ResourceBoundValue, reconciliation?: ResourceReconciliationMode) {
 		if (this.upperBoundSet) {
 			throw new Error(`${builderName} already has upperBound() set. Remove the duplicate call.`);
 		}
 		assertValidBoundValue(value, 'upperBound');
 		this.definition.upperBound = value;
+		if (reconciliation !== undefined) {
+			this.definition.upperBoundReconciliation = reconciliation;
+		}
 		this.upperBoundSet = true;
 		this.validateBounds();
 		return this;

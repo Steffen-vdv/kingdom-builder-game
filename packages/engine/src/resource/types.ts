@@ -93,6 +93,24 @@ export type RuntimeBoundValue = number | RuntimeBoundReference | null;
 export interface RuntimeResourceBounds {
 	readonly lowerBound: RuntimeBoundValue;
 	readonly upperBound: RuntimeBoundValue;
+	/**
+	 * How to reconcile when the lower bound is violated.
+	 * Used for both static bounds (direct value changes) and dynamic bounds
+	 * (cascading reconciliation when bound resource changes).
+	 *
+	 * When undefined, the effect-level reconciliation mode is used.
+	 * When specified, this mode takes precedence over effect-level mode.
+	 */
+	readonly lowerBoundReconciliation?: RuntimeReconciliationMode;
+	/**
+	 * How to reconcile when the upper bound is violated.
+	 * Used for both static bounds (direct value changes) and dynamic bounds
+	 * (cascading reconciliation when bound resource changes).
+	 *
+	 * When undefined, the effect-level reconciliation mode is used.
+	 * When specified, this mode takes precedence over effect-level mode.
+	 */
+	readonly upperBoundReconciliation?: RuntimeReconciliationMode;
 }
 
 /**

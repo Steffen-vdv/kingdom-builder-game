@@ -4,7 +4,6 @@ import type {
 	ActionEffectGroupOption,
 } from '@kingdom-builder/protocol';
 import {
-	describeContent,
 	splitSummary,
 	translateRequirementFailure,
 	type Summary,
@@ -23,7 +22,7 @@ import { type Action, type DisplayPlayer, type HoverCardData } from './types';
 import { normalizeActionFocus } from './types';
 import type { UseActionMetadataResult } from '../../state/useActionMetadata';
 import { getActionAvailability } from './getActionAvailability';
-import { resolveInstallationTarget } from './actionSummaryHelpers';
+import { describeActionWithInstallation } from './actionSummaryHelpers';
 import { isBuildingAlreadyOwned } from './buildingOwnershipCheck';
 
 interface GenericActionCardProps {
@@ -172,30 +171,11 @@ function GenericActionCard({
 	const actionIcon = typeof action.icon === 'string' ? action.icon : undefined;
 	const actionFocus = normalizeActionFocus(action.focus);
 	const hoverTitle = formatIconTitle(actionIcon, action.name);
-	const hoverContent = describeContent('action', action.id, translationContext);
-	let { effects, description } = splitSummary(hoverContent);
-	const installationTarget = useMemo(
-		() => resolveInstallationTarget(action.id, translationContext),
-		[action.id, translationContext],
+	const hoverContent = describeActionWithInstallation(
+		action.id,
+		translationContext,
 	);
-	if (installationTarget) {
-		try {
-			const installationSummary = describeContent(
-				installationTarget.type,
-				installationTarget.id,
-				translationContext,
-			);
-			const installationSplit = splitSummary(installationSummary);
-			if (installationSplit.effects.length > 0) {
-				effects = installationSplit.effects;
-			}
-			if (installationSplit.description?.length) {
-				description = installationSplit.description;
-			}
-		} catch {
-			/* ignore missing installation descriptions */
-		}
-	}
+	const { effects, description } = splitSummary(hoverContent);
 	const createHoverDetails = (): HoverCardData => ({
 		title: hoverTitle,
 		effects,
