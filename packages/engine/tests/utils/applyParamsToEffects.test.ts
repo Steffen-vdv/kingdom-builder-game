@@ -30,7 +30,7 @@ describe('applyParamsToEffects', () => {
 			resourceId: Resource.gold,
 			amount: 2,
 			count: 3,
-			nestedResourceId: Resource.ap,
+			nestedResourceId: Resource.cp,
 			nestedAmount: 1,
 		};
 		const applied = applyParamsToEffects(effects, params);

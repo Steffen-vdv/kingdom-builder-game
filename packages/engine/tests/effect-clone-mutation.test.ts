@@ -110,7 +110,7 @@ describe('Effect Clone Isolation', () => {
 
 		// Give player resources to perform actions
 		player.resourceValues[Resource.gold] = 1000;
-		player.resourceValues[Resource.ap] = 100;
+		player.resourceValues[Resource.cp] = 100;
 
 		// Advance through growth phase to main
 		while (engine.game.currentPhase !== PhaseId.Main) {
@@ -158,7 +158,7 @@ describe('Effect Clone Isolation', () => {
 
 		// Give player councils to trigger AP gain effects
 		player.resourceValues[Resource.council] = 5;
-		player.resourceValues[Resource.ap] = 0;
+		player.resourceValues[Resource.cp] = 0;
 
 		// Advance through all phases
 		for (let i = 0; i < 10; i++) {
@@ -199,7 +199,7 @@ describe('Cross-Execution Isolation', () => {
 
 		// 5 councils should create 5 separate trigger bundles
 		player.resourceValues[Resource.council] = 5;
-		player.resourceValues[Resource.ap] = 0;
+		player.resourceValues[Resource.cp] = 0;
 
 		// Position at gain AP step
 		const growthPhaseIndex = PHASES.findIndex(
@@ -219,7 +219,7 @@ describe('Cross-Execution Isolation', () => {
 
 		// Each council should contribute AP based on content definition
 		// If bundles share state, we might get different results
-		expect(player.resourceValues[Resource.ap]).toBe(5 * COUNCIL_AP_GAIN);
+		expect(player.resourceValues[Resource.cp]).toBe(5 * COUNCIL_AP_GAIN);
 	});
 
 	/**
@@ -236,7 +236,7 @@ describe('Cross-Execution Isolation', () => {
 			const player = engine.activePlayer;
 
 			player.resourceValues[Resource.council] = 3;
-			player.resourceValues[Resource.ap] = 0;
+			player.resourceValues[Resource.cp] = 0;
 
 			// Position at gain AP step
 			const growthPhaseIndex = PHASES.findIndex(
@@ -254,7 +254,7 @@ describe('Cross-Execution Isolation', () => {
 
 			advance(engine);
 
-			results.push(player.resourceValues[Resource.ap]);
+			results.push(player.resourceValues[Resource.cp]);
 		}
 
 		// All runs should produce the same result

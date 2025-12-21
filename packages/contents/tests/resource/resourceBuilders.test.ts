@@ -37,7 +37,6 @@ describe('resource builder', () => {
 			.group('group:efficiency', { order: 2 })
 			.tags('core', ['productivity', 'core'])
 			.tierTrack(tierTrack)
-			.globalActionCost(5)
 			.build();
 
 		expect(definition).toEqual({
@@ -55,7 +54,6 @@ describe('resource builder', () => {
 			groupOrder: 2,
 			tags: ['core', 'productivity'],
 			tierTrack,
-			globalCost: { amount: 5 },
 		});
 	});
 
@@ -72,12 +70,6 @@ describe('resource builder', () => {
 
 	it('enforces valid bounds', () => {
 		expect(() => resource('resource:bounds').lowerBound(5).upperBound(4)).toThrowError('Resource builder lowerBound must be less than or equal to upperBound (5 > 4).');
-	});
-
-	it('requires positive integer global action cost amounts', () => {
-		expect(() => resource('resource:cost-int').globalActionCost(1.5)).toThrowError('Resource builder expected globalCost.amount to be an integer but received 1.5.');
-
-		expect(() => resource('resource:cost-zero').globalActionCost(0)).toThrowError('Resource builder expected globalCost.amount to be greater than 0 but received 0.');
 	});
 });
 

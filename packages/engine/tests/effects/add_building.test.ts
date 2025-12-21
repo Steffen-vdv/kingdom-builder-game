@@ -41,8 +41,8 @@ describe('building:add effect', () => {
 		const cost = getActionCosts(grant.id, engineContext, { id: building.id });
 		engineContext.activePlayer.resourceValues[CResource.gold] =
 			cost[CResource.gold] ?? 0;
-		engineContext.activePlayer.resourceValues[CResource.ap] =
-			cost[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] =
+			cost[CResource.cp] ?? 0;
 		performAction(grant.id, engineContext, { id: building.id });
 		const after = getActionCosts(target.id, engineContext)[CResource.gold] ?? 0;
 		const bonus = building.onBuild?.find(

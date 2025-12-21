@@ -8,6 +8,7 @@ import {
 import {
 	createActionRegistry,
 	Resource as CResource,
+	MetaCategory,
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import {
@@ -23,6 +24,7 @@ describe('resource:add effect', () => {
 		actions.add('grant_gold', {
 			id: 'grant_gold',
 			name: 'Grant Gold',
+			metaCategory: MetaCategory.Commands,
 			effects: [
 				{
 					type: 'resource',
@@ -46,8 +48,8 @@ describe('resource:add effect', () => {
 				effect.params?.resourceId === CResource.gold,
 		)?.params as ResourceAmountParamsResult | undefined;
 		const amount = params?.amount ?? 0;
-		const cost = getActionCosts('grant_gold', engineContext)[CResource.ap] ?? 0;
-		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
+		const cost = getActionCosts('grant_gold', engineContext)[CResource.cp] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] = cost;
 		performAction('grant_gold', engineContext);
 		expect(getResourceValue(engineContext.activePlayer, CResource.gold)).toBe(
 			before + amount,
@@ -59,6 +61,7 @@ describe('resource:add effect', () => {
 		actions.add('round_up', {
 			id: 'round_up',
 			name: 'Round Up',
+			metaCategory: MetaCategory.Commands,
 			effects: [
 				{
 					type: 'resource',
@@ -74,6 +77,7 @@ describe('resource:add effect', () => {
 		actions.add('round_down', {
 			id: 'round_down',
 			name: 'Round Down',
+			metaCategory: MetaCategory.Commands,
 			effects: [
 				{
 					type: 'resource',
@@ -100,8 +104,8 @@ describe('resource:add effect', () => {
 			)?.params as ResourcePercentParamsResult | undefined;
 		const roundUpBase = 5;
 		engineContext.activePlayer.resourceValues[CResource.gold] = roundUpBase;
-		engineContext.activePlayer.resourceValues[CResource.ap] =
-			getActionCosts('round_up', engineContext)[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] =
+			getActionCosts('round_up', engineContext)[CResource.cp] ?? 0;
 		const roundUpDelta = roundUpParams?.reconciledDelta?.(roundUpBase) ?? 0;
 		performAction('round_up', engineContext);
 		expect(getResourceValue(engineContext.activePlayer, CResource.gold)).toBe(
@@ -118,8 +122,8 @@ describe('resource:add effect', () => {
 			)?.params as ResourcePercentParamsResult | undefined;
 		const roundDownBase = 11;
 		engineContext.activePlayer.resourceValues[CResource.gold] = roundDownBase;
-		engineContext.activePlayer.resourceValues[CResource.ap] =
-			getActionCosts('round_down', engineContext)[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] =
+			getActionCosts('round_down', engineContext)[CResource.cp] ?? 0;
 		const roundDownDelta =
 			roundDownParams?.reconciledDelta?.(roundDownBase) ?? 0;
 		performAction('round_down', engineContext);

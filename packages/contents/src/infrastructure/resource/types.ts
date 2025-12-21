@@ -32,10 +32,6 @@ export interface ResourceBounds {
 	upperBound?: ResourceBoundValue;
 }
 
-export interface ResourceGlobalCostConfig {
-	amount: number;
-}
-
 export interface ResourceTierThreshold {
 	min?: number;
 	max?: number;
@@ -143,7 +139,6 @@ export interface ResourceDefinition extends ResourceMetadata, ResourceBounds, Re
 	trackBoundBreakdown?: boolean;
 	groupId?: string;
 	groupOrder?: number;
-	globalCost?: ResourceGlobalCostConfig;
 	tierTrack?: ResourceTierTrack;
 	/**
 	 * Declares that this resource represents a bound of another resource.

@@ -87,8 +87,8 @@ describe('royal decree action effect group', () => {
 		} as const;
 
 		const costs = getActionCosts(actionId, engineContext, params);
-		engineContext.activePlayer.resourceValues[CResource.ap] =
-			costs[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] =
+			costs[CResource.cp] ?? 0;
 		engineContext.activePlayer.resourceValues[CResource.gold] =
 			costs[CResource.gold] ?? 0;
 

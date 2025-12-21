@@ -59,7 +59,7 @@ describe('simulateUpcomingPhases', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					resourceId: Resource.ap,
+					resourceId: Resource.cp,
 					amount: apGain,
 				}),
 			},
@@ -75,7 +75,7 @@ describe('simulateUpcomingPhases', () => {
 		expect(context.game.currentPhase).toBe(beforePhase);
 		expect(context.game.currentPlayerIndex).toBe(beforePlayerIndex);
 		expect(result.delta.values[Resource.gold]).toBe(goldGain);
-		expect(result.delta.values[Resource.ap]).toBe(apGain);
+		expect(result.delta.values[Resource.cp]).toBe(apGain);
 	});
 
 	it('treats skip flags as completing the affected phases', () => {

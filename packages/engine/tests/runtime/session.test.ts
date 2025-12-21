@@ -108,7 +108,7 @@ describe('EngineSession', () => {
 		// Ensure player has enough AP to perform the action
 		session.applyDeveloperPreset({
 			playerId: session.getSnapshot().game.activePlayerId,
-			resources: [{ resourceId: CResource.ap, target: 5 }],
+			resources: [{ resourceId: CResource.cp, target: 5 }],
 		});
 		const before = session.getSnapshot();
 		const activeBefore = before.game.players[0]!;
@@ -142,11 +142,11 @@ describe('EngineSession', () => {
 		// Ensure player has enough AP so action fails on land, not AP
 		session.applyDeveloperPreset({
 			playerId: session.getSnapshot().game.activePlayerId,
-			resources: [{ resourceId: CResource.ap, target: 5 }],
+			resources: [{ resourceId: CResource.cp, target: 5 }],
 		});
 		const before = session.getSnapshot();
 		const activeBefore = before.game.players[0]!;
-		const initialAp = activeBefore.values[CResource.ap] ?? 0;
+		const initialAp = activeBefore.values[CResource.cp] ?? 0;
 
 		expect(() => session.performAction(failingAction.id)).toThrow(
 			/No tillable land available/,
@@ -154,7 +154,7 @@ describe('EngineSession', () => {
 
 		const after = session.getSnapshot();
 		const activeAfter = after.game.players[0]!;
-		expect(activeAfter.values[CResource.ap]).toBe(initialAp);
+		expect(activeAfter.values[CResource.cp]).toBe(initialAp);
 	});
 
 	it('returns immutable game snapshots', () => {
@@ -582,7 +582,7 @@ it('delegates AI turns with overrides while preserving controllers', async () =>
 	advanceToPlayerMain(session, opponentId);
 	session.applyDeveloperPreset({
 		playerId: opponentId,
-		resources: [{ resourceId: CResource.ap, target: 1 }],
+		resources: [{ resourceId: CResource.cp, target: 1 }],
 	});
 	const performSpy = vi.fn<
 		Parameters<PerformActionFn>,

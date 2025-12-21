@@ -29,7 +29,7 @@ describe('royal decree auto land targeting', () => {
 
 		const beforeLandCount = engineContext.activePlayer.lands.length;
 		engineContext.activePlayer.resourceValues[CResource.gold] = 12;
-		engineContext.activePlayer.resourceValues[CResource.ap] = 1;
+		engineContext.activePlayer.resourceValues[CResource.cp] = 1;
 
 		const [actionId, royalDecree] = engineContext.actions
 			.entries()

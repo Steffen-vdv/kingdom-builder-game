@@ -40,8 +40,8 @@ describe('development:add effect', () => {
 			id: development.id,
 			landId: land.id,
 		});
-		engineContext.activePlayer.resourceValues[CResource.ap] =
-			cost[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] =
+			cost[CResource.cp] ?? 0;
 		const beforeGold =
 			engineContext.activePlayer.resourceValues[CResource.gold] ?? 0;
 		const beforeSlots = land.slotsUsed;
@@ -77,8 +77,8 @@ describe('development:add effect', () => {
 		}
 		// Give player AP to pass cost check so we can verify the land error
 		const cost = getActionCosts(action.id, engineContext);
-		engineContext.activePlayer.resourceValues[CResource.ap] =
-			cost[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] =
+			cost[CResource.cp] ?? 0;
 		expect(() => performAction(action.id, engineContext)).toThrow(
 			/Land missing not found/,
 		);
@@ -107,8 +107,8 @@ describe('development:add effect', () => {
 			id: development.id,
 			landId: land.id,
 		});
-		engineContext.activePlayer.resourceValues[CResource.ap] =
-			cost[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] =
+			cost[CResource.cp] ?? 0;
 		expect(() =>
 			performAction(action.id, engineContext, {
 				id: development.id,

@@ -152,12 +152,12 @@ describe('Trigger Effect Scaling', () => {
 					const player = engine.activePlayer;
 
 					player.resourceValues[Resource.council] = councilCount;
-					player.resourceValues[Resource.ap] = 0;
+					player.resourceValues[Resource.cp] = 0;
 
 					positionAtStep(engine, PhaseId.Growth, 'onGainAPStep');
 					advance(engine);
 
-					const apGained = player.resourceValues[Resource.ap];
+					const apGained = player.resourceValues[Resource.cp];
 
 					// Linear: N councils = N × AP_PER_COUNCIL
 					// Quadratic bug would give: N councils = N² × AP_PER_COUNCIL
@@ -176,17 +176,17 @@ describe('Trigger Effect Scaling', () => {
 
 			const engine5 = createMinimalEngine();
 			engine5.activePlayer.resourceValues[Resource.council] = 5;
-			engine5.activePlayer.resourceValues[Resource.ap] = 0;
+			engine5.activePlayer.resourceValues[Resource.cp] = 0;
 			positionAtStep(engine5, PhaseId.Growth, 'onGainAPStep');
 			advance(engine5);
-			const ap5 = engine5.activePlayer.resourceValues[Resource.ap];
+			const ap5 = engine5.activePlayer.resourceValues[Resource.cp];
 
 			const engine10 = createMinimalEngine();
 			engine10.activePlayer.resourceValues[Resource.council] = 10;
-			engine10.activePlayer.resourceValues[Resource.ap] = 0;
+			engine10.activePlayer.resourceValues[Resource.cp] = 0;
 			positionAtStep(engine10, PhaseId.Growth, 'onGainAPStep');
 			advance(engine10);
-			const ap10 = engine10.activePlayer.resourceValues[Resource.ap];
+			const ap10 = engine10.activePlayer.resourceValues[Resource.cp];
 
 			const ratio = ap10 / ap5;
 
@@ -453,14 +453,14 @@ describe('Combinatorial Scaling', () => {
 
 					player.resourceValues[Resource.council] = councils;
 					player.resourceValues[Resource.legion] = legions;
-					player.resourceValues[Resource.ap] = 0;
+					player.resourceValues[Resource.cp] = 0;
 					player.resourceValues[Resource.gold] = 100;
 
 					// Test AP gain (should only count councils)
 					positionAtStep(engine, PhaseId.Growth, 'onGainAPStep');
 					advance(engine);
 
-					const apGained = player.resourceValues[Resource.ap];
+					const apGained = player.resourceValues[Resource.cp];
 					expect(apGained).toBe(councils * COUNCIL_AP_GAIN);
 
 					// Reset and test upkeep (should count both independently)

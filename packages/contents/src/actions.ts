@@ -12,6 +12,7 @@
  * - Always end with .build() to finalize the action
  */
 import { actionSchema, type ActionConfig, Registry } from '@kingdom-builder/protocol';
+import { z, type ZodType } from 'zod';
 import { Resource } from './internal';
 import { DevelopmentId } from './developments';
 import { BuildingId } from './buildingIds';
@@ -65,12 +66,14 @@ import {
 	type SystemActionId as SystemActionIdType,
 } from './actionIds';
 import { ActionCategoryId as ActionCategoryValues, type ActionCategoryId as ActionCategoryIdValue } from './actionCategories';
+import { MetaCategory, type MetaCategoryValue } from './constants';
 import { resourceAmountChange, resourceTransferAmount, resourceTransferPercent } from './infrastructure/helpers/resourceEffects';
 import { ReconciliationMode, resourceChange } from './resource';
 
 // Re-export IDs for external consumers
 export const ActionId = ActionIdValues;
 export const ActionCategory = ActionCategoryValues;
+export { MetaCategory };
 export const BasicActions = BasicActionIdValues;
 export const DevelopActions = DevelopActionIdValues;
 export const HireActions = HireActionIdValues;
@@ -89,10 +92,23 @@ export type SystemActionId = SystemActionIdType;
 export type PopulationEvaluationId = PopulationEvaluationIdType;
 
 export interface ActionDef extends ActionConfig {
+	/** Which meta-category this action belongs to. Required for all actions. */
+	metaCategory: MetaCategoryValue;
 	category?: ActionCategoryIdValue;
 	order?: number;
 	focus?: Focus;
 }
+
+/**
+ * Extended action schema that includes metaCategory (required by contents layer).
+ * The protocol's actionSchema doesn't include metaCategory since it's a content-layer concern.
+ */
+const actionDefSchema = actionSchema.extend({
+	metaCategory: z.enum([MetaCategory.Commands, MetaCategory.Research]),
+	category: z.string().optional(),
+	order: z.number().optional(),
+	focus: z.string().optional(),
+});
 
 // Shared requirement for actions that need a development slot
 const developmentSlotRequirement = compareRequirement().left(landEvaluator()).operator('gt').right(0).message('Requires an available development slot.').build();
@@ -111,7 +127,8 @@ const plunderReconciliation = {
 };
 
 export function createActionRegistry() {
-	const registry = new Registry<ActionDef>(actionSchema.passthrough());
+	// Type assertion: schema types are compatible but exactOptionalPropertyTypes causes mismatch
+	const registry = new Registry<ActionDef>(actionDefSchema as unknown as ZodType<ActionDef>);
 
 	// ═══════════════════════════════════════════════════════════════════════════
 	// BASIC ACTIONS
@@ -121,6 +138,7 @@ export function createActionRegistry() {
 		BasicActionIdValues.expand,
 		action()
 			.id(BasicActionIdValues.expand)
+			.metaCategory(MetaCategory.Commands)
 			.name('Expand')
 			.icon('🌱')
 			.cost(Resource.gold, 2)
@@ -136,6 +154,7 @@ export function createActionRegistry() {
 		BasicActionIdValues.tax,
 		action()
 			.id(BasicActionIdValues.tax)
+			.metaCategory(MetaCategory.Commands)
 			.name('Tax')
 			.icon('💰')
 			.effect(
@@ -193,6 +212,7 @@ export function createActionRegistry() {
 		BasicActionIdValues.royal_decree,
 		action()
 			.id(BasicActionIdValues.royal_decree)
+			.metaCategory(MetaCategory.Commands)
 			.name('Royal Decree')
 			.icon('📜')
 			.cost(Resource.gold, 12)
@@ -214,6 +234,7 @@ export function createActionRegistry() {
 		BasicActionIdValues.raid,
 		action()
 			.id(BasicActionIdValues.raid)
+			.metaCategory(MetaCategory.Commands)
 			.name('Raid')
 			.icon('🗡️')
 			.requirement(compareRequirement().left(resourceEvaluator().resourceId(Resource.warWeariness)).operator('lt').right(resourceEvaluator().resourceId(Resource.legion)).build())
@@ -240,6 +261,7 @@ export function createActionRegistry() {
 		BasicActionIdValues.hold_festival,
 		action()
 			.id(BasicActionIdValues.hold_festival)
+			.metaCategory(MetaCategory.Commands)
 			.name('Hold Festival')
 			.icon('🎉')
 			.cost(Resource.gold, 3)
@@ -271,6 +293,7 @@ export function createActionRegistry() {
 		BasicActionIdValues.plunder,
 		action()
 			.id(BasicActionIdValues.plunder)
+			.metaCategory(MetaCategory.Commands)
 			.name('Plunder')
 			.icon('🏴‍☠️')
 			.locked()
@@ -293,6 +316,7 @@ export function createActionRegistry() {
 		BasicActionIdValues.plow,
 		action()
 			.id(BasicActionIdValues.plow)
+			.metaCategory(MetaCategory.Commands)
 			.name('Plow')
 			.icon('🚜')
 			.locked()
@@ -312,7 +336,16 @@ export function createActionRegistry() {
 
 	registry.add(
 		BasicActionIdValues.till,
-		action().id(BasicActionIdValues.till).name('Till').icon('🧑‍🌾').system().effect(effect(Types.Land, LandMethods.TILL).build()).category(ActionCategory.Basic).focus(Focus.Economy).build(),
+		action()
+			.id(BasicActionIdValues.till)
+			.metaCategory(MetaCategory.Commands)
+			.name('Till')
+			.icon('🧑‍🌾')
+			.system()
+			.effect(effect(Types.Land, LandMethods.TILL).build())
+			.category(ActionCategory.Basic)
+			.focus(Focus.Economy)
+			.build(),
 	);
 
 	// ═══════════════════════════════════════════════════════════════════════════
@@ -323,6 +356,7 @@ export function createActionRegistry() {
 		HireActionIdValues.hire_council,
 		action()
 			.id(HireActionIdValues.hire_council)
+			.metaCategory(MetaCategory.Commands)
 			.name('Hire Council')
 			.icon('⚖️')
 			.locked()
@@ -340,6 +374,7 @@ export function createActionRegistry() {
 		HireActionIdValues.hire_legion,
 		action()
 			.id(HireActionIdValues.hire_legion)
+			.metaCategory(MetaCategory.Commands)
 			.name('Hire Legion')
 			.icon('🎖️')
 			.locked()
@@ -357,6 +392,7 @@ export function createActionRegistry() {
 		HireActionIdValues.hire_fortifier,
 		action()
 			.id(HireActionIdValues.hire_fortifier)
+			.metaCategory(MetaCategory.Commands)
 			.name('Hire Fortifier')
 			.icon('🔧')
 			.locked()
@@ -378,6 +414,7 @@ export function createActionRegistry() {
 		DevelopActionIdValues.develop_farm,
 		action()
 			.id(DevelopActionIdValues.develop_farm)
+			.metaCategory(MetaCategory.Commands)
 			.name('Farm')
 			.icon('🌾')
 			.cost(Resource.gold, 3)
@@ -393,6 +430,7 @@ export function createActionRegistry() {
 		DevelopActionIdValues.develop_science_lab,
 		action()
 			.id(DevelopActionIdValues.develop_science_lab)
+			.metaCategory(MetaCategory.Commands)
 			.name('Science Lab')
 			.icon('🔬')
 			.cost(Resource.gold, 3)
@@ -408,6 +446,7 @@ export function createActionRegistry() {
 		DevelopActionIdValues.develop_house,
 		action()
 			.id(DevelopActionIdValues.develop_house)
+			.metaCategory(MetaCategory.Commands)
 			.name('House')
 			.icon('🏠')
 			.cost(Resource.gold, 3)
@@ -423,6 +462,7 @@ export function createActionRegistry() {
 		DevelopActionIdValues.develop_outpost,
 		action()
 			.id(DevelopActionIdValues.develop_outpost)
+			.metaCategory(MetaCategory.Commands)
 			.name('Outpost')
 			.icon('🏹')
 			.cost(Resource.gold, 3)
@@ -438,6 +478,7 @@ export function createActionRegistry() {
 		DevelopActionIdValues.develop_watchtower,
 		action()
 			.id(DevelopActionIdValues.develop_watchtower)
+			.metaCategory(MetaCategory.Commands)
 			.name('Watchtower')
 			.icon('🗼')
 			.cost(Resource.gold, 3)
@@ -457,6 +498,7 @@ export function createActionRegistry() {
 		BuildActionIdValues.build_town_charter,
 		action()
 			.id(BuildActionIdValues.build_town_charter)
+			.metaCategory(MetaCategory.Commands)
 			.name('Town Charter')
 			.icon('🏘️')
 			.locked()
@@ -471,6 +513,7 @@ export function createActionRegistry() {
 		BuildActionIdValues.build_mill,
 		action()
 			.id(BuildActionIdValues.build_mill)
+			.metaCategory(MetaCategory.Commands)
 			.name('Mill')
 			.icon('⚙️')
 			.locked()
@@ -485,6 +528,7 @@ export function createActionRegistry() {
 		BuildActionIdValues.build_raiders_guild,
 		action()
 			.id(BuildActionIdValues.build_raiders_guild)
+			.metaCategory(MetaCategory.Commands)
 			.name("Raider's Guild")
 			.icon('🏴‍☠️')
 			.locked()
@@ -499,6 +543,7 @@ export function createActionRegistry() {
 		BuildActionIdValues.build_plow_workshop,
 		action()
 			.id(BuildActionIdValues.build_plow_workshop)
+			.metaCategory(MetaCategory.Commands)
 			.name('Plow Workshop')
 			.icon('🏭')
 			.locked()
@@ -513,6 +558,7 @@ export function createActionRegistry() {
 		BuildActionIdValues.build_market,
 		action()
 			.id(BuildActionIdValues.build_market)
+			.metaCategory(MetaCategory.Commands)
 			.name('Market')
 			.icon('🏪')
 			.locked()
@@ -527,6 +573,7 @@ export function createActionRegistry() {
 		BuildActionIdValues.build_barracks,
 		action()
 			.id(BuildActionIdValues.build_barracks)
+			.metaCategory(MetaCategory.Commands)
 			.name('Barracks')
 			.icon('🪖')
 			.locked()
@@ -541,6 +588,7 @@ export function createActionRegistry() {
 		BuildActionIdValues.build_citadel,
 		action()
 			.id(BuildActionIdValues.build_citadel)
+			.metaCategory(MetaCategory.Commands)
 			.name('Citadel')
 			.icon('🏯')
 			.locked()
@@ -555,6 +603,7 @@ export function createActionRegistry() {
 		BuildActionIdValues.build_castle_walls,
 		action()
 			.id(BuildActionIdValues.build_castle_walls)
+			.metaCategory(MetaCategory.Commands)
 			.name('Castle Walls')
 			.icon('🧱')
 			.locked()
@@ -569,6 +618,7 @@ export function createActionRegistry() {
 		BuildActionIdValues.build_castle_gardens,
 		action()
 			.id(BuildActionIdValues.build_castle_gardens)
+			.metaCategory(MetaCategory.Commands)
 			.name('Castle Gardens')
 			.icon('🌷')
 			.locked()
@@ -583,6 +633,7 @@ export function createActionRegistry() {
 		BuildActionIdValues.build_temple,
 		action()
 			.id(BuildActionIdValues.build_temple)
+			.metaCategory(MetaCategory.Commands)
 			.name('Temple')
 			.icon('⛪')
 			.locked()
@@ -597,6 +648,7 @@ export function createActionRegistry() {
 		BuildActionIdValues.build_palace,
 		action()
 			.id(BuildActionIdValues.build_palace)
+			.metaCategory(MetaCategory.Commands)
 			.name('Palace')
 			.icon('👑')
 			.locked()
@@ -611,6 +663,7 @@ export function createActionRegistry() {
 		BuildActionIdValues.build_great_hall,
 		action()
 			.id(BuildActionIdValues.build_great_hall)
+			.metaCategory(MetaCategory.Commands)
 			.name('Great Hall')
 			.icon('🏟️')
 			.locked()
@@ -629,6 +682,7 @@ export function createActionRegistry() {
 		SystemActionIdValues.initial_setup,
 		action()
 			.id(SystemActionIdValues.initial_setup)
+			.metaCategory(MetaCategory.Commands)
 			.name('Initial Setup')
 			.icon('🎮')
 			.system()
@@ -652,6 +706,7 @@ export function createActionRegistry() {
 		SystemActionIdValues.initial_setup_devmode,
 		action()
 			.id(SystemActionIdValues.initial_setup_devmode)
+			.metaCategory(MetaCategory.Commands)
 			.name('Initial Setup (Dev Mode)')
 			.icon('🛠️')
 			.system()
@@ -692,11 +747,12 @@ export function createActionRegistry() {
 		SystemActionIdValues.compensation,
 		action()
 			.id(SystemActionIdValues.compensation)
+			.metaCategory(MetaCategory.Commands)
 			.name('Player Compensation')
 			.icon('⚖️')
 			.system()
 			.free()
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.ap).amount(1).reject().build()).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.cp).amount(1).reject().build()).build())
 			.build(),
 	);
 

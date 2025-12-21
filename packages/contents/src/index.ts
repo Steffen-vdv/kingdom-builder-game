@@ -1,5 +1,7 @@
 export { ACTION_CATEGORIES, createActionCategoryRegistry, ActionCategoryId } from './actionCategories';
 export type { ActionCategoryId as ActionCategoryIdValue } from './actionCategories';
+export { ACTION_META_CATEGORIES, createActionMetaCategoryRegistry, MetaCategory } from './actionMetaCategories';
+export type { MetaCategoryValue } from './actionMetaCategories';
 export { ACTIONS, createActionRegistry, ActionId, ACTION_INFO } from './actions';
 export { BUILDINGS, createBuildingRegistry, BuildingId, BUILDING_INFO } from './buildings';
 export { DEVELOPMENTS, createDevelopmentRegistry, DEVELOPMENT_INFO } from './developments';

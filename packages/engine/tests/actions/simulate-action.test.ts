@@ -13,7 +13,7 @@ describe('simulateAction', () => {
 		});
 		const engineContext = createTestEngine({ actions: content.actions });
 		engineContext.activePlayer.actions.add(till.id);
-		engineContext.activePlayer.resourceValues[CResource.ap] = 10;
+		engineContext.activePlayer.resourceValues[CResource.cp] = 10;
 
 		expect(engineContext.activePlayer.lands.some((land) => land.tilled)).toBe(
 			false,
@@ -43,7 +43,7 @@ describe('simulateAction', () => {
 		});
 		const engineContext = createTestEngine({ actions: content.actions });
 		engineContext.activePlayer.actions.add(tripleTill.id);
-		engineContext.activePlayer.resourceValues[CResource.ap] = 10;
+		engineContext.activePlayer.resourceValues[CResource.cp] = 10;
 
 		expect(() => simulateAction(tripleTill.id, engineContext)).toThrow(
 			/No tillable land available/,

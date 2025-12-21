@@ -36,7 +36,7 @@ describe('action:perform effect', () => {
 	it('uses the declared action when id points at a development', () => {
 		const engineContext = createTestEngine();
 		toMain(engineContext);
-		engineContext.activePlayer.resourceValues[CResource.ap] = 5;
+		engineContext.activePlayer.resourceValues[CResource.cp] = 5;
 		engineContext.activePlayer.resourceValues[CResource.gold] = 20;
 		const newLandId = `${engineContext.activePlayer.id}-L${engineContext.activePlayer.lands.length + 1}`;
 		const fallbackLand = new Land(newLandId, 2, true);

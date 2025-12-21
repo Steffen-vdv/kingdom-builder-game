@@ -19,8 +19,8 @@ describe('action:remove effect', () => {
 		}
 		engineContext.activePlayer.actions.add(extra.id);
 		const cost = getActionCosts(remove.id, engineContext);
-		engineContext.activePlayer.resourceValues[CResource.ap] =
-			cost[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] =
+			cost[CResource.cp] ?? 0;
 		performAction(remove.id, engineContext);
 		expect(engineContext.activePlayer.actions.has(extra.id)).toBe(false);
 	});

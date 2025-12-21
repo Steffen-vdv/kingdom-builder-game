@@ -24,7 +24,7 @@ import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import type { RuntimeResourceContent } from '../../src/resource/index.ts';
 
 // Use actual Resource IDs - they ARE the resource keys directly
-const RESOURCE_AP = CResource.ap;
+const RESOURCE_CP = CResource.cp;
 const RESOURCE_GOLD = CResource.gold;
 
 const FAILURE_REQUIREMENT_ID = 'vitest:fail';
@@ -285,7 +285,7 @@ describe('createLocalSessionGateway', () => {
 			sessionId,
 			actionId: actionIds.gainGold,
 		});
-		expect(costResponse.costs[RESOURCE_AP]).toBe(1);
+		expect(costResponse.costs[RESOURCE_CP]).toBe(1);
 		const requirementResponse = await gateway.getActionRequirements({
 			sessionId,
 			actionId: actionIds.gainGold,

@@ -294,10 +294,7 @@ export function createEngine({
 	// Initialize all resources to 0 for each player (baseline state)
 	initializeBaselineResourceValues(gameState, runtimeResourceCatalog);
 
-	const actionCostConfig = determineCommonActionCostResource(
-		actions,
-		runtimeResourceCatalog,
-	);
+	const actionCostConfig = determineCommonActionCostResource(actions);
 	const engineContext = new EngineContext(
 		gameState,
 		services,

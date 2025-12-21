@@ -7,7 +7,7 @@ interface ResourceGroupOptions {
 
 const builderName = 'Resource builder';
 
-type NumericField = 'order' | 'lowerBound' | 'upperBound' | 'groupOrder' | 'globalCost.amount';
+type NumericField = 'order' | 'lowerBound' | 'upperBound' | 'groupOrder';
 
 function assertInteger(value: number, field: NumericField) {
 	if (!Number.isInteger(value)) {
@@ -23,13 +23,6 @@ function assertValidBoundValue(value: ResourceBoundValue, field: NumericField) {
 	// It's a ResourceBoundReference
 	if (!value.resourceId) {
 		throw new Error(`${builderName} ${field}() requires a non-empty resourceId.`);
-	}
-}
-
-function assertPositiveInteger(value: number, field: NumericField) {
-	assertInteger(value, field);
-	if (value <= 0) {
-		throw new Error(`${builderName} expected ${field} to be greater than 0 but received ${value}.`);
 	}
 }
 
@@ -61,7 +54,6 @@ export interface ResourceBuilder {
 	group(id: string, options?: ResourceGroupOptions): this;
 	tags(...tags: ReadonlyArray<string | readonly string[]>): this;
 	tierTrack(track: ResourceTierTrack): this;
-	globalActionCost(amount: number): this;
 	/**
 	 * Effects to run when this resource's value increases.
 	 * Runs once per unit of increase.
@@ -128,7 +120,6 @@ class ResourceBuilderImpl implements ResourceBuilder {
 	private groupSet = false;
 	private tagsSet = false;
 	private tierTrackSet = false;
-	private globalCostSet = false;
 	private onValueIncreaseSet = false;
 	private onValueDecreaseSet = false;
 	private boundOfSet = false;
@@ -276,16 +267,6 @@ class ResourceBuilderImpl implements ResourceBuilder {
 		}
 		this.definition.tierTrack = track;
 		this.tierTrackSet = true;
-		return this;
-	}
-
-	globalActionCost(amount: number) {
-		if (this.globalCostSet) {
-			throw new Error(`${builderName} already configured globalActionCost(). Remove the duplicate call.`);
-		}
-		assertPositiveInteger(amount, 'globalCost.amount');
-		this.definition.globalCost = { amount };
-		this.globalCostSet = true;
 		return this;
 	}
 

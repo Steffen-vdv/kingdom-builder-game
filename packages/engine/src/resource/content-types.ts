@@ -118,7 +118,6 @@ export interface ContentResourceDefinition
 	readonly trackBoundBreakdown?: boolean;
 	readonly groupId?: string;
 	readonly groupOrder?: number;
-	readonly globalCost?: { amount: number };
 	readonly tierTrack?: ContentTierTrack;
 	readonly upkeep?: ContentResourceUpkeepCost;
 	/** UI section for dual-column layout. Defaults to 'economy'. */

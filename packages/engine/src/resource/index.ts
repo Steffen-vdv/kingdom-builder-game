@@ -8,7 +8,6 @@ export type {
 	RuntimeBoundReference,
 	RuntimeBoundValue,
 	RuntimeResourceBounds,
-	RuntimeResourceGlobalCostConfig,
 	RuntimeResourceTriggers,
 	RuntimeResourceSection,
 	RuntimeResourceDefinition,

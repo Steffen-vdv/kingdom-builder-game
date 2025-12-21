@@ -222,7 +222,7 @@ describe('Linear Scaling Through Stack', () => {
 
 				// Setup councils and reset AP
 				ctx.activePlayer.resourceValues[Resource.council] = councilCount;
-				ctx.activePlayer.resourceValues[Resource.ap] = 0;
+				ctx.activePlayer.resourceValues[Resource.cp] = 0;
 
 				// Position at AP gain step
 				const growthIndex = PHASES.findIndex(
@@ -246,7 +246,7 @@ describe('Linear Scaling Through Stack', () => {
 				advance(ctx);
 
 				// Should have gained exactly councilCount × AP_PER_COUNCIL (linear)
-				expect(ctx.activePlayer.resourceValues[Resource.ap]).toBe(
+				expect(ctx.activePlayer.resourceValues[Resource.cp]).toBe(
 					councilCount * COUNCIL_AP_GAIN,
 				);
 			}),

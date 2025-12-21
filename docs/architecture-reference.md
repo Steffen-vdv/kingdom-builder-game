@@ -71,7 +71,7 @@ single Resource system.
 **Resource IDs follow the pattern:** `resource:{group}:{name}`
 
 - `resource:core:gold` - Gold currency
-- `resource:core:action-points` - Action Points
+- `resource:core:command-points` - Command Points
 - `resource:stat:army-strength` - Army Strength stat
 - `resource:population:role:legion` - Legion population count
 

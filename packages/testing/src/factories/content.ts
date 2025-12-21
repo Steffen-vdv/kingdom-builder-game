@@ -4,6 +4,7 @@ import {
 	createBuildingRegistry,
 	createDevelopmentRegistry,
 	type ActionCategoryConfig as ContentActionCategoryConfig,
+	MetaCategory,
 } from '@kingdom-builder/contents';
 import type {
 	ActionCategoryConfig as SessionActionCategoryConfig,
@@ -71,7 +72,7 @@ export function createContentFactory(): ContentFactory {
 
 	function action(definition: Partial<ActionConfig> = {}): ActionConfig {
 		const id = definition.id ?? nextId('action');
-		const built: ActionConfig = {
+		const built = {
 			id,
 			name: definition.name ?? id,
 			icon: definition.icon,
@@ -80,6 +81,8 @@ export function createContentFactory(): ContentFactory {
 			effects: definition.effects ?? [],
 			system: definition.system,
 			locked: definition.locked,
+			// metaCategory is required by the action registry schema
+			metaCategory: MetaCategory.Commands,
 		};
 		actions.add(id, built);
 		return built;

@@ -49,16 +49,11 @@ export interface ResourceBoundsOverrides {
 	upperBound?: ResourceBoundValue;
 }
 
-export interface ResourceGlobalCostOverride {
-	amount: number;
-}
-
 export interface ResourceDefinitionOverrides {
 	id?: string;
 	metadata?: ResourceMetadataOverrides;
 	bounds?: ResourceBoundsOverrides;
 	tierTrack?: ResourceTierTrack;
-	globalCost?: number | ResourceGlobalCostOverride;
 }
 
 function applyResourceMetadata(
@@ -115,14 +110,6 @@ export function resourceDefinition(
 
 	if (overrides.tierTrack) {
 		builder.tierTrack(overrides.tierTrack);
-	}
-
-	if (overrides.globalCost !== undefined) {
-		const amount =
-			typeof overrides.globalCost === 'number'
-				? overrides.globalCost
-				: overrides.globalCost.amount;
-		builder.globalActionCost(amount);
 	}
 
 	return builder.build();

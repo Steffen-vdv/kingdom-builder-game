@@ -40,7 +40,7 @@ describe('cost_mod effects', () => {
 			getActionCosts(targetAction.id, engineContext)[CResource.gold] ?? 0;
 		const addModifierCost = getActionCosts(addModifierAction.id, engineContext);
 		// Give enough AP for both actions
-		engineContext.activePlayer.resourceValues[CResource.ap] = 10;
+		engineContext.activePlayer.resourceValues[CResource.cp] = 10;
 		engineContext.activePlayer.resourceValues[CResource.gold] =
 			addModifierCost[CResource.gold] ?? 0;
 		performAction(addModifierAction.id, engineContext);
@@ -97,7 +97,7 @@ describe('cost_mod effects', () => {
 			advance(engineContext);
 		}
 		engineContext.activePlayer.actions.add(addModifiersAction.id);
-		engineContext.activePlayer.resourceValues[CResource.ap] = 10;
+		engineContext.activePlayer.resourceValues[CResource.cp] = 10;
 		const initialCost =
 			getActionCosts(targetAction.id, engineContext)[CResource.gold] ?? 0;
 		performAction(addModifiersAction.id, engineContext);

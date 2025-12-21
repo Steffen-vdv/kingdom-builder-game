@@ -43,8 +43,8 @@ describe('resource effects for population', () => {
 		// Get initial population count
 		const initialCount = engineContext.activePlayer.resourceValues[roleId] ?? 0;
 		let cost = getActionCosts(add.id, engineContext);
-		engineContext.activePlayer.resourceValues[CResource.ap] =
-			cost[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] =
+			cost[CResource.cp] ?? 0;
 		performAction(add.id, engineContext);
 		const added = add.effects.filter((e) => e.method === 'add').length;
 		// roleId IS the Resource ID
@@ -65,8 +65,8 @@ describe('resource effects for population', () => {
 		})?.parent?.id;
 		expect(parentId).toBeDefined();
 		cost = getActionCosts(remove.id, engineContext);
-		engineContext.activePlayer.resourceValues[CResource.ap] =
-			cost[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] =
+			cost[CResource.cp] ?? 0;
 		performAction(remove.id, engineContext);
 		const removed = remove.effects.filter((e) => e.method === 'remove').length;
 		expect(engineContext.activePlayer.resourceValues[roleId]).toBe(

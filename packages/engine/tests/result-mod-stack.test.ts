@@ -78,7 +78,7 @@ describe('result modifiers', () => {
 		engineContext.passives.addPassive(passiveB, engineContext);
 
 		// Give player AP to perform the action
-		engineContext.activePlayer.resourceValues[CResource.ap] = 1;
+		engineContext.activePlayer.resourceValues[CResource.cp] = 1;
 
 		// CResource values ARE Resource IDs directly - no mapper needed
 		const before = engineContext.activePlayer.resourceValues[resourceKey] ?? 0;
