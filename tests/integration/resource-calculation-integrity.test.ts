@@ -12,15 +12,58 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
 import { advance } from '@kingdom-builder/engine';
-import { resolveActionEffects } from '@kingdom-builder/protocol';
+import {
+	resolveActionEffects,
+	type EffectConfig,
+} from '@kingdom-builder/protocol';
 import {
 	PHASES,
 	Resource,
 	PhaseId,
 	createActionRegistry,
 	ActionId,
+	DEVELOPMENTS,
+	RESOURCE_REGISTRY,
+	getResourceId,
 } from '@kingdom-builder/contents';
 import { createTestContext } from './fixtures';
+
+// ============================================================================
+// CONTENT-DERIVED VALUES
+// ============================================================================
+
+/**
+ * Extract the amount from a resource:add effect.
+ */
+function extractAmountFromEffect(effect: EffectConfig): number {
+	if (effect.type === 'resource' && effect.method === 'add') {
+		const params = effect.params as { change?: { amount?: number } };
+		return params?.change?.amount ?? 0;
+	}
+	return 0;
+}
+
+/**
+ * Get per-council AP gain from content definition.
+ */
+function getCouncilApGain(): number {
+	const councilId = getResourceId(Resource.council);
+	const councilDef = RESOURCE_REGISTRY.byId[councilId];
+	const effects = councilDef?.onGainAPStep ?? [];
+	return effects.reduce((sum, eff) => sum + extractAmountFromEffect(eff), 0);
+}
+
+/**
+ * Get per-farm gold income from content definition.
+ */
+function getFarmIncome(): number {
+	const farmDef = DEVELOPMENTS.get('farm');
+	const effects = farmDef?.onGainIncomeStep ?? [];
+	return effects.reduce((sum, eff) => sum + extractAmountFromEffect(eff), 0);
+}
+
+const COUNCIL_AP_GAIN = getCouncilApGain();
+const FARM_INCOME = getFarmIncome();
 
 // ============================================================================
 // PERCENT MODIFIER SERIALIZATION INTEGRITY
@@ -202,8 +245,10 @@ describe('Linear Scaling Through Stack', () => {
 				// Advance through the step
 				advance(ctx);
 
-				// Should have gained exactly councilCount AP (linear)
-				expect(ctx.activePlayer.resourceValues[Resource.ap]).toBe(councilCount);
+				// Should have gained exactly councilCount × AP_PER_COUNCIL (linear)
+				expect(ctx.activePlayer.resourceValues[Resource.ap]).toBe(
+					councilCount * COUNCIL_AP_GAIN,
+				);
 			}),
 			{ numRuns: 10 },
 		);
@@ -212,8 +257,8 @@ describe('Linear Scaling Through Stack', () => {
 	/**
 	 * INVARIANT: Farm income scales linearly in engine.
 	 *
-	 * Tests that N farms produce exactly N×2 gold, verifying the fix for
-	 * the N² scaling bug.
+	 * Tests that N farms produce exactly N × FARM_INCOME gold, verifying
+	 * the fix for the N² scaling bug.
 	 */
 	it('farm income scales linearly in engine', () => {
 		fc.assert(
@@ -257,8 +302,8 @@ describe('Linear Scaling Through Stack', () => {
 				const goldGained =
 					(ctx.activePlayer.resourceValues[Resource.gold] ?? 0) - goldBefore;
 
-				// Should have gained exactly farmCount × 2 gold (linear)
-				expect(goldGained).toBe(farmCount * 2);
+				// Should have gained exactly farmCount × FARM_INCOME gold (linear)
+				expect(goldGained).toBe(farmCount * FARM_INCOME);
 			}),
 			{ numRuns: 10 },
 		);
