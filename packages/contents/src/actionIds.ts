@@ -27,6 +27,7 @@ export type BasicActionId = ValueOf<typeof BasicActionId>;
 
 export const DevelopActionId = {
 	develop_farm: 'develop_farm',
+	develop_science_lab: 'develop_science_lab',
 	develop_house: 'develop_house',
 	develop_outpost: 'develop_outpost',
 	develop_watchtower: 'develop_watchtower',
@@ -60,8 +61,9 @@ export const BuildActionId = {
 export type BuildingActionId = ValueOf<typeof BuildActionId>;
 
 export const DEVELOPMENT_ACTION_IDS: readonly DevelopmentActionId[] = [
-	DevelopActionId.develop_house,
 	DevelopActionId.develop_farm,
+	DevelopActionId.develop_science_lab,
+	DevelopActionId.develop_house,
 	DevelopActionId.develop_outpost,
 	DevelopActionId.develop_watchtower,
 ];
@@ -100,8 +102,9 @@ export const PopulationEvaluationId = {
 export type PopulationEvaluationId = ValueOf<typeof PopulationEvaluationId>;
 
 export const DEVELOPMENT_ACTION_DEVELOPMENT_MAP = {
-	[DevelopActionId.develop_house]: DevelopmentId.House,
 	[DevelopActionId.develop_farm]: DevelopmentId.Farm,
+	[DevelopActionId.develop_science_lab]: DevelopmentId.ScienceLab,
+	[DevelopActionId.develop_house]: DevelopmentId.House,
 	[DevelopActionId.develop_outpost]: DevelopmentId.Outpost,
 	[DevelopActionId.develop_watchtower]: DevelopmentId.Watchtower,
 } as const satisfies Record<DevelopmentActionId, DevelopmentId>;

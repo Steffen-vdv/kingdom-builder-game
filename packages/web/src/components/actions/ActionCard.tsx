@@ -8,7 +8,7 @@ import { renderSummary, renderCosts } from '../../translation/render';
 import OptionList from './OptionList';
 import StepBadge, { MultiStepIndicator } from './StepBadge';
 import { type ActionCardOption } from './OptionCard';
-import { FOCUS_GRADIENTS } from './focusGradients';
+import { getFocusGradient } from './focusGradients';
 import { stripSummary } from './stripSummary';
 import type { ActionFocus } from './types';
 
@@ -75,8 +75,7 @@ export default function ActionCard({
 	assets,
 	resourceMetadata,
 }: ActionCardProps): ReactElement {
-	const focusClass =
-		(focus && FOCUS_GRADIENTS[focus]) ?? FOCUS_GRADIENTS.default;
+	const focusClass = getFocusGradient(focus);
 	const isBack = variant === 'back';
 	const interactive = !isBack && enabled;
 	const containerClass = [

@@ -19,6 +19,7 @@ export const ResourceId = {
 	ap: 'resource:core:action-points',
 	happiness: 'resource:core:happiness',
 	castleHP: 'resource:core:castle-hp',
+	research: 'resource:core:research',
 
 	// Stats
 	populationMax: 'resource:core:max-population',
@@ -62,6 +63,7 @@ export const ActionId = {
 	developHouse: 'develop_house',
 	developOutpost: 'develop_outpost',
 	developWatchtower: 'develop_watchtower',
+	developScienceLab: 'develop_science_lab',
 
 	// Hire actions
 	hireCouncil: 'hire_council',
@@ -115,6 +117,7 @@ export const DevelopmentId = {
 	House: 'house',
 	Outpost: 'outpost',
 	Watchtower: 'watchtower',
+	ScienceLab: 'science_lab',
 } as const;
 
 export type DevelopmentIdValue = (typeof DevelopmentId)[keyof typeof DevelopmentId];
@@ -160,12 +163,43 @@ export type TriggerValue = (typeof Trigger)[keyof typeof Trigger];
 
 export const Focus = {
 	Economy: 'economy',
-	Aggressive: 'aggressive',
-	Defense: 'defense',
-	Other: 'other',
+	Combat: 'combat',
+	Research: 'research',
 } as const;
 
 export type FocusValue = (typeof Focus)[keyof typeof Focus];
+
+/**
+ * Focus definition with content-driven metadata.
+ * Presentation styling (gradients) is handled by the web layer.
+ */
+export interface FocusDefinition {
+	readonly id: FocusValue;
+	readonly label: string;
+	readonly color: string;
+}
+
+/**
+ * Content-driven focus definitions.
+ * Semantic data only - presentation styling is in the web layer.
+ */
+export const FocusDefinitions: Record<FocusValue, FocusDefinition> = {
+	[Focus.Economy]: {
+		id: Focus.Economy,
+		label: 'Economy',
+		color: '#10b981',
+	},
+	[Focus.Combat]: {
+		id: Focus.Combat,
+		label: 'Combat',
+		color: '#f59e0b',
+	},
+	[Focus.Research]: {
+		id: Focus.Research,
+		label: 'Research',
+		color: '#3b82f6',
+	},
+};
 
 // =============================================================================
 // ACTION CATEGORIES
