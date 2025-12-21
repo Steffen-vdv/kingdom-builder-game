@@ -1,5 +1,6 @@
 import type {
 	RuntimeBoundValue,
+	RuntimeReconciliationMode,
 	RuntimeResourceBounds,
 	RuntimeResourceCatalog,
 	RuntimeResourceCategoryDefinition,
@@ -60,15 +61,21 @@ function assertPositiveInteger(
 }
 
 /**
- * Normalizes a bound value from content to runtime format.
+ * Normalizes a bound value from content to runtime format with reconciliation.
  * - Numbers are validated as integers and passed through.
  * - Reference objects have resourceId validated and reconciliation set.
  * - Undefined/null becomes null (unbounded).
+ *
+ * The reconciliation mode is now sourced from the bound-level configuration
+ * (lowerBoundReconciliation/upperBoundReconciliation), not from inside the
+ * reference. This allows reconciliation to be set for both static and dynamic
+ * bounds.
  */
-function normalizeBoundValue(
+function normalizeBoundValueWithReconciliation(
 	value: ContentBoundValue | undefined,
 	field: 'lowerBound' | 'upperBound',
 	context: string,
+	reconciliation: RuntimeReconciliationMode,
 ): RuntimeBoundValue {
 	if (value === undefined || value === null) {
 		return null;
@@ -83,21 +90,62 @@ function normalizeBoundValue(
 			`${RUNTIME_PREFIX} ${context} ${field} reference requires a non-empty resourceId.`,
 		);
 	}
+	// Embed the reconciliation mode in the reference for the cascading system.
+	// The cascading system (BoundDependentEntry) reads reconciliation from
+	// RuntimeBoundReference when a bound resource changes.
 	return Object.freeze({
 		resourceId: value.resourceId,
-		reconciliation: value.reconciliation ?? 'clamp',
+		reconciliation,
 	});
 }
 
 function normalizeBounds(
 	definition: ContentResourceDefinition | ContentResourceGroupParent,
 ): RuntimeResourceBounds {
-	const { lowerBound, upperBound } = definition;
+	const {
+		lowerBound,
+		upperBound,
+		lowerBoundReconciliation,
+		upperBoundReconciliation,
+	} = definition;
 	const context = `"${definition.id}"`;
-	return {
-		lowerBound: normalizeBoundValue(lowerBound, 'lowerBound', context),
-		upperBound: normalizeBoundValue(upperBound, 'upperBound', context),
+
+	// For dynamic bounds, we need reconciliation embedded in the reference
+	// for the cascading system. Use the explicit mode if specified, else 'clamp'.
+	const lowerCascadeMode = lowerBoundReconciliation ?? 'clamp';
+	const upperCascadeMode = upperBoundReconciliation ?? 'clamp';
+
+	// Normalize bound values, passing the reconciliation for dynamic bounds
+	const normalizedLower = normalizeBoundValueWithReconciliation(
+		lowerBound,
+		'lowerBound',
+		context,
+		lowerCascadeMode,
+	);
+	const normalizedUpper = normalizeBoundValueWithReconciliation(
+		upperBound,
+		'upperBound',
+		context,
+		upperCascadeMode,
+	);
+
+	// Only set bound-level reconciliation if explicitly specified in content.
+	// When undefined, effect-level reconciliation takes precedence.
+	const result: RuntimeResourceBounds = {
+		lowerBound: normalizedLower,
+		upperBound: normalizedUpper,
 	};
+	if (lowerBoundReconciliation !== undefined) {
+		(
+			result as { lowerBoundReconciliation?: RuntimeReconciliationMode }
+		).lowerBoundReconciliation = lowerBoundReconciliation;
+	}
+	if (upperBoundReconciliation !== undefined) {
+		(
+			result as { upperBoundReconciliation?: RuntimeReconciliationMode }
+		).upperBoundReconciliation = upperBoundReconciliation;
+	}
+	return result;
 }
 
 function normalizeMetadata(

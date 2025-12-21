@@ -5,8 +5,9 @@ const builderName = 'Resource group builder';
 /**
  * Parent metadata including optional bounds.
  * Bounds can be static numbers or dynamic references to other resources.
+ * Reconciliation modes can be specified for each bound.
  */
-type ParentMetadata = Pick<ResourceGroupParent, 'id' | 'label' | 'icon' | 'description' | 'lowerBound' | 'upperBound'>;
+type ParentMetadata = Pick<ResourceGroupParent, 'id' | 'label' | 'icon' | 'description' | 'lowerBound' | 'upperBound' | 'lowerBoundReconciliation' | 'upperBoundReconciliation'>;
 
 function assertInteger(value: number, field: 'order') {
 	if (!Number.isInteger(value)) {
@@ -88,7 +89,7 @@ class ResourceGroupBuilderImpl implements ResourceGroupBuilder {
 			throw new Error(`${builderName} parent() requires a non-empty icon.`);
 		}
 
-		const { id, label, icon, description, lowerBound, upperBound } = metadata;
+		const { id, label, icon, description, lowerBound, upperBound, lowerBoundReconciliation, upperBoundReconciliation } = metadata;
 		const parent: ResourceGroupParent = { id, label, icon };
 		if (description !== undefined) {
 			parent.description = description;
@@ -98,6 +99,12 @@ class ResourceGroupBuilderImpl implements ResourceGroupBuilder {
 		}
 		if (upperBound !== undefined) {
 			parent.upperBound = upperBound;
+		}
+		if (lowerBoundReconciliation !== undefined) {
+			parent.lowerBoundReconciliation = lowerBoundReconciliation;
+		}
+		if (upperBoundReconciliation !== undefined) {
+			parent.upperBoundReconciliation = upperBoundReconciliation;
 		}
 		this.definition.parent = parent;
 		this.parentSet = true;

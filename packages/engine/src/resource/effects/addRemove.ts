@@ -197,6 +197,9 @@ function applySign(
  * Resolves the effective bound for a resource. For dynamic bounds (references
  * to other resources), always use the definition to get a fresh resolution.
  * For static bounds, player overrides take precedence over the definition.
+ *
+ * Also includes per-bound reconciliation modes from the resource definition,
+ * allowing resources to define how their bounds should be enforced.
  */
 function resolveEffectiveBounds(
 	player: PlayerState,
@@ -218,10 +221,22 @@ function resolveEffectiveBounds(
 		: (playerUpper ?? defUpper);
 
 	// Resolve any references to get final numeric values
-	return {
+	// Include per-bound reconciliation modes from the definition only if set
+	const result: ResolvedBounds = {
 		lowerBound: resolveBoundValue(lowerBoundValue, player.resourceValues),
 		upperBound: resolveBoundValue(upperBoundValue, player.resourceValues),
 	};
+	if (definitionBounds.lowerBoundReconciliation !== undefined) {
+		(
+			result as { lowerBoundReconciliation?: ResourceReconciliationMode }
+		).lowerBoundReconciliation = definitionBounds.lowerBoundReconciliation;
+	}
+	if (definitionBounds.upperBoundReconciliation !== undefined) {
+		(
+			result as { upperBoundReconciliation?: ResourceReconciliationMode }
+		).upperBoundReconciliation = definitionBounds.upperBoundReconciliation;
+	}
+	return result;
 }
 
 function applyResourceEffect(

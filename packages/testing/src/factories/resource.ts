@@ -43,10 +43,16 @@ export interface ResourceMetadataOverrides {
 /**
  * Bound overrides can be static numbers or dynamic references to other
  * resources. Use `{ resourceId: 'other-resource' }` for dynamic bounds.
+ * Reconciliation modes can be specified for each bound to control
+ * behavior when bounds are violated.
  */
 export interface ResourceBoundsOverrides {
 	lowerBound?: ResourceBoundValue;
 	upperBound?: ResourceBoundValue;
+	/** How to reconcile when lower bound is violated. Default: effect-level. */
+	lowerBoundReconciliation?: ResourceReconciliationMode;
+	/** How to reconcile when upper bound is violated. Default: effect-level. */
+	upperBoundReconciliation?: ResourceReconciliationMode;
 }
 
 export interface ResourceGlobalCostOverride {
@@ -106,11 +112,13 @@ export function resourceDefinition(
 
 	const lowerBound = overrides.bounds?.lowerBound;
 	const upperBound = overrides.bounds?.upperBound;
+	const lowerBoundReconciliation = overrides.bounds?.lowerBoundReconciliation;
+	const upperBoundReconciliation = overrides.bounds?.upperBoundReconciliation;
 	if (lowerBound !== undefined) {
-		builder.lowerBound(lowerBound);
+		builder.lowerBound(lowerBound, lowerBoundReconciliation);
 	}
 	if (upperBound !== undefined) {
-		builder.upperBound(upperBound);
+		builder.upperBound(upperBound, upperBoundReconciliation);
 	}
 
 	if (overrides.tierTrack) {
@@ -146,22 +154,25 @@ export interface ResourceGroupParentOverrides {
  * Helper to create a bound reference for testing dynamic bounds.
  * When the referenced resource changes, cascading reconciliation applies.
  *
+ * Reconciliation mode is now specified at the bounds level, not on the
+ * reference. Use `lowerBoundReconciliation` or `upperBoundReconciliation`
+ * in the bounds object.
+ *
  * @param resourceId - Resource whose value acts as the bound
- * @param reconciliation - 'clamp' (default), 'pass', or 'reject'
  *
  * @example
  * resourceDefinition({
- *   bounds: { upperBound: boundRef('max-population') }
+ *   bounds: {
+ *     upperBound: boundRef('max-population'),
+ *     upperBoundReconciliation: 'reject'
+ *   }
  * })
  *
  * Note: Avoid circular bound references in tests. If A bounds B and B bounds A,
  * neither can increase beyond 0.
  */
-export function boundRef(
-	resourceId: string,
-	reconciliation?: ResourceReconciliationMode,
-): ResourceBoundReference {
-	return reconciliation ? { resourceId, reconciliation } : { resourceId };
+export function boundRef(resourceId: string): ResourceBoundReference {
+	return { resourceId };
 }
 
 export interface ResourceGroupDefinitionOverrides {

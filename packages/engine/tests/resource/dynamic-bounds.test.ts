@@ -867,12 +867,13 @@ describe('Dynamic resource bounds', () => {
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			// Use a bound reference with explicit reconciliation mode
+			// Use a bound reference with explicit reconciliation mode at bounds level
 			const population = resourceDefinition({
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'reject'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'reject',
 				},
 			});
 
@@ -882,11 +883,12 @@ describe('Dynamic resource bounds', () => {
 
 			const catalog = createRuntimeResourceCatalog(registries);
 
-			// Verify the bound reference has reconciliation set
+			// Verify the bound-level reconciliation is set
 			const popDef = catalog.resources.byId[populationId];
+			expect(popDef.upperBoundReconciliation).toBe('reject');
 			expect(popDef.upperBound).toEqual({
 				resourceId: maxPopId,
-				reconciliation: 'reject',
+				reconciliation: 'reject', // Still embedded in reference for cascading
 			});
 		});
 	});
@@ -905,7 +907,8 @@ describe('Dynamic resource bounds', () => {
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'clamp'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'clamp',
 				},
 			});
 
@@ -946,7 +949,8 @@ describe('Dynamic resource bounds', () => {
 			const gold = resourceDefinition({
 				id: goldId,
 				bounds: {
-					lowerBound: boundRef(minGoldId, 'clamp'),
+					lowerBound: boundRef(minGoldId),
+					lowerBoundReconciliation: 'clamp',
 					upperBound: 1000,
 				},
 			});
@@ -989,7 +993,8 @@ describe('Dynamic resource bounds', () => {
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'pass'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'pass',
 				},
 			});
 
@@ -1031,7 +1036,8 @@ describe('Dynamic resource bounds', () => {
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'reject'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'reject',
 				},
 			});
 
@@ -1076,7 +1082,8 @@ describe('Dynamic resource bounds', () => {
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'clamp'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'clamp',
 				},
 			});
 
@@ -1085,7 +1092,8 @@ describe('Dynamic resource bounds', () => {
 				id: workforceId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(populationId, 'clamp'),
+					upperBound: boundRef(populationId),
+					upperBoundReconciliation: 'clamp',
 				},
 			});
 
@@ -1132,7 +1140,8 @@ describe('Dynamic resource bounds', () => {
 				id: councilId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'clamp'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'clamp',
 				},
 			});
 
@@ -1140,7 +1149,8 @@ describe('Dynamic resource bounds', () => {
 				id: legionId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'clamp'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'clamp',
 				},
 			});
 
@@ -1185,7 +1195,8 @@ describe('Dynamic resource bounds', () => {
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'clamp'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'clamp',
 				},
 			});
 

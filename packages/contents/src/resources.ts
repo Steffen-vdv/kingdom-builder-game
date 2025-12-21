@@ -11,7 +11,7 @@
  * - Use .lowerBound() and .upperBound() to set value constraints
  * - Always end with .build() to finalize the resource
  */
-import { resource, resourceCategory, resourceGroup, boundTo } from './infrastructure/resource';
+import { resource, resourceCategory, resourceGroup, boundTo, ReconciliationMode } from './infrastructure/resource';
 import type { ResourceDefinition, ResourceCategoryDefinition, ResourceGroupDefinition } from './infrastructure/resource';
 import { resourceChange } from './infrastructure/resource/effects';
 import { PassiveMethods, ResourceMethods, Types } from './infrastructure/builderShared';
@@ -128,7 +128,7 @@ const researchResource = resource('resource:core:research')
 	.icon('🧬')
 	.label('Research Points')
 	.description("Research Points represent your kingdom's scientific and technological " + 'advancement. Accumulate them to unlock new buildings and upgrade ' + 'existing actions.')
-	.lowerBound(0)
+	.lowerBound(0, ReconciliationMode.REJECT)
 	.section('economy')
 	.build();
 
