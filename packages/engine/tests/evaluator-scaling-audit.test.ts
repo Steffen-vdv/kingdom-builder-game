@@ -24,8 +24,65 @@ import {
 	PhaseId,
 	buildResourceCatalog,
 	DEVELOPMENTS,
+	getResourceId,
 } from '@kingdom-builder/contents';
-import { Registry, type ActionConfig } from '@kingdom-builder/protocol';
+import {
+	Registry,
+	type ActionConfig,
+	type EffectConfig,
+} from '@kingdom-builder/protocol';
+
+// ============================================================================
+// CONTENT-DERIVED VALUES
+// ============================================================================
+
+/**
+ * Extract upkeep cost per unit from a resource definition.
+ * Returns 0 if the resource has no upkeep.
+ */
+function getResourceUpkeep(resourceKey: keyof typeof Resource): number {
+	const resourceId = getResourceId(resourceKey);
+	const resource = RESOURCE_REGISTRY.byId[resourceId];
+	return resource?.upkeep?.amount ?? 0;
+}
+
+/**
+ * Extract the amount from a resource:add effect.
+ * Used to get per-unit income/AP gains from trigger effects.
+ */
+function extractAmountFromEffect(effect: EffectConfig): number {
+	if (effect.type === 'resource' && effect.method === 'add') {
+		const params = effect.params as { change?: { amount?: number } };
+		return params?.change?.amount ?? 0;
+	}
+	return 0;
+}
+
+/**
+ * Get per-council AP gain from content definition.
+ */
+function getCouncilApGain(): number {
+	const councilId = getResourceId(Resource.council);
+	const councilDef = RESOURCE_REGISTRY.byId[councilId];
+	const effects = councilDef?.onGainAPStep ?? [];
+	// Sum all AP gains (should be just one effect)
+	return effects.reduce((sum, eff) => sum + extractAmountFromEffect(eff), 0);
+}
+
+/**
+ * Get per-farm gold income from content definition.
+ */
+function getFarmIncome(): number {
+	const farmDef = DEVELOPMENTS.get('farm');
+	const effects = farmDef?.onGainIncomeStep ?? [];
+	return effects.reduce((sum, eff) => sum + extractAmountFromEffect(eff), 0);
+}
+
+// Cache content values at test initialization for clarity
+const COUNCIL_UPKEEP = getResourceUpkeep(Resource.council);
+const LEGION_UPKEEP = getResourceUpkeep(Resource.legion);
+const COUNCIL_AP_GAIN = getCouncilApGain();
+const FARM_INCOME = getFarmIncome();
 
 // ============================================================================
 // TEST UTILITIES
@@ -102,17 +159,19 @@ describe('Trigger Effect Scaling', () => {
 
 					const apGained = player.resourceValues[Resource.ap];
 
-					// Linear: N councils = N AP (assuming 1 AP per council)
-					// Quadratic bug would give: N councils = N² AP
-					expect(apGained).toBe(councilCount);
+					// Linear: N councils = N × AP_PER_COUNCIL
+					// Quadratic bug would give: N councils = N² × AP_PER_COUNCIL
+					expect(apGained).toBe(councilCount * COUNCIL_AP_GAIN);
 				}),
 				{ numRuns: 10 },
 			);
 		});
 
 		it('confirms O(N) not O(N²) by checking ratio', () => {
-			// With N=5, linear gives 5 AP, quadratic gives 25 AP
-			// With N=10, linear gives 10 AP, quadratic gives 100 AP
+			// With N=5, linear gives 5 × AP_PER_COUNCIL,
+			// quadratic gives 25 × AP_PER_COUNCIL
+			// With N=10, linear gives 10 × AP_PER_COUNCIL,
+			// quadratic gives 100 × AP_PER_COUNCIL
 			// Ratio of N=10/N=5 should be 2 (linear) not 4 (quadratic)
 
 			const engine5 = createMinimalEngine();
@@ -175,9 +234,8 @@ describe('Trigger Effect Scaling', () => {
 					const goldGained =
 						(player.resourceValues[Resource.gold] ?? 0) - goldBefore;
 
-					// Each farm should produce income linearly
-					const expectedGold = farmCount * 2;
-					expect(goldGained).toBe(expectedGold);
+					// Each farm should produce income linearly (N farms × income per farm)
+					expect(goldGained).toBe(farmCount * FARM_INCOME);
 				}),
 				{ numRuns: 10 },
 			);
@@ -191,7 +249,6 @@ describe('Trigger Effect Scaling', () => {
 					const engine = createMinimalEngine();
 					const player = engine.activePlayer;
 
-					// Legion has 1 gold upkeep per unit
 					player.resourceValues[Resource.legion] = legionCount;
 					// Give enough gold to pay upkeep
 					const startingGold = 100;
@@ -203,21 +260,19 @@ describe('Trigger Effect Scaling', () => {
 					const goldRemaining = player.resourceValues[Resource.gold] ?? 0;
 					const goldPaid = startingGold - goldRemaining;
 
-					// Linear: N legions = N × 1 gold upkeep
-					// Each legion costs 1 gold upkeep
-					expect(goldPaid).toBe(legionCount);
+					// Linear: N legions = N × upkeep per legion
+					expect(goldPaid).toBe(legionCount * LEGION_UPKEEP);
 				}),
 				{ numRuns: 10 },
 			);
 		});
 
-		it('council upkeep scales linearly (1 gold each)', () => {
+		it('council upkeep scales linearly', () => {
 			fc.assert(
 				fc.property(fc.integer({ min: 1, max: 10 }), (councilCount) => {
 					const engine = createMinimalEngine();
 					const player = engine.activePlayer;
 
-					// Council has 1 gold upkeep per unit
 					player.resourceValues[Resource.council] = councilCount;
 					const startingGold = 200;
 					player.resourceValues[Resource.gold] = startingGold;
@@ -228,8 +283,8 @@ describe('Trigger Effect Scaling', () => {
 					const goldRemaining = player.resourceValues[Resource.gold] ?? 0;
 					const goldPaid = startingGold - goldRemaining;
 
-					// Linear: N councils = N × 1 gold upkeep
-					expect(goldPaid).toBe(councilCount * 1);
+					// Linear: N councils = N × upkeep per council
+					expect(goldPaid).toBe(councilCount * COUNCIL_UPKEEP);
 				}),
 				{ numRuns: 10 },
 			);
@@ -382,8 +437,8 @@ describe('Combinatorial Scaling', () => {
 	 * INVARIANT: Having multiple population types doesn't cause cross-scaling.
 	 *
 	 * With N councils and M legions:
-	 * - AP gain should be N (from councils only)
-	 * - Upkeep should be 2N + M (2 per council, 1 per legion)
+	 * - AP gain should be N × AP_PER_COUNCIL (from councils only)
+	 * - Upkeep should be N × COUNCIL_UPKEEP + M × LEGION_UPKEEP
 	 *
 	 * NOT N×M or (N+M)²
 	 */
@@ -406,7 +461,7 @@ describe('Combinatorial Scaling', () => {
 					advance(engine);
 
 					const apGained = player.resourceValues[Resource.ap];
-					expect(apGained).toBe(councils); // Only councils give AP
+					expect(apGained).toBe(councils * COUNCIL_AP_GAIN);
 
 					// Reset and test upkeep (should count both independently)
 					const engine2 = createMinimalEngine();
@@ -420,8 +475,8 @@ describe('Combinatorial Scaling', () => {
 					advance(engine2);
 
 					const goldPaid = startGold - player2.resourceValues[Resource.gold];
-					// Council: 1 gold each, Legion: 1 gold each
-					const expectedUpkeep = councils * 1 + legions * 1;
+					const expectedUpkeep =
+						councils * COUNCIL_UPKEEP + legions * LEGION_UPKEEP;
 					expect(goldPaid).toBe(expectedUpkeep);
 				},
 			),

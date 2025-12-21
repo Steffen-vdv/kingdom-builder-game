@@ -24,8 +24,40 @@ import {
 	PhaseId,
 	createActionRegistry,
 	buildResourceCatalog,
+	getResourceId,
 } from '@kingdom-builder/contents';
-import { Registry, type ActionConfig } from '@kingdom-builder/protocol';
+import {
+	Registry,
+	type ActionConfig,
+	type EffectConfig,
+} from '@kingdom-builder/protocol';
+
+// ============================================================================
+// CONTENT-DERIVED VALUES
+// ============================================================================
+
+/**
+ * Extract the amount from a resource:add effect.
+ */
+function extractAmountFromEffect(effect: EffectConfig): number {
+	if (effect.type === 'resource' && effect.method === 'add') {
+		const params = effect.params as { change?: { amount?: number } };
+		return params?.change?.amount ?? 0;
+	}
+	return 0;
+}
+
+/**
+ * Get per-council AP gain from content definition.
+ */
+function getCouncilApGain(): number {
+	const councilId = getResourceId(Resource.council);
+	const councilDef = RESOURCE_REGISTRY.byId[councilId];
+	const effects = councilDef?.onGainAPStep ?? [];
+	return effects.reduce((sum, eff) => sum + extractAmountFromEffect(eff), 0);
+}
+
+const COUNCIL_AP_GAIN = getCouncilApGain();
 
 // ============================================================================
 // TEST UTILITIES
@@ -185,9 +217,9 @@ describe('Cross-Execution Isolation', () => {
 
 		advance(engine);
 
-		// Each council should contribute exactly 1 AP
+		// Each council should contribute AP based on content definition
 		// If bundles share state, we might get different results
-		expect(player.resourceValues[Resource.ap]).toBe(5);
+		expect(player.resourceValues[Resource.ap]).toBe(5 * COUNCIL_AP_GAIN);
 	});
 
 	/**
@@ -227,7 +259,7 @@ describe('Cross-Execution Isolation', () => {
 
 		// All runs should produce the same result
 		expect(new Set(results).size).toBe(1);
-		expect(results[0]).toBe(3); // 3 councils = 3 AP
+		expect(results[0]).toBe(3 * COUNCIL_AP_GAIN);
 	});
 });
 

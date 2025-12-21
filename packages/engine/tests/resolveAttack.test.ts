@@ -148,12 +148,14 @@ describe('resolveAttack', () => {
 		);
 		engineContext.game.currentPlayerIndex = 0;
 		const beforeGold = defender.resourceValues[CResource.gold] ?? 0;
+		const beforeHP = defender.resourceValues[CResource.castleHP] ?? 0;
 		const result = resolveAttack(defender, 4, engineContext, {
 			type: 'resource',
 			resourceId: CResource.castleHP,
 		});
 		expect(result.damageDealt).toBe(0);
-		expect(defender.resourceValues[CResource.castleHP]).toBe(100);
+		// HP unchanged since tower absorbed all damage via fortification
+		expect(defender.resourceValues[CResource.castleHP]).toBe(beforeHP);
 		expect(defender.resourceValues[CResource.fortificationStrength]).toBe(0);
 		expect(defender.resourceValues[CResource.absorption]).toBe(0);
 		expect(defender.resourceValues[CResource.gold]).toBe(beforeGold + 1);

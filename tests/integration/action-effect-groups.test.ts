@@ -8,6 +8,7 @@ import { resolveActionEffects } from '@kingdom-builder/protocol';
 import { logContent } from '@kingdom-builder/web/translation/content';
 import {
 	Resource,
+	RULES,
 	actionEffectGroup,
 	actionEffectGroupOption,
 } from '@kingdom-builder/contents';
@@ -98,8 +99,8 @@ describe('action effect groups integration', () => {
 	it('requires explicit selections for effect groups', () => {
 		const { engineContext, chooser, group } = setup();
 		const costBag = getActionCosts(chooser.id, engineContext);
-		// AP cost is now applied globally by the action cost system (1 AP default)
-		expect(costBag[Resource.ap] ?? 0).toBe(1);
+		// AP cost is applied globally by the action cost system
+		expect(costBag[Resource.ap] ?? 0).toBe(RULES.defaultActionAPCost);
 		expect(() => performAction(chooser.id, engineContext)).toThrowError(
 			new RegExp(group.id),
 		);

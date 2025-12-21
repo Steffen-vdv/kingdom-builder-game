@@ -6,8 +6,8 @@
  * in triggers.ts iterates once per council unit to create bundles, and an
  * evaluator inside the effect was re-counting councils again.
  *
- * Expected: N councils = N AP (linear)
- * Bug: N councils = N² AP (quadratic due to double-counting)
+ * Expected: N councils = N × AP_PER_COUNCIL (linear)
+ * Bug: N councils = N² × AP_PER_COUNCIL (quadratic due to double-counting)
  */
 import { describe, it, expect } from 'vitest';
 import { advance, createEngine } from '../src';
@@ -18,8 +18,40 @@ import {
 	PHASES,
 	RULES,
 	PhaseId,
+	getResourceId,
 } from '@kingdom-builder/contents';
-import { Registry, type ActionConfig } from '@kingdom-builder/protocol';
+import {
+	Registry,
+	type ActionConfig,
+	type EffectConfig,
+} from '@kingdom-builder/protocol';
+
+// ============================================================================
+// CONTENT-DERIVED VALUES
+// ============================================================================
+
+/**
+ * Extract the amount from a resource:add effect.
+ */
+function extractAmountFromEffect(effect: EffectConfig): number {
+	if (effect.type === 'resource' && effect.method === 'add') {
+		const params = effect.params as { change?: { amount?: number } };
+		return params?.change?.amount ?? 0;
+	}
+	return 0;
+}
+
+/**
+ * Get per-council AP gain from content definition.
+ */
+function getCouncilApGain(): number {
+	const councilId = getResourceId(Resource.council);
+	const councilDef = RESOURCE_REGISTRY.byId[councilId];
+	const effects = councilDef?.onGainAPStep ?? [];
+	return effects.reduce((sum, eff) => sum + extractAmountFromEffect(eff), 0);
+}
+
+const COUNCIL_AP_GAIN = getCouncilApGain();
 
 function createRealContentEngine() {
 	// Use the actual content definitions
@@ -67,7 +99,7 @@ function positionAtGainApStep(engine: ReturnType<typeof createEngine>) {
 }
 
 describe('council AP scaling', () => {
-	it('grants AP linearly with council count (1 council = 1 AP)', () => {
+	it('grants AP linearly with council count (1 council)', () => {
 		const engine = createRealContentEngine();
 		const player = engine.activePlayer;
 
@@ -78,11 +110,10 @@ describe('council AP scaling', () => {
 		positionAtGainApStep(engine);
 		advance(engine);
 
-		// 1 council should give exactly 1 AP
-		expect(player.resourceValues[Resource.ap]).toBe(1);
+		expect(player.resourceValues[Resource.ap]).toBe(1 * COUNCIL_AP_GAIN);
 	});
 
-	it('grants AP linearly with council count (2 councils = 2 AP)', () => {
+	it('grants AP linearly with council count (2 councils)', () => {
 		const engine = createRealContentEngine();
 		const player = engine.activePlayer;
 
@@ -93,12 +124,12 @@ describe('council AP scaling', () => {
 		positionAtGainApStep(engine);
 		advance(engine);
 
-		// 2 councils should give exactly 2 AP (not 4!)
-		// Bug would cause: 2 bundles × 2 (from evaluator) = 4 AP
-		expect(player.resourceValues[Resource.ap]).toBe(2);
+		// 2 councils should give exactly 2 × AP_PER_COUNCIL (not 4×!)
+		// Bug would cause: 2 bundles × 2 (from evaluator) = quadratic scaling
+		expect(player.resourceValues[Resource.ap]).toBe(2 * COUNCIL_AP_GAIN);
 	});
 
-	it('grants AP linearly with council count (5 councils = 5 AP)', () => {
+	it('grants AP linearly with council count (5 councils)', () => {
 		const engine = createRealContentEngine();
 		const player = engine.activePlayer;
 
@@ -109,30 +140,21 @@ describe('council AP scaling', () => {
 		positionAtGainApStep(engine);
 		advance(engine);
 
-		// 5 councils should give exactly 5 AP (not 25!)
-		// Bug would cause: 5 bundles × 5 (from evaluator) = 25 AP
-		expect(player.resourceValues[Resource.ap]).toBe(5);
+		// 5 councils should give exactly 5 × AP_PER_COUNCIL (not 25×!)
+		// Bug would cause: 5 bundles × 5 (from evaluator) = quadratic scaling
+		expect(player.resourceValues[Resource.ap]).toBe(5 * COUNCIL_AP_GAIN);
 	});
 
-	it.each([
-		{ councils: 1, expectedAp: 1 },
-		{ councils: 2, expectedAp: 2 },
-		{ councils: 3, expectedAp: 3 },
-		{ councils: 4, expectedAp: 4 },
-		{ councils: 10, expectedAp: 10 },
-	])(
-		'$councils councils grants $expectedAp AP (linear scaling)',
-		({ councils, expectedAp }) => {
-			const engine = createRealContentEngine();
-			const player = engine.activePlayer;
+	it.each([1, 2, 3, 4, 10])('%i councils grants linear AP', (councils) => {
+		const engine = createRealContentEngine();
+		const player = engine.activePlayer;
 
-			player.resourceValues[Resource.council] = councils;
-			player.resourceValues[Resource.ap] = 0;
+		player.resourceValues[Resource.council] = councils;
+		player.resourceValues[Resource.ap] = 0;
 
-			positionAtGainApStep(engine);
-			advance(engine);
+		positionAtGainApStep(engine);
+		advance(engine);
 
-			expect(player.resourceValues[Resource.ap]).toBe(expectedAp);
-		},
-	);
+		expect(player.resourceValues[Resource.ap]).toBe(councils * COUNCIL_AP_GAIN);
+	});
 });
