@@ -11,6 +11,7 @@ import {
 	createForecastMap,
 	createResourceSnapshot,
 	formatResourceTitle,
+	hasForecastContributors,
 } from './resourceSnapshots';
 import { PLAYER_INFO_CARD_BG } from './infoCards';
 import ResourceGroupDisplay from './ResourceGroupDisplay';
@@ -220,7 +221,16 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 				return null;
 			}
 			// For non-primary categories, only show resources that have been touched
-			if (!category.isPrimary && !player.resourceTouched[resourceId]) {
+			// or have forecast contributors
+			const hasContributors = hasForecastContributors(
+				forecastBreakdown,
+				resourceId,
+			);
+			if (
+				!category.isPrimary &&
+				!player.resourceTouched[resourceId] &&
+				!hasContributors
+			) {
 				return null;
 			}
 
@@ -271,6 +281,7 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 			clearHoverCard,
 			category.isPrimary,
 			player.resourceTouched,
+			forecastBreakdown,
 		],
 	);
 
