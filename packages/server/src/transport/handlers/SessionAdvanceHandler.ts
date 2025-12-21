@@ -21,6 +21,8 @@ type BuildStateResponse = (
 	snapshot: SessionSnapshot,
 ) => SessionStateResponse;
 
+type RecordAdvance = (sessionId: string) => void;
+
 interface SessionAdvanceContext {
 	request: TransportRequest;
 	requireAuthorization: AuthorizationCallback;
@@ -31,12 +33,16 @@ export class SessionAdvanceHandler {
 
 	private readonly buildStateResponse: BuildStateResponse;
 
+	private readonly recordAdvance: RecordAdvance;
+
 	public constructor(options: {
 		requireSession: RequireSession;
 		buildStateResponse: BuildStateResponse;
+		recordAdvance: RecordAdvance;
 	}) {
 		this.requireSession = options.requireSession;
 		this.buildStateResponse = options.buildStateResponse;
+		this.recordAdvance = options.recordAdvance;
 	}
 
 	public async handle(
@@ -59,6 +65,8 @@ export class SessionAdvanceHandler {
 				const snapshot = session.getSnapshot();
 				return { advance, snapshot };
 			});
+			// Record the advance for persistence
+			this.recordAdvance(sessionId);
 			const base = this.buildStateResponse(sessionId, result.snapshot);
 			const response = {
 				...base,

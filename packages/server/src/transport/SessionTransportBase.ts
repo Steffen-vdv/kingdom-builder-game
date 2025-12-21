@@ -66,6 +66,8 @@ export class SessionTransportBase {
 		this.sessionAdvanceHandler = new SessionAdvanceHandler({
 			requireSession: this.requireSession.bind(this),
 			buildStateResponse: this.buildStateResponse.bind(this),
+			recordAdvance: (sessionId) =>
+				this.sessionManager.recordAdvance(sessionId),
 		});
 		this.sessionActionExecutionHandler = new SessionActionExecutionHandler({
 			sessionManager: this.sessionManager,
@@ -74,6 +76,8 @@ export class SessionTransportBase {
 		this.sessionPlayerNameHandler = new SessionPlayerNameUpdateHandler({
 			requireSession: this.requireSession.bind(this),
 			buildStateResponse: this.buildStateResponse.bind(this),
+			recordPlayerNameChange: (sessionId, playerId, name) =>
+				this.sessionManager.recordPlayerNameChange(sessionId, playerId, name),
 		});
 	}
 
@@ -89,6 +93,12 @@ export class SessionTransportBase {
 		this.requireAuthorization(request, 'session:advance');
 		this.requireSession(sessionId);
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
+		if (!snapshot) {
+			throw new TransportError(
+				'NOT_FOUND',
+				`Session "${sessionId}" was not found.`,
+			);
+		}
 		return sessionStateResponseSchema.parse(
 			this.buildStateResponse(sessionId, snapshot),
 		);
@@ -128,7 +138,15 @@ export class SessionTransportBase {
 		const { sessionId, enabled } = parsed.data;
 		const session = this.requireSession(sessionId);
 		session.setDevMode(enabled);
+		// Record the dev mode change for persistence
+		this.sessionManager.recordDevModeChange(sessionId, enabled);
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
+		if (!snapshot) {
+			throw new TransportError(
+				'NOT_FOUND',
+				`Session "${sessionId}" was not found.`,
+			);
+		}
 		return sessionSetDevModeResponseSchema.parse(
 			this.buildStateResponse(sessionId, snapshot),
 		);
@@ -249,15 +267,23 @@ export class SessionTransportBase {
 		sessionId: string,
 		snapshot: SessionSnapshot,
 	): SessionStateResponse {
+		const metadata = this.sessionManager.getSessionMetadata(sessionId);
+		const registries = this.sessionManager.getSessionRegistries(sessionId);
+		if (!metadata || !registries) {
+			throw new TransportError(
+				'NOT_FOUND',
+				`Session "${sessionId}" was not found.`,
+			);
+		}
 		const clonedSnapshot = structuredClone(snapshot);
 		clonedSnapshot.metadata = mergeSessionMetadata({
-			baseMetadata: this.sessionManager.getSessionMetadata(sessionId),
+			baseMetadata: metadata,
 			snapshotMetadata: clonedSnapshot.metadata,
 		});
 		return {
 			sessionId,
 			snapshot: clonedSnapshot,
-			registries: this.sessionManager.getSessionRegistries(sessionId),
+			registries,
 		};
 	}
 }

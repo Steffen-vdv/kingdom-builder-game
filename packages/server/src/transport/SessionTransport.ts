@@ -180,6 +180,12 @@ export class SessionTransport extends SessionTransportBase {
 				session.runAiTurn(playerId, overrides),
 			);
 			const snapshot = this.sessionManager.getSnapshot(sessionId);
+			if (!snapshot) {
+				throw new TransportError(
+					'NOT_FOUND',
+					`Session "${sessionId}" was not found.`,
+				);
+			}
 			const base = this.buildStateResponse(sessionId, snapshot);
 			const response = {
 				...base,
@@ -225,8 +231,17 @@ export class SessionTransport extends SessionTransportBase {
 		let registries: SessionMetadataSnapshotResponse['registries'];
 		let metadata: SessionMetadataSnapshotResponse['metadata'];
 		if (sessionId) {
-			registries = this.sessionManager.getSessionRegistries(sessionId);
-			metadata = this.sessionManager.getSessionMetadata(sessionId);
+			const sessionRegistries =
+				this.sessionManager.getSessionRegistries(sessionId);
+			const sessionMetadata = this.sessionManager.getSessionMetadata(sessionId);
+			if (!sessionRegistries || !sessionMetadata) {
+				throw new TransportError(
+					'NOT_FOUND',
+					`Session "${sessionId}" was not found.`,
+				);
+			}
+			registries = sessionRegistries;
+			metadata = sessionMetadata;
 		} else {
 			registries = this.sessionManager.getRegistries();
 			metadata = this.sessionManager.getMetadata();

@@ -84,6 +84,8 @@ export class SessionActionExecutionHandler {
 				const snapshot = session.getSnapshot();
 				return { traces, snapshot };
 			});
+			// Record the action for persistence
+			this.sessionManager.recordAction(sessionId, actionId, normalizedParams);
 			const snapshot = structuredClone(result.snapshot);
 			snapshot.metadata = mergeSessionMetadata({
 				baseMetadata: this.sessionManager.getMetadata(),
