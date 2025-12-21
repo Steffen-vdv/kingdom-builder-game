@@ -9,7 +9,12 @@ export function initializePlayerActions(
 	actions: Registry<ActionDef>,
 ): void {
 	for (const [actionId, actionDefinition] of actions.entries()) {
+		// System actions are engine-only, never added to player actions
 		if (actionDefinition.system) {
+			continue;
+		}
+		// Locked actions start unavailable, must be unlocked via action:add
+		if (actionDefinition.locked) {
 			continue;
 		}
 		const id = actionDefinition.id ?? actionId;

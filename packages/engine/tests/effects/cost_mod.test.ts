@@ -23,7 +23,7 @@ describe('cost_mod effects', () => {
 			],
 		});
 		const removeModifierAction = content.action({
-			system: true,
+			locked: true,
 			effects: [
 				{
 					type: 'cost_mod',
@@ -39,8 +39,8 @@ describe('cost_mod effects', () => {
 		const initialCost =
 			getActionCosts(targetAction.id, engineContext)[CResource.gold] ?? 0;
 		const addModifierCost = getActionCosts(addModifierAction.id, engineContext);
-		engineContext.activePlayer.resourceValues[CResource.ap] =
-			addModifierCost[CResource.ap] ?? 0;
+		// Give enough AP for both actions
+		engineContext.activePlayer.resourceValues[CResource.ap] = 10;
 		engineContext.activePlayer.resourceValues[CResource.gold] =
 			addModifierCost[CResource.gold] ?? 0;
 		performAction(addModifierAction.id, engineContext);
@@ -58,7 +58,7 @@ describe('cost_mod effects', () => {
 		const content = createContentFactory();
 		const targetAction = content.action({ baseCosts: { [CResource.gold]: 3 } });
 		const addModifiersAction = content.action({
-			system: true,
+			locked: true,
 			effects: [
 				{
 					type: 'cost_mod',
@@ -97,6 +97,7 @@ describe('cost_mod effects', () => {
 			advance(engineContext);
 		}
 		engineContext.activePlayer.actions.add(addModifiersAction.id);
+		engineContext.activePlayer.resourceValues[CResource.ap] = 10;
 		const initialCost =
 			getActionCosts(targetAction.id, engineContext)[CResource.gold] ?? 0;
 		performAction(addModifiersAction.id, engineContext);

@@ -18,6 +18,8 @@ describe('Building resource bonuses', () => {
 		const buildCosts = getActionCosts(buildActionId, engineContext, {
 			id: buildingId,
 		});
+		// Unlock the build action (locked by default)
+		engineContext.activePlayer.actions.add(buildActionId);
 		for (const [key, cost] of Object.entries(buildCosts)) {
 			engineContext.activePlayer.resourceValues[key] = cost ?? 0;
 		}

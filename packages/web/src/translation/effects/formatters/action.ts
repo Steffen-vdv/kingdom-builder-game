@@ -42,16 +42,18 @@ function getActionPresentation(id: string, context: TranslationContext) {
 	let name = id;
 	let icon = '';
 	let system = false;
+	let locked = false;
 	try {
 		const actionDefinition = context.actions.get(id);
 		name = actionDefinition.name;
 		icon = actionDefinition.icon || '';
 		system = !!actionDefinition.system;
+		locked = !!actionDefinition.locked;
 	} catch {
 		// ignore missing action
 	}
 	const label = formatActionLabel(icon, name) || id;
-	return { icon, name, system, label };
+	return { icon, name, system, locked, label };
 }
 
 registerEffectFormatter('action', 'add', {
@@ -68,7 +70,7 @@ registerEffectFormatter('action', 'add', {
 		if (!id) {
 			return null;
 		}
-		const { label, system } = getActionPresentation(id, context);
+		const { label, system, locked } = getActionPresentation(id, context);
 		const card = describeContent('action', id, context);
 		return [
 			`Unlock Action: ${label}`,
@@ -76,7 +78,7 @@ registerEffectFormatter('action', 'add', {
 				title: label,
 				items: card,
 				_hoist: true,
-				...(system && { _desc: true }),
+				...((system || locked) && { _desc: true }),
 			},
 		];
 	},

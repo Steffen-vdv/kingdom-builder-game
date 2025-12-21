@@ -14,19 +14,34 @@ import {
 } from './costs';
 import { cloneEngineContext } from './context_clone';
 
-function assertSystemActionUnlocked(
+/**
+ * Validates that an action can be performed by a player.
+ *
+ * - System actions are engine-only and can NEVER be performed via this path.
+ *   They must be executed via runSystemActionEffects() internally.
+ * - Locked actions must be in the player's actions set to be performed.
+ * - Normal actions are always allowed.
+ */
+function assertActionAvailable(
 	actionId: string,
 	engineContext: EngineContext,
 ): void {
 	const actionDefinition = engineContext.actions.get(actionId);
-	if (!actionDefinition.system) {
-		return;
+
+	// System actions are never executable by players
+	if (actionDefinition.system) {
+		throw new Error(`System action "${actionId}" cannot be performed directly`);
 	}
-	const isUnlocked = engineContext.activePlayer.actions.has(actionId);
-	if (isUnlocked) {
-		return;
+
+	// Locked actions must be unlocked (present in player's actions set)
+	if (actionDefinition.locked) {
+		const isUnlocked = engineContext.activePlayer.actions.has(actionId);
+		if (!isUnlocked) {
+			throw new Error(`Action ${actionId} is locked`);
+		}
 	}
-	throw new Error(`Action ${actionId} is locked`);
+
+	// Normal actions (neither system nor locked) are always allowed
 }
 
 interface RequirementError extends Error {
@@ -90,7 +105,7 @@ function executeAction<T extends string>(
 	}
 	engineContext.actionTraces = [];
 	const actionDefinition = engineContext.actions.get(actionId);
-	assertSystemActionUnlocked(actionId, engineContext);
+	assertActionAvailable(actionId, engineContext);
 	evaluateRequirements(actionId, engineContext);
 	const baseCosts = { ...(actionDefinition.baseCosts || {}) };
 	const resolved = resolveActionEffects(actionDefinition, params);

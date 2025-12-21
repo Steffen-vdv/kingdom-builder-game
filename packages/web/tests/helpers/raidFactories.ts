@@ -122,6 +122,7 @@ function buildAction(
 		...definition.meta,
 		baseCosts: definition.baseCosts,
 		system: definition.system,
+		locked: definition.locked,
 		effects,
 	});
 }

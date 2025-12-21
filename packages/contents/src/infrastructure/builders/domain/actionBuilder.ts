@@ -69,6 +69,16 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	}
 
 	/**
+	 * Marks this action as locked (not available to players initially).
+	 * Locked actions can be unlocked via the action:add effect.
+	 * Use for player-facing actions that should be gated behind progression.
+	 */
+	locked(flag = true) {
+		this.config.locked = flag;
+		return this;
+	}
+
+	/**
 	 * Marks this action as free (bypasses global action cost like AP).
 	 * Only valid for system actions. Call after `.system()`.
 	 */

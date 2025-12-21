@@ -17,6 +17,8 @@ describe('Building placement integration', () => {
 			id: buildingId,
 		});
 		const player = engineContext.activePlayer;
+		// Unlock the build action (locked by default)
+		player.actions.add(buildActionId);
 		for (const [resourceId, cost] of Object.entries(buildCosts)) {
 			player.resourceValues[resourceId] =
 				(player.resourceValues[resourceId] || 0) + (cost ?? 0);
