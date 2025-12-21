@@ -131,4 +131,144 @@ describe('simulateUpcomingPhases (runtime)', () => {
 			'Player missing-player does not exist in this context.',
 		);
 	});
+
+	describe('forecastBreakdown', () => {
+		it('returns forecastBreakdown with gains and losses', () => {
+			const context = createTestEngine();
+			const player = resetPlayerState(context);
+			const land = player.lands[0]!;
+			const goldGain = 5;
+			const upkeepCost = 2;
+			land.onGainIncomeStep = [
+				{
+					type: 'resource',
+					method: 'add',
+					params: resourceAmountParams({
+						resourceId: CResource.gold,
+						amount: goldGain,
+					}),
+				},
+			];
+			land.upkeep = { [CResource.gold]: upkeepCost };
+			player.resourceValues[CResource.gold] = 10;
+
+			const result = simulateUpcomingPhases(context, player.id);
+
+			expect(result.forecastBreakdown).toBeDefined();
+			const goldBreakdown = result.forecastBreakdown[CResource.gold];
+			expect(goldBreakdown).toBeDefined();
+			expect(goldBreakdown.net).toBe(goldGain - upkeepCost);
+			expect(goldBreakdown.gains.length).toBeGreaterThan(0);
+			expect(goldBreakdown.losses.length).toBeGreaterThan(0);
+		});
+
+		it('includes kind and id in forecast contributions', () => {
+			const context = createTestEngine();
+			const player = resetPlayerState(context);
+			const land = player.lands[0]!;
+			land.onGainIncomeStep = [
+				{
+					type: 'resource',
+					method: 'add',
+					params: resourceAmountParams({
+						resourceId: CResource.gold,
+						amount: 10,
+					}),
+				},
+			];
+			player.resourceValues[CResource.gold] = 0;
+
+			const result = simulateUpcomingPhases(context, player.id);
+
+			const goldBreakdown = result.forecastBreakdown[CResource.gold];
+			expect(goldBreakdown).toBeDefined();
+			expect(goldBreakdown.gains.length).toBeGreaterThan(0);
+			const gain = goldBreakdown.gains[0];
+			expect(gain.amount).toBe(10);
+			expect(gain.sourceKey).toBeDefined();
+		});
+
+		it('excludes resources with no contributors', () => {
+			const context = createTestEngine();
+			const player = resetPlayerState(context);
+			// Set up a resource with no changes
+			player.resourceValues[CResource.gold] = 100;
+			// No land effects, no upkeep
+
+			const result = simulateUpcomingPhases(context, player.id);
+
+			// Gold should not be in breakdown since no changes occurred
+			expect(result.forecastBreakdown[CResource.gold]).toBeUndefined();
+		});
+
+		it('separates positive and negative contributions correctly', () => {
+			const context = createTestEngine();
+			const player = resetPlayerState(context);
+			const land = player.lands[0]!;
+			land.onGainIncomeStep = [
+				{
+					type: 'resource',
+					method: 'add',
+					params: resourceAmountParams({
+						resourceId: CResource.gold,
+						amount: 20,
+					}),
+				},
+			];
+			land.upkeep = { [CResource.gold]: 5 };
+			player.resourceValues[CResource.gold] = 50;
+
+			const result = simulateUpcomingPhases(context, player.id);
+
+			const goldBreakdown = result.forecastBreakdown[CResource.gold];
+			expect(goldBreakdown).toBeDefined();
+
+			// Verify all gains are positive
+			for (const gain of goldBreakdown.gains) {
+				expect(gain.amount).toBeGreaterThan(0);
+			}
+
+			// Verify all losses are negative
+			for (const loss of goldBreakdown.losses) {
+				expect(loss.amount).toBeLessThan(0);
+			}
+
+			// Verify net matches delta
+			expect(goldBreakdown.net).toBe(result.delta.values[CResource.gold]);
+		});
+
+		it('clears resourceSources before simulation to capture only forecast', () => {
+			const context = createTestEngine();
+			const player = resetPlayerState(context);
+			// Pre-populate resourceSources with historic data
+			player.resourceSources[CResource.gold] = {
+				'historic-source': {
+					amount: 999,
+					meta: { sourceKey: 'historic-source' },
+				},
+			};
+			const land = player.lands[0]!;
+			land.onGainIncomeStep = [
+				{
+					type: 'resource',
+					method: 'add',
+					params: resourceAmountParams({
+						resourceId: CResource.gold,
+						amount: 5,
+					}),
+				},
+			];
+
+			const result = simulateUpcomingPhases(context, player.id);
+
+			const goldBreakdown = result.forecastBreakdown[CResource.gold];
+			expect(goldBreakdown).toBeDefined();
+			// Should not include the historic 999 amount
+			expect(goldBreakdown.net).toBe(5);
+			// Original context should be unchanged
+			expect(
+				player.resourceSources[CResource.gold]['historic-source'],
+			).toBeDefined();
+		});
+	});
 });

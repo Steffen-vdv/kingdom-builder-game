@@ -78,8 +78,9 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 	const groupParentId = groupDefinition?.parent?.id;
 
 	const forecastMap = React.useMemo(
-		() => createForecastMap(playerForecast, groupParentId, groupResourceIds),
-		[playerForecast, groupParentId, groupResourceIds],
+		() =>
+			createForecastMap(playerForecast?.delta, groupParentId, groupResourceIds),
+		[playerForecast?.delta, groupParentId, groupResourceIds],
 	);
 
 	const snapshotContext = React.useMemo(

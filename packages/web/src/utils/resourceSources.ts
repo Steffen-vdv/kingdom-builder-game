@@ -1,93 +1,9 @@
-import type {
-	SessionPlayerStateSnapshot as PlayerStateSnapshot,
-	SessionResourceSourceContribution as ResourceSourceContribution,
-} from '@kingdom-builder/protocol';
-import type { Summary, SummaryEntry } from '../translation/content/types';
-import type { TranslationContext } from '../translation/context';
-import {
-	formatSourceTitle,
-	formatResourceValue,
-	getSourceDescriptor,
-} from './resourceSources/descriptors';
-import type { SourceDescriptor } from './resourceSources/descriptors';
-import {
-	buildDetailEntries,
-	pushSummaryEntry,
-} from './resourceSources/summary';
-
+/**
+ * Re-exports for utility functions used by translation and formatting.
+ * The historic breakdown functionality has been replaced by forecast breakdown
+ * (see forecastBreakdown.ts).
+ */
 export {
-	resourceDisplaysAsPercent,
 	formatResourceValue,
+	resourceDisplaysAsPercent,
 } from './resourceSources/descriptors';
-
-export function getResourceBreakdownSummary(
-	resourceKey: string,
-	player: PlayerStateSnapshot,
-	context: TranslationContext,
-): Summary {
-	const sources = player.resourceSources?.[resourceKey] ?? {};
-	const contributions = Object.values(sources);
-	if (!contributions.length) {
-		return [];
-	}
-	const annotated = contributions.map((entry) => ({
-		entry,
-		descriptor: getSourceDescriptor(context, entry.meta),
-	}));
-	annotated.sort((left, right) => {
-		const leftOrder = left.entry.meta.longevity === 'ongoing' ? 0 : 1;
-		const rightOrder = right.entry.meta.longevity === 'ongoing' ? 0 : 1;
-		if (leftOrder !== rightOrder) {
-			return leftOrder - rightOrder;
-		}
-		return left.descriptor.label.localeCompare(right.descriptor.label);
-	});
-	return annotated.map(({ entry, descriptor }) =>
-		formatContribution(resourceKey, entry, descriptor, player, context),
-	);
-}
-
-function formatContribution(
-	resourceKey: string,
-	contribution: ResourceSourceContribution,
-	descriptor: SourceDescriptor,
-	player: PlayerStateSnapshot,
-	context: TranslationContext,
-): SummaryEntry {
-	const { amount, meta } = contribution;
-	const resourceInfo = context.assets.resources?.[resourceKey];
-	if (!resourceInfo) {
-		console.warn(`Missing resource metadata for key: ${resourceKey}`);
-	}
-	const valueText = formatResourceValue(resourceKey, amount, context.assets);
-	const sign = amount >= 0 ? '+' : '';
-	const amountParts: string[] = [];
-	if (resourceInfo?.icon) {
-		amountParts.push(resourceInfo.icon);
-	}
-	amountParts.push(`${sign}${valueText}`);
-	if (resourceInfo?.label) {
-		amountParts.push(resourceInfo.label);
-	}
-	const amountEntry = amountParts.join(' ').trim();
-	const detailEntries = buildDetailEntries(meta, player, context);
-	const title = formatSourceTitle(descriptor);
-	const prefixedTitle = title ? `Source: ${title}` : 'Source';
-	if (!title) {
-		const items: SummaryEntry[] = [];
-		pushSummaryEntry(items, amountEntry);
-		detailEntries.forEach((entry) => {
-			pushSummaryEntry(items, entry);
-		});
-		if (!items.length) {
-			return prefixedTitle;
-		}
-		return { title: prefixedTitle, items };
-	}
-	const items: SummaryEntry[] = [];
-	pushSummaryEntry(items, amountEntry);
-	detailEntries.forEach((entry) => {
-		pushSummaryEntry(items, entry);
-	});
-	return { title: prefixedTitle, items };
-}

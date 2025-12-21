@@ -27,7 +27,7 @@ import {
 	buildBoundReferenceMap,
 	type BoundRefEntry,
 } from './boundReferenceHelpers';
-import { getResourceBreakdownSummary } from '../../utils/resourceSources';
+import { getForecastBreakdownSummary } from '../../utils/forecastBreakdown';
 import {
 	groupResourcesBySection,
 	getGroupsForSection,
@@ -59,9 +59,11 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 	const playerForecast = forecast[player.id];
 
 	const forecastMap = useMemo(
-		() => createForecastMap(playerForecast),
-		[playerForecast],
+		() => createForecastMap(playerForecast?.delta),
+		[playerForecast?.delta],
 	);
+
+	const forecastBreakdown = playerForecast?.breakdown;
 
 	const snapshotContext = useMemo(
 		() => ({
@@ -190,9 +192,15 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 				};
 			}
 
-			const breakdown = definition.trackValueBreakdown
-				? getResourceBreakdownSummary(resourceId, player, translationContext)
-				: undefined;
+			const resourceBreakdown = forecastBreakdown?.[resourceId];
+			const breakdown =
+				definition.trackValueBreakdown && resourceBreakdown
+					? getForecastBreakdownSummary(
+							resourceId,
+							resourceBreakdown,
+							translationContext,
+						)
+					: undefined;
 
 			handleHoverCard({
 				title: formatResourceTitle(metadata),
@@ -213,7 +221,7 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 			activeTierId,
 			tieredResourceDescriptor,
 			passiveAssetDescriptor,
-			player,
+			forecastBreakdown,
 		],
 	);
 

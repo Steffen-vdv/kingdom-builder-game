@@ -25,7 +25,7 @@ import {
 	type BoundRefEntry,
 } from './boundReferenceHelpers';
 import ResourceWithBoundButton from './ResourceWithBoundButton';
-import { getResourceBreakdownSummary } from '../../utils/resourceSources';
+import { getForecastBreakdownSummary } from '../../utils/forecastBreakdown';
 
 interface ResourceCategoryRowProps {
 	category: SessionResourceCategoryDefinition;
@@ -44,9 +44,11 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 	const resourceMetadata = useResourceMetadata();
 
 	const forecastMap = React.useMemo(
-		() => createForecastMap(playerForecast),
-		[playerForecast],
+		() => createForecastMap(playerForecast?.delta),
+		[playerForecast?.delta],
 	);
+
+	const forecastBreakdown = playerForecast?.breakdown;
 
 	const snapshotContext = React.useMemo(
 		() => ({
@@ -174,10 +176,16 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 				};
 			}
 
-			// Build breakdown for resources that track it
-			const breakdown = definition.trackValueBreakdown
-				? getResourceBreakdownSummary(resourceId, player, translationContext)
-				: undefined;
+			// Build forecast breakdown for resources that track it
+			const resourceBreakdown = forecastBreakdown?.[resourceId];
+			const breakdown =
+				definition.trackValueBreakdown && resourceBreakdown
+					? getForecastBreakdownSummary(
+							resourceId,
+							resourceBreakdown,
+							translationContext,
+						)
+					: undefined;
 
 			handleHoverCard({
 				title: formatResourceTitle(metadata),
@@ -198,7 +206,7 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 			activeTierId,
 			tieredResourceDescriptor,
 			passiveAssetDescriptor,
-			player,
+			forecastBreakdown,
 		],
 	);
 
