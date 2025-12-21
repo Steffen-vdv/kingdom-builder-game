@@ -26,8 +26,45 @@ Use this as a jumping-off point when you need to track how combat, passives, and
 
 ## Server Session Management
 
-- **`packages/server/src/session/SessionManager.ts`** – Source of truth for creating, caching, and snapshotting engine sessions; clones registries and merges optional overrides on boot.【F:packages/server/src/session/SessionManager.ts†L1-L126】
-- **`packages/server/tests/helpers/createSyntheticSessionManager.ts`** – Test scaffold that seeds synthetic actions, phases, and rules via `createContentFactory()`; reuse when spinning up isolated sessions.【F:packages/server/tests/helpers/createSyntheticSessionManager.ts†L1-L109】
-- **`packages/engine/src/setup/create_engine.ts`** – Engine bootstrap that wires `PassiveManager`, registries, and services; server sessions call through here, so update this when changing startup requirements.【F:packages/engine/src/setup/create_engine.ts†L157-L180】
-- **`packages/engine/src/runtime/session.ts`** – Handles snapshot cloning and evaluation modifier persistence so server calls stay deterministic across requests.【F:packages/engine/src/runtime/session.ts†L23-L178】
+- **`packages/server/src/session/SessionManager.ts`** – Source of truth for creating, caching, and snapshotting engine sessions; clones registries and merges optional overrides on boot. Integrates with persistence layer for session recovery.
+- **`packages/server/tests/helpers/createSyntheticSessionManager.ts`** – Test scaffold that seeds synthetic actions, phases, and rules via `createContentFactory()`; reuse when spinning up isolated sessions.
+- **`packages/engine/src/setup/create_engine.ts`** – Engine bootstrap that wires `PassiveManager`, registries, and services; server sessions call through here, so update this when changing startup requirements.
+- **`packages/engine/src/runtime/session.ts`** – Handles snapshot cloning and evaluation modifier persistence so server calls stay deterministic across requests.
 - **Registries to preload** – Ensure `ACTIONS`, `BUILDINGS`, `DEVELOPMENTS`, `RESOURCES`, and `RULES` are available before `SessionManager` bootstraps, or provide explicit overrides via `engineOptions`.
+
+## Session Persistence
+
+Sessions survive server restarts and in-memory timeouts via SQLite persistence with action log replay.
+
+### Architecture
+
+```
+SessionManager ──► SessionPersistence ──► SQLite (session_snapshots table)
+      │                                           │
+      └──────► SessionRestorer ◄──────────────────┘
+                     │
+               (replays action log)
+                     │
+               EngineSession
+```
+
+### Key Modules
+
+- **`packages/server/src/session/SessionPersistence.ts`** – Database operations for session storage. Handles save/load/delete/touch and 24-hour expiration cleanup. Uses JSON serialization for complex fields (action log, snapshot, registries, metadata).
+- **`packages/server/src/session/SessionRestorer.ts`** – Recreates sessions from persistence by replaying the action log. Called lazily when `getSession()` finds a session in the database but not in memory.
+- **`packages/server/src/session/SessionRecorder.ts`** – Records actions, phase advances, player name changes, and dev mode toggles to both the in-memory action log and database persistence.
+- **`packages/server/migrations/002_create_session_snapshots.sql`** – Schema for the `session_snapshots` table with columns for creation options, action log, snapshot, registries, and metadata.
+
+### Lifecycle
+
+1. **Session Creation**: `SessionManager.createSession()` stores initial state in both memory and database
+2. **Action Recording**: Transport handlers call `recordAction()`, `recordAdvance()`, etc. after each operation
+3. **In-Memory Timeout**: After 15 minutes of inactivity, the in-memory session is purged
+4. **Lazy Restore**: Next `getSession()` call triggers `SessionRestorer.restore()` which replays the action log
+5. **24-Hour Cleanup**: `HourlyScheduler` calls `purgeExpiredFromPersistence()` to delete sessions older than 24 hours
+
+### Testing
+
+- **`tests/session/SessionPersistence.test.ts`** – Database operations: save/load round-trip, expiration, action appending
+- **`tests/session/SessionRestorer.test.ts`** – Action log replay, player names, dev mode restoration
+- **`tests/session/SessionRecorder.test.ts`** – Recording with and without persistence
