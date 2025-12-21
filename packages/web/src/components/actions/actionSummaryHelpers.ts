@@ -1,5 +1,5 @@
 import type { Summary, TranslationContext } from '../../translation';
-import { summarizeContent } from '../../translation';
+import { summarizeContent, describeContent } from '../../translation';
 
 type InstallationTargetType = 'building' | 'development';
 
@@ -150,5 +150,55 @@ export function summarizeActionWithInstallation(
 		];
 	} catch {
 		return baseSummary;
+	}
+}
+
+/**
+ * Combines slot transformation with development effects for describe mode.
+ * Structure:
+ *   • 🧩 Empty Development Slot → 🌾 Farm
+ *     • Gain 🪙 +2 Gold each 🌱 Growth Phase
+ */
+export function describeActionWithInstallation(
+	actionId: string,
+	translationContext: TranslationContext,
+): Summary {
+	const baseDescription = describeContent(
+		'action',
+		actionId,
+		translationContext,
+	);
+	const target = resolveInstallationTarget(actionId, translationContext);
+	if (!target) {
+		return baseDescription;
+	}
+	try {
+		// Get development effects without the "On build, until removed" wrapper
+		const installationDescription = describeContent(
+			target.type,
+			target.id,
+			translationContext,
+			{ omitTriggerTitle: true },
+		);
+		if (installationDescription.length === 0) {
+			return baseDescription;
+		}
+		// Get the slot transformation from the action description (first entry)
+		// The action description contains the `development:add` effect which renders
+		// as "🧩 Empty Development Slot → 🌾 Farm"
+		const transformation = baseDescription[0];
+		if (typeof transformation !== 'string') {
+			// Unexpected structure, fall back to installation description
+			return installationDescription;
+		}
+		// Combine: transformation as parent, development effects as children
+		return [
+			{
+				title: transformation,
+				items: installationDescription,
+			},
+		];
+	} catch {
+		return baseDescription;
 	}
 }
