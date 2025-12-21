@@ -104,7 +104,7 @@
 
 	/* Mini chip for secondary resources */
 	.mini-chip {
-		@apply inline-flex items-center gap-1 rounded-md cursor-pointer transition-all;
+		@apply inline-flex items-center gap-1 rounded-md cursor-help transition-all;
 		padding: 4px 8px;
 		font-size: 12px;
 		background: rgba(0, 0, 0, 0.04);
@@ -201,7 +201,7 @@
 
 	/* Resource bar (for bounded resources like happiness) */
 	.resource-bar {
-		@apply flex items-center gap-2.5 py-2 cursor-pointer;
+		@apply flex items-center gap-2.5 py-2 cursor-help;
 	}
 
 	.resource-bar:hover .bar-track {
