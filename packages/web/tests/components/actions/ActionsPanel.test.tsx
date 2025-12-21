@@ -151,6 +151,30 @@ describe('ActionsPanel tabs', () => {
 		const tabpanels = screen.getAllByRole('tabpanel');
 		expect(tabpanels.length).toBeGreaterThan(0);
 	});
+
+	it('hides tablist when only a single category is visible', () => {
+		// Override the translation context to return only one category
+		const basicCategoryId = mockGame.metadata.actions.basic.category;
+		const originalList = mockGame.translationContext.actionCategories.list();
+		const singleCategory = originalList.filter(
+			(category) => category.id === basicCategoryId,
+		);
+		const originalRegistry = mockGame.translationContext.actionCategories;
+		// Replace actionCategories with a mock that returns only one category
+		(
+			mockGame.translationContext as { actionCategories: unknown }
+		).actionCategories = {
+			...originalRegistry,
+			list: () => singleCategory,
+		};
+		renderPanel();
+		// With only one category, tablist should NOT be rendered
+		const tablist = screen.queryByRole('tablist');
+		expect(tablist).not.toBeInTheDocument();
+		// But the tabpanel content should still be visible
+		const tabpanel = screen.getByRole('tabpanel');
+		expect(tabpanel).toBeInTheDocument();
+	});
 });
 
 function renderPanel() {
