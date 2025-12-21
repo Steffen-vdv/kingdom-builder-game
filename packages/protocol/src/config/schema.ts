@@ -55,7 +55,7 @@ export const actionMetaCategorySchema = z.object({
 	/** Display order among meta-categories */
 	order: z.number(),
 	/** Optional sub-category IDs for grouping within this meta-category */
-	categoryIds: z.array(z.string()).optional(),
+	categoryIds: z.array(z.string()).readonly().optional(),
 });
 
 export type ActionMetaCategoryConfig = z.infer<typeof actionMetaCategorySchema>;
@@ -116,6 +116,11 @@ export const actionSchema = z.object({
 	baseCosts: costBagSchema.optional(),
 	requirements: z.array(requirementSchema).optional(),
 	effects: z.array(actionEffectSchema),
+	/**
+	 * The meta-category this action belongs to. Determines cost model and
+	 * UI grouping. Required for all actions (system actions may use any).
+	 */
+	metaCategory: z.string(),
 	/**
 	 * System actions are engine-only and never executable by players.
 	 * They are run via internal engine functions (e.g., runSystemActionEffects)

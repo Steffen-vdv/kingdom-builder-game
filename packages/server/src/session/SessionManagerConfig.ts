@@ -1,6 +1,7 @@
 import {
 	ACTIONS,
 	ACTION_CATEGORIES,
+	ACTION_META_CATEGORIES,
 	BUILDINGS,
 	DEVELOPMENTS,
 	PHASES,
@@ -71,6 +72,8 @@ export function buildSessionManagerConfig(
 		engineOverrides.actionCategories ?? ACTION_CATEGORIES;
 	const baseOptions: SessionBaseOptions = {
 		actions: engineOverrides.actions ?? ACTIONS,
+		actionMetaCategories:
+			engineOverrides.actionMetaCategories ?? ACTION_META_CATEGORIES,
 		actionCategories: baseActionCategories,
 		buildings: engineOverrides.buildings ?? BUILDINGS,
 		developments: engineOverrides.developments ?? DEVELOPMENTS,

@@ -19,6 +19,7 @@ import {
 	developmentSchema,
 	resolveActionEffects,
 	type ActionConfig as ActionDef,
+	type ActionMetaCategoryConfig,
 	type BuildingConfig as BuildingDef,
 	type DevelopmentConfig as DevelopmentDef,
 	type PhaseConfig,
@@ -47,6 +48,7 @@ export interface SystemActionIds {
 
 export interface EngineCreationOptions {
 	actions: Registry<ActionDef>;
+	actionMetaCategories: Registry<ActionMetaCategoryConfig>;
 	buildings: Registry<BuildingDef>;
 	developments: Registry<DevelopmentDef>;
 	phases: PhaseConfig[];
@@ -248,6 +250,7 @@ const DEFAULT_SYSTEM_ACTION_IDS = {
 
 export function createEngine({
 	actions,
+	actionMetaCategories,
 	buildings,
 	developments,
 	phases,
@@ -306,6 +309,7 @@ export function createEngine({
 		actionCostConfig.resourceId,
 		actionCostConfig.amount,
 		runtimeResourceCatalog,
+		actionMetaCategories,
 	);
 	const playerOne = engineContext.game.players[0]!;
 	const playerTwo = engineContext.game.players[1]!;

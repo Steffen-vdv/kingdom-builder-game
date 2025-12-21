@@ -32,30 +32,65 @@ export function applyCostsWithPassives(
 ): CostBag {
 	const defaultedCosts = cloneCostBag(baseCosts);
 	const actionDefinition = getActionDefinitionOrThrow(actionId, engineContext);
-	const primaryCostKey = engineContext.actionCostResource;
-	if (primaryCostKey) {
-		const globalAmount = engineContext.actionCostAmount;
-		if (globalAmount !== null) {
+
+	// System actions and free actions have no meta-category costs
+	if (actionDefinition.system || actionDefinition.free) {
+		return engineContext.passives.applyCostMods(
+			actionDefinition.id,
+			defaultedCosts,
+			engineContext,
+		);
+	}
+
+	// Look up the action's meta-category
+	const metaCategoryId = actionDefinition.metaCategory;
+	if (!metaCategoryId) {
+		// Fallback to legacy behavior for actions without metaCategory
+		const primaryCostKey = engineContext.actionCostResource;
+		if (primaryCostKey && defaultedCosts[primaryCostKey] === undefined) {
+			defaultedCosts[primaryCostKey] =
+				engineContext.services.rules.defaultActionAPCost;
+		}
+		return engineContext.passives.applyCostMods(
+			actionDefinition.id,
+			defaultedCosts,
+			engineContext,
+		);
+	}
+
+	// Get meta-category config and apply cost model
+	const metaCategories = engineContext.actionMetaCategories;
+	if (metaCategories && metaCategories.has(metaCategoryId)) {
+		const metaCategory = metaCategories.get(metaCategoryId);
+		const bindingResourceId = metaCategory.bindingResourceId;
+
+		if (metaCategory.costModel === 'global') {
+			// Global cost model: apply uniform cost from meta-category
+			const globalCost = metaCategory.globalCostAmount ?? 0;
 			if (
-				Object.prototype.hasOwnProperty.call(defaultedCosts, primaryCostKey)
+				Object.prototype.hasOwnProperty.call(defaultedCosts, bindingResourceId)
 			) {
-				const override = defaultedCosts[primaryCostKey];
-				if (!actionDefinition.system && override !== undefined) {
+				const override = defaultedCosts[bindingResourceId];
+				if (override !== undefined) {
 					const label = actionDefinition.id ?? actionId;
 					throw new Error(
-						`Action ${label} may not override global cost resource ${primaryCostKey}.`,
+						`Action ${label} may not override meta-category cost ` +
+							`resource ${bindingResourceId}.`,
 					);
 				}
 			}
-			defaultedCosts[primaryCostKey] = actionDefinition.system
-				? 0
-				: globalAmount;
-		} else if (defaultedCosts[primaryCostKey] === undefined) {
-			defaultedCosts[primaryCostKey] = actionDefinition.system
-				? 0
-				: engineContext.services.rules.defaultActionAPCost;
+			defaultedCosts[bindingResourceId] = globalCost;
+		}
+		// per-item cost model: baseCosts already contains the item-specific cost
+	} else if (!metaCategories) {
+		// Fallback to legacy behavior when no meta-categories registry
+		const primaryCostKey = engineContext.actionCostResource;
+		if (primaryCostKey && defaultedCosts[primaryCostKey] === undefined) {
+			defaultedCosts[primaryCostKey] =
+				engineContext.services.rules.defaultActionAPCost;
 		}
 	}
+
 	return engineContext.passives.applyCostMods(
 		actionDefinition.id,
 		defaultedCosts,
