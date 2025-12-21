@@ -211,13 +211,13 @@ describe('Trigger Effect Scaling', () => {
 			);
 		});
 
-		it('council upkeep scales linearly (2 gold each)', () => {
+		it('council upkeep scales linearly (1 gold each)', () => {
 			fc.assert(
 				fc.property(fc.integer({ min: 1, max: 10 }), (councilCount) => {
 					const engine = createMinimalEngine();
 					const player = engine.activePlayer;
 
-					// Council has 2 gold upkeep per unit
+					// Council has 1 gold upkeep per unit
 					player.resourceValues[Resource.council] = councilCount;
 					const startingGold = 200;
 					player.resourceValues[Resource.gold] = startingGold;
@@ -228,8 +228,8 @@ describe('Trigger Effect Scaling', () => {
 					const goldRemaining = player.resourceValues[Resource.gold] ?? 0;
 					const goldPaid = startingGold - goldRemaining;
 
-					// Linear: N councils = N × 2 gold upkeep
-					expect(goldPaid).toBe(councilCount * 2);
+					// Linear: N councils = N × 1 gold upkeep
+					expect(goldPaid).toBe(councilCount * 1);
 				}),
 				{ numRuns: 10 },
 			);
@@ -420,8 +420,8 @@ describe('Combinatorial Scaling', () => {
 					advance(engine2);
 
 					const goldPaid = startGold - player2.resourceValues[Resource.gold];
-					// Council: 2 gold each, Legion: 1 gold each
-					const expectedUpkeep = councils * 2 + legions * 1;
+					// Council: 1 gold each, Legion: 1 gold each
+					const expectedUpkeep = councils * 1 + legions * 1;
 					expect(goldPaid).toBe(expectedUpkeep);
 				},
 			),

@@ -92,7 +92,7 @@ describe('resolveAttack', () => {
 		defender.resourceValues[CResource.fortificationStrength] = 5;
 		const result = resolveAttack(
 			defender,
-			10,
+			100,
 			engineContext,
 			{ type: 'resource', resourceId: CResource.castleHP },
 			{
@@ -100,7 +100,7 @@ describe('resolveAttack', () => {
 				ignoreFortification: true,
 			},
 		);
-		expect(result.damageDealt).toBe(10);
+		expect(result.damageDealt).toBe(100);
 		expect(defender.resourceValues[CResource.fortificationStrength]).toBe(5);
 		expect(defender.resourceValues[CResource.castleHP]).toBe(0);
 	});
@@ -153,7 +153,7 @@ describe('resolveAttack', () => {
 			resourceId: CResource.castleHP,
 		});
 		expect(result.damageDealt).toBe(0);
-		expect(defender.resourceValues[CResource.castleHP]).toBe(10);
+		expect(defender.resourceValues[CResource.castleHP]).toBe(100);
 		expect(defender.resourceValues[CResource.fortificationStrength]).toBe(0);
 		expect(defender.resourceValues[CResource.absorption]).toBe(0);
 		expect(defender.resourceValues[CResource.gold]).toBe(beforeGold + 1);
