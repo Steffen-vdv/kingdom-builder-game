@@ -107,6 +107,12 @@ export function resolveInstallationTarget(
 	return undefined;
 }
 
+/**
+ * Combines slot transformation with development effects.
+ * Structure:
+ *   • 🧩 → 🌾
+ *     • 🪙 +2 per 🌱 Growth Phase
+ */
 export function summarizeActionWithInstallation(
 	actionId: string,
 	translationContext: TranslationContext,
@@ -117,12 +123,31 @@ export function summarizeActionWithInstallation(
 		return baseSummary;
 	}
 	try {
+		// Get development effects without the "On build, until removed" wrapper
 		const installationSummary = summarizeContent(
 			target.type,
 			target.id,
 			translationContext,
+			{ omitTriggerTitle: true },
 		);
-		return installationSummary.length > 0 ? installationSummary : baseSummary;
+		if (installationSummary.length === 0) {
+			return baseSummary;
+		}
+		// Get the slot transformation from the action summary (first entry)
+		// The action summary contains the `development:add` effect which renders
+		// as "🧩 → 🌾"
+		const transformation = baseSummary[0];
+		if (typeof transformation !== 'string') {
+			// Unexpected structure, fall back to installation summary
+			return installationSummary;
+		}
+		// Combine: transformation as parent, development effects as children
+		return [
+			{
+				title: transformation,
+				items: installationSummary,
+			},
+		];
 	} catch {
 		return baseSummary;
 	}

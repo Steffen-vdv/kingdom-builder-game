@@ -4,21 +4,18 @@ import { actionCategory, type ActionCategoryConfig } from './infrastructure/buil
 const ACTION_CATEGORY_ID_MAP = {
 	Basic: 'basic',
 	Hire: 'hire',
-	Develop: 'develop',
 	Build: 'build',
 } as const;
 
 const ACTION_CATEGORY_SUBTITLES = {
-	Basic: '(Effects take place immediately, unless stated otherwise)',
+	Basic: '',
 	Hire: ['(', 'Effects take place immediately and last until the population is removed', ' or reassigned', ')'].join(''),
-	Develop: ['(', 'Effects take place immediately and last until the development is removed', ')'].join(''),
 	Build: ['(', 'Effects take place immediately build and last until the building is', ' removed', ')'].join(''),
 } as const;
 
 const ACTION_CATEGORY_ICONS = {
 	Basic: '⚙️',
 	Hire: '🧑‍🤝‍🧑',
-	Develop: '🏗️',
 	Build: '🏗️',
 } as const;
 
@@ -49,20 +46,11 @@ export function createActionCategoryRegistry() {
 			.description('Actions that add population or assign roles.')
 			.build(),
 		actionCategory()
-			.id(ActionCategoryId.Develop)
-			.label('Develop')
-			.subtitle(ACTION_CATEGORY_SUBTITLES.Develop)
-			.icon(ACTION_CATEGORY_ICONS.Develop)
-			.order(2)
-			.layout('grid-secondary')
-			.description('Developments that upgrade existing buildings or lands.')
-			.build(),
-		actionCategory()
 			.id(ActionCategoryId.Build)
 			.label('Build')
 			.subtitle(ACTION_CATEGORY_SUBTITLES.Build)
 			.icon(ACTION_CATEGORY_ICONS.Build)
-			.order(3)
+			.order(2)
 			.layout('grid-secondary')
 			.description('Construction options that add new structures or unlocks.')
 			.build(),
