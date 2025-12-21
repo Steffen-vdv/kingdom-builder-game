@@ -197,6 +197,9 @@ function applySign(
  * Resolves the effective bound for a resource. For dynamic bounds (references
  * to other resources), always use the definition to get a fresh resolution.
  * For static bounds, player overrides take precedence over the definition.
+ *
+ * Also includes per-bound reconciliation modes from the resource definition,
+ * allowing resources to define how their bounds should be enforced.
  */
 function resolveEffectiveBounds(
 	player: PlayerState,
@@ -218,10 +221,22 @@ function resolveEffectiveBounds(
 		: (playerUpper ?? defUpper);
 
 	// Resolve any references to get final numeric values
-	return {
+	// Include per-bound reconciliation modes from the definition only if set
+	const result: ResolvedBounds = {
 		lowerBound: resolveBoundValue(lowerBoundValue, player.resourceValues),
 		upperBound: resolveBoundValue(upperBoundValue, player.resourceValues),
 	};
+	if (definitionBounds.lowerBoundReconciliation !== undefined) {
+		(
+			result as { lowerBoundReconciliation?: ResourceReconciliationMode }
+		).lowerBoundReconciliation = definitionBounds.lowerBoundReconciliation;
+	}
+	if (definitionBounds.upperBoundReconciliation !== undefined) {
+		(
+			result as { upperBoundReconciliation?: ResourceReconciliationMode }
+		).upperBoundReconciliation = definitionBounds.upperBoundReconciliation;
+	}
+	return result;
 }
 
 function applyResourceEffect(
@@ -356,8 +371,12 @@ function applyResourceEffect(
 	// Validate that the change won't violate the group parent's bounds.
 	// This is a systematic rejection to maintain computed value integrity.
 	validateGroupParentBounds(player, catalog, resourceId, result.finalValue);
-	// Pass mode bypasses bounds - tell setResourceValue to skip clamping
-	const skipBoundClamp = reconciliationMode === 'pass';
+	// Pass mode bypasses bounds - tell setResourceValue to skip clamping.
+	// Check both effect-level mode and bound-level modes.
+	const skipBoundClamp =
+		reconciliationMode === 'pass' ||
+		bounds.lowerBoundReconciliation === 'pass' ||
+		bounds.upperBoundReconciliation === 'pass';
 	// Only track resource:add effects in recentResourceGains for evaluation
 	// modifiers. resource:remove effects should not be subject to result mods.
 	const suppressRecentEntry = kind === 'remove';

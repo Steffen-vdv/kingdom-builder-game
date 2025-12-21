@@ -3,10 +3,10 @@ import type { EngineContext } from '../../context';
 import type { PlayerState } from '../../state';
 import { recordEffectResourceDelta } from '../../resource_sources';
 import { setResourceValue, getResourceValue } from '../state';
-import type { RuntimeResourceCatalog, RuntimeResourceBounds } from '../types';
-import { resolveBoundValue } from '../state-helpers';
+import type { RuntimeResourceCatalog } from '../types';
 import {
 	ResourceBoundExceededError,
+	type ResolvedBounds,
 	type ResourceReconciliationMode,
 	type ResourceReconciliationResult,
 } from '../reconciliation';
@@ -31,6 +31,9 @@ export function buildAdditiveCacheKey(
  * Apply an additive percent change using step-based caching. Multiple
  * percent changes in the same step scale from the original base value
  * rather than compounding.
+ *
+ * Supports per-bound reconciliation modes when specified in the bounds object.
+ * Each bound (lower/upper) can have its own reconciliation mode.
  */
 export function applyAdditivePercentChange(
 	context: EngineContext,
@@ -38,7 +41,7 @@ export function applyAdditivePercentChange(
 	catalog: RuntimeResourceCatalog,
 	resourceId: string,
 	requestedDelta: number,
-	bounds: RuntimeResourceBounds,
+	bounds: ResolvedBounds,
 	effect: EffectDef,
 	roundingMode: 'up' | 'down' | 'nearest' | undefined,
 	reconciliationMode: ResourceReconciliationMode = 'clamp',
@@ -69,49 +72,48 @@ export function applyAdditivePercentChange(
 		newValue = newValue >= 0 ? Math.floor(newValue) : Math.ceil(newValue);
 	}
 
-	// Resolve bounds (handles both static numbers and dynamic references)
-	const lowerBound = resolveBoundValue(
-		bounds.lowerBound,
-		player.resourceValues,
-	);
-	const upperBound = resolveBoundValue(
-		bounds.upperBound,
-		player.resourceValues,
-	);
+	// Use resolved bound values (already numbers or null)
+	const lowerBound = bounds.lowerBound;
+	const upperBound = bounds.upperBound;
 	let clampedToLowerBound = false;
 	let clampedToUpperBound = false;
 
-	if (reconciliationMode === 'reject') {
-		// Reject mode: throw error if bounds would be exceeded
-		// NOTE: We throw BEFORE updating the accumulator so state is untouched
-		if (lowerBound !== null && newValue < lowerBound) {
+	// Determine effective mode for each bound:
+	// - Use bound-level mode if specified, otherwise use effect-level mode
+	const lowerMode = bounds.lowerBoundReconciliation ?? reconciliationMode;
+	const upperMode = bounds.upperBoundReconciliation ?? reconciliationMode;
+
+	// Check lower bound violation
+	if (lowerBound !== null && newValue < lowerBound) {
+		if (lowerMode === 'reject') {
 			throw new ResourceBoundExceededError(
 				'lower',
 				newValue,
 				lowerBound,
 				requestedDelta,
 			);
+		} else if (lowerMode === 'clamp') {
+			newValue = lowerBound;
+			clampedToLowerBound = true;
 		}
-		if (upperBound !== null && newValue > upperBound) {
+		// 'pass' mode: do nothing, allow violation
+	}
+
+	// Check upper bound violation
+	if (upperBound !== null && newValue > upperBound) {
+		if (upperMode === 'reject') {
 			throw new ResourceBoundExceededError(
 				'upper',
 				newValue,
 				upperBound,
 				requestedDelta,
 			);
-		}
-	} else if (reconciliationMode === 'clamp') {
-		// Clamp mode: constrain to bounds
-		if (lowerBound !== null && newValue < lowerBound) {
-			newValue = lowerBound;
-			clampedToLowerBound = true;
-		}
-		if (upperBound !== null && newValue > upperBound) {
+		} else if (upperMode === 'clamp') {
 			newValue = upperBound;
 			clampedToUpperBound = true;
 		}
+		// 'pass' mode: do nothing, allow violation
 	}
-	// Pass mode: no bounds checking, value passes through as-is
 
 	// Validate group parent bounds - systematic rejection to maintain integrity
 	validateGroupParentBounds(player, catalog, resourceId, newValue);
@@ -120,7 +122,8 @@ export function applyAdditivePercentChange(
 	accums[cacheKey] = tentativeAccum;
 
 	// Pass mode bypasses bounds - tell setResourceValue to skip clamping
-	const skipBoundClamp = reconciliationMode === 'pass';
+	// Use 'pass' if EITHER bound mode is 'pass' (conservative approach)
+	const skipBoundClamp = lowerMode === 'pass' || upperMode === 'pass';
 	setResourceValue(context, player, catalog, resourceId, newValue, {
 		skipBoundClamp,
 	});

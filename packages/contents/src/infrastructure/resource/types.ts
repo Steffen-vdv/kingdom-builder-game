@@ -1,6 +1,9 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
 import type { ResourceReconciliationMode } from './reconciliation';
 
+// Re-export for convenience so consumers don't need multiple imports
+export type { ResourceReconciliationMode } from './reconciliation';
+
 export interface ResourceMetadata {
 	id: string;
 	label: string;
@@ -17,11 +20,6 @@ export interface ResourceMetadata {
 export interface ResourceBoundReference {
 	/** The resource ID whose value determines this bound */
 	readonly resourceId: string;
-	/**
-	 * How to reconcile when the bound changes and the current value
-	 * would overflow/underflow. Default: 'clamp'
-	 */
-	readonly reconciliation?: ResourceReconciliationMode;
 }
 
 /** A bound can be a static number or a dynamic reference to another resource */
@@ -30,6 +28,16 @@ export type ResourceBoundValue = number | ResourceBoundReference;
 export interface ResourceBounds {
 	lowerBound?: ResourceBoundValue;
 	upperBound?: ResourceBoundValue;
+	/**
+	 * How to reconcile when the lower bound is violated.
+	 * Applies to both static and dynamic bounds. Default: 'clamp'
+	 */
+	lowerBoundReconciliation?: ResourceReconciliationMode;
+	/**
+	 * How to reconcile when the upper bound is violated.
+	 * Applies to both static and dynamic bounds. Default: 'clamp'
+	 */
+	upperBoundReconciliation?: ResourceReconciliationMode;
 }
 
 export interface ResourceGlobalCostConfig {
@@ -226,23 +234,26 @@ export interface ResourceCategoryDefinition {
  *
  * When the referenced resource's value changes, cascading reconciliation is
  * automatically applied to ensure this resource stays within its new bounds.
+ * The reconciliation mode is now specified as a second parameter to the
+ * `.lowerBound()` or `.upperBound()` method.
  *
  * @param resourceId - The resource whose value acts as this bound
- * @param reconciliation - How to handle overflow/underflow when bound changes
- *                         (default: 'clamp')
  *
  * @example
  * // Default clamp behavior - population capped by max-population
  * .upperBound(boundTo(Stat.populationMax))
  *
- * // Explicit reconciliation mode
- * .upperBound(boundTo(Stat.populationMax, ReconciliationMode.REJECT))
+ * // Explicit reconciliation mode (now on the bound method, not boundTo)
+ * .upperBound(boundTo(Stat.populationMax), ReconciliationMode.REJECT)
+ *
+ * // Static bounds can also have reconciliation modes
+ * .lowerBound(0, ReconciliationMode.REJECT)
  *
  * **WARNING: Avoid circular bound references.** If resource A's bound
  * references B and B's bound references A, both will initialize to 0 and
  * cannot increase. Prefer one-way dependency chains like:
  * `max-population → population → workforce`
  */
-export function boundTo(resourceId: string, reconciliation?: ResourceReconciliationMode): ResourceBoundReference {
-	return reconciliation ? { resourceId, reconciliation } : { resourceId };
+export function boundTo(resourceId: string): ResourceBoundReference {
+	return { resourceId };
 }

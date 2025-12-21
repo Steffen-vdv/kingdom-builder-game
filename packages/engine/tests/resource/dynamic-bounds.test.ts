@@ -867,12 +867,13 @@ describe('Dynamic resource bounds', () => {
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			// Use a bound reference with explicit reconciliation mode
+			// Use a bound reference with explicit reconciliation mode at bounds level
 			const population = resourceDefinition({
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'reject'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'reject',
 				},
 			});
 
@@ -882,12 +883,279 @@ describe('Dynamic resource bounds', () => {
 
 			const catalog = createRuntimeResourceCatalog(registries);
 
-			// Verify the bound reference has reconciliation set
+			// Verify the bound-level reconciliation is set
 			const popDef = catalog.resources.byId[populationId];
+			expect(popDef.upperBoundReconciliation).toBe('reject');
 			expect(popDef.upperBound).toEqual({
 				resourceId: maxPopId,
-				reconciliation: 'reject',
+				reconciliation: 'reject', // Still embedded in reference for cascading
 			});
+		});
+	});
+
+	describe('static bounds with reconciliation modes', () => {
+		it('reject mode throws when removing below static lower bound', () => {
+			const goldId = 'resource-gold';
+
+			const gold = resourceDefinition({
+				id: goldId,
+				bounds: {
+					lowerBound: 0,
+					upperBound: 100,
+					lowerBoundReconciliation: 'reject',
+				},
+			});
+
+			const registries = createResourceRegistries({
+				resources: [gold],
+			});
+
+			const catalog = createRuntimeResourceCatalog(registries);
+			const active = new PlayerState('A', 'Active Player');
+			initialisePlayerResourceState(active, catalog);
+
+			const ctx = {
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
+				activePlayer: active,
+			} as unknown as EngineContext;
+
+			// Set gold to 5
+			setResourceValue(ctx, active, catalog, goldId, 5);
+
+			// Try to remove 10 - should throw because lower bound is 0 with reject
+			const effect: EffectDef = {
+				params: {
+					resourceId: goldId,
+					change: { type: 'amount', amount: 10 },
+				},
+			};
+
+			expect(() => resourceRemove(effect, ctx)).toThrow(
+				ResourceBoundExceededError,
+			);
+			// Value should remain unchanged
+			expect(getResourceValue(active, goldId)).toBe(5);
+		});
+
+		it('reject mode throws when adding above static upper bound', () => {
+			const goldId = 'resource-gold';
+
+			const gold = resourceDefinition({
+				id: goldId,
+				bounds: {
+					lowerBound: 0,
+					upperBound: 50,
+					upperBoundReconciliation: 'reject',
+				},
+			});
+
+			const registries = createResourceRegistries({
+				resources: [gold],
+			});
+
+			const catalog = createRuntimeResourceCatalog(registries);
+			const active = new PlayerState('A', 'Active Player');
+			initialisePlayerResourceState(active, catalog);
+
+			const ctx = {
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
+				activePlayer: active,
+			} as unknown as EngineContext;
+
+			// Set gold to 40
+			setResourceValue(ctx, active, catalog, goldId, 40);
+
+			// Try to add 20 - should throw because upper bound is 50 with reject
+			const effect: EffectDef = {
+				params: {
+					resourceId: goldId,
+					change: { type: 'amount', amount: 20 },
+				},
+			};
+
+			expect(() => resourceAdd(effect, ctx)).toThrow(
+				ResourceBoundExceededError,
+			);
+			// Value should remain unchanged
+			expect(getResourceValue(active, goldId)).toBe(40);
+		});
+
+		it('clamp mode clamps to static lower bound', () => {
+			const goldId = 'resource-gold';
+
+			const gold = resourceDefinition({
+				id: goldId,
+				bounds: {
+					lowerBound: 0,
+					upperBound: 100,
+					lowerBoundReconciliation: 'clamp',
+				},
+			});
+
+			const registries = createResourceRegistries({
+				resources: [gold],
+			});
+
+			const catalog = createRuntimeResourceCatalog(registries);
+			const active = new PlayerState('A', 'Active Player');
+			initialisePlayerResourceState(active, catalog);
+
+			const ctx = {
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
+				activePlayer: active,
+			} as unknown as EngineContext;
+
+			// Set gold to 5
+			setResourceValue(ctx, active, catalog, goldId, 5);
+
+			// Remove 10 - should clamp to 0
+			const effect: EffectDef = {
+				params: {
+					resourceId: goldId,
+					change: { type: 'amount', amount: 10 },
+				},
+			};
+
+			resourceRemove(effect, ctx);
+			expect(getResourceValue(active, goldId)).toBe(0);
+			expect(active.resourceBoundTouched[goldId].lower).toBe(true);
+		});
+
+		it('pass mode allows exceeding static bounds', () => {
+			const goldId = 'resource-gold';
+
+			const gold = resourceDefinition({
+				id: goldId,
+				bounds: {
+					lowerBound: 0,
+					upperBound: 100,
+					lowerBoundReconciliation: 'pass',
+				},
+			});
+
+			const registries = createResourceRegistries({
+				resources: [gold],
+			});
+
+			const catalog = createRuntimeResourceCatalog(registries);
+			const active = new PlayerState('A', 'Active Player');
+			initialisePlayerResourceState(active, catalog);
+
+			const ctx = {
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
+				activePlayer: active,
+			} as unknown as EngineContext;
+
+			// Set gold to 5
+			setResourceValue(ctx, active, catalog, goldId, 5);
+
+			// Remove 10 with pass mode - should allow going negative
+			const effect: EffectDef = {
+				params: {
+					resourceId: goldId,
+					change: { type: 'amount', amount: 10 },
+				},
+			};
+
+			resourceRemove(effect, ctx);
+			expect(getResourceValue(active, goldId)).toBe(-5);
+		});
+
+		it('bound-level reconciliation overrides effect-level', () => {
+			const goldId = 'resource-gold';
+
+			const gold = resourceDefinition({
+				id: goldId,
+				bounds: {
+					lowerBound: 0,
+					upperBound: 100,
+					lowerBoundReconciliation: 'reject',
+				},
+			});
+
+			const registries = createResourceRegistries({
+				resources: [gold],
+			});
+
+			const catalog = createRuntimeResourceCatalog(registries);
+			const active = new PlayerState('A', 'Active Player');
+			initialisePlayerResourceState(active, catalog);
+
+			const ctx = {
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
+				activePlayer: active,
+			} as unknown as EngineContext;
+
+			// Set gold to 5
+			setResourceValue(ctx, active, catalog, goldId, 5);
+
+			// Effect says clamp, but bound says reject - bound should win
+			const effect: EffectDef = {
+				params: {
+					resourceId: goldId,
+					change: { type: 'amount', amount: 10 },
+					reconciliation: 'clamp', // effect-level says clamp
+				},
+			};
+
+			// Bound-level reject should override effect-level clamp
+			expect(() => resourceRemove(effect, ctx)).toThrow(
+				ResourceBoundExceededError,
+			);
+		});
+
+		it('effect-level reconciliation used when bound-level not set', () => {
+			const goldId = 'resource-gold';
+
+			const gold = resourceDefinition({
+				id: goldId,
+				bounds: {
+					lowerBound: 0,
+					upperBound: 100,
+					// No lowerBoundReconciliation - effect-level takes precedence
+				},
+			});
+
+			const registries = createResourceRegistries({
+				resources: [gold],
+			});
+
+			const catalog = createRuntimeResourceCatalog(registries);
+			const active = new PlayerState('A', 'Active Player');
+			initialisePlayerResourceState(active, catalog);
+
+			const ctx = {
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
+				activePlayer: active,
+			} as unknown as EngineContext;
+
+			// Set gold to 5
+			setResourceValue(ctx, active, catalog, goldId, 5);
+
+			// Effect says reject - should throw since no bound-level override
+			const effect: EffectDef = {
+				params: {
+					resourceId: goldId,
+					change: { type: 'amount', amount: 10 },
+					reconciliation: 'reject',
+				},
+			};
+
+			expect(() => resourceRemove(effect, ctx)).toThrow(
+				ResourceBoundExceededError,
+			);
 		});
 	});
 
@@ -905,7 +1173,8 @@ describe('Dynamic resource bounds', () => {
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'clamp'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'clamp',
 				},
 			});
 
@@ -946,7 +1215,8 @@ describe('Dynamic resource bounds', () => {
 			const gold = resourceDefinition({
 				id: goldId,
 				bounds: {
-					lowerBound: boundRef(minGoldId, 'clamp'),
+					lowerBound: boundRef(minGoldId),
+					lowerBoundReconciliation: 'clamp',
 					upperBound: 1000,
 				},
 			});
@@ -989,7 +1259,8 @@ describe('Dynamic resource bounds', () => {
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'pass'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'pass',
 				},
 			});
 
@@ -1031,7 +1302,8 @@ describe('Dynamic resource bounds', () => {
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'reject'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'reject',
 				},
 			});
 
@@ -1076,7 +1348,8 @@ describe('Dynamic resource bounds', () => {
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'clamp'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'clamp',
 				},
 			});
 
@@ -1085,7 +1358,8 @@ describe('Dynamic resource bounds', () => {
 				id: workforceId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(populationId, 'clamp'),
+					upperBound: boundRef(populationId),
+					upperBoundReconciliation: 'clamp',
 				},
 			});
 
@@ -1132,7 +1406,8 @@ describe('Dynamic resource bounds', () => {
 				id: councilId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'clamp'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'clamp',
 				},
 			});
 
@@ -1140,7 +1415,8 @@ describe('Dynamic resource bounds', () => {
 				id: legionId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'clamp'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'clamp',
 				},
 			});
 
@@ -1185,7 +1461,8 @@ describe('Dynamic resource bounds', () => {
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
-					upperBound: boundRef(maxPopId, 'clamp'),
+					upperBound: boundRef(maxPopId),
+					upperBoundReconciliation: 'clamp',
 				},
 			});
 

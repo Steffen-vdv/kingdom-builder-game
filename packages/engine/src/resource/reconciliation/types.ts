@@ -5,6 +5,16 @@
 export interface ResolvedBounds {
 	readonly lowerBound: number | null;
 	readonly upperBound: number | null;
+	/**
+	 * How to reconcile when the lower bound is violated. When provided,
+	 * overrides the effect-level reconciliation mode for lower bound.
+	 */
+	readonly lowerBoundReconciliation?: ResourceReconciliationMode;
+	/**
+	 * How to reconcile when the upper bound is violated. When provided,
+	 * overrides the effect-level reconciliation mode for upper bound.
+	 */
+	readonly upperBoundReconciliation?: ResourceReconciliationMode;
 }
 
 /**

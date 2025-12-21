@@ -168,7 +168,6 @@ const resourceReconciliationModeSchema = z.enum(['clamp', 'pass', 'reject']);
 
 const resourceBoundReferenceSchema = z.object({
 	resourceId: z.string(),
-	reconciliation: resourceReconciliationModeSchema.optional(),
 });
 
 const resourceBoundValueSchema = z.union([
@@ -179,6 +178,8 @@ const resourceBoundValueSchema = z.union([
 const resourceBoundsSchema = z.object({
 	lowerBound: resourceBoundValueSchema.optional(),
 	upperBound: resourceBoundValueSchema.optional(),
+	lowerBoundReconciliation: resourceReconciliationModeSchema.optional(),
+	upperBoundReconciliation: resourceReconciliationModeSchema.optional(),
 });
 
 const resourceBoundOfConfigSchema = z.object({

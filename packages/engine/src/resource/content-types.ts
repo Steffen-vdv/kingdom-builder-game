@@ -49,11 +49,6 @@ export type ContentReconciliationMode = 'clamp' | 'pass' | 'reject';
 export interface ContentBoundReference {
 	/** The resource ID whose value determines this bound */
 	readonly resourceId: string;
-	/**
-	 * How to reconcile when the bound changes and the current value
-	 * would overflow/underflow. Default: 'clamp'
-	 */
-	readonly reconciliation?: ContentReconciliationMode;
 }
 
 /** A bound can be a static number or a dynamic reference to another resource */
@@ -62,6 +57,16 @@ export type ContentBoundValue = number | ContentBoundReference;
 export interface ContentBounds {
 	readonly lowerBound?: ContentBoundValue;
 	readonly upperBound?: ContentBoundValue;
+	/**
+	 * How to reconcile when the lower bound is violated.
+	 * Applies to both static and dynamic bounds. Default: 'clamp'
+	 */
+	readonly lowerBoundReconciliation?: ContentReconciliationMode;
+	/**
+	 * How to reconcile when the upper bound is violated.
+	 * Applies to both static and dynamic bounds. Default: 'clamp'
+	 */
+	readonly upperBoundReconciliation?: ContentReconciliationMode;
 }
 
 export interface ContentMetadata {

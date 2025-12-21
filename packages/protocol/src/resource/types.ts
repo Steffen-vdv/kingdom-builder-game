@@ -24,11 +24,6 @@ export type ResourceReconciliationMode = 'clamp' | 'pass' | 'reject';
 export interface ResourceBoundReference {
 	/** The resource ID whose value determines this bound */
 	readonly resourceId: string;
-	/**
-	 * How to reconcile when the bound changes and the current value
-	 * would overflow/underflow. Default: 'clamp'
-	 */
-	readonly reconciliation?: ResourceReconciliationMode;
 }
 
 /** A bound can be a static number or a dynamic reference to another resource */
@@ -37,6 +32,16 @@ export type ResourceBoundValue = number | ResourceBoundReference;
 export interface ResourceBounds {
 	lowerBound?: ResourceBoundValue;
 	upperBound?: ResourceBoundValue;
+	/**
+	 * How to reconcile when the lower bound is violated.
+	 * Applies to both static and dynamic bounds. Default: 'clamp'
+	 */
+	lowerBoundReconciliation?: ResourceReconciliationMode;
+	/**
+	 * How to reconcile when the upper bound is violated.
+	 * Applies to both static and dynamic bounds. Default: 'clamp'
+	 */
+	upperBoundReconciliation?: ResourceReconciliationMode;
 }
 
 export interface ResourceGlobalCostConfig {
