@@ -258,7 +258,8 @@ export default function ActionsPanel() {
 		const seen = new Set<string>();
 		categoryDefinitions.forEach((definition) => {
 			const grouped = actionsByCategory.get(definition.id) ?? [];
-			if (definition.hideWhenEmpty && grouped.length === 0) {
+			// Always hide empty categories
+			if (grouped.length === 0) {
 				seen.add(definition.id);
 				return;
 			}
@@ -324,7 +325,8 @@ export default function ActionsPanel() {
 			const visibleActions = grouped.filter(
 				(actionDefinition) => !actionDefinition.system,
 			);
-			if (definition?.hideWhenEmpty && visibleActions.length === 0) {
+			// Always hide categories with no visible actions
+			if (visibleActions.length === 0) {
 				return;
 			}
 			const fallbackLabel = grouped[0]?.name ?? definition?.title ?? 'Actions';

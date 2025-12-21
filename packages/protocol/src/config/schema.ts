@@ -71,7 +71,18 @@ export const actionSchema = z.object({
 	baseCosts: costBagSchema.optional(),
 	requirements: z.array(requirementSchema).optional(),
 	effects: z.array(actionEffectSchema),
+	/**
+	 * System actions are engine-only and never executable by players.
+	 * They are run via internal engine functions (e.g., runSystemActionEffects)
+	 * and cannot be unlocked. Examples: initial_setup, compensation.
+	 */
 	system: z.boolean().optional(),
+	/**
+	 * Locked actions are player actions that start unavailable but can be
+	 * unlocked via the action:add effect. Once unlocked, they behave like
+	 * normal actions. Examples: plow, build actions, hire actions.
+	 */
+	locked: z.boolean().optional(),
 	/**
 	 * When true, the action bypasses the global action cost (e.g., AP).
 	 * Only valid for system actions. Useful for initial setup actions that

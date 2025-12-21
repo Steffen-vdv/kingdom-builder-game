@@ -96,8 +96,13 @@ Player-initiated sequences with costs, requirements, and effects.
 6. Apply result modifiers
 7. Log action trace
 
-**System actions** (marked with `.system()`) cost 0 AP and are auto-unlocked.
-Used for internal game operations.
+**System actions** (marked with `.system()`) are engine-only and can never be
+executed by players. They throw unconditionally if attempted. Used for internal
+game operations like initial setup and compensation.
+
+**Locked actions** (marked with `.locked()`) are player actions that start
+unavailable but can be unlocked via the `action:add` effect. Once unlocked, they
+behave like normal actions. Examples: plow, build actions, hire actions.
 
 ### Effects
 

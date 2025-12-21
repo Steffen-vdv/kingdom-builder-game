@@ -79,6 +79,7 @@ export function createContentFactory(): ContentFactory {
 			requirements: definition.requirements ?? [],
 			effects: definition.effects ?? [],
 			system: definition.system,
+			locked: definition.locked,
 		};
 		actions.add(id, built);
 		return built;

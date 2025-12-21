@@ -142,9 +142,8 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 		id: 'action:synthetic:expand',
 		name: 'Expand Fields',
 		icon: '🌾',
-		system: true,
+		locked: true,
 		baseCosts: {
-			[SYNTHETIC_RESOURCE_KEYS.ap]: 1,
 			[SYNTHETIC_RESOURCE_KEYS.gold]: 2,
 		},
 		effects: [
@@ -163,7 +162,7 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 		id: 'action:synthetic:till',
 		name: 'Till Soil',
 		icon: '🧑\u200d🌾',
-		system: true,
+		locked: true,
 		effects: [{ type: 'land', method: 'till' }],
 	});
 	const plowPassiveParams = {
@@ -176,9 +175,8 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 		id: 'action:synthetic:plow',
 		name: 'Plow Furrows',
 		icon: '🚜',
-		system: true,
+		locked: true,
 		baseCosts: {
-			[SYNTHETIC_RESOURCE_KEYS.ap]: 1,
 			[SYNTHETIC_RESOURCE_KEYS.gold]: 6,
 		},
 		effects: [

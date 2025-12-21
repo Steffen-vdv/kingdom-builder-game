@@ -57,6 +57,7 @@ export type ActionDefinition = {
 	attack?: AttackEffectDescriptor;
 	extra?: EffectDescriptor[];
 	system?: boolean;
+	locked?: boolean;
 };
 
 function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
@@ -214,8 +215,7 @@ export function buildAttackEffect(
 export const ACTION_DEFS: Record<string, ActionDefinition> = {
 	attack: {
 		meta: SYNTH_ATTACK,
-		system: true,
-		baseCosts: { [SYNTH_RESOURCE_IDS.ap]: 1 },
+		locked: true,
 		attack: {
 			target: { resource: SYNTH_RESOURCE_IDS.castleHP },
 			attacker: [{ kind: 'action', id: SYNTH_PLUNDER.id }],
@@ -230,8 +230,7 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 	},
 	buildingAttack: {
 		meta: SYNTH_BUILDING_ATTACK,
-		system: true,
-		baseCosts: { [SYNTH_RESOURCE_IDS.ap]: 1 },
+		locked: true,
 		attack: {
 			target: { building: SYNTH_BUILDING.id },
 			attacker: [
@@ -246,7 +245,7 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 	},
 	plunder: {
 		meta: SYNTH_PLUNDER,
-		system: true,
+		locked: true,
 		extra: [
 			{
 				kind: 'resource',
@@ -264,8 +263,7 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 	},
 	partial: {
 		meta: SYNTH_PARTIAL_ATTACK,
-		system: true,
-		baseCosts: { [SYNTH_RESOURCE_IDS.ap]: 0 },
+		locked: true,
 		attack: {
 			target: { resource: SYNTH_RESOURCE_IDS.castleHP },
 			combatResources: ['power'],
