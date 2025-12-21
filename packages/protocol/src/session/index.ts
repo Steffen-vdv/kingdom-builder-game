@@ -40,34 +40,6 @@ export type {
 
 export type SessionPlayerId = 'A' | 'B';
 
-export type SessionResourceSourceLink = {
-	type?: string;
-	id?: string;
-	detail?: string;
-	extra?: Record<string, unknown>;
-};
-
-export interface SessionResourceSourceMeta {
-	sourceKey: string;
-	longevity: 'ongoing' | 'permanent';
-	kind?: string;
-	id?: string;
-	detail?: string;
-	instance?: string;
-	dependsOn?: SessionResourceSourceLink[];
-	removal?: SessionResourceSourceLink;
-	effect?: {
-		type?: string;
-		method?: string;
-	};
-	extra?: Record<string, unknown>;
-}
-
-export interface SessionResourceSourceContribution {
-	amount: number;
-	meta: SessionResourceSourceMeta;
-}
-
 export interface SessionLandSnapshot {
 	id: string;
 	slotsMax: number;
@@ -106,10 +78,6 @@ export interface SessionPlayerStateSnapshot {
 	lands: SessionLandSnapshot[];
 	buildings: string[];
 	actions: string[];
-	resourceSources: Record<
-		string,
-		Record<string, SessionResourceSourceContribution>
-	>;
 	skipPhases: Record<string, Record<string, true>>;
 	skipSteps: Record<string, Record<string, Record<string, true>>>;
 	passives: SessionPassiveSummary[];
@@ -182,6 +150,39 @@ export interface PlayerSnapshotDeltaBucket {
 	values: Record<string, number>;
 }
 
+/**
+ * A single contribution to a resource forecast. Represents one source
+ * (building, passive, phase effect, etc.) that affects the resource.
+ */
+export interface ForecastContribution {
+	/** The change amount (positive or negative). */
+	amount: number;
+	/** Unique key for aggregation (same sourceKey = same source type). */
+	sourceKey: string;
+	/** The kind of source: 'passive', 'building', 'phase', 'action', etc. */
+	kind?: string;
+	/** Content ID reference for the source (e.g., 'building:core:farm'). */
+	id?: string;
+}
+
+/**
+ * Complete breakdown of forecast contributors for a single resource.
+ * Split into gains (positive), losses (negative), and net total.
+ */
+export interface ResourceForecastBreakdown {
+	/** All positive contributions (gains). */
+	gains: ForecastContribution[];
+	/** All negative contributions (losses). */
+	losses: ForecastContribution[];
+	/** Net change (sum of all contributions). */
+	net: number;
+}
+
+/**
+ * Forecast breakdown for all resources, keyed by resource ID.
+ */
+export type ForecastBreakdownMap = Record<string, ResourceForecastBreakdown>;
+
 export interface SimulateUpcomingPhasesIds {
 	growth: string;
 	upkeep: string;
@@ -198,6 +199,8 @@ export interface SimulateUpcomingPhasesResult {
 	after: SessionPlayerStateSnapshot;
 	delta: PlayerSnapshotDeltaBucket;
 	steps: SessionAdvanceResult[];
+	/** Breakdown of forecast contributions per resource (gains/losses/net). */
+	forecastBreakdown: ForecastBreakdownMap;
 }
 
 export interface SessionPassiveRecordSnapshot extends SessionPassiveSummary {

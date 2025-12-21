@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
+	ForecastBreakdownMap,
 	PlayerSnapshotDeltaBucket,
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
@@ -7,7 +8,12 @@ import type {
 import { useGameEngine } from './GameContext';
 import { enqueueSimulateUpcomingPhases } from './sessionSdk';
 
-export type NextTurnForecast = Record<string, PlayerSnapshotDeltaBucket>;
+export interface PlayerForecastData {
+	delta: PlayerSnapshotDeltaBucket;
+	breakdown: ForecastBreakdownMap;
+}
+
+export type NextTurnForecast = Record<string, PlayerForecastData>;
 
 interface ForecastCacheEntry {
 	key: string;
@@ -24,9 +30,10 @@ export function resetNextTurnForecastCacheForTests(): void {
 	resolvedRequests.clear();
 }
 
-function cloneEmptyDelta(): PlayerSnapshotDeltaBucket {
+function cloneEmptyForecast(): PlayerForecastData {
 	return {
-		values: {},
+		delta: { values: {} },
+		breakdown: {},
 	};
 }
 
@@ -165,7 +172,10 @@ export function useNextTurnForecast(): NextTurnForecast {
 							sessionId,
 							playerId,
 						);
-						updates[playerId] = response.result.delta;
+						updates[playerId] = {
+							delta: response.result.delta,
+							breakdown: response.result.forecastBreakdown,
+						};
 						hasSuccess = true;
 					} catch (error) {
 						void error;
@@ -192,7 +202,7 @@ export function useNextTurnForecast(): NextTurnForecast {
 						merged[playerId] = existing[playerId];
 						continue;
 					}
-					merged[playerId] = cloneEmptyDelta();
+					merged[playerId] = cloneEmptyForecast();
 				}
 				const entry: ForecastCacheEntry = {
 					key: hashKey,
@@ -234,7 +244,7 @@ export function useNextTurnForecast(): NextTurnForecast {
 		// Only create empty forecast on initial load before any data arrives
 		const forecast: NextTurnForecast = {};
 		for (const player of players) {
-			forecast[player.id] = cloneEmptyDelta();
+			forecast[player.id] = cloneEmptyForecast();
 		}
 		return forecast;
 	}, [hashKey, players, revision, sessionId]);

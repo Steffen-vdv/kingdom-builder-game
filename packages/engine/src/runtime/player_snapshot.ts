@@ -1,5 +1,4 @@
 import { cloneEffectList } from '../utils';
-import { cloneMeta } from '../resource_sources/meta';
 import type { EngineContext } from '../context';
 import type { ActionTrace, PlayerSnapshot } from '../log';
 import type { Land, PlayerId, PlayerState } from '../state';
@@ -12,8 +11,6 @@ import {
 	resolveBoundValue,
 	resolveResourceDefinition,
 } from '../resource/state-helpers';
-
-type ResourceSnapshotBucket = PlayerStateSnapshot['resourceSources'][string];
 
 type SkipPhases = PlayerStateSnapshot['skipPhases'];
 
@@ -71,25 +68,6 @@ function clonePassives(
 	playerId: PlayerId,
 ): PassiveSummary[] {
 	return context.passives.list(playerId).map((passive) => ({ ...passive }));
-}
-
-function cloneResourceSources(
-	sources: PlayerState['resourceSources'],
-): Record<string, ResourceSnapshotBucket> {
-	const result: Record<string, ResourceSnapshotBucket> = {};
-	for (const [resourceKey, contributions] of Object.entries(sources)) {
-		const next: ResourceSnapshotBucket = {};
-		if (contributions) {
-			for (const [sourceKey, contribution] of Object.entries(contributions)) {
-				next[sourceKey] = {
-					amount: contribution?.amount ?? 0,
-					meta: cloneMeta(contribution?.meta),
-				};
-			}
-		}
-		result[resourceKey] = next;
-	}
-	return result;
 }
 
 function cloneSkipPhases(skipPhases: PlayerState['skipPhases']): SkipPhases {
@@ -222,7 +200,6 @@ export function snapshotPlayer(
 		lands: player.lands.map((land) => cloneLand(land)),
 		buildings: Array.from(player.buildings),
 		actions: Array.from(player.actions),
-		resourceSources: cloneResourceSources(player.resourceSources),
 		skipPhases: cloneSkipPhases(player.skipPhases),
 		skipSteps: cloneSkipSteps(player.skipSteps),
 		passives: clonePassives(context, player.id),
