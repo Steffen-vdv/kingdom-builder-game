@@ -83,7 +83,7 @@ function spawnScript(scriptName, forwardArgs, tokensString) {
 		spawnArgs.push('--', ...forwardArgs);
 	}
 
-	const child = spawn('npm', spawnArgs, {
+	const child = spawn('pnpm', spawnArgs, {
 		stdio: 'inherit',
 		shell: process.platform === 'win32',
 		env: createEnv(tokensString),
@@ -98,7 +98,7 @@ function spawnScript(scriptName, forwardArgs, tokensString) {
 	});
 
 	child.on('error', (error) => {
-		console.error('[run-with-auth] Failed to start npm:', error);
+		console.error('[run-with-auth] Failed to start pnpm:', error);
 		process.exit(1);
 	});
 }
