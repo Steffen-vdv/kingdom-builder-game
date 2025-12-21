@@ -93,7 +93,7 @@
 			],
 			"category": "develop",
 			"order": 4,
-			"focus": "defense"
+			"focus": "combat"
 		},
 		"develop_watchtower": {
 			"id": "develop_watchtower",
@@ -115,7 +115,7 @@
 			],
 			"category": "develop",
 			"order": 5,
-			"focus": "defense"
+			"focus": "combat"
 		},
 		"tax": {
 			"id": "tax",
@@ -459,7 +459,7 @@
 			],
 			"category": "basic",
 			"order": 6,
-			"focus": "aggressive"
+			"focus": "combat"
 		},
 		"hold_festival": {
 			"id": "hold_festival",
@@ -686,7 +686,7 @@
 			],
 			"category": "build",
 			"order": 5,
-			"focus": "aggressive"
+			"focus": "combat"
 		},
 		"build_plow_workshop": {
 			"id": "build_plow_workshop",
@@ -737,7 +737,7 @@
 			],
 			"category": "build",
 			"order": 10,
-			"focus": "defense"
+			"focus": "combat"
 		},
 		"build_barracks": {
 			"id": "build_barracks",
@@ -754,7 +754,7 @@
 			],
 			"category": "build",
 			"order": 8,
-			"focus": "aggressive"
+			"focus": "combat"
 		},
 		"build_citadel": {
 			"id": "build_citadel",
@@ -771,7 +771,7 @@
 			],
 			"category": "build",
 			"order": 9,
-			"focus": "defense"
+			"focus": "combat"
 		},
 		"build_castle_gardens": {
 			"id": "build_castle_gardens",
@@ -805,7 +805,7 @@
 			],
 			"category": "build",
 			"order": 12,
-			"focus": "other"
+			"focus": "economy"
 		},
 		"build_palace": {
 			"id": "build_palace",
@@ -822,7 +822,7 @@
 			],
 			"category": "build",
 			"order": 13,
-			"focus": "other"
+			"focus": "economy"
 		},
 		"build_great_hall": {
 			"id": "build_great_hall",
@@ -839,7 +839,7 @@
 			],
 			"category": "build",
 			"order": 14,
-			"focus": "other"
+			"focus": "economy"
 		}
 	},
 	"buildings": {
@@ -932,7 +932,7 @@
 					}
 				}
 			],
-			"focus": "aggressive"
+			"focus": "combat"
 		},
 		"plow_workshop": {
 			"id": "plow_workshop",
@@ -1012,7 +1012,7 @@
 					]
 				}
 			],
-			"focus": "defense"
+			"focus": "combat"
 		},
 		"barracks": {
 			"id": "barracks",
@@ -1023,7 +1023,7 @@
 				"gold": 12
 			},
 			"onBuild": [],
-			"focus": "aggressive"
+			"focus": "combat"
 		},
 		"citadel": {
 			"id": "citadel",
@@ -1034,7 +1034,7 @@
 				"gold": 12
 			},
 			"onBuild": [],
-			"focus": "defense"
+			"focus": "combat"
 		},
 		"castle_gardens": {
 			"id": "castle_gardens",
@@ -1056,7 +1056,7 @@
 				"gold": 16
 			},
 			"onBuild": [],
-			"focus": "other"
+			"focus": "economy"
 		},
 		"palace": {
 			"id": "palace",
@@ -1067,7 +1067,7 @@
 				"gold": 20
 			},
 			"onBuild": [],
-			"focus": "other"
+			"focus": "economy"
 		},
 		"great_hall": {
 			"id": "great_hall",
@@ -1078,7 +1078,7 @@
 				"gold": 22
 			},
 			"onBuild": [],
-			"focus": "other"
+			"focus": "economy"
 		}
 	},
 	"developments": {
@@ -1150,7 +1150,7 @@
 				}
 			],
 			"order": 3,
-			"focus": "defense"
+			"focus": "combat"
 		},
 		"watchtower": {
 			"id": "watchtower",
@@ -1185,7 +1185,7 @@
 				}
 			],
 			"order": 4,
-			"focus": "defense"
+			"focus": "combat"
 		},
 		"garden": {
 			"id": "garden",

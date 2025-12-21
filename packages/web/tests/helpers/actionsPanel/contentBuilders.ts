@@ -130,7 +130,7 @@ export function buildActionsPanelContent({
 	Object.assign(basicAction, {
 		category: categories.basic,
 		order: 2,
-		focus: 'other',
+		focus: 'economy',
 	});
 	let buildingAction: ActionDefinition | undefined;
 	let buildingDefinition: BuildingDefinition | undefined;
@@ -144,7 +144,7 @@ export function buildActionsPanelContent({
 		Object.assign(buildingAction, {
 			category: categories.building,
 			order: 3,
-			focus: 'other',
+			focus: 'economy',
 		});
 		buildingDefinition = factory.building({
 			name: 'Great Hall',
