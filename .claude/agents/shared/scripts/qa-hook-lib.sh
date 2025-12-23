@@ -245,9 +245,36 @@ qa_current_branch() {
 	echo "detached-$short_sha"
 }
 
+# qa_get_comparison_base(branch) -> output the best base ref for comparison
+# Priority:
+#   1. origin/$branch (if exists) - only unpushed commits
+#   2. origin/main (fallback) - full branch scope
+# This ensures reviewers only see unpushed work when possible.
+qa_get_comparison_base() {
+	local branch="${1:-}"
+
+	# If branch provided, check for remote tracking branch first
+	if [[ -n "$branch" ]]; then
+		if git rev-parse --verify "origin/$branch" >/dev/null 2>&1; then
+			echo "origin/$branch"
+			return
+		fi
+	fi
+
+	# Fallback to origin/main
+	if git rev-parse --verify origin/main >/dev/null 2>&1; then
+		echo "origin/main"
+		return
+	fi
+
+	# No valid base found
+	echo ""
+}
+
 # qa_current_commits_json(branch_opt) -> output JSON array of SHAs
 # Simple and robust: always returns at least HEAD or empty array
 # Limited to 100 commits to avoid shell ARG_MAX issues
+# Uses remote tracking branch (origin/$branch) if available for correct scope.
 qa_current_commits_json() {
 	local branch_opt="${1:-}"
 	local head_sha
@@ -258,19 +285,24 @@ qa_current_commits_json() {
 		return
 	fi
 
-	# Try to get commits from origin/main...HEAD if origin/main exists
+	# Get the best comparison base (prefers origin/$branch over origin/main)
+	local base
+	base=$(qa_get_comparison_base "$branch_opt")
+
+	# Try to get commits from base...HEAD if base exists
 	# Limit to 100 commits to avoid ARG_MAX issues in shell
-	if git rev-parse --verify origin/main >/dev/null 2>&1; then
+	if [[ -n "$base" ]]; then
 		local commits
-		commits=$(git log --format='%H' -n 100 origin/main...HEAD 2>/dev/null | jq -R -s 'split("\n") | map(select(length > 0))' 2>/dev/null || echo "[]")
-		if [[ -n "$commits" && "$commits" != "[]" ]]; then
+		commits=$(git log --format='%H' -n 100 "${base}...HEAD" 2>/dev/null | jq -R -s 'split("\n") | map(select(length > 0))' 2>/dev/null || echo "[]")
+		# Return whatever we got (even empty array - means nothing unpushed)
+		if [[ -n "$commits" ]]; then
 			echo "$commits"
 			return
 		fi
 	fi
 
-	# Fallback: just HEAD as single-element array
-	# Use printf to build JSON manually if jq fails (more robust for CI)
+	# Fallback only when no valid base exists (new repo, offline, etc.)
+	# Use HEAD as single-element array
 	local result
 	result=$(jq -n -c --arg head "$head_sha" '[$head]' 2>/dev/null) || result=""
 	if [[ -n "$result" ]]; then
@@ -281,22 +313,29 @@ qa_current_commits_json() {
 	fi
 }
 
-# qa_files_changed_json() -> JSON array of changed files
-# Fetches origin/main if not present, then compares HEAD to it.
+# qa_files_changed_json(branch_opt) -> JSON array of changed files
+# Uses remote tracking branch (origin/$branch) if available, else origin/main.
 # Limited to 500 files to avoid shell ARG_MAX issues
 # Always returns valid JSON array (empty [] if unable to determine)
 qa_files_changed_json() {
-	# Ensure origin/main is available for comparison
-	if ! git rev-parse --verify origin/main >/dev/null 2>&1; then
+	local branch_opt="${1:-}"
+
+	# Get the best comparison base (prefers origin/$branch over origin/main)
+	local base
+	base=$(qa_get_comparison_base "$branch_opt")
+
+	# If no base found, try to fetch origin/main
+	if [[ -z "$base" ]]; then
 		# Fetch main branch from origin (silent, don't fail if network issues)
 		# Use timeout to prevent hanging in CI shallow clones
 		timeout 5 git fetch --depth=1 origin main >/dev/null 2>&1 || true
+		base=$(qa_get_comparison_base "$branch_opt")
 	fi
 
 	# Now try to get the diff (limit to 500 files to avoid ARG_MAX)
-	if git rev-parse --verify origin/main >/dev/null 2>&1; then
+	if [[ -n "$base" ]]; then
 		local result
-		result=$(git diff --name-only origin/main...HEAD 2>/dev/null | head -n 500 | \
+		result=$(git diff --name-only "${base}...HEAD" 2>/dev/null | head -n 500 | \
 			jq -R -s 'split("\n") | map(select(length > 0))' 2>/dev/null) || result=""
 		if [[ -n "$result" ]]; then
 			echo "$result"
@@ -304,7 +343,7 @@ qa_files_changed_json() {
 			echo '[]'
 		fi
 	else
-		# Fallback: if still no origin/main, return empty (truly offline/shallow scenario)
+		# Fallback: no valid base found (truly offline/shallow scenario)
 		echo '[]'
 	fi
 }

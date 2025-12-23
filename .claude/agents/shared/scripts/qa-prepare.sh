@@ -108,11 +108,11 @@ if [[ -z "$BRANCH" ]]; then
 	exit 1
 fi
 
-# Get commits on this branch
+# Get commits on this branch (compares to origin/$BRANCH if exists, else origin/main)
 COMMITS=$(qa_current_commits_json "$BRANCH")
 
-# Get files changed
-FILES_CHANGED=$(qa_files_changed_json)
+# Get files changed (uses same comparison base as commits)
+FILES_CHANGED=$(qa_files_changed_json "$BRANCH")
 
 # Get user prompts from session log (fixed file, no session ID needed)
 PROMPTS=$(qa_prompts_from_log)
