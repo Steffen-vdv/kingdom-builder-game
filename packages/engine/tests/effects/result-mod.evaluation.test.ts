@@ -50,12 +50,12 @@ describe('result_mod evaluation modifiers', () => {
 		// PlayerState uses resourceValues for all resources
 		engineContext.activePlayer.resourceValues[Resource.gold] = 0;
 		engineContext.activePlayer.resourceValues[Resource.happiness] = 0;
-		engineContext.activePlayer.resourceValues[Resource.ap] = 0;
+		engineContext.activePlayer.resourceValues[Resource.cp] = 0;
 
 		const gains: ResourceGain[] = [
 			{ resourceId: Resource.gold, amount: 5 },
 			{ resourceId: Resource.happiness, amount: 3 },
-			{ resourceId: Resource.ap, amount: -5 },
+			{ resourceId: Resource.cp, amount: -5 },
 		];
 
 		engineContext.passives.runEvaluationMods(TARGET_KEY, engineContext, gains);
@@ -64,13 +64,13 @@ describe('result_mod evaluation modifiers', () => {
 		expect(gains[0].amount).toBe(8);
 		expect(gains[1].resourceId).toBe(Resource.happiness);
 		expect(gains[1].amount).toBeCloseTo(5.5);
-		expect(gains[2].resourceId).toBe(Resource.ap);
+		expect(gains[2].resourceId).toBe(Resource.cp);
 		expect(gains[2].amount).toBeCloseTo(-3.3);
 		expect(engineContext.activePlayer.resourceValues[Resource.gold]).toBe(1);
 		expect(engineContext.activePlayer.resourceValues[Resource.happiness]).toBe(
 			4,
 		);
-		expect(engineContext.activePlayer.resourceValues[Resource.ap]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[Resource.cp]).toBe(0);
 	});
 
 	it('unregisters evaluation modifiers and validates inputs', () => {

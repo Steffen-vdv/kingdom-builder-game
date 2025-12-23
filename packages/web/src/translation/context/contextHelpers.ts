@@ -1,5 +1,6 @@
 import type {
 	ActionCategoryConfig,
+	ActionMetaCategoryConfig,
 	PlayerStartConfig,
 	Registry,
 	SessionPassiveEvaluationModifierMap,
@@ -10,6 +11,8 @@ import type {
 import type {
 	TranslationActionCategoryDefinition,
 	TranslationActionCategoryRegistry,
+	TranslationActionMetaCategoryDefinition,
+	TranslationActionMetaCategoryRegistry,
 	TranslationPassiveDescriptor,
 	TranslationPassiveModifierMap,
 	TranslationPlayer,
@@ -135,6 +138,60 @@ export function wrapActionCategoryRegistry(
 			const definition = byId.get(id);
 			if (!definition) {
 				throw new Error(`Unknown action category definition for id "${id}".`);
+			}
+			return definition;
+		},
+		has(id: string) {
+			return byId.has(id);
+		},
+		list() {
+			return ordered;
+		},
+	});
+}
+
+function normalizeActionMetaCategoryDefinition(
+	definition: ActionMetaCategoryConfig,
+): TranslationActionMetaCategoryDefinition {
+	return Object.freeze({
+		id: definition.id,
+		label: definition.label,
+		icon: definition.icon,
+		bindingResourceId: definition.bindingResourceId,
+		costModel: definition.costModel,
+		...(definition.globalCostAmount !== undefined
+			? { globalCostAmount: definition.globalCostAmount }
+			: {}),
+		visibilityTrigger: definition.visibilityTrigger,
+		order: definition.order,
+		...(definition.categoryIds !== undefined
+			? { categoryIds: Object.freeze([...definition.categoryIds]) }
+			: {}),
+	});
+}
+
+export function wrapActionMetaCategoryRegistry(
+	registry: Registry<ActionMetaCategoryConfig>,
+): TranslationActionMetaCategoryRegistry {
+	const entries = registry.values().map(normalizeActionMetaCategoryDefinition);
+	entries.sort((left, right) => {
+		if (left.order !== right.order) {
+			return left.order - right.order;
+		}
+		return left.id.localeCompare(right.id);
+	});
+	const ordered: ReadonlyArray<TranslationActionMetaCategoryDefinition> =
+		Object.freeze([...entries]);
+	const byId = new Map(
+		ordered.map((definition) => [definition.id, definition] as const),
+	);
+	return Object.freeze({
+		get(id: string) {
+			const definition = byId.get(id);
+			if (!definition) {
+				throw new Error(
+					`Unknown action meta-category definition for id "${id}".`,
+				);
 			}
 			return definition;
 		},

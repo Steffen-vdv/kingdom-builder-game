@@ -8,6 +8,7 @@ import {
 import {
 	createActionRegistry,
 	Resource as CResource,
+	MetaCategory,
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import {
@@ -21,6 +22,7 @@ describe('resource and stat bounds', () => {
 		actions.add('lower_fort', {
 			id: 'lower_fort',
 			name: 'Lower Fort',
+			metaCategory: MetaCategory.Commands,
 			effects: [
 				{
 					type: 'resource',
@@ -42,8 +44,8 @@ describe('resource and stat bounds', () => {
 		const effectAmount = resourceParams?.amount ?? 0;
 		engineContext.activePlayer.resourceValues[CResource.fortificationStrength] =
 			effectAmount - 1;
-		const cost = getActionCosts('lower_fort', engineContext)[CResource.ap] ?? 0;
-		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
+		const cost = getActionCosts('lower_fort', engineContext)[CResource.cp] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] = cost;
 		performAction('lower_fort', engineContext);
 		expect(
 			getResourceValue(
@@ -58,6 +60,7 @@ describe('resource and stat bounds', () => {
 		actions.add('lose_gold', {
 			id: 'lose_gold',
 			name: 'Lose Gold',
+			metaCategory: MetaCategory.Commands,
 			effects: [
 				{
 					type: 'resource',
@@ -78,8 +81,8 @@ describe('resource and stat bounds', () => {
 		)?.params as ResourceAmountParamsResult | undefined;
 		const effectAmount = resourceParams?.amount ?? 0;
 		engineContext.activePlayer.resourceValues[CResource.gold] = 1;
-		const cost = getActionCosts('lose_gold', engineContext)[CResource.ap] ?? 0;
-		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
+		const cost = getActionCosts('lose_gold', engineContext)[CResource.cp] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] = cost;
 		performAction('lose_gold', engineContext);
 		expect(getResourceValue(engineContext.activePlayer, CResource.gold)).toBe(
 			Math.max(1 + effectAmount, 0),
@@ -91,6 +94,7 @@ describe('resource and stat bounds', () => {
 		actions.add('bad_add', {
 			id: 'bad_add',
 			name: 'Bad Add',
+			metaCategory: MetaCategory.Commands,
 			effects: [
 				{
 					type: 'resource',
@@ -114,8 +118,8 @@ describe('resource and stat bounds', () => {
 			engineContext.activePlayer,
 			CResource.armyStrength,
 		);
-		const cost = getActionCosts('bad_add', engineContext)[CResource.ap] ?? 0;
-		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
+		const cost = getActionCosts('bad_add', engineContext)[CResource.cp] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] = cost;
 		performAction('bad_add', engineContext);
 		expect(
 			getResourceValue(engineContext.activePlayer, CResource.armyStrength),

@@ -90,7 +90,7 @@ describe('action effect groups integration', () => {
 			);
 		}
 		const player = engineContext.activePlayer;
-		player.resourceValues[Resource.ap] = 5;
+		player.resourceValues[Resource.cp] = 5;
 		player.resourceValues[Resource.gold] = 0;
 		player.resourceValues[Resource.happiness] = 0;
 		return { engineContext, chooser, group, rewardAmount };
@@ -100,7 +100,7 @@ describe('action effect groups integration', () => {
 		const { engineContext, chooser, group } = setup();
 		const costBag = getActionCosts(chooser.id, engineContext);
 		// AP cost is applied globally by the action cost system
-		expect(costBag[Resource.ap] ?? 0).toBe(RULES.defaultActionAPCost);
+		expect(costBag[Resource.cp] ?? 0).toBe(RULES.defaultActionAPCost);
 		expect(() => performAction(chooser.id, engineContext)).toThrowError(
 			new RegExp(group.id),
 		);

@@ -1,6 +1,6 @@
-import { ActionBuilder, action, actionParams, building } from '../src/config/builders';
-import { actionEffectGroup, actionEffectGroupOption } from '../src/config/builders/actionEffectGroups';
-import type { ActionEffectGroupDef } from '../src/config/builders/actionEffectGroups';
+import { ActionBuilder, action, actionParams, building } from '../src/infrastructure/builders';
+import { actionEffectGroup, actionEffectGroupOption } from '../src/infrastructure/builders/actionEffectGroups';
+import type { ActionEffectGroupDef } from '../src/infrastructure/builders/actionEffectGroups';
 import { DevelopActions } from '../src/actions';
 import { describe, expect, it } from 'vitest';
 

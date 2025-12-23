@@ -1,17 +1,28 @@
 import {
 	createActionCategoryRegistry,
+	createActionMetaCategoryRegistry,
 	createActionRegistry,
 	createBuildingRegistry,
 	createDevelopmentRegistry,
 	type ActionCategoryConfig as ContentActionCategoryConfig,
+	MetaCategory,
 } from '@kingdom-builder/contents';
-import type {
-	ActionCategoryConfig as SessionActionCategoryConfig,
-	ActionConfig,
-	BuildingConfig,
-	DevelopmentConfig,
+import {
 	Registry,
+	type ActionCategoryConfig as SessionActionCategoryConfig,
+	type ActionConfig,
+	type ActionMetaCategoryConfig,
+	type BuildingConfig,
+	type DevelopmentConfig,
 } from '@kingdom-builder/protocol';
+
+export interface ContentFactoryOptions {
+	/**
+	 * When true, creates empty registries for isolated testing.
+	 * When false (default), uses pre-populated registries from contents.
+	 */
+	isolated?: boolean;
+}
 
 let seq = 0;
 function nextId(prefix: string) {
@@ -21,6 +32,7 @@ function nextId(prefix: string) {
 
 export interface ContentFactory {
 	categories: Registry<ContentActionCategoryConfig>;
+	actionMetaCategories: Registry<ActionMetaCategoryConfig>;
 	actions: Registry<ActionConfig>;
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
@@ -32,11 +44,26 @@ export interface ContentFactory {
 	development(definition?: Partial<DevelopmentConfig>): DevelopmentConfig;
 }
 
-export function createContentFactory(): ContentFactory {
-	const categories = createActionCategoryRegistry();
-	const actions = createActionRegistry();
-	const buildings = createBuildingRegistry();
-	const developments = createDevelopmentRegistry();
+export function createContentFactory(
+	options: ContentFactoryOptions = {},
+): ContentFactory {
+	// Default: use pre-populated registries from contents package
+	// When isolated=true: use empty registries for isolated testing
+	const categories = options.isolated
+		? new Registry<ContentActionCategoryConfig>()
+		: createActionCategoryRegistry();
+	// Meta-categories always use real definitions - they define the cost model
+	// which is needed even in isolated test scenarios
+	const actionMetaCategories = createActionMetaCategoryRegistry();
+	const actions = options.isolated
+		? new Registry<ActionConfig>()
+		: createActionRegistry();
+	const buildings = options.isolated
+		? new Registry<BuildingConfig>()
+		: createBuildingRegistry();
+	const developments = options.isolated
+		? new Registry<DevelopmentConfig>()
+		: createDevelopmentRegistry();
 
 	let nextCategoryOrder = categories.values().length;
 
@@ -70,7 +97,7 @@ export function createContentFactory(): ContentFactory {
 
 	function action(definition: Partial<ActionConfig> = {}): ActionConfig {
 		const id = definition.id ?? nextId('action');
-		const built: ActionConfig = {
+		const built = {
 			id,
 			name: definition.name ?? id,
 			icon: definition.icon,
@@ -79,6 +106,8 @@ export function createContentFactory(): ContentFactory {
 			effects: definition.effects ?? [],
 			system: definition.system,
 			locked: definition.locked,
+			// metaCategory is required by the action registry schema
+			metaCategory: MetaCategory.Commands,
 		};
 		actions.add(id, built);
 		return built;
@@ -126,6 +155,7 @@ export function createContentFactory(): ContentFactory {
 
 	return {
 		categories,
+		actionMetaCategories,
 		actions,
 		buildings,
 		developments,

@@ -6,7 +6,8 @@ import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 
 describe('cost_mod effects', () => {
 	it('adds and removes cost modifiers', () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const targetAction = content.action({ baseCosts: { [CResource.gold]: 2 } });
 		const addModifierAction = content.action({
 			effects: [
@@ -40,7 +41,7 @@ describe('cost_mod effects', () => {
 			getActionCosts(targetAction.id, engineContext)[CResource.gold] ?? 0;
 		const addModifierCost = getActionCosts(addModifierAction.id, engineContext);
 		// Give enough AP for both actions
-		engineContext.activePlayer.resourceValues[CResource.ap] = 10;
+		engineContext.activePlayer.resourceValues[CResource.cp] = 10;
 		engineContext.activePlayer.resourceValues[CResource.gold] =
 			addModifierCost[CResource.gold] ?? 0;
 		performAction(addModifierAction.id, engineContext);
@@ -55,7 +56,8 @@ describe('cost_mod effects', () => {
 	});
 
 	it('supports stacked percentage modifiers after flat adjustments', () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const targetAction = content.action({ baseCosts: { [CResource.gold]: 3 } });
 		const addModifiersAction = content.action({
 			locked: true,
@@ -97,7 +99,7 @@ describe('cost_mod effects', () => {
 			advance(engineContext);
 		}
 		engineContext.activePlayer.actions.add(addModifiersAction.id);
-		engineContext.activePlayer.resourceValues[CResource.ap] = 10;
+		engineContext.activePlayer.resourceValues[CResource.cp] = 10;
 		const initialCost =
 			getActionCosts(targetAction.id, engineContext)[CResource.gold] ?? 0;
 		performAction(addModifiersAction.id, engineContext);

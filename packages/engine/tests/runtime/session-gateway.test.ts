@@ -16,6 +16,7 @@ import {
 	RULES as REAL_RULES,
 	PhaseId,
 	ACTIONS as REAL_ACTIONS,
+	ACTION_META_CATEGORIES as REAL_ACTION_META_CATEGORIES,
 	BUILDINGS as REAL_BUILDINGS,
 	DEVELOPMENTS as REAL_DEVELOPMENTS,
 } from '@kingdom-builder/contents';
@@ -24,7 +25,7 @@ import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import type { RuntimeResourceContent } from '../../src/resource/index.ts';
 
 // Use actual Resource IDs - they ARE the resource keys directly
-const RESOURCE_AP = CResource.ap;
+const RESOURCE_CP = CResource.cp;
 const RESOURCE_GOLD = CResource.gold;
 
 const FAILURE_REQUIREMENT_ID = 'vitest:fail';
@@ -52,7 +53,9 @@ interface CreateGatewayOptions {
 }
 
 function createGateway(options?: CreateGatewayOptions) {
-	const content = createContentFactory();
+	// Use isolated mode so actionCostResource returns command-points
+	// (the meta-category binding resource) instead of gold from real actions
+	const content = createContentFactory({ isolated: true });
 	const gainGold = content.action({
 		effects: [
 			{
@@ -80,6 +83,7 @@ function createGateway(options?: CreateGatewayOptions) {
 
 	const session = createEngineSession({
 		actions: REAL_ACTIONS,
+		actionMetaCategories: REAL_ACTION_META_CATEGORIES,
 		buildings: REAL_BUILDINGS,
 		developments: REAL_DEVELOPMENTS,
 		phases: REAL_PHASES,
@@ -285,7 +289,7 @@ describe('createLocalSessionGateway', () => {
 			sessionId,
 			actionId: actionIds.gainGold,
 		});
-		expect(costResponse.costs[RESOURCE_AP]).toBe(1);
+		expect(costResponse.costs[RESOURCE_CP]).toBe(1);
 		const requirementResponse = await gateway.getActionRequirements({
 			sessionId,
 			actionId: actionIds.gainGold,

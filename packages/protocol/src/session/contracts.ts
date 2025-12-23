@@ -2,6 +2,7 @@ import type {
 	ActionCategoryConfig,
 	ActionConfig,
 	ActionEffectGroup,
+	ActionMetaCategoryConfig,
 	BuildingConfig,
 	DevelopmentConfig,
 	GameConfig,
@@ -45,11 +46,15 @@ export type SerializedRegistry<T> = Record<string, T>;
 export type SessionActionCategoryRegistry =
 	SerializedRegistry<ActionCategoryConfig>;
 
+export type SessionActionMetaCategoryRegistry =
+	SerializedRegistry<ActionMetaCategoryConfig>;
+
 export interface SessionRegistriesPayload {
 	actions: SerializedRegistry<ActionConfig>;
 	buildings: SerializedRegistry<BuildingConfig>;
 	developments: SerializedRegistry<DevelopmentConfig>;
 	actionCategories?: SessionActionCategoryRegistry;
+	actionMetaCategories?: SessionActionMetaCategoryRegistry;
 	/**
 	 * Registry of concrete resource definitions. Always present for every
 	 * session payload.

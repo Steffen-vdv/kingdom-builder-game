@@ -405,6 +405,7 @@ export type {
 	SessionMetadataSnapshot,
 	SessionMetadataSnapshotResponse,
 	SessionActionCategoryRegistry,
+	SessionActionMetaCategoryRegistry,
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
 	SessionActionCostRequest,

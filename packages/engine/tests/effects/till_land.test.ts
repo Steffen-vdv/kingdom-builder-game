@@ -15,7 +15,7 @@ describe('land:till effect', () => {
 		});
 		const engineContext = createTestEngine({ actions: content.actions });
 		engineContext.activePlayer.actions.add(tillAction.id);
-		engineContext.activePlayer.resourceValues[CResource.ap] = 10;
+		engineContext.activePlayer.resourceValues[CResource.cp] = 10;
 		const land = engineContext.activePlayer.lands[1];
 		const before = land.slotsMax;
 		const expected = Math.min(
@@ -37,7 +37,7 @@ describe('land:till effect', () => {
 		});
 		const engineContext = createTestEngine({ actions: content.actions });
 		engineContext.activePlayer.actions.add(tillAction.id);
-		engineContext.activePlayer.resourceValues[CResource.ap] = 10;
+		engineContext.activePlayer.resourceValues[CResource.cp] = 10;
 		performAction(tillAction.id, engineContext);
 		expect(() => performAction(tillAction.id, engineContext)).toThrow(
 			/already tilled/,
@@ -52,7 +52,7 @@ describe('land:till effect', () => {
 		});
 		const engineContext = createTestEngine({ actions: content.actions });
 		engineContext.activePlayer.actions.add(tillAction.id);
-		engineContext.activePlayer.resourceValues[CResource.ap] = 10;
+		engineContext.activePlayer.resourceValues[CResource.cp] = 10;
 		performAction(tillAction.id, engineContext);
 		const tilledCount = engineContext.activePlayer.lands.filter(
 			(land) => land.tilled,

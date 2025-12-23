@@ -31,7 +31,6 @@ import {
 	type ActionAvailabilityResult,
 } from './getActionAvailability';
 import { summarizeActionWithInstallation } from './actionSummaryHelpers';
-import { selectActionDescriptor } from '../../translation/effects/registrySelectors';
 
 interface CategoryEntry {
 	id: string;
@@ -113,9 +112,23 @@ export default function ActionsPanel() {
 	);
 	const actionCostIcon = actionCostDescriptor.icon;
 	const actionCostLabel = actionCostDescriptor.label ?? actionCostResource;
+	const primaryMetaCategory = useMemo(() => {
+		const metaCategories = translationContext.actionMetaCategories.list();
+		const first = metaCategories[0];
+		if (!first) {
+			throw new Error(
+				'No action meta-category configured. At least one meta-category is required.',
+			);
+		}
+		return first;
+	}, [translationContext.actionMetaCategories]);
 	const actionKeyword = useMemo(
-		() => selectActionDescriptor(translationContext),
-		[translationContext],
+		() => ({
+			singular: primaryMetaCategory.label,
+			plural: primaryMetaCategory.label,
+			icon: primaryMetaCategory.icon,
+		}),
+		[primaryMetaCategory],
 	);
 	const sectionRef = useAnimate<HTMLDivElement>();
 	const player = sessionView.active;
@@ -328,7 +341,8 @@ export default function ActionsPanel() {
 			if (visibleActions.length === 0) {
 				return;
 			}
-			const fallbackLabel = grouped[0]?.name ?? definition?.title ?? 'Actions';
+			const fallbackLabel =
+				grouped[0]?.name ?? definition?.title ?? actionKeyword.plural;
 			const descriptor = createCategoryDescriptor(definition, fallbackLabel);
 			entries.push({
 				...entry,
@@ -337,7 +351,7 @@ export default function ActionsPanel() {
 			});
 		});
 		return entries;
-	}, [categoryEntries]);
+	}, [categoryEntries, actionKeyword.plural]);
 	const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
 	useEffect(() => {
 		if (visibleCategoryEntries.length === 0) {

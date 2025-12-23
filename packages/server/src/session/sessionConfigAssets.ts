@@ -5,6 +5,7 @@ import {
 	developmentSchema,
 	validateGameConfig,
 	type ActionConfig,
+	type ActionMetaCategoryConfig,
 	type BuildingConfig,
 	type DevelopmentConfig,
 	type GameConfig,
@@ -30,6 +31,7 @@ export type SessionResourceRegistry = SerializedRegistry<ResourceDefinition>;
 
 export interface SessionBaseOptions {
 	actions: Registry<ActionConfig>;
+	actionMetaCategories: Registry<ActionMetaCategoryConfig>;
 	actionCategories: Registry<ActionCategoryConfig>;
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
@@ -85,6 +87,10 @@ export function buildSessionAssets(
 	};
 	if (context.baseRegistries.actionCategories) {
 		registries.actionCategories = context.baseRegistries.actionCategories;
+	}
+	if (context.baseRegistries.actionMetaCategories) {
+		registries.actionMetaCategories =
+			context.baseRegistries.actionMetaCategories;
 	}
 	const metadata = buildSessionMetadata({
 		buildings,

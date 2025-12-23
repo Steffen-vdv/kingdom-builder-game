@@ -1,6 +1,7 @@
 import { z, type ZodObject, type ZodRawShape } from 'zod';
 import {
 	actionCategorySchema,
+	actionMetaCategorySchema,
 	actionSchema,
 	buildingSchema,
 	developmentSchema,
@@ -164,6 +165,9 @@ export const sessionRegistriesSchema = z
 		buildings: serializedRegistrySchema(buildingSchema),
 		developments: serializedRegistrySchema(developmentSchema),
 		actionCategories: serializedRegistrySchema(actionCategorySchema).optional(),
+		actionMetaCategories: serializedRegistrySchema(
+			actionMetaCategorySchema,
+		).optional(),
 		resources: resourceRegistrySchema,
 		resourceGroups: resourceGroupRegistrySchema,
 		resourceCategories: resourceCategoriesRegistrySchema,

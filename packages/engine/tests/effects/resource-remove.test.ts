@@ -5,11 +5,9 @@ import {
 	getActionCosts,
 	getResourceValue,
 } from '../../src/index.ts';
-import {
-	createActionRegistry,
-	Resource as CResource,
-} from '@kingdom-builder/contents';
+import { Resource as CResource } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
+import { createContentFactory } from '@kingdom-builder/testing';
 import {
 	resourceAmountParams,
 	resourcePercentParams,
@@ -19,8 +17,10 @@ import {
 
 describe('resource:remove effect', () => {
 	it('decrements a resource via action effect', () => {
-		const actions = createActionRegistry();
-		actions.add('pay_gold', {
+		// Use isolated mode so actionCostResource returns command-points
+		// (the meta-category binding resource) instead of gold from real actions
+		const content = createContentFactory({ isolated: true });
+		const payGold = content.action({
 			id: 'pay_gold',
 			name: 'Pay Gold',
 			effects: [
@@ -34,20 +34,21 @@ describe('resource:remove effect', () => {
 				},
 			],
 		});
-		const engineContext = createTestEngine({ actions });
+		const engineContext = createTestEngine(content);
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
+		// Set initial gold before testing removal (isolated mode has no initial gold)
+		engineContext.activePlayer.resourceValues[CResource.gold] = 10;
 		const before = getResourceValue(engineContext.activePlayer, CResource.gold);
-		const actionDefinition = actions.get('pay_gold');
-		const params = actionDefinition.effects.find(
+		const params = payGold.effects.find(
 			(effect) =>
 				effect.type === 'resource' &&
 				effect.method === 'remove' &&
 				effect.params?.resourceId === CResource.gold,
 		)?.params as ResourceAmountParamsResult | undefined;
 		const amount = params?.amount ?? 0;
-		const cost = getActionCosts('pay_gold', engineContext)[CResource.ap] ?? 0;
-		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
+		const cost = getActionCosts('pay_gold', engineContext)[CResource.cp] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] = cost;
 		performAction('pay_gold', engineContext);
 		expect(getResourceValue(engineContext.activePlayer, CResource.gold)).toBe(
 			before - amount,
@@ -55,8 +56,9 @@ describe('resource:remove effect', () => {
 	});
 
 	it('rounds fractional amounts according to round setting', () => {
-		const actions = createActionRegistry();
-		actions.add('round_up_remove', {
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
+		const roundUpRemove = content.action({
 			id: 'round_up_remove',
 			name: 'Round Up Remove',
 			effects: [
@@ -71,7 +73,7 @@ describe('resource:remove effect', () => {
 				},
 			],
 		});
-		actions.add('round_down_remove', {
+		const roundDownRemove = content.action({
 			id: 'round_down_remove',
 			name: 'Round Down Remove',
 			effects: [
@@ -86,22 +88,20 @@ describe('resource:remove effect', () => {
 				},
 			],
 		});
-		const engineContext = createTestEngine({ actions });
+		const engineContext = createTestEngine(content);
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
 
-		const roundUpParams = actions
-			.get('round_up_remove')
-			.effects.find(
-				(effect) =>
-					effect.type === 'resource' &&
-					effect.method === 'remove' &&
-					effect.params?.resourceId === CResource.gold,
-			)?.params as ResourcePercentParamsResult | undefined;
+		const roundUpParams = roundUpRemove.effects.find(
+			(effect) =>
+				effect.type === 'resource' &&
+				effect.method === 'remove' &&
+				effect.params?.resourceId === CResource.gold,
+		)?.params as ResourcePercentParamsResult | undefined;
 		const roundUpBase = 7;
 		engineContext.activePlayer.resourceValues[CResource.gold] = roundUpBase;
-		engineContext.activePlayer.resourceValues[CResource.ap] =
-			getActionCosts('round_up_remove', engineContext)[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] =
+			getActionCosts('round_up_remove', engineContext)[CResource.cp] ?? 0;
 		const roundUpDelta =
 			roundUpParams?.reconciledDelta?.(roundUpBase, 'remove') ?? 0;
 		performAction('round_up_remove', engineContext);
@@ -109,18 +109,16 @@ describe('resource:remove effect', () => {
 			roundUpBase + roundUpDelta,
 		);
 
-		const roundDownParams = actions
-			.get('round_down_remove')
-			.effects.find(
-				(effect) =>
-					effect.type === 'resource' &&
-					effect.method === 'remove' &&
-					effect.params?.resourceId === CResource.gold,
-			)?.params as ResourcePercentParamsResult | undefined;
+		const roundDownParams = roundDownRemove.effects.find(
+			(effect) =>
+				effect.type === 'resource' &&
+				effect.method === 'remove' &&
+				effect.params?.resourceId === CResource.gold,
+		)?.params as ResourcePercentParamsResult | undefined;
 		const roundDownBase = 9;
 		engineContext.activePlayer.resourceValues[CResource.gold] = roundDownBase;
-		engineContext.activePlayer.resourceValues[CResource.ap] =
-			getActionCosts('round_down_remove', engineContext)[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] =
+			getActionCosts('round_down_remove', engineContext)[CResource.cp] ?? 0;
 		const roundDownDelta =
 			roundDownParams?.reconciledDelta?.(roundDownBase, 'remove') ?? 0;
 		performAction('round_down_remove', engineContext);

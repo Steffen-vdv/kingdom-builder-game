@@ -4,6 +4,7 @@ import type { Services, PassiveManager } from './services';
 import type { ResourceSourceFrame } from './resource_sources';
 import type {
 	ActionConfig as ActionDef,
+	ActionMetaCategoryConfig,
 	BuildingConfig as BuildingDef,
 	DevelopmentConfig as DevelopmentDef,
 	PlayerStartConfig,
@@ -25,6 +26,7 @@ export class EngineContext {
 		public actionCostResourceId: string,
 		public actionCostAmount: number | null,
 		public resourceCatalog: RuntimeResourceCatalog,
+		public actionMetaCategories: Registry<ActionMetaCategoryConfig>,
 		public compensations: Record<PlayerId, PlayerStartConfig> = {
 			A: {},
 			B: {},

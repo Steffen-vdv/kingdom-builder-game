@@ -105,12 +105,12 @@ describe('council AP scaling', () => {
 
 		// Set up: 1 council, 0 AP
 		player.resourceValues[Resource.council] = 1;
-		player.resourceValues[Resource.ap] = 0;
+		player.resourceValues[Resource.cp] = 0;
 
 		positionAtGainApStep(engine);
 		advance(engine);
 
-		expect(player.resourceValues[Resource.ap]).toBe(1 * COUNCIL_AP_GAIN);
+		expect(player.resourceValues[Resource.cp]).toBe(1 * COUNCIL_AP_GAIN);
 	});
 
 	it('grants AP linearly with council count (2 councils)', () => {
@@ -119,14 +119,14 @@ describe('council AP scaling', () => {
 
 		// Set up: 2 councils, 0 AP
 		player.resourceValues[Resource.council] = 2;
-		player.resourceValues[Resource.ap] = 0;
+		player.resourceValues[Resource.cp] = 0;
 
 		positionAtGainApStep(engine);
 		advance(engine);
 
 		// 2 councils should give exactly 2 × AP_PER_COUNCIL (not 4×!)
 		// Bug would cause: 2 bundles × 2 (from evaluator) = quadratic scaling
-		expect(player.resourceValues[Resource.ap]).toBe(2 * COUNCIL_AP_GAIN);
+		expect(player.resourceValues[Resource.cp]).toBe(2 * COUNCIL_AP_GAIN);
 	});
 
 	it('grants AP linearly with council count (5 councils)', () => {
@@ -135,14 +135,14 @@ describe('council AP scaling', () => {
 
 		// Set up: 5 councils, 0 AP
 		player.resourceValues[Resource.council] = 5;
-		player.resourceValues[Resource.ap] = 0;
+		player.resourceValues[Resource.cp] = 0;
 
 		positionAtGainApStep(engine);
 		advance(engine);
 
 		// 5 councils should give exactly 5 × AP_PER_COUNCIL (not 25×!)
 		// Bug would cause: 5 bundles × 5 (from evaluator) = quadratic scaling
-		expect(player.resourceValues[Resource.ap]).toBe(5 * COUNCIL_AP_GAIN);
+		expect(player.resourceValues[Resource.cp]).toBe(5 * COUNCIL_AP_GAIN);
 	});
 
 	it.each([1, 2, 3, 4, 10])('%i councils grants linear AP', (councils) => {
@@ -150,11 +150,11 @@ describe('council AP scaling', () => {
 		const player = engine.activePlayer;
 
 		player.resourceValues[Resource.council] = councils;
-		player.resourceValues[Resource.ap] = 0;
+		player.resourceValues[Resource.cp] = 0;
 
 		positionAtGainApStep(engine);
 		advance(engine);
 
-		expect(player.resourceValues[Resource.ap]).toBe(councils * COUNCIL_AP_GAIN);
+		expect(player.resourceValues[Resource.cp]).toBe(councils * COUNCIL_AP_GAIN);
 	});
 });

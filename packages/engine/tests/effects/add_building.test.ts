@@ -10,7 +10,8 @@ import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 describe('building:add effect', () => {
 	it('adds building and applies its passives', () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const target = content.action({ baseCosts: { [CResource.gold]: 4 } });
 		const building = content.building({
 			costs: { [CResource.gold]: 3 },
@@ -41,8 +42,8 @@ describe('building:add effect', () => {
 		const cost = getActionCosts(grant.id, engineContext, { id: building.id });
 		engineContext.activePlayer.resourceValues[CResource.gold] =
 			cost[CResource.gold] ?? 0;
-		engineContext.activePlayer.resourceValues[CResource.ap] =
-			cost[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] =
+			cost[CResource.cp] ?? 0;
 		performAction(grant.id, engineContext, { id: building.id });
 		const after = getActionCosts(target.id, engineContext)[CResource.gold] ?? 0;
 		const bonus = building.onBuild?.find(
@@ -53,7 +54,8 @@ describe('building:add effect', () => {
 	});
 
 	it('throws before paying costs when building already owned', () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const building = content.building({ costs: { [CResource.gold]: 2 } });
 		const grant = content.action({
 			effects: [
@@ -71,18 +73,20 @@ describe('building:add effect', () => {
 
 		performAction(grant.id, engineContext, { id: building.id });
 
-		const actionKey = engineContext.actionCostResource as string;
-		engineContext.activePlayer.resourceValues[actionKey] = 5;
+		// Set up resources for second attempt (use CResource.cp for command-points)
+		engineContext.activePlayer.resourceValues[CResource.cp] = 5;
 		engineContext.activePlayer.resourceValues[CResource.gold] = 10;
 		expect(() =>
 			performAction(grant.id, engineContext, { id: building.id }),
 		).toThrow(`Building ${building.id} already built`);
-		expect(engineContext.activePlayer.resourceValues[actionKey]).toBe(5);
+		// Resources should be unchanged since building ownership check fails first
+		expect(engineContext.activePlayer.resourceValues[CResource.cp]).toBe(5);
 		expect(engineContext.activePlayer.resourceValues[CResource.gold]).toBe(10);
 	});
 
 	it('allows rebuilding after the structure is removed', () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const building = content.building();
 		const build = content.action({
 			effects: [
@@ -99,7 +103,8 @@ describe('building:add effect', () => {
 			advance(engineContext);
 		}
 		const cost = getActionCosts(build.id, engineContext, { id: building.id });
-		const actionKey = engineContext.actionCostResource as string;
+		// Use CResource.cp directly - actions cost command-points via meta-category
+		const cpKey = CResource.cp;
 		for (const [key, value] of Object.entries(cost)) {
 			engineContext.activePlayer.resourceValues[key] = (value ?? 0) * 3;
 		}
@@ -107,14 +112,15 @@ describe('building:add effect', () => {
 		performAction(build.id, engineContext, { id: building.id });
 		performAction(demolish.id, engineContext, { id: building.id });
 
-		engineContext.activePlayer.resourceValues[actionKey] = 5;
+		engineContext.activePlayer.resourceValues[cpKey] = 5;
 		performAction(build.id, engineContext, { id: building.id });
 
 		expect(engineContext.activePlayer.buildings.has(building.id)).toBe(true);
 	});
 
 	it('removes building passives when demolished', () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const surcharge = 2;
 		const target = content.action({
 			baseCosts: { [CResource.gold]: 3 },
@@ -167,7 +173,8 @@ describe('building:add effect', () => {
 	});
 
 	it('adds passives for new structures and reports duplicate installations', () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const building = content.building({
 			onBuild: [
 				{
@@ -219,7 +226,8 @@ describe('building:add effect', () => {
 	});
 
 	it('collects building costs when requested and ignores undefined ids', () => {
-		const content = createContentFactory();
+		// Use isolated mode so actionCostResource returns command-points
+		const content = createContentFactory({ isolated: true });
 		const building = content.building();
 		const base: Record<string, number> = {};
 		const context = {

@@ -1,6 +1,7 @@
 import type { ActionEffect, EffectConfig, RequirementConfig } from '@kingdom-builder/protocol';
 import type { ActionDef } from '../../../actions';
 import type { ActionCategoryId } from '../../../actionCategories';
+import type { MetaCategoryValue } from '../../../constants';
 import type { Focus } from '../../defs';
 import type { ResourceKey } from '../../../internal';
 import { ActionEffectGroupBuilder } from '../actionEffectGroups';
@@ -12,9 +13,24 @@ type ActionBuilderConfig = ActionDef;
 
 export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	private readonly effectGroupIds = new Set<string>();
+	private metaCategorySet = false;
 
 	constructor() {
-		super({ effects: [] }, 'Action');
+		// metaCategory is validated at build() time - using placeholder here
+		super({ effects: [] } as unknown as Omit<ActionDef, 'id' | 'name'>, 'Action');
+	}
+
+	/**
+	 * Sets the meta-category for this action. Required for all actions.
+	 * @param metaCategory - The meta-category ID (e.g., MetaCategory.Actions)
+	 */
+	metaCategory(metaCategory: MetaCategoryValue) {
+		if (this.metaCategorySet) {
+			throw new Error('Action already has metaCategory(). Remove the extra metaCategory() call.');
+		}
+		this.config.metaCategory = metaCategory;
+		this.metaCategorySet = true;
+		return this;
 	}
 
 	category(category: ActionCategoryId) {
@@ -85,5 +101,12 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	free(flag = true) {
 		this.config.free = flag;
 		return this;
+	}
+
+	override build(): ActionBuilderConfig {
+		if (!this.metaCategorySet) {
+			throw new Error('Action is missing metaCategory(). Call metaCategory(MetaCategory.Actions) or metaCategory(MetaCategory.Research) before build().');
+		}
+		return super.build();
 	}
 }

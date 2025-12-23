@@ -64,8 +64,8 @@ describe('Real Content Smoke Tests', () => {
 
 		// Get raid action cost and provide enough AP
 		const raidCost = getActionCosts(ActionId.raid, engineContext);
-		const apNeeded = raidCost[CResource.ap] ?? 0;
-		engineContext.activePlayer.resourceValues[CResource.ap] = apNeeded;
+		const apNeeded = raidCost[CResource.cp] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] = apNeeded;
 
 		const beforeActive = getResourceValue(
 			engineContext.activePlayer,
@@ -101,7 +101,7 @@ describe('Real Content Smoke Tests', () => {
 				// Setup: Give player N councils
 				engineContext.activePlayer.resourceValues[CResource.council] =
 					councilCount;
-				engineContext.activePlayer.resourceValues[CResource.ap] = 0;
+				engineContext.activePlayer.resourceValues[CResource.cp] = 0;
 
 				// Advance through growth phase to gain AP step
 				while (engineContext.game.currentPhase !== PhaseId.Main) {
@@ -109,7 +109,7 @@ describe('Real Content Smoke Tests', () => {
 				}
 
 				const apGained =
-					engineContext.activePlayer.resourceValues[CResource.ap];
+					engineContext.activePlayer.resourceValues[CResource.cp];
 
 				// INVARIANT: AP gain should be linear (proportional to council count)
 				// With 1 council = base AP, 2 councils = 2x base AP, etc.
@@ -119,12 +119,12 @@ describe('Real Content Smoke Tests', () => {
 					// Run again with 1 council to get the base rate
 					const baseContext = createTestEngine();
 					baseContext.activePlayer.resourceValues[CResource.council] = 1;
-					baseContext.activePlayer.resourceValues[CResource.ap] = 0;
+					baseContext.activePlayer.resourceValues[CResource.cp] = 0;
 					while (baseContext.game.currentPhase !== PhaseId.Main) {
 						advance(baseContext);
 					}
 					const baseApGain =
-						baseContext.activePlayer.resourceValues[CResource.ap];
+						baseContext.activePlayer.resourceValues[CResource.cp];
 
 					// INVARIANT: N councils should give N × baseApGain
 					// Allow some tolerance for other effects

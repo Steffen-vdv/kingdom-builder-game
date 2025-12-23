@@ -187,6 +187,10 @@ function applyRegistries(
 		record.registries.actionCategories,
 		next.actionCategories,
 	);
+	mergeRegistryEntries(
+		record.registries.actionMetaCategories,
+		next.actionMetaCategories,
+	);
 	mergeRegistryEntries(record.registries.buildings, next.buildings);
 	mergeRegistryEntries(record.registries.developments, next.developments);
 	applyResourceRegistry(record.registries.resources, next.resources);

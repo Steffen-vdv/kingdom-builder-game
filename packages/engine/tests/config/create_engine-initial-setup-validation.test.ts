@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { createEngine } from '../../src/index.ts';
 import {
+	ACTION_META_CATEGORIES,
 	BUILDINGS,
 	DEVELOPMENTS,
+	MetaCategory,
 	PHASES,
 	RULES,
 	RESOURCE_REGISTRY,
@@ -19,6 +21,7 @@ import type { ActionConfig } from '@kingdom-builder/protocol';
  */
 describe('createEngine initial setup validation', () => {
 	const baseConfig = {
+		actionMetaCategories: ACTION_META_CATEGORIES,
 		buildings: BUILDINGS,
 		developments: DEVELOPMENTS,
 		phases: PHASES,
@@ -45,6 +48,7 @@ describe('createEngine initial setup validation', () => {
 			const invalidSetupAction: ActionConfig = {
 				id: 'test_invalid_setup',
 				name: 'Invalid Setup',
+				metaCategory: MetaCategory.Commands,
 				system: true,
 				free: true,
 				effects: [
@@ -80,6 +84,7 @@ describe('createEngine initial setup validation', () => {
 			const invalidSetupAction: ActionConfig = {
 				id: 'test_group_mutation',
 				name: 'Invalid Group Mutation',
+				metaCategory: MetaCategory.Commands,
 				system: true,
 				free: true,
 				effects: [
@@ -116,6 +121,7 @@ describe('createEngine initial setup validation', () => {
 			const invalidSetupAction: ActionConfig = {
 				id: 'test_missing_resource_id',
 				name: 'Missing Resource ID',
+				metaCategory: MetaCategory.Commands,
 				system: true,
 				free: true,
 				effects: [
@@ -150,6 +156,7 @@ describe('createEngine initial setup validation', () => {
 			const invalidSetupAction: ActionConfig = {
 				id: 'test_missing_params',
 				name: 'Missing Params',
+				metaCategory: MetaCategory.Commands,
 				system: true,
 				free: true,
 				effects: [
@@ -181,6 +188,7 @@ describe('createEngine initial setup validation', () => {
 			const invalidSetupAction: ActionConfig = {
 				id: 'test_invalid_amount',
 				name: 'Invalid Amount',
+				metaCategory: MetaCategory.Commands,
 				system: true,
 				free: true,
 				effects: [
@@ -217,6 +225,7 @@ describe('createEngine initial setup validation', () => {
 			const nonSystemAction: ActionConfig = {
 				id: 'test_non_system',
 				name: 'Non-System Action',
+				metaCategory: MetaCategory.Commands,
 				system: false, // Not a system action
 				effects: [
 					{
@@ -253,6 +262,7 @@ describe('createEngine initial setup validation', () => {
 			const underflowSetupAction: ActionConfig = {
 				id: 'test_underflow_setup',
 				name: 'Underflow Setup',
+				metaCategory: MetaCategory.Commands,
 				system: true,
 				free: true,
 				effects: [
@@ -302,6 +312,7 @@ describe('createEngine initial setup validation', () => {
 			const invalidSetupAction: ActionConfig = {
 				id: 'test_unknown_development',
 				name: 'Unknown Development',
+				metaCategory: MetaCategory.Commands,
 				system: true,
 				free: true,
 				effects: [
@@ -341,6 +352,7 @@ describe('createEngine initial setup validation', () => {
 			const invalidSetupAction: ActionConfig = {
 				id: 'test_unknown_building',
 				name: 'Unknown Building',
+				metaCategory: MetaCategory.Commands,
 				system: true,
 				free: true,
 				effects: [

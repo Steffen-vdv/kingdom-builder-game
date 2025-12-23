@@ -1,6 +1,7 @@
 import { createEngine } from '../src/index.ts';
 import {
 	ACTIONS,
+	ACTION_META_CATEGORIES,
 	BUILDINGS,
 	DEVELOPMENTS,
 	PHASES,
@@ -20,6 +21,7 @@ import type { PhaseDef } from '../src/phases.ts';
 
 const BASE: {
 	actions: Registry<ActionDef>;
+	actionMetaCategories: typeof ACTION_META_CATEGORIES;
 	buildings: Registry<BuildingDef>;
 	developments: Registry<DevelopmentDef>;
 	phases: PhaseDef[];
@@ -30,6 +32,7 @@ const BASE: {
 	};
 } = {
 	actions: ACTIONS,
+	actionMetaCategories: ACTION_META_CATEGORIES,
 	buildings: BUILDINGS,
 	developments: DEVELOPMENTS,
 	phases: PHASES,

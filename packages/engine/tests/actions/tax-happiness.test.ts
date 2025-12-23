@@ -29,8 +29,8 @@ describe('resource removal penalties', () => {
 		engineContext.activePlayer.resourceValues[CResource.happiness] = 2;
 		const before =
 			engineContext.activePlayer.resourceValues[CResource.happiness] ?? 0;
-		const cost = getActionCosts(action.id, engineContext)[CResource.ap] ?? 0;
-		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
+		const cost = getActionCosts(action.id, engineContext)[CResource.cp] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] = cost;
 		performAction(action.id, engineContext);
 		const after =
 			engineContext.activePlayer.resourceValues[CResource.happiness] ?? 0;
@@ -68,9 +68,9 @@ describe('resource removal penalties', () => {
 		// role IS the Resource ID directly
 		engineContext.activePlayer.resourceValues[CResource.council] = 2;
 		engineContext.activePlayer.resourceValues[CResource.happiness] = 2;
-		const cost = getActionCosts(action.id, engineContext)[CResource.ap] ?? 0;
+		const cost = getActionCosts(action.id, engineContext)[CResource.cp] ?? 0;
 
-		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
+		engineContext.activePlayer.resourceValues[CResource.cp] = cost;
 
 		const before =
 			engineContext.activePlayer.resourceValues[CResource.happiness] ?? 0;
@@ -85,7 +85,7 @@ describe('resource removal penalties', () => {
 
 		engineContext.activePlayer.resourceValues[CResource.happiness] = 0;
 
-		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
+		engineContext.activePlayer.resourceValues[CResource.cp] = cost;
 
 		performAction(action.id, engineContext);
 

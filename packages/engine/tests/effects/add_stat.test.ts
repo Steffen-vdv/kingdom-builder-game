@@ -3,6 +3,7 @@ import { performAction, advance, getActionCosts } from '../../src/index.ts';
 import {
 	createActionRegistry,
 	Resource as CResource,
+	MetaCategory,
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import {
@@ -16,6 +17,7 @@ describe('resource:add effect for stats', () => {
 		actionRegistry.add('train_army', {
 			id: 'train_army',
 			name: 'Train Army',
+			metaCategory: MetaCategory.Commands,
 			effects: [
 				{
 					type: 'resource',
@@ -41,8 +43,8 @@ describe('resource:add effect for stats', () => {
 		)?.params as ResourceAmountParamsResult | undefined;
 		const armyStrengthIncrease = params?.amount ?? 0;
 		const actionCosts = getActionCosts('train_army', engineContext);
-		engineContext.activePlayer.resourceValues[CResource.ap] =
-			actionCosts[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.cp] =
+			actionCosts[CResource.cp] ?? 0;
 		performAction('train_army', engineContext);
 		expect(
 			engineContext.activePlayer.resourceValues[CResource.armyStrength],

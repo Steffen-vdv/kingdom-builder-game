@@ -27,10 +27,11 @@ packages/contents/src/
 ├── phases.ts            # Game phase definitions
 ├── rules.ts             # Game rules export
 ├── rules.config.ts      # Rule configuration values
-├── actionCategories.ts  # Action category definitions
-├── actionIds.ts         # Action ID constants
-├── buildingIds.ts       # Building ID constants
-├── constants.ts         # Unified constants (ResourceId, etc.)
+├── actionCategories.ts      # Action category definitions
+├── actionMetaCategories.ts  # Action meta-category definitions (cost models)
+├── actionIds.ts             # Action ID constants
+├── buildingIds.ts           # Building ID constants
+├── constants.ts             # Unified constants (ResourceId, etc.)
 │
 ├── resource/            # Resource system exports (types, builders, registry)
 │   └── index.ts         # Barrel export for resource infrastructure

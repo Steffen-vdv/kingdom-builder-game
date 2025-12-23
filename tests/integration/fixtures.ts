@@ -9,6 +9,7 @@ import {
 	RESOURCES,
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
+	ACTION_META_CATEGORIES,
 } from '@kingdom-builder/contents';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { PlayerState, Land } from '@kingdom-builder/engine/state';
@@ -48,6 +49,7 @@ export function createTestContext(
 ) {
 	const engineContext = createEngine({
 		actions: ACTIONS,
+		actionMetaCategories: ACTION_META_CATEGORIES,
 		buildings: BUILDINGS,
 		developments: DEVELOPMENTS,
 		phases: PHASES,

@@ -26,6 +26,7 @@
 				}
 			],
 			"category": "basic",
+			"metaCategory": "meta:commands",
 			"order": 1,
 			"focus": "economy"
 		},
@@ -49,7 +50,8 @@
 			],
 			"category": "basic",
 			"order": 200,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		},
 		"develop_farm": {
 			"id": "develop_farm",
@@ -71,7 +73,8 @@
 			],
 			"category": "basic",
 			"order": 201,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		},
 		"develop_outpost": {
 			"id": "develop_outpost",
@@ -93,7 +96,8 @@
 			],
 			"category": "basic",
 			"order": 202,
-			"focus": "combat"
+			"focus": "combat",
+			"metaCategory": "meta:commands"
 		},
 		"develop_watchtower": {
 			"id": "develop_watchtower",
@@ -115,7 +119,8 @@
 			],
 			"category": "basic",
 			"order": 203,
-			"focus": "combat"
+			"focus": "combat",
+			"metaCategory": "meta:commands"
 		},
 		"tax": {
 			"id": "tax",
@@ -158,7 +163,8 @@
 			],
 			"category": "basic",
 			"order": 3,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		},
 		"hire_council": {
 			"id": "hire_council",
@@ -205,7 +211,8 @@
 			],
 			"category": "hire",
 			"order": 1,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		},
 		"hire_legion": {
 			"id": "hire_legion",
@@ -252,7 +259,8 @@
 			],
 			"category": "hire",
 			"order": 2,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		},
 		"hire_fortifier": {
 			"id": "hire_fortifier",
@@ -299,7 +307,8 @@
 			],
 			"category": "hire",
 			"order": 3,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		},
 		"royal_decree": {
 			"id": "royal_decree",
@@ -382,7 +391,8 @@
 			],
 			"category": "basic",
 			"order": 5,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		},
 		"raid": {
 			"id": "raid",
@@ -453,13 +463,17 @@
 					"method": "add",
 					"params": {
 						"resourceId": "resource:core:war-weariness",
-						"change": { "type": "amount", "amount": 1 }
+						"change": {
+							"type": "amount",
+							"amount": 1
+						}
 					}
 				}
 			],
 			"category": "basic",
 			"order": 6,
-			"focus": "combat"
+			"focus": "combat",
+			"metaCategory": "meta:commands"
 		},
 		"hold_festival": {
 			"id": "hold_festival",
@@ -499,7 +513,10 @@
 					"method": "remove",
 					"params": {
 						"resourceId": "resource:core:fortification-strength",
-						"change": { "type": "amount", "amount": 3 }
+						"change": {
+							"type": "amount",
+							"amount": 3
+						}
 					}
 				},
 				{
@@ -546,7 +563,8 @@
 			],
 			"category": "basic",
 			"order": 7,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		},
 		"plunder": {
 			"id": "plunder",
@@ -570,7 +588,8 @@
 					}
 				}
 			],
-			"system": true
+			"system": true,
+			"metaCategory": "meta:commands"
 		},
 		"plow": {
 			"id": "plow",
@@ -623,7 +642,8 @@
 					]
 				}
 			],
-			"system": true
+			"system": true,
+			"metaCategory": "meta:commands"
 		},
 		"till": {
 			"id": "till",
@@ -635,7 +655,8 @@
 					"method": "till"
 				}
 			],
-			"system": true
+			"system": true,
+			"metaCategory": "meta:commands"
 		},
 		"build_town_charter": {
 			"id": "build_town_charter",
@@ -652,7 +673,8 @@
 			],
 			"category": "build",
 			"order": 3,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		},
 		"build_mill": {
 			"id": "build_mill",
@@ -669,7 +691,8 @@
 			],
 			"category": "build",
 			"order": 4,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		},
 		"build_raiders_guild": {
 			"id": "build_raiders_guild",
@@ -686,7 +709,8 @@
 			],
 			"category": "build",
 			"order": 5,
-			"focus": "combat"
+			"focus": "combat",
+			"metaCategory": "meta:commands"
 		},
 		"build_plow_workshop": {
 			"id": "build_plow_workshop",
@@ -703,7 +727,8 @@
 			],
 			"category": "build",
 			"order": 6,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		},
 		"build_market": {
 			"id": "build_market",
@@ -720,7 +745,8 @@
 			],
 			"category": "build",
 			"order": 7,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		},
 		"build_castle_walls": {
 			"id": "build_castle_walls",
@@ -737,7 +763,8 @@
 			],
 			"category": "build",
 			"order": 10,
-			"focus": "combat"
+			"focus": "combat",
+			"metaCategory": "meta:commands"
 		},
 		"build_barracks": {
 			"id": "build_barracks",
@@ -754,7 +781,8 @@
 			],
 			"category": "build",
 			"order": 8,
-			"focus": "combat"
+			"focus": "combat",
+			"metaCategory": "meta:commands"
 		},
 		"build_citadel": {
 			"id": "build_citadel",
@@ -771,7 +799,8 @@
 			],
 			"category": "build",
 			"order": 9,
-			"focus": "combat"
+			"focus": "combat",
+			"metaCategory": "meta:commands"
 		},
 		"build_castle_gardens": {
 			"id": "build_castle_gardens",
@@ -788,7 +817,8 @@
 			],
 			"category": "build",
 			"order": 11,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		},
 		"build_temple": {
 			"id": "build_temple",
@@ -805,7 +835,8 @@
 			],
 			"category": "build",
 			"order": 12,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		},
 		"build_palace": {
 			"id": "build_palace",
@@ -822,7 +853,8 @@
 			],
 			"category": "build",
 			"order": 13,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		},
 		"build_great_hall": {
 			"id": "build_great_hall",
@@ -839,7 +871,8 @@
 			],
 			"category": "build",
 			"order": 14,
-			"focus": "economy"
+			"focus": "economy",
+			"metaCategory": "meta:commands"
 		}
 	},
 	"buildings": {
@@ -998,7 +1031,10 @@
 							"method": "add",
 							"params": {
 								"resourceId": "resource:core:fortification-strength",
-								"change": { "type": "amount", "amount": 5 }
+								"change": {
+									"type": "amount",
+									"amount": 5
+								}
 							}
 						},
 						{
@@ -1006,7 +1042,10 @@
 							"method": "add",
 							"params": {
 								"resourceId": "resource:core:absorption",
-								"change": { "type": "amount", "amount": 0.2 }
+								"change": {
+									"type": "amount",
+									"amount": 0.2
+								}
 							}
 						}
 					]
@@ -1094,7 +1133,10 @@
 							"method": "add",
 							"params": {
 								"resourceId": "resource:core:gold",
-								"change": { "type": "amount", "amount": 2 }
+								"change": {
+									"type": "amount",
+									"amount": 2
+								}
 							}
 						}
 					],
@@ -1119,7 +1161,10 @@
 					"method": "add",
 					"params": {
 						"resourceId": "resource:core:max-population",
-						"change": { "type": "amount", "amount": 1 }
+						"change": {
+							"type": "amount",
+							"amount": 1
+						}
 					}
 				}
 			],
@@ -1137,7 +1182,10 @@
 					"method": "add",
 					"params": {
 						"resourceId": "resource:core:army-strength",
-						"change": { "type": "amount", "amount": 1 }
+						"change": {
+							"type": "amount",
+							"amount": 1
+						}
 					}
 				},
 				{
@@ -1145,7 +1193,10 @@
 					"method": "add",
 					"params": {
 						"resourceId": "resource:core:fortification-strength",
-						"change": { "type": "amount", "amount": 1 }
+						"change": {
+							"type": "amount",
+							"amount": 1
+						}
 					}
 				}
 			],
@@ -1162,7 +1213,10 @@
 					"method": "add",
 					"params": {
 						"resourceId": "resource:core:fortification-strength",
-						"change": { "type": "amount", "amount": 2 }
+						"change": {
+							"type": "amount",
+							"amount": 2
+						}
 					}
 				},
 				{
@@ -1170,7 +1224,10 @@
 					"method": "add",
 					"params": {
 						"resourceId": "resource:core:absorption",
-						"change": { "type": "amount", "amount": 0.5 }
+						"change": {
+							"type": "amount",
+							"amount": 0.5
+						}
 					}
 				}
 			],
@@ -1241,34 +1298,6 @@
 		}
 	},
 	"resources": {
-		"gold": {
-			"key": "gold",
-			"icon": "🪙",
-			"label": "Gold",
-			"description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.",
-			"tags": ["bankruptcy-check"]
-		},
-		"ap": {
-			"key": "ap",
-			"icon": "⚡",
-			"label": "Action Points",
-			"description": "Action Points govern how many actions you can perform during your turn. Plan carefully: once you run out of AP, your main phase ends."
-		},
-		"happiness": {
-			"key": "happiness",
-			"icon": "😊",
-			"label": "Happiness",
-			"description": "Happiness measures the contentment of your subjects. High happiness keeps morale up, while low happiness can lead to unrest or negative effects."
-		},
-		"castleHP": {
-			"key": "castleHP",
-			"icon": "🏰",
-			"label": "Castle HP",
-			"description": "Castle HP represents the durability of your stronghold. If it ever drops to zero, your kingdom falls and the game is lost.",
-			"tags": ["attack-target", "win-condition-zero"]
-		}
-	},
-	"resources": {
 		"resource:core:gold": {
 			"id": "resource:core:gold",
 			"label": "Gold",
@@ -1304,7 +1333,6 @@
 			"groupId": null,
 			"groupOrder": null,
 			"resolvedGroupOrder": null,
-			"globalCost": { "amount": 1 },
 			"section": "economy",
 			"secondary": false
 		},
@@ -1611,10 +1639,22 @@
 			"resolvedOrder": 0,
 			"isPrimary": true,
 			"contents": [
-				{ "type": "resource", "id": "resource:core:gold" },
-				{ "type": "resource", "id": "resource:core:ap" },
-				{ "type": "resource", "id": "resource:core:happiness" },
-				{ "type": "resource", "id": "resource:core:castleHP" }
+				{
+					"type": "resource",
+					"id": "resource:core:gold"
+				},
+				{
+					"type": "resource",
+					"id": "resource:core:ap"
+				},
+				{
+					"type": "resource",
+					"id": "resource:core:happiness"
+				},
+				{
+					"type": "resource",
+					"id": "resource:core:castleHP"
+				}
 			]
 		},
 		"category:secondary": {
@@ -1626,8 +1666,14 @@
 			"resolvedOrder": 1,
 			"isPrimary": false,
 			"contents": [
-				{ "type": "group", "id": "resource-group:stats" },
-				{ "type": "group", "id": "resource-group:population:roles" }
+				{
+					"type": "group",
+					"id": "resource-group:stats"
+				},
+				{
+					"type": "group",
+					"id": "resource-group:population:roles"
+				}
 			]
 		}
 	},

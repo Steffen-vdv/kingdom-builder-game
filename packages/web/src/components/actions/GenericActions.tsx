@@ -188,14 +188,24 @@ function GenericActions({
 		[],
 	);
 
+	const allMetricsLoaded = useMemo(() => {
+		return actions.every(
+			(action) => actionSortMetrics[action.id] !== undefined,
+		);
+	}, [actions, actionSortMetrics]);
+
 	const sortedActions = useMemo(() => {
-		return actions
-			.map((action, index) => ({
-				action,
-				index,
-				metrics: actionSortMetrics[action.id],
-				fallbackCost: sumNonActionCosts(action.baseCosts, actionCostResource),
-			}))
+		const mapped = actions.map((action, index) => ({
+			action,
+			index,
+			metrics: actionSortMetrics[action.id],
+			fallbackCost: sumNonActionCosts(action.baseCosts, actionCostResource),
+		}));
+		// Preserve original order until all metrics are loaded to prevent shuffling
+		if (!allMetricsLoaded) {
+			return mapped.map((entry) => entry.action);
+		}
+		return mapped
 			.sort((first, second) => {
 				const firstCost = first.metrics?.cost ?? first.fallbackCost;
 				const secondCost = second.metrics?.cost ?? second.fallbackCost;
@@ -216,7 +226,7 @@ function GenericActions({
 				return first.index - second.index;
 			})
 			.map((entry) => entry.action);
-	}, [actions, actionSortMetrics, actionCostResource]);
+	}, [actions, actionSortMetrics, actionCostResource, allMetricsLoaded]);
 
 	return (
 		<>

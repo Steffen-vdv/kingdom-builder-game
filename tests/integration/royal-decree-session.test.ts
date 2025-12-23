@@ -108,7 +108,7 @@ describe('royal decree via session', () => {
 						target: 12,
 					},
 					{
-						resourceId: Resource.ap as ResourceKey,
+						resourceId: Resource.cp as ResourceKey,
 						target: 1,
 					},
 				],

@@ -1,12 +1,12 @@
 import type { WinConditionDefinition, WinConditionDisplay, WinConditionResult, WinConditionTrigger, WinConditionOutcome } from '@kingdom-builder/protocol';
 import type { ResourceKey } from '../internal';
 import { CompareRequirementBuilder } from './builders/evaluators';
-import { ActionBuilder, ActionCategoryBuilder, BaseBuilder, BuildingBuilder, DevelopmentBuilder, InfoBuilder } from './builders/domain';
+import { ActionBuilder, ActionCategoryBuilder, ActionMetaCategoryBuilder, BaseBuilder, BuildingBuilder, DevelopmentBuilder, InfoBuilder } from './builders/domain';
 export { happinessTier, tierDisplay, tierPassiveText } from './builders/tiers';
 
-export type { ActionCategoryConfig, ActionCategoryLayout, InfoDef } from './builders/domain';
+export type { ActionCategoryConfig, ActionCategoryLayout, ActionMetaCategoryConfig, ActionMetaCategoryCostModel, ActionMetaCategoryVisibilityTrigger, InfoDef } from './builders/domain';
 
-export { ActionBuilder, ActionCategoryBuilder, BaseBuilder, BuildingBuilder, DevelopmentBuilder, InfoBuilder };
+export { ActionBuilder, ActionCategoryBuilder, ActionMetaCategoryBuilder, BaseBuilder, BuildingBuilder, DevelopmentBuilder, InfoBuilder };
 
 export {
 	CompareRequirementBuilder,
@@ -238,6 +238,9 @@ export function action() {
 }
 export function actionCategory() {
 	return new ActionCategoryBuilder();
+}
+export function actionMetaCategory() {
+	return new ActionMetaCategoryBuilder();
 }
 export function building() {
 	return new BuildingBuilder();

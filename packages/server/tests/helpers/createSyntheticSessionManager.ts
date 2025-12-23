@@ -37,12 +37,15 @@ export interface SyntheticSessionManagerResult {
 export function createSyntheticSessionManager(
 	options: SyntheticSessionManagerOptions = {},
 ): SyntheticSessionManagerResult {
-	const factory = createContentFactory();
+	// Use isolated mode to avoid loading real content that expects command-points
+	const factory = createContentFactory({ isolated: true });
 	const costResourceId = 'resource:synthetic:cost';
 	const gainResourceId = 'resource:synthetic:gain';
 	// Create Resource definitions for the synthetic resources
 	// Include a percent resource to satisfy expectStaticMetadata checks
 	const percentResourceId = 'resource:synthetic:percent';
+	// Include command-points for action cost model
+	const cpResourceId = 'resource:core:command-points';
 	const { resources, groups } = createResourceRegistries({
 		resources: [
 			resourceDefinition({
@@ -58,6 +61,11 @@ export function createSyntheticSessionManager(
 			resourceDefinition({
 				id: percentResourceId,
 				metadata: { label: 'Percent', icon: '📊', displayAsPercent: true },
+			}),
+			resourceDefinition({
+				id: cpResourceId,
+				metadata: { label: 'Command Points', icon: '⚡' },
+				bounds: { lowerBound: 0 },
 			}),
 		],
 	});
@@ -75,6 +83,17 @@ export function createSyntheticSessionManager(
 		],
 	});
 
+	// Create synthetic building and development for tests that expect them
+	factory.building({
+		id: 'building:synthetic:test',
+		icon: '🏠',
+		costs: { [costResourceId]: 1 },
+	});
+	factory.development({
+		id: 'development:synthetic:test',
+		icon: '🌱',
+	});
+
 	// Create synthetic system actions for initial setup
 	// These give players the initial resources defined in the start config
 	const initialSetupActionId = '__synth_initial_setup__';
@@ -85,6 +104,7 @@ export function createSyntheticSessionManager(
 	factory.actions.add(initialSetupActionId, {
 		id: initialSetupActionId,
 		name: 'Synthetic Initial Setup',
+		metaCategory: 'meta:commands',
 		system: true,
 		free: true,
 		baseCosts: {},
@@ -95,6 +115,14 @@ export function createSyntheticSessionManager(
 				params: {
 					resourceId: costResourceId,
 					change: { type: 'amount', amount: 1 },
+				},
+			},
+			{
+				type: 'resource',
+				method: 'add',
+				params: {
+					resourceId: cpResourceId,
+					change: { type: 'amount', amount: 5 },
 				},
 			},
 		],
@@ -104,6 +132,7 @@ export function createSyntheticSessionManager(
 	factory.actions.add(initialSetupDevmodeActionId, {
 		id: initialSetupDevmodeActionId,
 		name: 'Synthetic Initial Setup (DevMode)',
+		metaCategory: 'meta:commands',
 		system: true,
 		free: true,
 		baseCosts: {},
@@ -116,6 +145,14 @@ export function createSyntheticSessionManager(
 					change: { type: 'amount', amount: 1 },
 				},
 			},
+			{
+				type: 'resource',
+				method: 'add',
+				params: {
+					resourceId: cpResourceId,
+					change: { type: 'amount', amount: 5 },
+				},
+			},
 		],
 	});
 
@@ -123,6 +160,7 @@ export function createSyntheticSessionManager(
 	factory.actions.add(compensationActionId, {
 		id: compensationActionId,
 		name: 'Synthetic Compensation',
+		metaCategory: 'meta:commands',
 		system: true,
 		free: true,
 		baseCosts: {},

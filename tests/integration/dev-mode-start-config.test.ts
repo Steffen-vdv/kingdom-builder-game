@@ -97,7 +97,7 @@ describe('dev mode start configuration', () => {
 		}
 		const goldId = getResourceId(Resource.gold);
 		const happinessId = getResourceId(Resource.happiness);
-		const apId = getResourceId(Resource.ap);
+		const cpId = getResourceId(Resource.cp);
 		const castleId = getResourceId(Resource.castleHP);
 		const councilId = getResourceId(Resource.council);
 		const legionId = getResourceId(Resource.legion);
@@ -114,8 +114,8 @@ describe('dev mode start configuration', () => {
 			DEV_MODE_RESOURCES.get(fortifierId),
 		);
 		expect(opponent.values[castleId]).toBe(DEV_MODE_RESOURCES.get(castleId));
-		// AP starts at 0; it is granted during the Growth phase by Council members
-		expect(player.values[apId]).toBe(0);
+		// CP starts at 0; it is granted during the Growth phase by Council members
+		expect(player.values[cpId]).toBe(0);
 		expect(player.resourceBounds[goldId]?.lowerBound).toBe(0);
 		expect(snapshot.game.resourceCatalog.resources.byId[goldId]).toBeDefined();
 	});

@@ -3,7 +3,6 @@ export type {
 	ResourceBoundValue,
 	ResourceMetadata,
 	ResourceBounds,
-	ResourceGlobalCostConfig,
 	ResourceTierThreshold,
 	ResourceTierDefinition,
 	ResourceTierTrackMetadata,

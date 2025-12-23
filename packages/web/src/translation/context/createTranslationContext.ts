@@ -17,6 +17,7 @@ import {
 	mapPassives,
 	mapPassiveDescriptors,
 	wrapActionCategoryRegistry,
+	wrapActionMetaCategoryRegistry,
 	wrapRegistry,
 } from './contextHelpers';
 import {
@@ -41,7 +42,12 @@ export function createTranslationContext(
 	session: SessionSnapshot,
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'actionCategories' | 'buildings' | 'developments' | 'resources'
+		| 'actions'
+		| 'actionCategories'
+		| 'actionMetaCategories'
+		| 'buildings'
+		| 'developments'
+		| 'resources'
 	>,
 	metadata: SessionSnapshotMetadata,
 	options: TranslationContextOptions,
@@ -115,6 +121,9 @@ export function createTranslationContext(
 	return Object.freeze({
 		actions: wrapRegistry(registries.actions),
 		actionCategories: wrapActionCategoryRegistry(registries.actionCategories),
+		actionMetaCategories: wrapActionMetaCategoryRegistry(
+			registries.actionMetaCategories,
+		),
 		buildings: wrapRegistry(registries.buildings),
 		developments: wrapRegistry(registries.developments),
 		passives: translationPassives,

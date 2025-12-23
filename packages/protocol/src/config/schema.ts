@@ -19,6 +19,51 @@ const actionCategoryLayoutSchema = z.enum([
 	'list',
 ]);
 
+// =============================================================================
+// ACTION META-CATEGORIES
+// =============================================================================
+
+/**
+ * Cost model for action meta-categories.
+ * - 'global': All items share a uniform cost (e.g., 1 CP per command)
+ * - 'per-item': Each item defines its own cost for the binding resource
+ */
+const actionMetaCategoryCostModelSchema = z.enum(['global', 'per-item']);
+
+/**
+ * Visibility trigger for when to show a meta-category's UI panel.
+ * - 'always': Panel is always visible
+ * - 'resource-touched': Panel appears only after binding resource is touched
+ */
+const actionMetaCategoryVisibilityTriggerSchema = z.enum([
+	'always',
+	'resource-touched',
+]);
+
+export const actionMetaCategorySchema = z.object({
+	id: z.string(),
+	label: z.string(),
+	icon: z.string(),
+	/** The resource this meta-category is bound to (e.g., command-points) */
+	bindingResourceId: z.string(),
+	/** How costs are applied to items in this meta-category */
+	costModel: actionMetaCategoryCostModelSchema,
+	/** For 'global' cost model: the uniform cost per item */
+	globalCostAmount: z.number().optional(),
+	/** When to show this meta-category's UI panel */
+	visibilityTrigger: actionMetaCategoryVisibilityTriggerSchema,
+	/** Display order among meta-categories */
+	order: z.number(),
+	/** Optional sub-category IDs for grouping within this meta-category */
+	categoryIds: z.array(z.string()).readonly().optional(),
+});
+
+export type ActionMetaCategoryConfig = z.infer<typeof actionMetaCategorySchema>;
+
+// =============================================================================
+// ACTION CATEGORIES
+// =============================================================================
+
 export const actionCategorySchema = z.object({
 	id: z.string(),
 	title: z.string(),
@@ -70,6 +115,11 @@ export const actionSchema = z.object({
 	baseCosts: costBagSchema.optional(),
 	requirements: z.array(requirementSchema).optional(),
 	effects: z.array(actionEffectSchema),
+	/**
+	 * The meta-category this action belongs to. Determines cost model and
+	 * UI grouping. Required for all actions (system actions may use any).
+	 */
+	metaCategory: z.string(),
 	/**
 	 * System actions are engine-only and never executable by players.
 	 * They are run via internal engine functions (e.g., runSystemActionEffects)

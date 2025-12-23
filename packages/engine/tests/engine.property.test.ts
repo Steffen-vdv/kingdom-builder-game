@@ -23,7 +23,7 @@ function toMain(engineContext: ReturnType<typeof createTestEngine>) {
 /**
  * Get resource IDs that can be tested with simple add/remove effects.
  * Excludes:
- * - Resources with globalCost: Reserved as global action costs
+ * - Command-points: Reserved as action cost via meta-category system
  * - Group parent resources: Values are derived from children
  * - Group child resources: Changing them affects parent (cascading)
  * - Resources with fixed upperBound: Capping breaks simple math invariant
@@ -36,14 +36,6 @@ function getSimpleResourceIds(): string[] {
 	const runtimeCatalog = createRuntimeResourceCatalog(contentCatalog);
 	const indexes = getCatalogIndexes(runtimeCatalog);
 	const parentIds = new Set(Object.keys(indexes.parentById));
-
-	// Exclude resources with globalCost (reserved as action costs)
-	const globalCostIds = new Set<string>();
-	for (const resource of Object.values(indexes.resourceById)) {
-		if (resource.globalCost) {
-			globalCostIds.add(resource.id);
-		}
-	}
 
 	// Also exclude resources that are in a group (have cascading effects)
 	const groupChildIds = new Set<string>();
@@ -64,7 +56,8 @@ function getSimpleResourceIds(): string[] {
 
 	return Object.values(CResource).filter(
 		(id) =>
-			!globalCostIds.has(id) &&
+			// Exclude command-points - reserved as action cost via meta-category
+			id !== CResource.cp &&
 			!parentIds.has(id) &&
 			!groupChildIds.has(id) &&
 			!cappedIds.has(id),
@@ -94,7 +87,8 @@ describe('engine property invariants', () => {
 				resourceMapArb, // building costs
 				resourceMapArb, // onBuild gains
 				(baseCosts, buildingCosts, gains) => {
-					const content = createContentFactory();
+					// Use isolated mode so actionCostResource returns command-points
+					const content = createContentFactory({ isolated: true });
 					const building = content.building({
 						costs: buildingCosts,
 						onBuild: toResourceEffects(gains),

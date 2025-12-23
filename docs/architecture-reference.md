@@ -71,7 +71,7 @@ single Resource system.
 **Resource IDs follow the pattern:** `resource:{group}:{name}`
 
 - `resource:core:gold` - Gold currency
-- `resource:core:action-points` - Action Points
+- `resource:core:command-points` - Command Points
 - `resource:stat:army-strength` - Army Strength stat
 - `resource:population:role:legion` - Legion population count
 
@@ -103,6 +103,37 @@ game operations like initial setup and compensation.
 **Locked actions** (marked with `.locked()`) are player actions that start
 unavailable but can be unlocked via the `action:add` effect. Once unlocked, they
 behave like normal actions. Examples: plow, build actions, hire actions.
+
+**Action meta-categories** group actions by activity type and define their cost
+model. Each meta-category specifies:
+
+- **Binding resource**: The resource used for action costs in this category
+- **Cost model**: Either `global` (fixed cost per action) or `per-item` (each
+  action defines its own cost)
+- **Visibility trigger**: When the category appears in UI (`always` or
+  `resource-touched`)
+
+Meta-categories are defined using the `actionMetaCategory()` builder. Every
+action must specify a meta-category via `.metaCategory(MetaCategory.X)`.
+
+**Cost resolution** (via `determineCommonActionCostResource()`):
+
+1. Find the first meta-category with `costModel: 'global'` and use its binding resource
+2. If no global cost model exists, use the first meta-category's binding resource
+
+Example meta-category definition:
+
+```typescript
+actionMetaCategory()
+	.id('meta:example')
+	.label('Example Actions')
+	.icon('⚡')
+	.bindingResource('resource:example:points')
+	.costModel('global', 1) // Every action costs 1 point
+	.visibilityTrigger('resource-touched')
+	.order(0)
+	.build();
+```
 
 ### Effects
 

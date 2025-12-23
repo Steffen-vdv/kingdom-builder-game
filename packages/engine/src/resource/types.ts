@@ -113,10 +113,6 @@ export interface RuntimeResourceBounds {
 	readonly upperBoundReconciliation?: RuntimeReconciliationMode;
 }
 
-export interface RuntimeResourceGlobalCostConfig {
-	readonly amount: number;
-}
-
 /**
  * Triggers that run when a resource value changes.
  */
@@ -171,7 +167,6 @@ export interface RuntimeResourceDefinition
 	readonly groupId: string | null;
 	readonly groupOrder: number | null;
 	readonly resolvedGroupOrder: number | null;
-	readonly globalCost?: RuntimeResourceGlobalCostConfig;
 	readonly tierTrack?: RuntimeResourceTierTrack;
 	readonly upkeep?: RuntimeResourceUpkeepCost;
 	/**

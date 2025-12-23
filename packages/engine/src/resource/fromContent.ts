@@ -6,7 +6,6 @@ import type {
 	RuntimeResourceCategoryDefinition,
 	RuntimeResourceCategoryRegistry,
 	RuntimeResourceDefinition,
-	RuntimeResourceGlobalCostConfig,
 	RuntimeResourceGroup,
 	RuntimeResourceGroupParent,
 	RuntimeResourceGroupRegistry,
@@ -28,12 +27,7 @@ import { normalizeTierTrack } from './fromContent-tiers';
 
 const RUNTIME_PREFIX = 'Resource runtime';
 
-type NumericField =
-	| 'order'
-	| 'groupOrder'
-	| 'lowerBound'
-	| 'upperBound'
-	| 'globalCost.amount';
+type NumericField = 'order' | 'groupOrder' | 'lowerBound' | 'upperBound';
 
 function assertInteger(
 	value: number,
@@ -43,19 +37,6 @@ function assertInteger(
 	if (!Number.isInteger(value)) {
 		throw new Error(
 			`${RUNTIME_PREFIX} expected ${context} ${field} to be an integer but received ${value}.`,
-		);
-	}
-}
-
-function assertPositiveInteger(
-	value: number,
-	field: NumericField,
-	context: string,
-): void {
-	assertInteger(value, field, context);
-	if (value <= 0) {
-		throw new Error(
-			`${RUNTIME_PREFIX} expected ${context} ${field} to be greater than 0 but received ${value}.`,
 		);
 	}
 }
@@ -205,18 +186,6 @@ function normalizeGroup(
 	});
 }
 
-function normalizeGlobalCost(
-	definition: ContentResourceDefinition,
-	context: string,
-): RuntimeResourceGlobalCostConfig | undefined {
-	const config = definition.globalCost;
-	if (!config) {
-		return undefined;
-	}
-	assertPositiveInteger(config.amount, 'globalCost.amount', context);
-	return Object.freeze({ amount: config.amount });
-}
-
 export interface RuntimeResourceContent {
 	readonly resources: ContentOrderedRegistry<ContentResourceDefinition>;
 	readonly groups: ContentOrderedRegistry<ContentResourceGroupDefinition>;
@@ -241,7 +210,6 @@ export function createRuntimeResourceCatalog({
 		runtimeGroups.push(runtimeGroup);
 	}
 
-	let globalCostResourceId: string | null = null;
 	const runtimeResources: RuntimeResourceDefinition[] = [];
 	const resourcesById: Record<string, RuntimeResourceDefinition> = {};
 	const groupChildOrderFallback = new Map<string, number>();
@@ -283,16 +251,6 @@ export function createRuntimeResourceCatalog({
 			);
 		}
 
-		const globalCost = normalizeGlobalCost(definition, context);
-		if (globalCost) {
-			if (globalCostResourceId && globalCostResourceId !== definition.id) {
-				throw new Error(
-					`${RUNTIME_PREFIX} only supports a single global cost resource during MVP (${globalCostResourceId} already configured, ${definition.id} attempted to join).`,
-				);
-			}
-			globalCostResourceId = definition.id;
-		}
-
 		const tierTrack = normalizeTierTrack(definition.tierTrack, context);
 		const onValueIncrease = Object.freeze([
 			...(definition.onValueIncrease ?? []),
@@ -328,7 +286,6 @@ export function createRuntimeResourceCatalog({
 			section: definition.section ?? 'economy',
 			secondary: definition.secondary ?? false,
 			displayHint: definition.displayHint ?? null,
-			...(globalCost ? { globalCost } : {}),
 			...(tierTrack ? { tierTrack } : {}),
 			...(upkeep ? { upkeep } : {}),
 		});

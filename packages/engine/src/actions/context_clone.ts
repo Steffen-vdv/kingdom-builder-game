@@ -160,6 +160,7 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 		source.actionCostResourceId,
 		source.actionCostAmount,
 		source.resourceCatalog,
+		source.actionMetaCategories,
 		compensations,
 	);
 	if (source.aiSystem) {

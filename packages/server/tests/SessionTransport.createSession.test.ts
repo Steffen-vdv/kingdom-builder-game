@@ -293,4 +293,29 @@ describe('SessionTransport createSession', () => {
 		expect(response.sessionId).toBe('no-names-session');
 		expectSnapshotMetadata(response.snapshot.metadata);
 	});
+
+	it('includes actionMetaCategories in session registries', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('meta-categories-session'),
+			authMiddleware: middleware,
+		});
+		const response = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const { registries } = response;
+		expect(registries.actionMetaCategories).toBeDefined();
+		expect(Object.keys(registries.actionMetaCategories ?? {})).not.toHaveLength(
+			0,
+		);
+		const metaCategories = Object.values(registries.actionMetaCategories ?? {});
+		for (const metaCategory of metaCategories) {
+			expect(metaCategory.id).toBeDefined();
+			expect(metaCategory.label).toBeDefined();
+			expect(metaCategory.bindingResourceId).toBeDefined();
+			expect(metaCategory.costModel).toBeDefined();
+		}
+	});
 });

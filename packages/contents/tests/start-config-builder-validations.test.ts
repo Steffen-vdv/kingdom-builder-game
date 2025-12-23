@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { startConfig, playerStart } from '../src/config/builders';
+import { startConfig, playerStart } from '../src/infrastructure/builders';
 import { Resource, type ResourceKey } from '../src/resourceKeys';
 import { Stat, type StatKey } from '../src/stats';
 

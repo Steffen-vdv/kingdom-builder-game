@@ -39,12 +39,11 @@ const goldResource = resource('resource:core:gold')
 	.trackValueBreakdown()
 	.build();
 
-const actionPointsResource = resource('resource:core:action-points')
+const commandPointsResource = resource('resource:core:command-points')
 	.icon('⚡')
-	.label('Action Points')
-	.description('Action Points govern how many actions you can perform during your ' + 'turn. Plan carefully: once you run out of AP, your main phase ends.')
+	.label('Command Points')
+	.description('Command Points govern how many commands you can perform during your ' + 'turn. Plan carefully: once you run out of CP, your main phase ends.')
 	.lowerBound(0)
-	.globalActionCost(1)
 	.section('economy')
 	.trackValueBreakdown()
 	.build();
@@ -191,7 +190,7 @@ function buildPopulationResources(): readonly ResourceDefinition[] {
 	// Note: The trigger collection loop in triggers.ts already creates one bundle
 	// per council unit, so no evaluator is needed here. Using an evaluator would
 	// cause N² AP gain (bundles × evaluator count) instead of N.
-	const councilApGainEffect = effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.ap, 1)).build();
+	const councilApGainEffect = effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.cp, 1)).build();
 
 	cachedPopulationResources = [
 		resource('resource:core:council')
@@ -263,7 +262,7 @@ const primaryCategory = resourceCategory('resource-category:primary')
 	.order(1)
 	.primary()
 	.resource('resource:core:gold')
-	.resource('resource:core:action-points')
+	.resource('resource:core:command-points')
 	.resource('resource:core:castle-hp')
 	.resource('resource:core:happiness')
 	.resource('resource:core:research')
@@ -293,7 +292,7 @@ const secondaryCategory = resourceCategory('resource-category:secondary')
 export function getResourceDefinitions(): readonly ResourceDefinition[] {
 	return [
 		goldResource,
-		actionPointsResource,
+		commandPointsResource,
 		castleHpResource,
 		getHappinessResourceDefinition(),
 		researchResource,

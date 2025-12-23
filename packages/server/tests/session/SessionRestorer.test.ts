@@ -58,6 +58,7 @@ function createTestSetup() {
 	factory.actions.add(initialSetupActionId, {
 		id: initialSetupActionId,
 		name: 'Synthetic Initial Setup',
+		metaCategory: 'meta:commands',
 		system: true,
 		free: true,
 		baseCosts: {},
@@ -76,6 +77,7 @@ function createTestSetup() {
 	factory.actions.add(initialSetupDevmodeActionId, {
 		id: initialSetupDevmodeActionId,
 		name: 'Synthetic Initial Setup (DevMode)',
+		metaCategory: 'meta:commands',
 		system: true,
 		free: true,
 		baseCosts: {},
@@ -94,6 +96,7 @@ function createTestSetup() {
 	factory.actions.add(compensationActionId, {
 		id: compensationActionId,
 		name: 'Synthetic Compensation',
+		metaCategory: 'meta:commands',
 		system: true,
 		free: true,
 		baseCosts: {},

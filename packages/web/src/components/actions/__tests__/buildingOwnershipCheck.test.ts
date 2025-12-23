@@ -15,6 +15,7 @@ describe('buildingOwnershipCheck', () => {
 			const action = {
 				id: 'test',
 				name: 'Test',
+				metaCategory: 'meta:commands',
 				effects: [],
 			} as ActionConfig;
 			expect(extractBuildingIdFromAction(action)).toBeUndefined();
@@ -24,6 +25,7 @@ describe('buildingOwnershipCheck', () => {
 			const action = {
 				id: 'test',
 				name: 'Test',
+				metaCategory: 'meta:commands',
 				effects: [
 					{ type: 'resource', method: 'change', params: { amount: 5 } },
 				],
@@ -35,6 +37,7 @@ describe('buildingOwnershipCheck', () => {
 			const action = {
 				id: 'build_mill',
 				name: 'Build Mill',
+				metaCategory: 'meta:commands',
 				effects: [{ type: 'building', method: 'add', params: { id: 'mill' } }],
 			} as ActionConfig;
 			expect(extractBuildingIdFromAction(action)).toBe('mill');
@@ -44,6 +47,7 @@ describe('buildingOwnershipCheck', () => {
 			const action = {
 				id: 'build_combo',
 				name: 'Build Combo',
+				metaCategory: 'meta:commands',
 				effects: [
 					{ type: 'building', method: 'add', params: { id: 'mill' } },
 					{ type: 'building', method: 'add', params: { id: 'market' } },
@@ -56,6 +60,7 @@ describe('buildingOwnershipCheck', () => {
 			const action = {
 				id: 'test',
 				name: 'Test',
+				metaCategory: 'meta:commands',
 				effects: [
 					{
 						id: 'group',
@@ -72,6 +77,7 @@ describe('buildingOwnershipCheck', () => {
 			const action = {
 				id: 'test',
 				name: 'Test',
+				metaCategory: 'meta:commands',
 				effects: [{ type: 'building', method: 'add', params: {} }],
 			} as ActionConfig;
 			expect(extractBuildingIdFromAction(action)).toBeUndefined();
@@ -81,6 +87,7 @@ describe('buildingOwnershipCheck', () => {
 			const action = {
 				id: 'test',
 				name: 'Test',
+				metaCategory: 'meta:commands',
 				effects: [
 					{ type: 'building', method: 'remove', params: { id: 'mill' } },
 				],
@@ -99,6 +106,7 @@ describe('buildingOwnershipCheck', () => {
 			const action = {
 				id: 'test',
 				name: 'Test',
+				metaCategory: 'meta:commands',
 				effects: [
 					{ type: 'resource', method: 'change', params: { amount: 5 } },
 				],
@@ -111,6 +119,7 @@ describe('buildingOwnershipCheck', () => {
 			const action = {
 				id: 'build_mill',
 				name: 'Build Mill',
+				metaCategory: 'meta:commands',
 				effects: [{ type: 'building', method: 'add', params: { id: 'mill' } }],
 			} as ActionConfig;
 			const playerBuildings = new Set(['market', 'barracks']);
@@ -121,6 +130,7 @@ describe('buildingOwnershipCheck', () => {
 			const action = {
 				id: 'build_mill',
 				name: 'Build Mill',
+				metaCategory: 'meta:commands',
 				effects: [{ type: 'building', method: 'add', params: { id: 'mill' } }],
 			} as ActionConfig;
 			const playerBuildings = new Set(['mill', 'market']);
@@ -131,6 +141,7 @@ describe('buildingOwnershipCheck', () => {
 			const action = {
 				id: 'build_mill',
 				name: 'Build Mill',
+				metaCategory: 'meta:commands',
 				effects: [{ type: 'building', method: 'add', params: { id: 'mill' } }],
 			} as ActionConfig;
 			const playerBuildings = new Set<string>();

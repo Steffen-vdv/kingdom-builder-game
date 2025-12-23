@@ -9,14 +9,14 @@
 // RESOURCE IDs
 // =============================================================================
 // All resource identifiers are unified under ResourceId, including:
-// - Core resources (gold, action points, happiness, castle HP)
+// - Core resources (gold, command points, happiness, castle HP)
 // - Stats (army strength, fortification, growth, etc.)
 // - Population roles (council, legion, fortifier)
 
 export const ResourceId = {
 	// Core resources
 	gold: 'resource:core:gold',
-	ap: 'resource:core:action-points',
+	cp: 'resource:core:command-points',
 	happiness: 'resource:core:happiness',
 	castleHP: 'resource:core:castle-hp',
 	research: 'resource:core:research',
@@ -200,6 +200,23 @@ export const FocusDefinitions: Record<FocusValue, FocusDefinition> = {
 		color: '#3b82f6',
 	},
 };
+
+// =============================================================================
+// ACTION META-CATEGORIES
+// =============================================================================
+
+/**
+ * Meta-categories group actions by their activity type and cost model.
+ * Each action must belong to exactly one meta-category.
+ */
+export const MetaCategory = {
+	/** Standard commands that cost CP (global cost model) */
+	Commands: 'meta:commands',
+	/** Research options that cost variable RP (per-item cost model) */
+	Research: 'meta:research',
+} as const;
+
+export type MetaCategoryValue = (typeof MetaCategory)[keyof typeof MetaCategory];
 
 // =============================================================================
 // ACTION CATEGORIES
