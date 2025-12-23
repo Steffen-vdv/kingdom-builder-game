@@ -8,11 +8,19 @@ describe('simulateAction', () => {
 	it('does not mutate state when previewing an action', () => {
 		const content = createContentFactory();
 		const till = content.action({
-			locked: true,
-			effects: [{ type: 'land', method: LandMethods.TILL }],
+			tiers: {
+				'1': {
+					effects: [{ type: 'land', method: LandMethods.TILL }],
+				},
+			},
 		});
 		const engineContext = createTestEngine({ actions: content.actions });
-		engineContext.activePlayer.actions.add(till.id);
+		engineContext.activePlayer.actionStates[till.id] = {
+			locked: false,
+			poolLocked: false,
+			currentTier: 1,
+			exhausted: false,
+		};
 		engineContext.activePlayer.resourceValues[CResource.cp] = 10;
 
 		expect(engineContext.activePlayer.lands.some((land) => land.tilled)).toBe(
@@ -35,14 +43,22 @@ describe('simulateAction', () => {
 	it('throws when the simulated action would fail', () => {
 		const content = createContentFactory();
 		const tripleTill = content.action({
-			locked: true,
-			effects: Array.from({ length: 3 }, () => ({
-				type: 'land',
-				method: LandMethods.TILL,
-			})),
+			tiers: {
+				'1': {
+					effects: Array.from({ length: 3 }, () => ({
+						type: 'land',
+						method: LandMethods.TILL,
+					})),
+				},
+			},
 		});
 		const engineContext = createTestEngine({ actions: content.actions });
-		engineContext.activePlayer.actions.add(tripleTill.id);
+		engineContext.activePlayer.actionStates[tripleTill.id] = {
+			locked: false,
+			poolLocked: false,
+			currentTier: 1,
+			exhausted: false,
+		};
 		engineContext.activePlayer.resourceValues[CResource.cp] = 10;
 
 		expect(() => simulateAction(tripleTill.id, engineContext)).toThrow(

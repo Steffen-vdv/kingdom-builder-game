@@ -1,11 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import { actionPerform } from '../../src/effects/action_perform';
-import { advance, resolveActionEffects, type EffectDef } from '../../src';
+import { advance, resolveActionEffects } from '../../src';
 import { createTestEngine } from '../helpers';
 import { Land } from '../../src/state';
 import { createContentFactory } from '@kingdom-builder/testing';
 import * as protocol from '@kingdom-builder/protocol';
-import type { ResolvedActionEffects } from '@kingdom-builder/protocol';
+import type {
+	EffectConfig,
+	ResolvedActionEffects,
+} from '@kingdom-builder/protocol';
 import { Resource as CResource } from '@kingdom-builder/contents';
 
 interface EffectGroupOption {
@@ -32,6 +35,17 @@ function toMain(engineContext: ReturnType<typeof createTestEngine>) {
 	}
 }
 
+// Helper to get all effects from all tiers
+function getAllEffectsFromAction(definition: {
+	tiers: Record<string, { effects: unknown[] }>;
+}): unknown[] {
+	const effects: unknown[] = [];
+	for (const tierConfig of Object.values(definition.tiers)) {
+		effects.push(...tierConfig.effects);
+	}
+	return effects;
+}
+
 describe('action:perform effect', () => {
 	it('uses the declared action when id points at a development', () => {
 		const engineContext = createTestEngine();
@@ -41,10 +55,15 @@ describe('action:perform effect', () => {
 		const newLandId = `${engineContext.activePlayer.id}-L${engineContext.activePlayer.lands.length + 1}`;
 		const fallbackLand = new Land(newLandId, 2, true);
 		engineContext.activePlayer.lands.push(fallbackLand);
+		// Find action with effect groups across all tiers
 		const [royalDecreeId, royalDecree] = engineContext.actions
 			.entries()
-			.find(([, definition]) => definition.effects.some(isEffectGroup))!;
-		const group = royalDecree.effects.find(isEffectGroup)!;
+			.find(([, definition]) => {
+				const allEffects = getAllEffectsFromAction(definition);
+				return allEffects.some(isEffectGroup);
+			})!;
+		const allEffects = getAllEffectsFromAction(royalDecree);
+		const group = allEffects.find(isEffectGroup)!;
 		const option = group.options[0];
 		const nestedAction = engineContext.actions.get(option.actionId);
 		if (!nestedAction) {
@@ -52,10 +71,12 @@ describe('action:perform effect', () => {
 				`Missing nested action definition for id "${option.actionId}".`,
 			);
 		}
-		const nestedDevelopmentEffect = nestedAction.effects.find(
+		const nestedActionEffects = getAllEffectsFromAction(nestedAction);
+		const nestedDevelopmentEffect = nestedActionEffects.find(
 			(candidate) =>
-				candidate.type === 'development' && candidate.method === 'add',
-		);
+				(candidate as EffectConfig).type === 'development' &&
+				(candidate as EffectConfig).method === 'add',
+		) as EffectConfig | undefined;
 		if (!nestedDevelopmentEffect) {
 			throw new Error(
 				`Missing development:add effect for action "${nestedAction.id}".`,

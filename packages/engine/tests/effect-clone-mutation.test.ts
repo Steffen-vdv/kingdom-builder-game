@@ -29,6 +29,7 @@ import {
 import {
 	Registry,
 	type ActionConfig,
+	type ActionMetaCategoryConfig,
 	type EffectConfig,
 } from '@kingdom-builder/protocol';
 
@@ -67,6 +68,7 @@ function createMinimalEngine() {
 	// Empty actions registry - no systemRole actions, so setup is skipped
 	return createEngine({
 		actions: new Registry<ActionConfig>(),
+		actionMetaCategories: new Registry<ActionMetaCategoryConfig>(),
 		buildings: new Registry(),
 		developments: new Registry(),
 		phases: PHASES,

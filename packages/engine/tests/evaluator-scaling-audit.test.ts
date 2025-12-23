@@ -92,6 +92,7 @@ function createMinimalEngine() {
 	// Empty actions registry - no systemRole actions, so setup is skipped
 	return createEngine({
 		actions: new Registry<ActionConfig>(),
+		actionMetaCategories: new Registry(),
 		buildings: new Registry(),
 		developments: DEVELOPMENTS, // Use real developments for income tests
 		phases: PHASES,

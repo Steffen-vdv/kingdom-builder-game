@@ -112,7 +112,14 @@ function createLinkedContentResolver({
 			const matchesMethod = candidate.method === method;
 			return matchesType && matchesMethod;
 		};
-		const effect = findEffect(actionDefinition.effects, matchesTarget);
+		// Get effects from the first tier (for log purposes)
+		const tierKeys = Object.keys(actionDefinition.tiers);
+		const startingTier =
+			tierKeys.length > 0
+				? String(Math.min(...tierKeys.map(Number).filter((n) => !isNaN(n))))
+				: '1';
+		const tierEffects = actionDefinition.tiers[startingTier]?.effects ?? [];
+		const effect = findEffect(tierEffects, matchesTarget);
 		if (!effect) {
 			return undefined;
 		}

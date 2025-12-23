@@ -98,15 +98,18 @@ export function createContentFactory(
 
 	function action(definition: Partial<ActionConfig> = {}): ActionConfig {
 		const id = definition.id ?? nextId('action');
-		const built = {
+		const tierConfig = definition.tiers ?? {
+			'1': { effects: [] },
+		};
+		const built: ActionConfig = {
 			id,
 			name: definition.name ?? id,
 			icon: definition.icon,
-			baseCosts: definition.baseCosts ?? {},
-			requirements: definition.requirements ?? [],
-			effects: definition.effects ?? [],
+			tiers: tierConfig,
 			system: definition.system,
 			locked: definition.locked,
+			oneTime: definition.oneTime,
+			free: definition.free,
 			// metaCategory is required by the action registry schema
 			metaCategory: MetaCategory.Commands,
 			// In isolated mode, actions are free by default to avoid CP

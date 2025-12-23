@@ -36,18 +36,27 @@ const mapPlayer = (player: SessionPlayerStateSnapshot): SessionPlayerView => ({
 const createActionOption = (
 	id: string,
 	definition: ActionDefinition,
-): SessionActionOption => ({
-	id: definition.id ?? id,
-	name: definition.name,
-	icon: definition.icon,
-	system: definition.system,
-	order: definition.order,
-	category: definition.category,
-	focus: definition.focus,
-	baseCosts: definition.baseCosts
-		? cloneRecord(definition.baseCosts)
-		: undefined,
-});
+): SessionActionOption => {
+	// Get costs from tier 1 (the default tier for display purposes)
+	const tierKeys = Object.keys(definition.tiers);
+	const startingTier =
+		tierKeys.length > 0
+			? String(Math.min(...tierKeys.map(Number).filter((n) => !isNaN(n))))
+			: '1';
+	const tierConfig = definition.tiers[startingTier];
+	const baseCosts = tierConfig?.costs;
+
+	return {
+		id: definition.id ?? id,
+		name: definition.name,
+		icon: definition.icon,
+		system: definition.system,
+		order: definition.order,
+		category: definition.category,
+		focus: definition.focus,
+		baseCosts: baseCosts ? cloneRecord(baseCosts) : undefined,
+	};
+};
 const createBuildingOption = (
 	id: string,
 	definition: BuildingDefinition,

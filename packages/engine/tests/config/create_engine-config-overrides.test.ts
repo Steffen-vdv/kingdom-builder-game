@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
 	ACTIONS,
+	ACTION_META_CATEGORIES,
 	BUILDINGS,
 	DEVELOPMENTS,
 	PHASES,
@@ -9,6 +10,7 @@ import {
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
 } from '@kingdom-builder/contents';
+import { getActionTierConfig } from '@kingdom-builder/protocol';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createEngine } from '../../src/index.ts';
 
@@ -21,12 +23,18 @@ describe('createEngine configuration overrides', () => {
 	it('applies registry overrides via config', () => {
 		const factory = createContentFactory();
 		const customAction = factory.action({
-			baseCosts: { [Resource.gold]: 3 },
+			tiers: {
+				'1': {
+					costs: { [Resource.gold]: 3 },
+					effects: [],
+				},
+			},
 		});
 		factory.building();
 		factory.development();
 		const engine = createEngine({
 			actions: ACTIONS,
+			actionMetaCategories: ACTION_META_CATEGORIES,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
 			phases: PHASES,
@@ -42,8 +50,8 @@ describe('createEngine configuration overrides', () => {
 		expect(engine.buildings.keys()).toEqual(factory.buildings.keys());
 		expect(engine.developments.keys()).toEqual(factory.developments.keys());
 		const createdAction = engine.actions.get(customAction.id);
-		const baseCosts = createdAction.baseCosts || {};
-		expect(baseCosts[Resource.gold]).toBe(3);
+		const tierConfig = getActionTierConfig(createdAction, 1);
+		expect(tierConfig.costs[Resource.gold]).toBe(3);
 	});
 
 	it('retains base registries when config definitions are empty', () => {
@@ -53,6 +61,7 @@ describe('createEngine configuration overrides', () => {
 		}
 		const engine = createEngine({
 			actions: ACTIONS,
+			actionMetaCategories: ACTION_META_CATEGORIES,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
 			phases: PHASES,

@@ -9,6 +9,7 @@ import {
 import { createTestEngine } from '../helpers';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { type ResourceAmountParamsResult } from '../helpers/resourceParams.ts';
+import type { EffectConfig } from '@kingdom-builder/protocol';
 
 interface EffectGroupOption {
 	id: string;
@@ -29,6 +30,17 @@ function isEffectGroup(effect: unknown): effect is EffectGroup {
 	);
 }
 
+// Helper to get all effects from an action's tiers
+function getAllEffectsFromAction(action: {
+	tiers: Record<string, { effects: EffectConfig[] }>;
+}): EffectConfig[] {
+	const effects: EffectConfig[] = [];
+	for (const tier of Object.values(action.tiers)) {
+		effects.push(...tier.effects);
+	}
+	return effects;
+}
+
 function toMain(engineContext: ReturnType<typeof createTestEngine>) {
 	while (engineContext.game.currentPhase !== PhaseId.Main) {
 		advance(engineContext);
@@ -42,8 +54,11 @@ describe('royal decree action effect group', () => {
 
 		const [actionId, royalDecree] = engineContext.actions
 			.entries()
-			.find(([, definition]) => definition.effects.some(isEffectGroup))!;
-		const group = royalDecree.effects.find(isEffectGroup)!;
+			.find(([, definition]) =>
+				getAllEffectsFromAction(definition).some(isEffectGroup),
+			)!;
+		const allRoyalDecreeEffects = getAllEffectsFromAction(royalDecree);
+		const group = allRoyalDecreeEffects.find(isEffectGroup)!;
 		const chosenOption = group.options[0];
 		const optionId = chosenOption.id;
 		const nestedAction = engineContext.actions.get(chosenOption.actionId);
@@ -52,7 +67,8 @@ describe('royal decree action effect group', () => {
 				`Missing nested action definition for id "${chosenOption.actionId}".`,
 			);
 		}
-		const nestedDevelopmentEffect = nestedAction.effects.find(
+		const nestedActionEffects = getAllEffectsFromAction(nestedAction);
+		const nestedDevelopmentEffect = nestedActionEffects.find(
 			(candidate) =>
 				candidate.type === 'development' && candidate.method === 'add',
 		);
@@ -118,7 +134,7 @@ describe('royal decree action effect group', () => {
 		expect(tilledAfter).toBe(tilledBefore + 1);
 
 		const traceIds = traces.map((trace) => trace.id);
-		const expectedNested = royalDecree.effects.flatMap((effect) => {
+		const expectedNested = allRoyalDecreeEffects.flatMap((effect) => {
 			if (!isEffectGroup(effect)) {
 				if (effect.type === 'action' && effect.method === 'perform') {
 					const nestedId = (effect.params as { id?: string } | undefined)?.id;
@@ -136,7 +152,8 @@ describe('royal decree action effect group', () => {
 		let happinessGain = 0;
 		for (const nestedId of expectedNested) {
 			const nested = engineContext.actions.get(nestedId);
-			const effect = nested.effects.find(
+			const nestedEffects = getAllEffectsFromAction(nested);
+			const effect = nestedEffects.find(
 				(candidate) =>
 					candidate.type === 'resource' &&
 					candidate.method === 'add' &&
@@ -149,9 +166,11 @@ describe('royal decree action effect group', () => {
 					0;
 			}
 		}
-		const happinessPenalty = engineContext.actions
-			.get(actionId)
-			.effects.filter(
+		const mainActionEffects = getAllEffectsFromAction(
+			engineContext.actions.get(actionId),
+		);
+		const happinessPenalty = mainActionEffects
+			.filter(
 				(effect) => effect.type === 'resource' && effect.method === 'remove',
 			)
 			.reduce((total, effect) => {

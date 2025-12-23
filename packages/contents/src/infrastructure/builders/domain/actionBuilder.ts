@@ -1,0 +1,143 @@
+import type { ActionTiersConfig } from '@kingdom-builder/protocol';
+import { BaseBuilder } from '@kingdom-builder/contents-sdk';
+import type { ActionDef } from '../../../actions';
+import type { ActionCategoryId } from '../../../actionCategories';
+import type { MetaCategoryValue } from '../../../constants';
+import type { Focus } from '../../defs';
+import { ActionTierBuilder, type ActionTierConfig } from './actionTierBuilder';
+
+type ActionBuilderConfig = ActionDef;
+
+type TierConfigurator = (builder: ActionTierBuilder) => ActionTierBuilder;
+
+export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
+	private readonly tiersMap: Map<number, ActionTierConfig> = new Map();
+	private metaCategorySet = false;
+	private oneTimeSet = false;
+
+	constructor() {
+		// metaCategory is validated at build() time - using placeholder here
+		// tiers is now required and will be set via tier() method
+		super({ tiers: {} } as unknown as Omit<ActionDef, 'id' | 'name'>, 'Action');
+	}
+
+	/**
+	 * Sets the meta-category for this action. Required for all actions.
+	 * @param metaCategory - The meta-category ID (e.g., MetaCategory.Commands)
+	 */
+	metaCategory(metaCategory: MetaCategoryValue) {
+		if (this.metaCategorySet) {
+			throw new Error('Action already has metaCategory(). ' + 'Remove the extra metaCategory() call.');
+		}
+		this.config.metaCategory = metaCategory;
+		this.metaCategorySet = true;
+		return this;
+	}
+
+	category(category: ActionCategoryId) {
+		this.config.category = category;
+		return this;
+	}
+
+	order(order: number) {
+		this.config.order = order;
+		return this;
+	}
+
+	focus(focus: Focus) {
+		this.config.focus = focus;
+		return this;
+	}
+
+	/**
+	 * Adds a tier to this action with its costs, effects, and requirements.
+	 * @param tierNumber The tier number (must be positive integer)
+	 * @param config The tier configuration or a callback that builds it
+	 */
+	tier(tierNumber: number, config: ActionTierConfig | ActionTierBuilder | TierConfigurator): this {
+		if (!Number.isInteger(tierNumber) || tierNumber < 1) {
+			throw new Error(`Action tier number must be a positive integer, got ${tierNumber}`);
+		}
+		if (this.tiersMap.has(tierNumber)) {
+			throw new Error(`Action already has tier ${tierNumber}. ` + 'Each tier number can only be defined once.');
+		}
+
+		let tierConfig: ActionTierConfig;
+		if (typeof config === 'function') {
+			tierConfig = config(new ActionTierBuilder()).build();
+		} else if (config instanceof ActionTierBuilder) {
+			tierConfig = config.build();
+		} else {
+			tierConfig = config;
+		}
+
+		this.tiersMap.set(tierNumber, tierConfig);
+		return this;
+	}
+
+	/**
+	 * Marks this action as one-time (locks after each tier completion).
+	 * For pooled meta-categories, the action returns to the candidate pool
+	 * at the next tier after completion.
+	 */
+	oneTime(flag = true): this {
+		if (this.oneTimeSet) {
+			throw new Error('Action already has oneTime(). Remove the extra oneTime() call.');
+		}
+		this.config.oneTime = flag;
+		this.oneTimeSet = true;
+		return this;
+	}
+
+	system(flag = true) {
+		this.config.system = flag;
+		return this;
+	}
+
+	/**
+	 * Marks this action as locked (not available to players initially).
+	 * Locked actions can be unlocked via the action:add effect.
+	 * Use for player-facing actions that should be gated behind progression.
+	 */
+	locked(flag = true) {
+		this.config.locked = flag;
+		return this;
+	}
+
+	/**
+	 * Marks this action as free (bypasses global action cost like AP).
+	 * Only valid for system actions. Call after `.system()`.
+	 */
+	free(flag = true) {
+		this.config.free = flag;
+		return this;
+	}
+
+	override build(): ActionBuilderConfig {
+		if (!this.metaCategorySet) {
+			throw new Error('Action is missing metaCategory(). ' + 'Call metaCategory(MetaCategory.Commands) before build().');
+		}
+		if (this.tiersMap.size === 0) {
+			throw new Error('Action must have at least one tier. ' + 'Call tier(1, t => t.effect(...)) before build().');
+		}
+
+		// Validate consecutive tiers
+		const tierNumbers = Array.from(this.tiersMap.keys()).sort((a, b) => a - b);
+		const minTier = tierNumbers[0]!;
+		for (let i = 0; i < tierNumbers.length; i++) {
+			const expected = minTier + i;
+			if (tierNumbers[i] !== expected) {
+				throw new Error(`Action tiers must be consecutive. ` + `Found gap: expected tier ${expected} but got ${tierNumbers[i]}.`);
+			}
+		}
+
+		// Convert Map to Record for the config
+		const tiers: ActionTiersConfig = {};
+		for (const [tierNum, tierConfig] of this.tiersMap) {
+			tiers[tierNum] = tierConfig;
+		}
+		this.config.tiers = tiers;
+
+		return super.build();
+	}
+}

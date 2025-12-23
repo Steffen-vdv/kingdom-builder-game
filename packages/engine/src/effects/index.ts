@@ -25,6 +25,9 @@ import { resultMod } from './result_mod';
 import { actionAdd } from './action_add';
 import { actionRemove } from './action_remove';
 import { actionPerform } from './action_perform';
+import { actionUpgrade } from './action_upgrade';
+import { actionPoolAdd } from './action_pool_add';
+import { actionPoolRemove } from './action_pool_remove';
 import { attackPerform } from './attack';
 
 export interface EffectHandler<
@@ -66,6 +69,9 @@ export function registerCoreEffects(
 	registry.add('action:add', actionAdd);
 	registry.add('action:remove', actionRemove);
 	registry.add('action:perform', actionPerform);
+	registry.add('action:upgrade', actionUpgrade);
+	registry.add('action:pool-add', actionPoolAdd);
+	registry.add('action:pool-remove', actionPoolRemove);
 	registry.add('attack:perform', attackPerform);
 
 	costRegistry.add('building:add', collectBuildingAddCosts);

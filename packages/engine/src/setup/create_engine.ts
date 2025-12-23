@@ -1,7 +1,7 @@
 import type { ZodType } from 'zod';
 import { GameState } from '../state';
 import type { ResourceKey, PopulationRoleId } from '../state';
-import { Services, PassiveManager } from '../services';
+import { Services, PassiveManager, RngService } from '../services';
 import type { RuleSet } from '../services';
 import { EngineContext } from '../context';
 import { registerCoreEffects, runEffects } from '../effects';
@@ -32,7 +32,8 @@ import {
 } from '../resource';
 import {
 	determineCommonActionCostResource,
-	initializePlayerActions,
+	initializePlayerActionStates,
+	runInitialPoolFills,
 } from './player_setup';
 import { snapshotPlayer, type ActionTrace } from '../log';
 import {
@@ -49,6 +50,8 @@ export interface EngineCreationOptions {
 	rules: RuleSet;
 	config?: GameConfig;
 	resourceCatalog?: RuntimeResourceContent;
+	/** Seed for the RNG. If not provided, uses Date.now(). */
+	seed?: number;
 }
 
 type ValidatedConfig = ReturnType<typeof validateGameConfig>;
@@ -259,6 +262,7 @@ export function createEngine({
 	rules,
 	config,
 	resourceCatalog,
+	seed,
 }: EngineCreationOptions) {
 	registerCoreEffects();
 	registerCoreEvaluators();
@@ -299,6 +303,7 @@ export function createEngine({
 
 	const actionCostConfig =
 		determineCommonActionCostResource(actionMetaCategories);
+	const rng = new RngService(seed ?? Date.now());
 	const engineContext = new EngineContext(
 		gameState,
 		services,
@@ -311,6 +316,7 @@ export function createEngine({
 		actionCostConfig.amount,
 		runtimeResourceCatalog,
 		actionMetaCategories,
+		rng,
 	);
 	const playerOne = engineContext.game.players[0]!;
 	const playerTwo = engineContext.game.players[1]!;
@@ -366,9 +372,13 @@ export function createEngine({
 		}
 	}
 
-	// Initialize player actions (unlocks non-system actions for players)
-	initializePlayerActions(playerOne, actions);
-	initializePlayerActions(playerTwo, actions);
+	// Initialize action states for all non-system actions
+	initializePlayerActionStates(playerOne, actions, actionMetaCategories);
+	initializePlayerActionStates(playerTwo, actions, actionMetaCategories);
+
+	// Run initial pool fill for meta-categories with pools
+	runInitialPoolFills(playerOne, actions, actionMetaCategories, rng);
+	runInitialPoolFills(playerTwo, actions, actionMetaCategories, rng);
 
 	// Set initial game state
 	engineContext.game.currentPlayerIndex = 0;

@@ -22,13 +22,17 @@ describe('development:add effect', () => {
 			],
 		});
 		const action = content.action({
-			effects: [
-				{
-					type: 'development',
-					method: 'add',
-					params: { id: development.id, landId: '$landId' },
+			tiers: {
+				'1': {
+					effects: [
+						{
+							type: 'development',
+							method: 'add',
+							params: { id: development.id, landId: '$landId' },
+						},
+					],
 				},
-			],
+			},
 		});
 		const engineContext = createTestEngine(content);
 		while (engineContext.game.currentPhase !== PhaseId.Main) {
@@ -65,13 +69,17 @@ describe('development:add effect', () => {
 		const content = createContentFactory();
 		const development = content.development();
 		const action = content.action({
-			effects: [
-				{
-					type: 'development',
-					method: 'add',
-					params: { id: development.id, landId: 'missing' },
+			tiers: {
+				'1': {
+					effects: [
+						{
+							type: 'development',
+							method: 'add',
+							params: { id: development.id, landId: 'missing' },
+						},
+					],
 				},
-			],
+			},
 		});
 		const engineContext = createTestEngine(content);
 		while (engineContext.game.currentPhase !== PhaseId.Main) {
@@ -91,13 +99,17 @@ describe('development:add effect', () => {
 		const content = createContentFactory();
 		const development = content.development();
 		const action = content.action({
-			effects: [
-				{
-					type: 'development',
-					method: 'add',
-					params: { id: development.id, landId: '$landId' },
+			tiers: {
+				'1': {
+					effects: [
+						{
+							type: 'development',
+							method: 'add',
+							params: { id: development.id, landId: '$landId' },
+						},
+					],
 				},
-			],
+			},
 		});
 		const engineContext = createTestEngine(content);
 		while (engineContext.game.currentPhase !== PhaseId.Main) {

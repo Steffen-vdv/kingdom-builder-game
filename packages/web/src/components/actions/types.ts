@@ -25,7 +25,7 @@ export interface Action
 	extends
 		SessionActionOption,
 		PerformableAction,
-		Partial<Pick<ActionDefinition, 'effects' | 'requirements'>> {
+		Partial<Pick<ActionDefinition, 'tiers'>> {
 	system?: boolean;
 	focus?: ActionFocus;
 }

@@ -28,6 +28,8 @@ export type { EffectDef } from './effects';
 export {
 	applyParamsToEffects,
 	coerceActionEffectGroupChoices,
+	getActionStartingTier,
+	getActionTierConfig,
 	resolveActionEffects,
 } from './effects/resolve';
 export type {
@@ -88,6 +90,8 @@ export type {
 	ActionEffectGroup,
 	ActionEffectGroupOption,
 	ActionEffect,
+	ActionTierConfig,
+	ActionTiersConfig,
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,

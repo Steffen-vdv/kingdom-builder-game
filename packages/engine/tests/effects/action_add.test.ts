@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { performAction, getActionCosts, advance } from '../../src';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '@kingdom-builder/testing';
@@ -9,15 +9,20 @@ import type { EngineContext } from '../../src/context';
 describe('action:add effect', () => {
 	it('grants a new action', () => {
 		const contentFactory = createContentFactory();
-		const extraActionDefinition = contentFactory.action();
+		// Create an action that's initially locked
+		const extraActionDefinition = contentFactory.action({ locked: true });
 		const grantingActionDefinition = contentFactory.action({
-			effects: [
-				{
-					type: 'action',
-					method: 'add',
-					params: { id: extraActionDefinition.id },
+			tiers: {
+				'1': {
+					effects: [
+						{
+							type: 'action',
+							method: 'add',
+							params: { id: extraActionDefinition.id },
+						},
+					],
 				},
-			],
+			},
 		});
 		const engineContext = createTestEngine(contentFactory);
 		while (engineContext.game.currentPhase !== PhaseId.Main) {
@@ -29,16 +34,24 @@ describe('action:add effect', () => {
 		);
 		engineContext.activePlayer.resourceValues[CResource.cp] =
 			grantActionCosts[CResource.cp] ?? 0;
-		performAction(grantingActionDefinition.id, engineContext);
+		// Before: action should be locked
 		expect(
-			engineContext.activePlayer.actions.has(extraActionDefinition.id),
+			engineContext.activePlayer.actionStates[extraActionDefinition.id]?.locked,
 		).toBe(true);
+		performAction(grantingActionDefinition.id, engineContext);
+		// After: action should be unlocked
+		expect(
+			engineContext.activePlayer.actionStates[extraActionDefinition.id]?.locked,
+		).toBe(false);
 	});
 
 	it('runs once per whole-number multiplier and floors decimals', () => {
 		const contentFactory = createContentFactory();
 		const extraActionDefinition = contentFactory.action();
-		const add = vi.fn();
+		// actionStates is modified directly by the effect handler
+		const actionStates: Record<string, { locked: boolean }> = {
+			[extraActionDefinition.id]: { locked: true },
+		};
 		const effect: EffectDef = {
 			type: 'action',
 			method: 'add',
@@ -46,22 +59,18 @@ describe('action:add effect', () => {
 		};
 		const context = {
 			activePlayer: {
-				actions: {
-					add,
-				},
+				actionStates,
 			},
 		} as unknown as EngineContext;
 		actionAdd(effect, context, 2.75);
-		expect(add).toHaveBeenCalledTimes(2);
-		expect(add).toHaveBeenNthCalledWith(1, extraActionDefinition.id);
+		// Effect sets locked = false (runs 2 times but result is same)
+		expect(actionStates[extraActionDefinition.id]?.locked).toBe(false);
 	});
 
 	it('throws a helpful error when ids are omitted', () => {
 		const context = {
 			activePlayer: {
-				actions: {
-					add: vi.fn(),
-				},
+				actionStates: {},
 			},
 		} as unknown as EngineContext;
 		expect(() =>

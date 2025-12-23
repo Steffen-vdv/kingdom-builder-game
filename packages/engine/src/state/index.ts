@@ -42,6 +42,21 @@ export interface GameConclusion {
 	triggeredBy: PlayerId;
 }
 
+/**
+ * State of a single action for a player.
+ * Tracks lock states, tier progression, and exhaustion.
+ */
+export interface ActionState {
+	/** Content-controlled lock (via action:add/remove effects) */
+	locked: boolean;
+	/** Engine-controlled lock (via action:pool-add/pool-remove effects) */
+	poolLocked: boolean;
+	/** Player's current tier for this action */
+	currentTier: number;
+	/** True if oneTime and completed at max tier (permanently unavailable) */
+	exhausted: boolean;
+}
+
 export class Land {
 	id: string;
 	slotsMax: number;
@@ -74,7 +89,20 @@ export class PlayerState {
 	resourceSources: Record<string, Record<string, ResourceSourceContribution>>;
 	lands: Land[] = [];
 	buildings: Set<string> = new Set();
+	/**
+	 * @deprecated Use actionStates instead. Kept for backwards compatibility.
+	 */
 	actions: Set<string> = new Set();
+	/**
+	 * Action states for all actions. Tracks lock states, tier progression,
+	 * and exhaustion. Replaces the old `actions` string set.
+	 */
+	actionStates: Record<string, ActionState> = {};
+	/**
+	 * Total binding resource spent per meta-category. Used for tier
+	 * progression curve calculations in pooled meta-categories.
+	 */
+	metaCategoryBindingSpent: Record<string, number> = {};
 	skipPhases: Record<string, Record<string, true>>;
 	skipSteps: Record<string, Record<string, Record<string, true>>>;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -95,6 +123,39 @@ export class PlayerState {
 		>;
 		this.skipPhases = {};
 		this.skipSteps = {};
+	}
+
+	/**
+	 * Checks if an action is available (can be performed) by the player.
+	 * An action is available when it's not content-locked AND not pool-locked.
+	 *
+	 * Note: This method does NOT check the action's system status - system
+	 * actions should be filtered at a higher level using the action registry.
+	 * Use the helper functions in pool/fillAlgorithm.ts for complete checks.
+	 */
+	isActionAvailable(actionId: string): boolean {
+		const state = this.actionStates[actionId];
+		if (!state) {
+			return false;
+		}
+		return !state.locked && !state.poolLocked;
+	}
+
+	/**
+	 * Checks if an action is a pool candidate (can be added to the pool).
+	 * An action is a candidate when it's pool-locked but not content-locked
+	 * and not exhausted.
+	 *
+	 * Note: This method does NOT check the action's system status - system
+	 * actions should be filtered at a higher level using the action registry.
+	 * Use the helper functions in pool/fillAlgorithm.ts for complete checks.
+	 */
+	isPoolCandidate(actionId: string): boolean {
+		const state = this.actionStates[actionId];
+		if (!state) {
+			return false;
+		}
+		return !state.locked && state.poolLocked && !state.exhausted;
 	}
 }
 

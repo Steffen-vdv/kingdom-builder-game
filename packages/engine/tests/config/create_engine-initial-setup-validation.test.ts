@@ -53,16 +53,20 @@ describe('createEngine initial setup validation', () => {
 				system: true,
 				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
-				effects: [
-					{
-						type: 'resource',
-						method: 'add',
-						params: {
-							resourceId: 'resource:nonexistent:fake',
-							change: { type: 'amount', amount: 10 },
-						},
+				tiers: {
+					'1': {
+						effects: [
+							{
+								type: 'resource',
+								method: 'add',
+								params: {
+									resourceId: 'resource:nonexistent:fake',
+									change: { type: 'amount', amount: 10 },
+								},
+							},
+						],
 					},
-				],
+				},
 			};
 
 			const actions = createActionsRegistry(invalidSetupAction);
@@ -84,16 +88,20 @@ describe('createEngine initial setup validation', () => {
 				system: true,
 				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
-				effects: [
-					{
-						type: 'resource',
-						method: 'add',
-						params: {
-							resourceId: 'resource:core:total-population',
-							change: { type: 'amount', amount: 5 },
-						},
+				tiers: {
+					'1': {
+						effects: [
+							{
+								type: 'resource',
+								method: 'add',
+								params: {
+									resourceId: 'resource:core:total-population',
+									change: { type: 'amount', amount: 5 },
+								},
+							},
+						],
 					},
-				],
+				},
 			};
 
 			const actions = createActionsRegistry(invalidSetupAction);
@@ -116,16 +124,20 @@ describe('createEngine initial setup validation', () => {
 				system: true,
 				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
-				effects: [
-					{
-						type: 'resource',
-						method: 'add',
-						params: {
-							// Missing resourceId
-							change: { type: 'amount', amount: 10 },
-						} as Record<string, unknown>,
+				tiers: {
+					'1': {
+						effects: [
+							{
+								type: 'resource',
+								method: 'add',
+								params: {
+									// Missing resourceId
+									change: { type: 'amount', amount: 10 },
+								} as Record<string, unknown>,
+							},
+						],
 					},
-				],
+				},
 			};
 
 			const actions = createActionsRegistry(invalidSetupAction);
@@ -146,13 +158,17 @@ describe('createEngine initial setup validation', () => {
 				system: true,
 				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
-				effects: [
-					{
-						type: 'resource',
-						method: 'add',
-						// No params at all
+				tiers: {
+					'1': {
+						effects: [
+							{
+								type: 'resource',
+								method: 'add',
+								// No params at all
+							},
+						],
 					},
-				],
+				},
 			};
 
 			const actions = createActionsRegistry(invalidSetupAction);
@@ -173,16 +189,20 @@ describe('createEngine initial setup validation', () => {
 				system: true,
 				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
-				effects: [
-					{
-						type: 'resource',
-						method: 'add',
-						params: {
-							resourceId: 'resource:core:gold',
-							change: { type: 'amount', amount: NaN },
-						},
+				tiers: {
+					'1': {
+						effects: [
+							{
+								type: 'resource',
+								method: 'add',
+								params: {
+									resourceId: 'resource:core:gold',
+									change: { type: 'amount', amount: NaN },
+								},
+							},
+						],
 					},
-				],
+				},
 			};
 
 			const actions = createActionsRegistry(invalidSetupAction);
@@ -204,16 +224,20 @@ describe('createEngine initial setup validation', () => {
 				metaCategory: MetaCategory.Commands,
 				system: false, // Not a system action
 				systemRole: SystemRole.INITIAL_SETUP, // Has role but system=false
-				effects: [
-					{
-						type: 'resource',
-						method: 'add',
-						params: {
-							resourceId: 'resource:core:gold',
-							change: { type: 'amount', amount: 10 },
-						},
+				tiers: {
+					'1': {
+						effects: [
+							{
+								type: 'resource',
+								method: 'add',
+								params: {
+									resourceId: 'resource:core:gold',
+									change: { type: 'amount', amount: 10 },
+								},
+							},
+						],
 					},
-				],
+				},
 			};
 
 			const actions = createActionsRegistry(nonSystemAction);
@@ -237,26 +261,30 @@ describe('createEngine initial setup validation', () => {
 				system: true,
 				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
-				effects: [
-					// Start with some gold
-					{
-						type: 'resource',
-						method: 'add',
-						params: {
-							resourceId: 'resource:core:gold',
-							change: { type: 'amount', amount: 5 },
-						},
+				tiers: {
+					'1': {
+						effects: [
+							// Start with some gold
+							{
+								type: 'resource',
+								method: 'add',
+								params: {
+									resourceId: 'resource:core:gold',
+									change: { type: 'amount', amount: 5 },
+								},
+							},
+							// Then try to remove way more than we have
+							{
+								type: 'resource',
+								method: 'remove',
+								params: {
+									resourceId: 'resource:core:gold',
+									change: { type: 'amount', amount: 100 },
+								},
+							},
+						],
 					},
-					// Then try to remove way more than we have
-					{
-						type: 'resource',
-						method: 'remove',
-						params: {
-							resourceId: 'resource:core:gold',
-							change: { type: 'amount', amount: 100 },
-						},
-					},
-				],
+				},
 			};
 
 			const actions = createActionsRegistry(underflowSetupAction);
@@ -282,21 +310,25 @@ describe('createEngine initial setup validation', () => {
 				system: true,
 				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
-				effects: [
-					{
-						type: 'land',
-						method: 'add',
-						params: { slotsMax: 2 },
+				tiers: {
+					'1': {
+						effects: [
+							{
+								type: 'land',
+								method: 'add',
+								params: { slotsMax: 2 },
+							},
+							{
+								type: 'development',
+								method: 'add',
+								params: {
+									id: 'nonexistent_development',
+									landIndex: 0,
+								},
+							},
+						],
 					},
-					{
-						type: 'development',
-						method: 'add',
-						params: {
-							id: 'nonexistent_development',
-							landIndex: 0,
-						},
-					},
-				],
+				},
 			};
 
 			const actions = createActionsRegistry(invalidSetupAction);
@@ -317,13 +349,17 @@ describe('createEngine initial setup validation', () => {
 				system: true,
 				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
-				effects: [
-					{
-						type: 'building',
-						method: 'add',
-						params: { id: 'nonexistent_building' },
+				tiers: {
+					'1': {
+						effects: [
+							{
+								type: 'building',
+								method: 'add',
+								params: { id: 'nonexistent_building' },
+							},
+						],
 					},
-				],
+				},
 			};
 
 			const actions = createActionsRegistry(invalidSetupAction);

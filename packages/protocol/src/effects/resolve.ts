@@ -171,6 +171,54 @@ export interface ResolvedActionEffects {
 	steps: ResolvedActionEffectStep[];
 }
 
+/**
+ * Gets the tier configuration for a tiered action at the specified tier.
+ * Returns the tier's costs, effects, and requirements.
+ */
+export function getActionTierConfig(
+	action: {
+		id: string;
+		tiers: Record<
+			string,
+			{
+				costs?: Record<string, number> | undefined;
+				effects: ActionEffect[];
+				requirements?: unknown[] | undefined;
+			}
+		>;
+	},
+	tier: number,
+): {
+	costs: Record<string, number>;
+	effects: ActionEffect[];
+	requirements: unknown[];
+} {
+	const tierConfig = action.tiers[String(tier)];
+	if (!tierConfig) {
+		throw new Error(`Action "${action.id}" has no tier ${tier}`);
+	}
+	return {
+		costs: tierConfig.costs ?? {},
+		effects: tierConfig.effects,
+		requirements: tierConfig.requirements ?? [],
+	};
+}
+
+/**
+ * Gets the starting (lowest) tier number for an action.
+ */
+export function getActionStartingTier(action: {
+	tiers: Record<string, unknown>;
+}): number {
+	const tierNumbers = Object.keys(action.tiers)
+		.map(Number)
+		.filter((n) => !isNaN(n));
+	if (tierNumbers.length === 0) {
+		throw new Error('Action has no tiers defined');
+	}
+	return Math.min(...tierNumbers);
+}
+
 export function coerceActionEffectGroupChoices(
 	value: unknown,
 ): ActionEffectGroupChoiceMap {
@@ -200,10 +248,47 @@ export function coerceActionEffectGroupChoices(
 	return Object.fromEntries(entries);
 }
 
+/**
+ * Resolves action effects for execution. Supports both old flat format and
+ * new tier-based format.
+ *
+ * For tier-based actions, pass the specific tier number to use. If omitted,
+ * defaults to tier 1 (the lowest tier).
+ *
+ * @param actionDefinition Action definition with either flat effects or tiers
+ * @param params Optional action parameters
+ * @param tier Tier number to use for tier-based actions (defaults to 1)
+ */
 export function resolveActionEffects(
-	actionDefinition: { id: string; effects: ActionEffect[] },
+	actionDefinition:
+		| { id: string; effects: ActionEffect[] }
+		| { id: string; tiers: Record<string, { effects: ActionEffect[] }> },
 	params?: ActionParametersPayload,
+	tier?: number,
 ): ResolvedActionEffects {
+	// Get effects from either flat format or tier-based format
+	let effects: ActionEffect[];
+	if ('effects' in actionDefinition) {
+		effects = actionDefinition.effects;
+	} else if ('tiers' in actionDefinition) {
+		// Use specified tier or find the lowest tier
+		const tierNumber =
+			tier ??
+			Math.min(
+				...Object.keys(actionDefinition.tiers)
+					.map(Number)
+					.filter((n) => !isNaN(n)),
+			);
+		const tierConfig = actionDefinition.tiers[String(tierNumber)];
+		if (!tierConfig) {
+			throw new Error(
+				`Action "${actionDefinition.id}" has no tier ${tierNumber}`,
+			);
+		}
+		effects = tierConfig.effects;
+	} else {
+		effects = [];
+	}
 	const substitutionParams = extractActionParams(params);
 	const choices = coerceActionEffectGroupChoices(params?.choices);
 	const resolvedEffects: EffectDef[] = [];
@@ -211,7 +296,7 @@ export function resolveActionEffects(
 	const missingSelections: string[] = [];
 	const steps: ResolvedActionEffectStep[] = [];
 
-	for (const effect of actionDefinition.effects) {
+	for (const effect of effects) {
 		if (!isActionEffectGroup(effect)) {
 			const applied = applyParamsToEffects([effect], substitutionParams);
 			resolvedEffects.push(...applied);

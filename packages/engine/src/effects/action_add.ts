@@ -1,5 +1,10 @@
 import type { EffectHandler } from '.';
 
+/**
+ * Effect handler for action:add.
+ * Sets locked = false in actionStates (content-controlled unlock).
+ * This is used when a building or other content unlocks an action.
+ */
 export const actionAdd: EffectHandler = (effect, context, mult = 1) => {
 	const id = effect.params?.['id'] as string;
 	if (!id) {
@@ -8,7 +13,12 @@ export const actionAdd: EffectHandler = (effect, context, mult = 1) => {
 	const iterations = Math.floor(mult);
 	let iterationIndex = 0;
 	while (iterationIndex < iterations) {
-		context.activePlayer.actions.add(id);
+		// Update actionStates model
+		const state = context.activePlayer.actionStates[id];
+		if (state) {
+			state.locked = false;
+		}
+
 		iterationIndex++;
 	}
 };

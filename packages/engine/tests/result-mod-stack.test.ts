@@ -19,13 +19,17 @@ describe('result modifiers', () => {
 			amount: baseGain,
 		});
 		const action = content.action({
-			effects: [
-				{
-					type: 'resource',
-					method: 'add',
-					params: base,
+			tiers: {
+				'1': {
+					effects: [
+						{
+							type: 'resource',
+							method: 'add',
+							params: base,
+						},
+					],
 				},
-			],
+			},
 		});
 
 		const passiveA = {

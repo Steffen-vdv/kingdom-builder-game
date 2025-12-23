@@ -6,33 +6,50 @@ import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { getCatalogIndexes } from '../../src/resource';
 import { resourceAmountParams } from '../helpers/resourceParams';
 
+// Helper to get effects from first tier
+function getEffectsFromFirstTier(action: {
+	tiers: Record<string, { effects: unknown[] }>;
+}): unknown[] {
+	const tierKeys = Object.keys(action.tiers);
+	const firstTier = tierKeys.length > 0 ? tierKeys[0] : '1';
+	return action.tiers[firstTier!]?.effects ?? [];
+}
+
 describe('resource effects for population', () => {
 	it('adds and removes population via resource effects', () => {
 		const content = createContentFactory();
 		// Use a real population role that's registered in the Resource catalog
 		const roleId = CResource.legion;
 		const add = content.action({
-			effects: [
-				{
-					type: 'resource',
-					method: 'add',
-					params: resourceAmountParams({ resourceId: roleId, amount: 1 }),
+			tiers: {
+				'1': {
+					effects: [
+						{
+							type: 'resource',
+							method: 'add',
+							params: resourceAmountParams({ resourceId: roleId, amount: 1 }),
+						},
+						{
+							type: 'resource',
+							method: 'add',
+							params: resourceAmountParams({ resourceId: roleId, amount: 1 }),
+						},
+					],
 				},
-				{
-					type: 'resource',
-					method: 'add',
-					params: resourceAmountParams({ resourceId: roleId, amount: 1 }),
-				},
-			],
+			},
 		});
 		const remove = content.action({
-			effects: [
-				{
-					type: 'resource',
-					method: 'remove',
-					params: resourceAmountParams({ resourceId: roleId, amount: 1 }),
+			tiers: {
+				'1': {
+					effects: [
+						{
+							type: 'resource',
+							method: 'remove',
+							params: resourceAmountParams({ resourceId: roleId, amount: 1 }),
+						},
+					],
 				},
-			],
+			},
 		});
 		const engineContext = createTestEngine(content);
 		while (engineContext.game.currentPhase !== PhaseId.Main) {
@@ -46,7 +63,10 @@ describe('resource effects for population', () => {
 		engineContext.activePlayer.resourceValues[CResource.cp] =
 			cost[CResource.cp] ?? 0;
 		performAction(add.id, engineContext);
-		const added = add.effects.filter((e) => e.method === 'add').length;
+		const addEffects = getEffectsFromFirstTier(add);
+		const added = addEffects.filter(
+			(e) => (e as { method?: string }).method === 'add',
+		).length;
 		// roleId IS the Resource ID
 		expect(engineContext.activePlayer.resourceValues[roleId]).toBe(
 			initialCount + added,
@@ -68,7 +88,10 @@ describe('resource effects for population', () => {
 		engineContext.activePlayer.resourceValues[CResource.cp] =
 			cost[CResource.cp] ?? 0;
 		performAction(remove.id, engineContext);
-		const removed = remove.effects.filter((e) => e.method === 'remove').length;
+		const removeEffects = getEffectsFromFirstTier(remove);
+		const removed = removeEffects.filter(
+			(e) => (e as { method?: string }).method === 'remove',
+		).length;
 		expect(engineContext.activePlayer.resourceValues[roleId]).toBe(
 			initialCount + added - removed,
 		);

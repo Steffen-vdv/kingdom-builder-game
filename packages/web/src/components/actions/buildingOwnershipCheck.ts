@@ -8,18 +8,21 @@ import type { ActionConfig } from '@kingdom-builder/protocol';
 export function extractBuildingIdFromAction(
 	actionConfig: ActionConfig | undefined,
 ): string | undefined {
-	if (!actionConfig?.effects) {
+	if (!actionConfig?.tiers) {
 		return undefined;
 	}
-	for (const effect of actionConfig.effects) {
-		// Skip effect groups (they have 'options' instead of 'type')
-		if ('options' in effect) {
-			continue;
-		}
-		if (effect.type === 'building' && effect.method === 'add') {
-			const buildingId = effect.params?.['id'];
-			if (typeof buildingId === 'string') {
-				return buildingId;
+	// Check effects in all tiers (typically tier 1)
+	for (const tierConfig of Object.values(actionConfig.tiers)) {
+		for (const effect of tierConfig.effects) {
+			// Skip effect groups (they have 'options' instead of 'type')
+			if ('options' in effect) {
+				continue;
+			}
+			if (effect.type === 'building' && effect.method === 'add') {
+				const buildingId = effect.params?.['id'];
+				if (typeof buildingId === 'string') {
+					return buildingId;
+				}
 			}
 		}
 	}

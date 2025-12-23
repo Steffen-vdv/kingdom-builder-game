@@ -60,6 +60,21 @@ export interface SessionPassiveSummary {
 	meta?: PassiveMetadata;
 }
 
+/**
+ * State of a single action for a player.
+ * Tracks lock states, tier progression, and exhaustion.
+ */
+export interface SessionActionState {
+	/** Content-controlled lock (via action:add/remove effects) */
+	locked: boolean;
+	/** Engine-controlled lock (via action:pool-add/pool-remove effects) */
+	poolLocked: boolean;
+	/** Player's current tier for this action */
+	currentTier: number;
+	/** True if oneTime and completed at max tier (permanently unavailable) */
+	exhausted: boolean;
+}
+
 export interface SessionPlayerStateSnapshot {
 	id: SessionPlayerId;
 	name: string;
@@ -77,7 +92,21 @@ export interface SessionPlayerStateSnapshot {
 	resourceBounds: Record<string, SessionResourceBounds>;
 	lands: SessionLandSnapshot[];
 	buildings: string[];
+	/**
+	 * @deprecated Use actionStates instead. This field is kept for backwards
+	 * compatibility during migration.
+	 */
 	actions: string[];
+	/**
+	 * Action states for all actions. Tracks lock states, tier progression,
+	 * and exhaustion. Replaces the old `actions` string array.
+	 */
+	actionStates: Record<string, SessionActionState>;
+	/**
+	 * Total binding resource spent per meta-category. Used for tier
+	 * progression curve calculations in pooled meta-categories.
+	 */
+	metaCategoryBindingSpent: Record<string, number>;
 	skipPhases: Record<string, Record<string, true>>;
 	skipSteps: Record<string, Record<string, Record<string, true>>>;
 	passives: SessionPassiveSummary[];

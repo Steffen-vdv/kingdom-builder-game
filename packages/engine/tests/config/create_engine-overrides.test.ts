@@ -54,6 +54,7 @@ describe('createEngine config overrides', () => {
 		};
 		const engine = createEngine({
 			actions: baseContent.actions,
+			actionMetaCategories: baseContent.actionMetaCategories,
 			buildings: baseContent.buildings,
 			developments: baseContent.developments,
 			populations: baseContent.populations,
@@ -74,6 +75,7 @@ describe('createEngine config overrides', () => {
 		};
 		const engine = createEngine({
 			actions: baseContent.actions,
+			actionMetaCategories: baseContent.actionMetaCategories,
 			buildings: baseContent.buildings,
 			developments: baseContent.developments,
 			populations: baseContent.populations,

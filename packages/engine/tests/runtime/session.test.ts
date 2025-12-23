@@ -94,16 +94,20 @@ describe('EngineSession', () => {
 		// Use isolated mode so actionCostResource returns command-points
 		const content = createContentFactory({ isolated: true });
 		const gainGold = content.action({
-			effects: [
-				{
-					type: 'resource',
-					method: 'add',
-					params: resourceAmountParams({
-						resourceId: CResource.gold,
-						amount: 3,
-					}),
+			tiers: {
+				'1': {
+					effects: [
+						{
+							type: 'resource',
+							method: 'add',
+							params: resourceAmountParams({
+								resourceId: CResource.gold,
+								amount: 3,
+							}),
+						},
+					],
 				},
-			],
+			},
 		});
 		const session = createTestSession({
 			actions: content.actions,
@@ -135,10 +139,14 @@ describe('EngineSession', () => {
 		// Use isolated mode so actionCostResource returns command-points
 		const content = createContentFactory({ isolated: true });
 		const failingAction = content.action({
-			effects: Array.from({ length: 3 }, () => ({
-				type: 'land',
-				method: LandMethods.TILL,
-			})),
+			tiers: {
+				'1': {
+					effects: Array.from({ length: 3 }, () => ({
+						type: 'land',
+						method: LandMethods.TILL,
+					})),
+				},
+			},
 		});
 		const session = createTestSession({
 			actions: content.actions,
@@ -202,22 +210,40 @@ describe('EngineSession', () => {
 
 	it('clones action effect groups for option queries', () => {
 		const session = createTestSession();
-		const withGroup = ACTIONS.entries().find(([, def]) =>
-			def.effects.some(
-				(effect) =>
-					typeof effect === 'object' && effect !== null && 'options' in effect,
-			),
-		);
+		// Find an action with effect groups in any tier
+		const withGroup = ACTIONS.entries().find(([, def]) => {
+			for (const tierConfig of Object.values(def.tiers)) {
+				if (
+					tierConfig.effects.some(
+						(effect) =>
+							typeof effect === 'object' &&
+							effect !== null &&
+							'options' in effect,
+					)
+				) {
+					return true;
+				}
+			}
+			return false;
+		});
 		if (!withGroup) {
 			throw new Error('Expected an action with effect groups');
 		}
 		const [actionId, definition] = withGroup;
 		const groups = session.getActionOptions(actionId);
 		expect(groups.length).toBeGreaterThan(0);
-		const firstGroup = definition.effects.find(
-			(effect) =>
-				typeof effect === 'object' && effect !== null && 'options' in effect,
-		);
+		// Find the first group in any tier
+		let firstGroup: { options: { id: string }[] } | undefined;
+		for (const tierConfig of Object.values(definition.tiers)) {
+			const found = tierConfig.effects.find(
+				(effect) =>
+					typeof effect === 'object' && effect !== null && 'options' in effect,
+			);
+			if (found && 'options' in found) {
+				firstGroup = found as { options: { id: string }[] };
+				break;
+			}
+		}
 		if (!firstGroup || !('options' in firstGroup)) {
 			throw new Error('Missing group definition');
 		}
@@ -261,7 +287,12 @@ describe('EngineSession', () => {
 		const content = createContentFactory({ isolated: true });
 		const goldCost = 5;
 		const action = content.action({
-			baseCosts: { [CResource.gold]: goldCost },
+			tiers: {
+				'1': {
+					costs: { [CResource.gold]: goldCost },
+					effects: [],
+				},
+			},
 		});
 		const session = createTestSession({
 			actions: content.actions,
@@ -310,13 +341,18 @@ describe('EngineSession', () => {
 		// Use isolated mode so actionCostResource returns command-points
 		const content = createContentFactory({ isolated: true });
 		const action = content.action({
-			requirements: [
-				{
-					type: 'vitest',
-					method: 'fail',
-					message: requirementMessage,
+			tiers: {
+				'1': {
+					requirements: [
+						{
+							type: 'vitest',
+							method: 'fail',
+							message: requirementMessage,
+						},
+					],
+					effects: [],
 				},
-			],
+			},
 		});
 		const session = createTestSession({
 			actions: content.actions,
@@ -361,12 +397,17 @@ describe('EngineSession', () => {
 		// Use isolated mode so actionCostResource returns command-points
 		const content = createContentFactory({ isolated: true });
 		const action = content.action({
-			requirements: [
-				{
-					type: 'vitest',
-					method: 'active-id',
+			tiers: {
+				'1': {
+					requirements: [
+						{
+							type: 'vitest',
+							method: 'active-id',
+						},
+					],
+					effects: [],
 				},
-			],
+			},
 		});
 		const session = createTestSession({
 			actions: content.actions,
@@ -569,17 +610,21 @@ it('delegates AI turns with overrides while preserving controllers', async () =>
 	const content = createContentFactory({ isolated: true });
 	const taxAction = content.action({
 		id: TAX_ACTION_ID,
-		baseCosts: {},
-		effects: [
-			{
-				type: 'resource',
-				method: 'add',
-				params: resourceAmountParams({
-					resourceId: CResource.gold,
-					amount: 1,
-				}),
+		tiers: {
+			'1': {
+				costs: {},
+				effects: [
+					{
+						type: 'resource',
+						method: 'add',
+						params: resourceAmountParams({
+							resourceId: CResource.gold,
+							amount: 1,
+						}),
+					},
+				],
 			},
-		],
+		},
 	});
 	void taxAction;
 	const session = createTestSession({
