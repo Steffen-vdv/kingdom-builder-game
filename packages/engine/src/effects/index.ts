@@ -130,5 +130,8 @@ export {
 	actionAdd,
 	actionRemove,
 	actionPerform,
+	actionUpgrade,
+	actionPoolAdd,
+	actionPoolRemove,
 };
 export type { EffectDef } from '@kingdom-builder/protocol';
