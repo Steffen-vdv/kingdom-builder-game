@@ -106,7 +106,7 @@ export function createActionsPanelGame({
 		[actionCostResource]: 3,
 		[upkeepResource]: 10,
 	};
-	// Mark resources as touched for Commands meta-category visibility
+	// Touched resources for Commands meta-category visibility
 	const resourceTouched = {
 		[actionCostResource]: true,
 		'resource:core:command-points': true, // Commands binding resource
