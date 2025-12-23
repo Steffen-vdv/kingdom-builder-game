@@ -1,9 +1,7 @@
 import type { EffectConfig, PassiveMetadata } from '@kingdom-builder/protocol';
-import type { ResourceTierTrackMetadata } from './resource';
-import { costModParams, globalTarget, resultModParams, resourceAddEffect, effect } from './builders';
-import { Types, CostModMethods, ResultModMethods, PassiveMethods } from './builderShared';
-import { formatPassiveRemoval } from './text';
-import type { passiveParams } from './builders';
+import type { ResourceTierTrackMetadata, passiveParams } from '@kingdom-builder/contents-sdk';
+import { costModParams, globalTarget, resultModParams, effect, Types, CostModMethods, ResultModMethods, PassiveMethods, formatPassiveRemoval } from '@kingdom-builder/contents-sdk';
+import { resourceAddEffect } from '../internal/resourceEffects';
 import { ResourceId } from '../constants';
 
 export type HappinessTierSlug = 'despair' | 'misery' | 'grim' | 'unrest' | 'steady' | 'content' | 'joyful' | 'elated' | 'ecstatic';

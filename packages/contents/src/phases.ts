@@ -1,7 +1,6 @@
 import { Resource } from './internal';
 import { effect, phase, step, compareEvaluator, resourceEvaluator, type PhaseDef } from './infrastructure/builders';
-import { Types, ResourceMethods } from './infrastructure/builderShared';
-import { resourcePercentFromResourceChange } from './infrastructure/helpers/resourceEffects';
+import { Types, ResourceMethods, resourcePercentFromResourceChange } from '@kingdom-builder/contents-sdk';
 import { resourceChange } from './resource';
 import { Trigger } from './triggers';
 import { PhaseId, PhaseStepId } from './phaseTypes';

@@ -1,3 +1,4 @@
+// Re-export resource builders and types from contents-sdk
 export type {
 	ResourceBoundReference,
 	ResourceBoundValue,
@@ -13,35 +14,12 @@ export type {
 	ResourceGroupDefinition,
 	ResourceCategoryItem,
 	ResourceCategoryDefinition,
-} from '../infrastructure/resource/types';
-export { boundTo } from '../infrastructure/resource/types';
-
-export { resource } from '../infrastructure/resource/resourceBuilder';
-export type { ResourceBuilder } from '../infrastructure/resource/resourceBuilder';
-
-export { resourceGroup } from '../infrastructure/resource/groupBuilder';
-export type { ResourceGroupBuilder } from '../infrastructure/resource/groupBuilder';
-
-export { resourceCategory } from '../infrastructure/resource/categoryBuilder';
-export type { ResourceCategoryBuilder } from '../infrastructure/resource/categoryBuilder';
-
-export { createResourceRegistry, createResourceGroupRegistry, createResourceCategoryRegistry } from '../infrastructure/resource/registry';
-export type { ResourceRegistry, ResourceGroupRegistry, ResourceCategoryRegistry } from '../infrastructure/resource/registry';
-
-export { RESOURCE_REGISTRY, RESOURCE_GROUP_REGISTRY, RESOURCE_CATEGORY_REGISTRY, buildResourceCatalog } from '../infrastructure/resource/catalog';
-export type { ResourceCatalog } from '../infrastructure/resource/catalog';
-
-export {
-	resourceChange,
-	resourceTransfer,
-	transferEndpoint,
-	increaseUpperBound,
-	ReconciliationMode,
-	RoundingMode,
-	VALID_RECONCILIATION_MODES,
-	VALID_ROUNDING_MODES,
-} from '../infrastructure/resource/effects';
-export type {
+	ResourceBuilder,
+	ResourceGroupBuilder,
+	ResourceCategoryBuilder,
+	ResourceRegistry,
+	ResourceGroupRegistry,
+	ResourceCategoryRegistry,
 	ResourceChangeBuilder,
 	ResourceChangeEffectParams,
 	ResourceChangeParameters,
@@ -57,4 +35,26 @@ export type {
 	ResourceUpperBoundIncreaseParams,
 	ResourceValueWriteOptions,
 	ResourcePlayerScope,
-} from '../infrastructure/resource/effects';
+} from '@kingdom-builder/contents-sdk';
+
+export {
+	boundTo,
+	resource,
+	resourceGroup,
+	resourceCategory,
+	createResourceRegistry,
+	createResourceGroupRegistry,
+	createResourceCategoryRegistry,
+	resourceChange,
+	resourceTransfer,
+	transferEndpoint,
+	increaseUpperBound,
+	ReconciliationMode,
+	RoundingMode,
+	VALID_RECONCILIATION_MODES,
+	VALID_ROUNDING_MODES,
+} from '@kingdom-builder/contents-sdk';
+
+// Game-specific catalog
+export { RESOURCE_REGISTRY, RESOURCE_GROUP_REGISTRY, RESOURCE_CATEGORY_REGISTRY, buildResourceCatalog } from '../infrastructure/resource/catalog';
+export type { ResourceCatalog } from '../infrastructure/resource/catalog';

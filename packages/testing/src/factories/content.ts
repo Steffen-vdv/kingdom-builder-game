@@ -79,6 +79,7 @@ export function createContentFactory(
 		const built: ContentActionCategoryConfig = {
 			id,
 			label: definition.label ?? id,
+			subtitle: definition.subtitle ?? definition.label ?? id,
 			icon: definition.icon ?? 'icon-action-generic',
 			order,
 			layout: definition.layout ?? 'grid-primary',

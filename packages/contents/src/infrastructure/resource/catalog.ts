@@ -1,5 +1,6 @@
 import { getResourceDefinitions, getResourceGroupDefinitions, getResourceCategoryDefinitions } from '../../resources';
-import { createResourceCategoryRegistry, createResourceGroupRegistry, createResourceRegistry, type ResourceCategoryRegistry, type ResourceGroupRegistry, type ResourceRegistry } from './registry';
+import { createResourceCategoryRegistry, createResourceGroupRegistry, createResourceRegistry } from '@kingdom-builder/contents-sdk';
+import type { ResourceCategoryRegistry, ResourceGroupRegistry, ResourceRegistry } from '@kingdom-builder/contents-sdk';
 
 export interface ResourceCatalog {
 	readonly resources: ResourceRegistry;

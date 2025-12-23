@@ -15,7 +15,7 @@ import { ActionId, PopulationEvaluationId } from './actionIds';
 import { Resource } from './internal';
 import { DevelopmentId } from './developments';
 import { building, effect, actionParams, resultModParams, evaluationTarget, developmentTarget, populationTarget, costModParams, passiveParams } from './infrastructure/builders';
-import { Types, CostModMethods, ResultModMethods, ResourceMethods, ActionMethods, PassiveMethods } from './infrastructure/builderShared';
+import { Types, CostModMethods, ResultModMethods, ResourceMethods, ActionMethods, PassiveMethods } from '@kingdom-builder/contents-sdk';
 import { Focus } from './infrastructure/defs';
 import { BuildingId as BuildingIdMap } from './buildingIds';
 import type { BuildingId as BuildingIdType } from './buildingIds';

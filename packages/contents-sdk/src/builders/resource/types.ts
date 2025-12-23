@@ -30,6 +30,16 @@ export type ResourceBoundValue = number | ResourceBoundReference;
 export interface ResourceBounds {
 	lowerBound?: ResourceBoundValue;
 	upperBound?: ResourceBoundValue;
+	/**
+	 * How to reconcile when the lower bound is violated.
+	 * Applies to both static and dynamic bounds. Default: 'clamp'
+	 */
+	lowerBoundReconciliation?: ResourceReconciliationMode;
+	/**
+	 * How to reconcile when the upper bound is violated.
+	 * Applies to both static and dynamic bounds. Default: 'clamp'
+	 */
+	upperBoundReconciliation?: ResourceReconciliationMode;
 }
 
 export interface ResourceGlobalCostConfig {

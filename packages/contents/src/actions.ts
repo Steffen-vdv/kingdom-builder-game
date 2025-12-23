@@ -44,7 +44,10 @@ import {
 	ResourceMethods,
 	ResultModMethods,
 	Types,
-} from './infrastructure/builderShared';
+	resourceAmountChange,
+	resourceTransferAmount,
+	resourceTransferPercent,
+} from '@kingdom-builder/contents-sdk';
 import { Focus } from './infrastructure/defs';
 import {
 	ActionId as ActionIdValues,
@@ -67,7 +70,6 @@ import {
 } from './actionIds';
 import { ActionCategoryId as ActionCategoryValues, type ActionCategoryId as ActionCategoryIdValue } from './actionCategories';
 import { MetaCategory, type MetaCategoryValue } from './constants';
-import { resourceAmountChange, resourceTransferAmount, resourceTransferPercent } from './infrastructure/helpers/resourceEffects';
 import { ReconciliationMode, resourceChange } from './resource';
 
 // Re-export IDs for external consumers
