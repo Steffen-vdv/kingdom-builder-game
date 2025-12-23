@@ -237,6 +237,7 @@ export function createActionRegistry() {
 			.metaCategory(MetaCategory.Commands)
 			.name('Raid')
 			.icon('🗡️')
+			.locked()
 			.requirement(compareRequirement().left(resourceEvaluator().resourceId(Resource.warWeariness)).operator('lt').right(resourceEvaluator().resourceId(Resource.legion)).build())
 			.effect(
 				effect(Types.Attack, AttackMethods.PERFORM)
