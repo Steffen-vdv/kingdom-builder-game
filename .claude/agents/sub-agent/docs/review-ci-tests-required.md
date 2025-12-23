@@ -71,19 +71,81 @@ You do NOT need to read them manually - they appear above in your session contex
 │                                                                                 │
 │ 0. REVIEW the injected input.json and delta content above                       │
 │    ↓                                                                            │
-│ 1. ANALYZE what changed (from injected files_changed + git diff)                │
+│ 1. CHECK DELTA MODE FIRST                                                       │
+│    • If mode=DELTA_REVIEW AND prior_verdict=APPROVED:                           │
+│      → Only analyze files in new_commits (see Delta Mode Optimization)          │
+│      → Use minimal test strategy for delta scope                                │
+│    • If mode=FULL_REVIEW:                                                       │
+│      → Analyze all files_changed                                                │
 │    ↓                                                                            │
-│ 2. DETERMINE test strategy based on change scope                                │
+│ 2. ANALYZE what changed (delta files OR full files_changed)                     │
 │    ↓                                                                            │
-│ 3. EXECUTE chosen test commands                                                 │
+│ 3. DETERMINE test strategy based on change scope                                │
 │    ↓                                                                            │
-│ 4. If PASS → verdict APPROVED                                                   │
+│ 4. EXECUTE chosen test commands                                                 │
+│    ↓                                                                            │
+│ 5. If PASS → verdict APPROVED                                                   │
 │    If FAIL → verdict BLOCKED with blockers                                      │
 │    ↓                                                                            │
-│ 5. END with strict QA_VERDICT footer line                                       │
+│ 6. END with strict QA_VERDICT footer line                                       │
 │                                                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Delta Mode Optimization
+
+**CRITICAL:** In `DELTA_REVIEW` mode with `prior_verdict=APPROVED`, you must optimize:
+
+### When Delta Mode Applies
+
+Check your delta file (`delta/review-ci-tests-required.json`):
+
+```json
+{
+	"mode": "DELTA_REVIEW",
+	"prior_verdict": "APPROVED",
+	"prior_commits": ["abc123", "def456"],
+	"new_commits": ["789xyz"]
+}
+```
+
+### Delta Mode Rules
+
+1. **ONLY analyze files changed in `new_commits`** — not the entire branch diff
+2. **Do NOT re-run full suite** for already-approved commits
+3. **Use minimal strategy** when new changes are limited scope
+
+### Delta Strategy Selection
+
+| New Commit Scope                   | Strategy                                  |
+| ---------------------------------- | ----------------------------------------- |
+| Only docs (`.md` files)            | Strategy 1: No tests needed               |
+| Only tests in single package       | Strategy 2: Run that package's tests only |
+| Source + tests in single package   | Strategy 2: Run that package's tests only |
+| Config/formatting only             | Strategy 1: No tests (maybe lint check)   |
+| Cross-package or protocol changes  | Strategy 4: Full test suite (re-verify)   |
+| High-impact files (see list below) | Strategy 7: Full verification             |
+
+### Getting Delta-Only Changes
+
+```bash
+# Get files changed ONLY in new commits (not entire branch)
+git diff --name-only <prior_commit>..HEAD
+
+# Example: if prior_commits ends with "abc123" and HEAD is "789xyz"
+git diff --name-only abc123..HEAD
+```
+
+### Example
+
+If `prior_verdict=APPROVED` and `new_commits` only touches:
+
+- `packages/server/src/session/registryUtils.ts`
+- `packages/server/tests/SessionTransport.createSession.test.ts`
+
+Then run: `pnpm --filter @kingdom-builder/server test` (NOT full verification)
 
 ---
 
@@ -110,13 +172,34 @@ Analyze the changes and choose the appropriate strategy:
 
 ## Analysis Process
 
-### Step 1: Get Changed Files
+### Step 0: Check Delta Mode
 
-Use `files_changed` from input.json, or run git commands:
+**ALWAYS check this first.** Read your delta file:
 
 ```bash
-# For branch comparison
+cat /tmp/claude/qa/current/delta/review-ci-tests-required.json
+```
+
+If `mode=DELTA_REVIEW` AND `prior_verdict=APPROVED`:
+
+- Skip to "Get Delta Files" below
+- Do NOT analyze the full branch diff
+
+### Step 1: Get Changed Files
+
+**For FULL_REVIEW mode:** Use `files_changed` from input.json, or:
+
+```bash
+# Full branch comparison
 git diff --name-only origin/main...HEAD
+```
+
+**For DELTA_REVIEW mode:** Get only new commit changes:
+
+```bash
+# Get the last prior commit (last element in prior_commits array)
+# Then diff from there to HEAD
+git diff --name-only <last_prior_commit>..HEAD
 ```
 
 ### Step 2: Categorize Changes
@@ -198,9 +281,11 @@ QA_VERDICT:{"verdict":"BLOCKED","summary":"3 tests failed in engine package","bl
 ## BEFORE YOU FINISH (MANDATORY)
 
 1. ☐ Review the injected input.json and delta content above
-2. ☐ Analyzed changes and chose test strategy
-3. ☐ Ran appropriate tests
-4. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-5. ☐ Ended response with QA_VERDICT footer line
+2. ☐ **Checked delta mode** — if DELTA_REVIEW with prior APPROVED, used minimal strategy
+3. ☐ Analyzed changes (delta files only OR full files_changed)
+4. ☐ Chose appropriate test strategy (NOT full suite if delta allows minimal)
+5. ☐ Ran appropriate tests
+6. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
+7. ☐ Ended response with QA_VERDICT footer line
 
 **The hook parses your footer to create the signed output. No footer = ERROR.**
