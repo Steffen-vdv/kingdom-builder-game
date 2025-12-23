@@ -9,7 +9,7 @@ const baseTasks = [
 ];
 
 const isWindows = process.platform === 'win32';
-const npmExecutable = isWindows ? 'npm.cmd' : 'npm';
+const pnpmExecutable = isWindows ? 'pnpm.cmd' : 'pnpm';
 const artifactsDirectory = path.resolve(process.cwd(), 'artifacts');
 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 
@@ -21,7 +21,7 @@ async function runTask(task) {
 	const writeStream = createWriteStream(artifactPath, { flags: 'w' });
 
 	return new Promise((resolve) => {
-		const child = spawn(npmExecutable, ['run', task.script], {
+		const child = spawn(pnpmExecutable, ['run', task.script], {
 			shell: isWindows,
 			env: process.env,
 		});
@@ -99,7 +99,7 @@ if (!overallSuccess) {
 	console.log('\nVerification failed. Review the artifacts for details.');
 	if (encounteredEnvironmentFailure) {
 		console.log(
-			'Detected environment tooling errors while launching npm tasks.',
+			'Detected environment tooling errors while launching pnpm tasks.',
 		);
 		process.exit(2);
 	}
