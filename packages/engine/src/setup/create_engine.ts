@@ -36,15 +36,9 @@ import {
 } from './player_setup';
 import { snapshotPlayer, type ActionTrace } from '../log';
 
-/**
- * System action IDs for initial setup. The engine will run these actions
- * to set up players at game start.
- */
-export interface SystemActionIds {
-	initialSetup: string;
-	initialSetupDevmode: string;
-	compensation: string;
-}
+// Import and re-export SystemActionIds from contents (single source of truth)
+import type { SystemActionIds } from '@kingdom-builder/contents';
+export type { SystemActionIds };
 
 export interface EngineCreationOptions {
 	actions: Registry<ActionDef>;
