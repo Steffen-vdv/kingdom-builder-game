@@ -86,6 +86,7 @@ export type {
 	RequirementConfig,
 	EffectConfig,
 	ActionMetaCategoryConfig,
+	ActionMetaCategoryPool,
 	ActionCategoryConfig,
 	ActionEffectGroup,
 	ActionEffectGroupOption,
@@ -127,6 +128,7 @@ export type {
 export type {
 	SessionPlayerId,
 	SessionLandSnapshot,
+	SessionActionState,
 	ForecastContribution,
 	ResourceForecastBreakdown,
 	ForecastBreakdownMap,

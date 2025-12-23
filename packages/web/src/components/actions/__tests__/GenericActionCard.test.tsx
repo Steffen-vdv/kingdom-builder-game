@@ -59,7 +59,10 @@ describe('GenericActionCard', () => {
 	} as unknown as DisplayPlayer;
 
 	const createTranslationContext = (
-		actionsMap: Map<string, { effects: unknown[] }> = new Map(),
+		actionsMap: Map<
+			string,
+			{ tiers: Record<string, { effects: unknown[] }> }
+		> = new Map(),
 	) =>
 		({
 			assets: {},

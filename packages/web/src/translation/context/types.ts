@@ -2,6 +2,7 @@ import type {
 	ActionCategoryConfig,
 	ActionConfig,
 	ActionMetaCategoryConfig,
+	ActionMetaCategoryPool,
 	BuildingConfig,
 	DevelopmentConfig,
 	EffectDef,
@@ -52,6 +53,7 @@ export interface TranslationActionMetaCategoryDefinition {
 	readonly visibilityTrigger: ActionMetaCategoryConfig['visibilityTrigger'];
 	readonly order: number;
 	readonly categoryIds?: readonly string[];
+	readonly pool?: ActionMetaCategoryPool;
 }
 
 // eslint-disable-next-line max-len

@@ -1,27 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import type { ActionMetaCategoryConfig } from '@kingdom-builder/protocol';
 import { type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { hasAiController } from '../../state/sessionAi';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
-import { useAnimate } from '../../utils/useAutoAnimate';
 import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
-import type { TranslationActionCategoryDefinition } from '../../translation/context/types';
-import BasicOptions from './BasicOptions';
-import ActionCategoryHeader, {
-	type ActionCategoryDescriptor,
-} from './ActionCategoryHeader';
+import MetaCategoryPanel from './MetaCategoryPanel';
 import {
-	COST_LABEL_CLASSES,
-	HEADER_CLASSES,
 	INDICATOR_PILL_CLASSES,
 	OVERLAY_CLASSES,
-	SECTION_CLASSES,
-	TITLE_CLASSES,
 	TOGGLE_BUTTON_CLASSES,
-	TAB_LIST_CLASSES,
-	TAB_BUTTON_CLASSES,
-	TAB_BUTTON_ACTIVE_CLASSES,
-	TAB_BUTTON_INACTIVE_CLASSES,
 } from './actionsPanelStyles';
 import type { Action, DisplayPlayer } from './types';
 import { normalizeActionFocus } from './types';
@@ -32,15 +20,15 @@ import {
 } from './getActionAvailability';
 import { summarizeActionWithInstallation } from './actionSummaryHelpers';
 
-interface CategoryEntry {
-	id: string;
-	definition?: TranslationActionCategoryDefinition;
+/**
+ * Grouped actions by meta-category with visibility info.
+ */
+interface MetaCategoryGroup {
+	metaCategory: ActionMetaCategoryConfig;
 	actions: Action[];
-}
-
-interface VisibleCategoryEntry extends CategoryEntry {
-	descriptor: ActionCategoryDescriptor;
-	visibleActions: Action[];
+	isVisible: boolean;
+	hasPool: boolean;
+	poolSize: number;
 }
 
 interface ActionAvailabilityObserverProps {
@@ -79,22 +67,12 @@ function ActionAvailabilityObserver({
 	return null;
 }
 
-function createCategoryDescriptor(
-	definition: TranslationActionCategoryDefinition | undefined,
-	fallbackLabel: string,
-): ActionCategoryDescriptor {
-	const label = definition?.title ?? fallbackLabel;
-	const icon = definition?.icon;
-	return { icon, label };
-}
-
 export default function ActionsPanel() {
 	const {
 		sessionSnapshot,
 		selectors,
 		translationContext,
 		phase,
-		actionCostResource,
 		resolution,
 		sessionId,
 	} = useGameEngine();
@@ -106,31 +84,15 @@ export default function ActionsPanel() {
 			resourceMetadata.select(resourceKey),
 		[resourceMetadata],
 	);
-	const actionCostDescriptor = useMemo(
-		() => selectResourceDescriptor(actionCostResource),
-		[selectResourceDescriptor, actionCostResource],
-	);
-	const actionCostIcon = actionCostDescriptor.icon;
-	const actionCostLabel = actionCostDescriptor.label ?? actionCostResource;
-	const primaryMetaCategory = useMemo(() => {
-		const metaCategories = translationContext.actionMetaCategories.list();
-		const first = metaCategories[0];
-		if (!first) {
-			throw new Error(
-				'No action meta-category configured. At least one meta-category is required.',
-			);
-		}
-		return first;
+
+	// Get all meta-categories sorted by order
+	const allMetaCategories = useMemo(() => {
+		return translationContext.actionMetaCategories
+			.list()
+			.slice()
+			.sort((a, b) => a.order - b.order);
 	}, [translationContext.actionMetaCategories]);
-	const actionKeyword = useMemo(
-		() => ({
-			singular: primaryMetaCategory.label,
-			plural: primaryMetaCategory.label,
-			icon: primaryMetaCategory.icon,
-		}),
-		[primaryMetaCategory],
-	);
-	const sectionRef = useAnimate<HTMLDivElement>();
+
 	const player = sessionView.active;
 	if (!player) {
 		return null;
@@ -193,6 +155,7 @@ export default function ActionsPanel() {
 		!resolution?.requireAcknowledgement;
 	const panelDisabled = !canInteract;
 
+	// Get all actions for the selected player
 	const actions = useMemo<Action[]>(() => {
 		const playerActions =
 			sessionView.actionsByPlayer.get(selectedPlayer.id) ?? [];
@@ -216,6 +179,8 @@ export default function ActionsPanel() {
 					: (rest as Action);
 			});
 	}, [sessionView.actionList, sessionView.actionsByPlayer, selectedPlayer]);
+
+	// Build action summaries
 	const actionSummaries = useMemo(() => {
 		const map = new Map<string, Summary>();
 		actions.forEach((actionDefinition) => {
@@ -229,74 +194,44 @@ export default function ActionsPanel() {
 		});
 		return map;
 	}, [actions, translationContext]);
-	const categoryDefinitions = useMemo(
-		() => translationContext.actionCategories.list(),
-		[translationContext.actionCategories],
-	);
-	const categoriesById = useMemo(
-		() =>
-			new Map(
-				categoryDefinitions.map(
-					(definition) => [definition.id, definition] as const,
-				),
-			),
-		[categoryDefinitions],
-	);
-	const fallbackCategoryId = categoryDefinitions[0]?.id;
-	const actionsByCategory = useMemo(() => {
-		const map = new Map<string, Action[]>();
-		actions.forEach((actionDefinition) => {
-			const categoryId = actionDefinition.category ?? fallbackCategoryId;
-			if (!categoryId) {
-				return;
-			}
-			if (
-				actionDefinition.category !== undefined &&
-				!categoriesById.has(actionDefinition.category)
-			) {
-				return;
-			}
-			const bucket = map.get(categoryId);
-			if (bucket) {
-				bucket.push(actionDefinition);
+
+	// Build meta-category groups with visibility info
+	const metaCategoryGroups = useMemo<MetaCategoryGroup[]>(() => {
+		return allMetaCategories.map((metaCategory) => {
+			// Filter actions belonging to this meta-category
+			const categoryActions = actions.filter(
+				(action) => action.metaCategory === metaCategory.id,
+			);
+
+			// Check visibility based on trigger
+			let isVisible: boolean;
+			if (metaCategory.visibilityTrigger === 'always') {
+				isVisible = true;
 			} else {
-				map.set(categoryId, [actionDefinition]);
+				// 'resource-touched' - show only if binding resource has been touched
+				isVisible =
+					selectedPlayer.resourceTouched[metaCategory.bindingResourceId] ??
+					false;
 			}
+
+			return {
+				metaCategory,
+				actions: categoryActions,
+				isVisible,
+				hasPool: Boolean(metaCategory.pool),
+				poolSize: metaCategory.pool?.size ?? 0,
+			};
 		});
-		return map;
-	}, [actions, fallbackCategoryId, categoriesById]);
-	const categoryEntries = useMemo<CategoryEntry[]>(() => {
-		const entries: CategoryEntry[] = [];
-		const seen = new Set<string>();
-		categoryDefinitions.forEach((definition) => {
-			const grouped = actionsByCategory.get(definition.id) ?? [];
-			// Always hide empty categories
-			if (grouped.length === 0) {
-				seen.add(definition.id);
-				return;
-			}
-			entries.push({
-				id: definition.id,
-				definition,
-				actions: grouped,
-			});
-			seen.add(definition.id);
-		});
-		actionsByCategory.forEach((grouped, categoryId) => {
-			if (seen.has(categoryId)) {
-				return;
-			}
-			if (grouped.length === 0) {
-				return;
-			}
-			entries.push({
-				id: categoryId,
-				actions: grouped,
-			});
-		});
-		return entries;
-	}, [actionsByCategory, categoryDefinitions]);
-	const [availabilityMap, setAvailabilityMap] = useState<
+	}, [allMetaCategories, actions, selectedPlayer]);
+
+	// Filter to only visible meta-categories
+	const visibleMetaCategories = useMemo(
+		() => metaCategoryGroups.filter((group) => group.isVisible),
+		[metaCategoryGroups],
+	);
+
+	// Availability tracking (used by ActionAvailabilityObserver components)
+	const [_availabilityMap, setAvailabilityMap] = useState<
 		Map<string, ActionAvailabilityResult>
 	>(() => new Map());
 	useEffect(() => {
@@ -330,181 +265,61 @@ export default function ActionsPanel() {
 		},
 		[],
 	);
-	const visibleCategoryEntries = useMemo<VisibleCategoryEntry[]>(() => {
-		const entries: VisibleCategoryEntry[] = [];
-		categoryEntries.forEach((entry) => {
-			const { definition, actions: grouped } = entry;
-			const visibleActions = grouped.filter(
-				(actionDefinition) => !actionDefinition.system,
-			);
-			// Always hide categories with no visible actions
-			if (visibleActions.length === 0) {
-				return;
-			}
-			const fallbackLabel =
-				grouped[0]?.name ?? definition?.title ?? actionKeyword.plural;
-			const descriptor = createCategoryDescriptor(definition, fallbackLabel);
-			entries.push({
-				...entry,
-				descriptor,
-				visibleActions,
-			});
-		});
-		return entries;
-	}, [categoryEntries, actionKeyword.plural]);
-	const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
-	useEffect(() => {
-		if (visibleCategoryEntries.length === 0) {
-			if (activeCategoryId !== null) {
-				setActiveCategoryId(null);
-			}
-			return;
-		}
-		if (
-			activeCategoryId &&
-			visibleCategoryEntries.some((entry) => entry.id === activeCategoryId)
-		) {
-			return;
-		}
-		const nextId = visibleCategoryEntries[0]?.id ?? null;
-		if (nextId !== activeCategoryId) {
-			setActiveCategoryId(nextId);
-		}
-	}, [visibleCategoryEntries, activeCategoryId]);
-	const categoryCounts = useMemo(() => {
-		const map = new Map<string, { performable: number; total: number }>();
-		visibleCategoryEntries.forEach((entry) => {
-			const total = entry.visibleActions.length;
-			const performable = entry.visibleActions.reduce(
-				(count, actionDefinition) => {
-					const availability = availabilityMap.get(actionDefinition.id);
-					if (availability?.performable) {
-						return count + 1;
-					}
-					return count;
-				},
-				0,
-			);
-			map.set(entry.id, { performable, total });
-		});
-		return map;
-	}, [visibleCategoryEntries, availabilityMap]);
-	const activeEntry = activeCategoryId
-		? visibleCategoryEntries.find((entry) => entry.id === activeCategoryId)
-		: visibleCategoryEntries[0];
-	const tabPanelId = 'actions-panel-tabpanel';
-	const activeButtonId = activeEntry
-		? `actions-panel-tab-${activeEntry.id}`
-		: undefined;
-	const activeContent = activeEntry ? (
-		<BasicOptions
-			actions={activeEntry.actions}
-			summaries={actionSummaries}
-			player={selectedPlayer}
-			canInteract={canInteract}
-			selectResourceDescriptor={selectResourceDescriptor}
-		/>
-	) : null;
+
 	const toggleLabel = viewingOpponent
 		? 'Show player actions'
 		: 'Show opponent actions';
+
 	return (
-		<section
-			className={SECTION_CLASSES}
-			aria-disabled={panelDisabled || undefined}
-		>
-			{panelDisabled && <div aria-hidden className={OVERLAY_CLASSES} />}
-			<div className={HEADER_CLASSES}>
-				<h2 className={TITLE_CLASSES}>
-					{viewingOpponent
-						? `${opponent.name} ${actionKeyword.plural}`
-						: `${actionKeyword.icon} ${actionKeyword.plural}`}{' '}
-					<span className={COST_LABEL_CLASSES}>
-						(1 {actionCostIcon ?? ''}
-						{actionCostIcon ? ' ' : ''}
-						{actionCostLabel} each)
+		<div className="space-y-6">
+			{/* Global status indicators */}
+			<div className="flex flex-wrap items-center gap-2">
+				{viewingOpponent && (
+					<span className={INDICATOR_PILL_CLASSES}>
+						<span>Viewing Opponent</span>
 					</span>
-				</h2>
-				<div className="flex flex-wrap items-center gap-2">
-					{viewingOpponent && (
-						<span className={INDICATOR_PILL_CLASSES}>
-							<span>Viewing Opponent</span>
-						</span>
-					)}
-					{!isControlledTurn && (
-						<span className={INDICATOR_PILL_CLASSES}>
-							<span>Opponent Turn</span>
-						</span>
-					)}
-					{!isActionPhase && (
-						<span className={INDICATOR_PILL_CLASSES}>
-							<span>Not In Main Phase</span>
-						</span>
-					)}
-					{isControlledTurn && hasOpponent && (
-						<button
-							type="button"
-							className={TOGGLE_BUTTON_CLASSES}
-							onClick={() => setViewingOpponent((previous) => !previous)}
-							aria-label={toggleLabel}
-						>
-							<span className="margin-top-correction-five">
-								{viewingOpponent ? '←' : '→'}
-							</span>
-						</button>
-					)}
-				</div>
-			</div>
-			<div className="relative">
-				{visibleCategoryEntries.length > 1 && (
-					<div
-						className={TAB_LIST_CLASSES}
-						role="tablist"
-						aria-label="Action categories"
-					>
-						{visibleCategoryEntries.map((entry) => {
-							const isActive = activeEntry?.id === entry.id;
-							const buttonId = `actions-panel-tab-${entry.id}`;
-							const counts = categoryCounts.get(entry.id) ?? {
-								performable: 0,
-								total: entry.visibleActions.length,
-							};
-							const buttonClasses = [
-								TAB_BUTTON_CLASSES,
-								isActive
-									? TAB_BUTTON_ACTIVE_CLASSES
-									: TAB_BUTTON_INACTIVE_CLASSES,
-							].join(' ');
-							return (
-								<button
-									key={entry.id}
-									id={buttonId}
-									type="button"
-									role="tab"
-									aria-selected={isActive}
-									aria-controls={tabPanelId}
-									className={buttonClasses}
-									onClick={() => setActiveCategoryId(entry.id)}
-								>
-									<ActionCategoryHeader
-										descriptor={entry.descriptor}
-										counts={counts}
-									/>
-								</button>
-							);
-						})}
-					</div>
 				)}
-				<div
-					ref={sectionRef}
-					role="tabpanel"
-					id={tabPanelId}
-					aria-labelledby={activeButtonId}
-					className="mt-4"
-				>
-					{activeContent}
-				</div>
+				{!isControlledTurn && (
+					<span className={INDICATOR_PILL_CLASSES}>
+						<span>Opponent Turn</span>
+					</span>
+				)}
+				{!isActionPhase && (
+					<span className={INDICATOR_PILL_CLASSES}>
+						<span>Not In Main Phase</span>
+					</span>
+				)}
+				{isControlledTurn && hasOpponent && (
+					<button
+						type="button"
+						className={TOGGLE_BUTTON_CLASSES}
+						onClick={() => setViewingOpponent((previous) => !previous)}
+						aria-label={toggleLabel}
+					>
+						<span className="margin-top-correction-five">
+							{viewingOpponent ? '←' : '→'}
+						</span>
+					</button>
+				)}
 			</div>
+
+			{/* Render each visible meta-category panel */}
+			{visibleMetaCategories.map((group) => (
+				<div key={group.metaCategory.id} className="relative">
+					{panelDisabled && <div aria-hidden className={OVERLAY_CLASSES} />}
+					<MetaCategoryPanel
+						metaCategory={group.metaCategory}
+						actions={group.actions}
+						summaries={actionSummaries}
+						player={selectedPlayer}
+						canInteract={canInteract}
+						selectResourceDescriptor={selectResourceDescriptor}
+						panelDisabled={panelDisabled}
+					/>
+				</div>
+			))}
+
+			{/* Hidden availability observers */}
 			{actions.map((actionDefinition) => (
 				<ActionAvailabilityObserver
 					key={`availability-${actionDefinition.id}`}
@@ -515,6 +330,6 @@ export default function ActionsPanel() {
 					onChange={handleAvailabilityChange}
 				/>
 			))}
-		</section>
+		</div>
 	);
 }

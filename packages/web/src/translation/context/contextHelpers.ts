@@ -167,6 +167,9 @@ function normalizeActionMetaCategoryDefinition(
 		...(definition.categoryIds !== undefined
 			? { categoryIds: Object.freeze([...definition.categoryIds]) }
 			: {}),
+		...(definition.pool !== undefined
+			? { pool: Object.freeze({ ...definition.pool }) }
+			: {}),
 	});
 }
 

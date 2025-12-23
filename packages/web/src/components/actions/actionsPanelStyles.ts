@@ -166,6 +166,54 @@ export const TAB_LABEL_CLASS_NAMES = [
 	'dark:text-slate-100',
 ] as const;
 
+// Pool display mode styles
+export const POOL_SLOT_CLASS_NAMES = [
+	'rounded-xl',
+	'border',
+	'border-emerald-200',
+	'bg-emerald-50/50',
+	'p-2',
+	'dark:border-emerald-700/50',
+	'dark:bg-emerald-900/20',
+] as const;
+
+export const POOL_SLOT_EMPTY_CLASS_NAMES = [
+	'rounded-xl',
+	'border',
+	'border-dashed',
+	'border-slate-300',
+	'bg-slate-100/50',
+	'p-4',
+	'flex',
+	'items-center',
+	'justify-center',
+	'min-h-[100px]',
+	'dark:border-slate-600',
+	'dark:bg-slate-800/30',
+] as const;
+
+export const POOL_STATUS_CLASS_NAMES = [
+	'text-sm',
+	'font-medium',
+	'text-slate-500',
+	'dark:text-slate-400',
+] as const;
+
+export const TIER_INDICATOR_CLASS_NAMES = [
+	'inline-flex',
+	'items-center',
+	'gap-1',
+	'rounded-full',
+	'bg-amber-100',
+	'px-2',
+	'py-0.5',
+	'text-xs',
+	'font-semibold',
+	'text-amber-800',
+	'dark:bg-amber-900/40',
+	'dark:text-amber-200',
+] as const;
+
 export const joinClassNames = (classNames: readonly string[]) =>
 	classNames.join(' ');
 
@@ -189,3 +237,11 @@ export const TAB_BUTTON_INACTIVE_CLASSES = joinClassNames(
 export const TAB_HEADER_CLASSES = joinClassNames(TAB_HEADER_CLASS_NAMES);
 export const TAB_ICON_CLASSES = joinClassNames(TAB_ICON_CLASS_NAMES);
 export const TAB_LABEL_CLASSES = joinClassNames(TAB_LABEL_CLASS_NAMES);
+export const POOL_SLOT_CLASSES = joinClassNames(POOL_SLOT_CLASS_NAMES);
+export const POOL_SLOT_EMPTY_CLASSES = joinClassNames(
+	POOL_SLOT_EMPTY_CLASS_NAMES,
+);
+export const POOL_STATUS_CLASSES = joinClassNames(POOL_STATUS_CLASS_NAMES);
+export const TIER_INDICATOR_CLASSES = joinClassNames(
+	TIER_INDICATOR_CLASS_NAMES,
+);

@@ -112,13 +112,14 @@ export function createContentFactory(
 		let tierConfig = definition.tiers;
 		if (!tierConfig) {
 			const legacyCosts = definition.baseCosts;
-			const legacyEffects = definition.effects ?? [];
+			const legacyEffects = (definition.effects ??
+				[]) as ActionConfig['tiers']['1']['effects'];
 			tierConfig = {
 				'1': {
 					...(legacyCosts ? { costs: legacyCosts } : {}),
 					effects: legacyEffects,
 				},
-			};
+			} as ActionConfig['tiers'];
 		}
 
 		const built: ActionConfig = {
