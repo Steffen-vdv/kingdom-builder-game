@@ -1,9 +1,9 @@
-import type { ActionEffect, EffectConfig, RequirementConfig } from '@kingdom-builder/protocol';
-import type { ActionDef } from '../../../actions';
-import type { ActionCategoryId } from '../../../actionCategories';
-import type { MetaCategoryValue } from '../../../constants';
-import type { Focus } from '../../defs';
-import type { ResourceKey } from '../../../internal';
+import type {
+	ActionEffect,
+	EffectConfig,
+	RequirementConfig,
+} from '@kingdom-builder/protocol';
+import type { ActionDef, FocusValue, ResourceKey } from '../../../types';
 import { ActionEffectGroupBuilder } from '../actionEffectGroups';
 import type { ActionEffectGroupDef } from '../actionEffectGroups';
 import { RequirementBuilder } from '../evaluators';
@@ -13,27 +13,12 @@ type ActionBuilderConfig = ActionDef;
 
 export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	private readonly effectGroupIds = new Set<string>();
-	private metaCategorySet = false;
 
 	constructor() {
-		// metaCategory is validated at build() time - using placeholder here
-		super({ effects: [] } as unknown as Omit<ActionDef, 'id' | 'name'>, 'Action');
+		super({ effects: [] }, 'Action');
 	}
 
-	/**
-	 * Sets the meta-category for this action. Required for all actions.
-	 * @param metaCategory - The meta-category ID (e.g., MetaCategory.Actions)
-	 */
-	metaCategory(metaCategory: MetaCategoryValue) {
-		if (this.metaCategorySet) {
-			throw new Error('Action already has metaCategory(). Remove the extra metaCategory() call.');
-		}
-		this.config.metaCategory = metaCategory;
-		this.metaCategorySet = true;
-		return this;
-	}
-
-	category(category: ActionCategoryId) {
+	category(category: string) {
 		this.config.category = category;
 		return this;
 	}
@@ -43,7 +28,7 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 		return this;
 	}
 
-	focus(focus: Focus) {
+	focus(focus: FocusValue) {
 		this.config.focus = focus;
 		return this;
 	}
@@ -68,11 +53,18 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 
 	effectGroup(group: ActionEffectGroupBuilder | ActionEffectGroupDef) {
 		if (!(this instanceof ActionBuilder)) {
-			throw new Error('Action effect groups can only be used on actions. ' + 'Use action().effectGroup(...).');
+			throw new Error(
+				'Action effect groups can only be used on actions. ' +
+					'Use action().effectGroup(...).',
+			);
 		}
-		const built = group instanceof ActionEffectGroupBuilder ? group.build() : group;
+		const built =
+			group instanceof ActionEffectGroupBuilder ? group.build() : group;
 		if (this.effectGroupIds.has(built.id)) {
-			throw new Error(`Action effect group id "${built.id}" already exists on this action. ` + 'Use unique group ids.');
+			throw new Error(
+				`Action effect group id "${built.id}" already exists on this action. ` +
+					'Use unique group ids.',
+			);
 		}
 		this.effectGroupIds.add(built.id);
 		this.config.effects.push(built as ActionEffect);
@@ -80,8 +72,11 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	}
 
 	/**
-	 * Marks this action as a system action.
-	 * @param role - Optional system role identifier (e.g., 'initial-setup', 'compensation')
+	 * Marks this action as a system action, optionally with a specific role.
+	 * System actions are run by the engine at specific moments (e.g., game start).
+	 *
+	 * @param role Optional system role (e.g., 'initial-setup', 'compensation').
+	 *             If true/undefined, marks as system without a specific role.
 	 */
 	system(role?: string | boolean) {
 		if (typeof role === 'string') {
@@ -110,12 +105,5 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	free(flag = true) {
 		this.config.free = flag;
 		return this;
-	}
-
-	override build(): ActionBuilderConfig {
-		if (!this.metaCategorySet) {
-			throw new Error('Action is missing metaCategory(). Call metaCategory(MetaCategory.Actions) or metaCategory(MetaCategory.Research) before build().');
-		}
-		return super.build();
 	}
 }

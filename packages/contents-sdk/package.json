@@ -1,5 +1,5 @@
 {
-	"name": "@kingdom-builder/contents",
+	"name": "@kingdom-builder/contents-sdk",
 	"version": "0.1.0",
 	"private": false,
 	"type": "module",
@@ -10,8 +10,7 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@kingdom-builder/protocol": "workspace:*",
-		"@kingdom-builder/contents-sdk": "workspace:*"
+		"@kingdom-builder/protocol": "workspace:*"
 	},
 	"devDependencies": {
 		"typescript": "5.9.3",

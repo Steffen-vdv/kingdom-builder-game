@@ -22,3 +22,16 @@ export function getResourceId(resource: ResourceKey): ResourceKey {
 }
 
 export { resourceAddEffect } from './resourceEffects';
+
+/**
+ * System action roles.
+ * These identify the purpose of system actions so the engine can find them.
+ */
+export const SystemRole = {
+	/** Initial game setup (starting resources, lands, etc.) */
+	INITIAL_SETUP: 'initial-setup',
+	/** Player compensation (e.g., for going second) */
+	COMPENSATION: 'compensation',
+} as const;
+
+export type SystemRoleValue = (typeof SystemRole)[keyof typeof SystemRole];
