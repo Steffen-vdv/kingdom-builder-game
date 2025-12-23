@@ -254,6 +254,80 @@ spec = SPECS.get(executable)
 library, tool, or existing codebase solution already handles the problem.
 Reinventing what exists wastes time and introduces bugs the original solved.
 
+### 2.9 Code Hygiene (Cleanup-As-You-Go)
+
+**Leave the codebase cleaner than you found it.**
+
+This principle has three parts:
+
+#### No Backwards-Compatibility Cruft
+
+When changing code, delete what's no longer needed. Never leave:
+
+- Renamed `_unused` variables (delete them)
+- Re-exports for removed code (delete the export)
+- `// removed` or `// deprecated` comments (delete the code)
+- Dead imports or unused functions (delete them)
+- Shims or adapters for old patterns (migrate fully)
+
+```typescript
+// WRONG - Leaving cruft from a refactor
+const _oldValue = computed(); // kept for backwards compat
+export { newThing as oldThing }; // re-export for old consumers
+
+// CORRECT - Clean delete
+// (the old code is simply gone)
+```
+
+#### Opportunistic Cleanup
+
+When you touch a file that contains violations of ANY rule in this document,
+fix them immediately. The act of modifying a file obligates you to clean it.
+
+- See a `??` fallback on a required field? Fix it.
+- See an ID-based branch? Refactor to property-based.
+- See duplicated logic? Extract it.
+- See a missing type? Add it.
+
+**The rule:** If you're already in the file, fix what's broken. Don't leave
+known violations for "later."
+
+#### No Useless Comments
+
+Comments should explain WHY, not WHAT. Never leave comments that:
+
+- Restate what the code obviously does
+- Explain a refactoring that already happened
+- Describe the old state of things
+
+```typescript
+// WRONG - Useless comment explaining obvious code
+// This is a resource, not a stat
+const resource = resourceValues[resourceId];
+
+// WRONG - Comment about what was removed
+// Removed the old stat-based calculation
+const value = getResourceValue(id);
+
+// CORRECT - No comment needed, code is self-documenting
+const resource = resourceValues[resourceId];
+
+// CORRECT - Comment explains non-obvious WHY
+// Resources can be negative during attack resolution before clamping
+const rawValue = getResourceValue(id);
+```
+
+**Red flags for useless comments:**
+
+- "This is a X, not a Y" (the variable name should make this clear)
+- "Changed from X to Y" (git history captures this)
+- "Now uses X instead of Y" (the code shows what it uses)
+- "Refactored to..." (the code IS the refactored state)
+
+**Prefer less comments.** Good code is self-documenting. If you need a comment
+to explain what code does, consider renaming variables or extracting functions
+instead.
+
 ---
 
 ## 3. Agent Architecture
@@ -292,7 +366,7 @@ directly. Subagents are used only for QA review and push operations.
 | review-contracts-boundaries | 1     | `.claude/agents/sub-agent/docs/review-contracts-boundaries.md` | Contracts, cross-layer integration |
 | review-mechanics-content    | 1     | `.claude/agents/sub-agent/docs/review-mechanics-content.md`    | Content-driven, no hardcoding      |
 | review-infra-concurrency    | 1     | `.claude/agents/sub-agent/docs/review-infra-concurrency.md`    | Code safety, error handling        |
-| review-tests-docs-dry       | 1     | `.claude/agents/sub-agent/docs/review-tests-docs-dry.md`       | Tests, docs, DRY                   |
+| review-tests-docs-dry       | 1     | `.claude/agents/sub-agent/docs/review-tests-docs-dry.md`       | Tests, docs, DRY, code hygiene     |
 | review-lead                 | 2     | `.claude/agents/sub-agent/docs/review-lead.md`                 | Aggregate, produce final sig       |
 | safe-deployment-gate        | 3     | `.claude/agents/sub-agent/docs/safe-deployment-gate.md`        | Verify final sig, push             |
 
