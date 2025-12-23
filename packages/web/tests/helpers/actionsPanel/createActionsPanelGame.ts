@@ -19,7 +19,10 @@ import {
 	toTranslationPlayer,
 	wrapTranslationRegistry,
 } from '../translationContextStub';
-import { wrapActionCategoryRegistry } from '../../../src/translation/context/contextHelpers';
+import {
+	wrapActionCategoryRegistry,
+	wrapActionMetaCategoryRegistry,
+} from '../../../src/translation/context/contextHelpers';
 import { resolveActionCategoryIds } from './categorySelectors';
 import { createEmptySnapshotMetadata } from '../sessionFixtures';
 import { buildActionsPanelContent } from './contentBuilders';
@@ -132,6 +135,9 @@ export function createActionsPanelGame({
 		actions: wrapTranslationRegistry(actionsRegistry),
 		actionCategories: wrapActionCategoryRegistry(
 			sessionRegistries.actionCategories,
+		),
+		actionMetaCategories: wrapActionMetaCategoryRegistry(
+			factory.actionMetaCategories,
 		),
 		buildings: wrapTranslationRegistry(buildingsRegistry),
 		developments: wrapTranslationRegistry(developmentsRegistry),

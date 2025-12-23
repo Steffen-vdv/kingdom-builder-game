@@ -148,7 +148,12 @@ interface SessionTranslationContextInput {
 	passiveRecords: SessionSnapshot['passiveRecords'];
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'actionCategories' | 'buildings' | 'developments' | 'resources'
+		| 'actions'
+		| 'actionCategories'
+		| 'actionMetaCategories'
+		| 'buildings'
+		| 'developments'
+		| 'resources'
 	>;
 }
 

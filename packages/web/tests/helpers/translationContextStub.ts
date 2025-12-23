@@ -1,5 +1,6 @@
 import type {
 	TranslationActionCategoryRegistry,
+	TranslationActionMetaCategoryRegistry,
 	TranslationAssets,
 	TranslationContext,
 	TranslationPassives,
@@ -136,6 +137,7 @@ export function createTranslationContextStub(
 	options: Pick<TranslationContext, 'phases' | 'actionCostResource'> & {
 		actions: TranslationRegistry<unknown>;
 		actionCategories?: TranslationActionCategoryRegistry;
+		actionMetaCategories: TranslationActionMetaCategoryRegistry;
 		buildings: TranslationRegistry<unknown>;
 		developments: TranslationRegistry<unknown>;
 		populations?: TranslationRegistry<unknown>;
@@ -175,6 +177,7 @@ export function createTranslationContextStub(
 	return {
 		actions: options.actions,
 		actionCategories: options.actionCategories ?? EMPTY_ACTION_CATEGORIES,
+		actionMetaCategories: options.actionMetaCategories,
 		buildings: options.buildings,
 		developments: options.developments,
 		populations: options.populations ?? options.actions,

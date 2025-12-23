@@ -1,11 +1,13 @@
 import {
 	Registry,
 	actionCategorySchema,
+	actionMetaCategorySchema,
 	actionSchema,
 	buildingSchema,
 	developmentSchema,
 	type ActionCategoryConfig,
 	type ActionConfig,
+	type ActionMetaCategoryConfig,
 	type BuildingConfig,
 	type DevelopmentConfig,
 	type ResourceDefinition,
@@ -72,9 +74,47 @@ function createActionCategoryRegistry(
 	return registry;
 }
 
+function cloneActionMetaCategoryDefinition(
+	definition: ActionMetaCategoryConfig,
+): ActionMetaCategoryConfig {
+	const parsed = actionMetaCategorySchema.passthrough().parse(definition);
+	const result: ActionMetaCategoryConfig = {
+		id: parsed.id,
+		label: parsed.label,
+		icon: parsed.icon,
+		bindingResourceId: parsed.bindingResourceId,
+		costModel: parsed.costModel,
+		visibilityTrigger: parsed.visibilityTrigger,
+		order: parsed.order,
+	};
+	if (parsed.globalCostAmount !== undefined) {
+		result.globalCostAmount = parsed.globalCostAmount;
+	}
+	if (parsed.categoryIds !== undefined) {
+		result.categoryIds = [...parsed.categoryIds];
+	}
+	return result;
+}
+
+function createActionMetaCategoryRegistry(
+	metaCategories: Record<string, ActionMetaCategoryConfig> | undefined,
+): Registry<ActionMetaCategoryConfig> {
+	const registry = new Registry<ActionMetaCategoryConfig>(
+		actionMetaCategorySchema.passthrough(),
+	);
+	if (!metaCategories) {
+		return registry;
+	}
+	for (const [id, definition] of Object.entries(metaCategories)) {
+		registry.add(id, cloneActionMetaCategoryDefinition(definition));
+	}
+	return registry;
+}
+
 export interface SessionRegistries {
 	actions: Registry<ActionConfig>;
 	actionCategories: Registry<ActionCategoryConfig>;
+	actionMetaCategories: Registry<ActionMetaCategoryConfig>;
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
 	resources: Record<string, ResourceDefinition>;
@@ -98,6 +138,9 @@ export function deserializeSessionRegistries(
 		),
 		resources: cloneResourceRegistry(payload.resources ?? {}),
 		actionCategories: createActionCategoryRegistry(payload.actionCategories),
+		actionMetaCategories: createActionMetaCategoryRegistry(
+			payload.actionMetaCategories,
+		),
 	};
 }
 

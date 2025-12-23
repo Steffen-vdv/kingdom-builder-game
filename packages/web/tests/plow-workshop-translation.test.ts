@@ -97,9 +97,9 @@ describe('plow workshop translation', () => {
 			{
 				actions: synthetic.factory.actions,
 				actionCategories: synthetic.factory.categories,
+				actionMetaCategories: synthetic.factory.actionMetaCategories,
 				buildings: synthetic.factory.buildings,
 				developments: synthetic.factory.developments,
-				populations: synthetic.factory.populations,
 				resources: {},
 			},
 			engineSnapshot.metadata,

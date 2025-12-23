@@ -1,6 +1,7 @@
 import type {
 	ActionCategoryConfig,
 	ActionConfig,
+	ActionMetaCategoryConfig,
 	BuildingConfig,
 	DevelopmentConfig,
 	EffectDef,
@@ -39,6 +40,23 @@ export interface TranslationActionCategoryDefinition {
 // eslint-disable-next-line max-len
 export interface TranslationActionCategoryRegistry extends TranslationRegistry<TranslationActionCategoryDefinition> {
 	list(): readonly TranslationActionCategoryDefinition[];
+}
+
+export interface TranslationActionMetaCategoryDefinition {
+	readonly id: string;
+	readonly label: string;
+	readonly icon: string;
+	readonly bindingResourceId: string;
+	readonly costModel: ActionMetaCategoryConfig['costModel'];
+	readonly globalCostAmount?: number;
+	readonly visibilityTrigger: ActionMetaCategoryConfig['visibilityTrigger'];
+	readonly order: number;
+	readonly categoryIds?: readonly string[];
+}
+
+// eslint-disable-next-line max-len
+export interface TranslationActionMetaCategoryRegistry extends TranslationRegistry<TranslationActionMetaCategoryDefinition> {
+	list(): readonly TranslationActionMetaCategoryDefinition[];
 }
 
 export interface TranslationIconLabel {
@@ -212,6 +230,7 @@ export interface TranslationPlayer {
 export interface TranslationContext {
 	readonly actions: TranslationRegistry<ActionConfig>;
 	readonly actionCategories: TranslationActionCategoryRegistry;
+	readonly actionMetaCategories: TranslationActionMetaCategoryRegistry;
 	readonly buildings: TranslationRegistry<BuildingConfig>;
 	readonly developments: TranslationRegistry<DevelopmentConfig>;
 	readonly passives: TranslationPassives;

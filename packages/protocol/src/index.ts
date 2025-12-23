@@ -199,6 +199,7 @@ export type {
 	SessionRegistriesPayload,
 	SerializedRegistry,
 	SessionActionCategoryRegistry,
+	SessionActionMetaCategoryRegistry,
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
 	SessionActionCostRequest,

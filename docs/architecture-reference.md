@@ -118,8 +118,8 @@ action must specify a meta-category via `.metaCategory(MetaCategory.X)`.
 
 **Cost resolution** (via `determineCommonActionCostResource()`):
 
-1. If action has explicit `baseCosts`, use the first cost resource
-2. Otherwise, look up the action's meta-category and use its binding resource
+1. Find the first meta-category with `costModel: 'global'` and use its binding resource
+2. If no global cost model exists, use the first meta-category's binding resource
 
 Example meta-category definition:
 

@@ -88,6 +88,10 @@ export function buildSessionAssets(
 	if (context.baseRegistries.actionCategories) {
 		registries.actionCategories = context.baseRegistries.actionCategories;
 	}
+	if (context.baseRegistries.actionMetaCategories) {
+		registries.actionMetaCategories =
+			context.baseRegistries.actionMetaCategories;
+	}
 	const metadata = buildSessionMetadata({
 		buildings,
 		developments,

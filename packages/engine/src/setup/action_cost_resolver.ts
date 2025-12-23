@@ -1,7 +1,6 @@
 import type {
 	ActionMetaCategoryConfig,
 	Registry,
-	ActionConfig as ActionDef,
 } from '@kingdom-builder/protocol';
 
 export interface ActionCostConfiguration {
@@ -10,42 +9,33 @@ export interface ActionCostConfiguration {
 }
 
 /**
- * Determines the common action cost resource by finding the intersection
- * of baseCosts across all non-system actions. If no common baseCost is found,
- * falls back to the first 'global' cost model meta-category's binding resource.
+ * Determines the common action cost resource from meta-category definitions.
+ * Prioritizes 'global' cost model meta-categories (fixed cost per action),
+ * then falls back to 'per-item' meta-categories (variable cost per action).
  */
 export function determineCommonActionCostResource(
-	actions: Registry<ActionDef>,
 	actionMetaCategories?: Registry<ActionMetaCategoryConfig>,
 ): ActionCostConfiguration {
-	let intersection: string[] | null = null;
-	for (const [, actionDefinition] of actions.entries()) {
-		if (actionDefinition.system) {
-			continue;
-		}
-		const costKeys = Object.keys(actionDefinition.baseCosts || {});
-		if (!costKeys.length) {
-			continue;
-		}
-		intersection = intersection
-			? intersection.filter((key) => costKeys.includes(key))
-			: costKeys;
-	}
-	if (intersection && intersection.length > 0) {
-		const resourceId = intersection[0]!;
-		return { resourceId, amount: null };
+	if (!actionMetaCategories) {
+		return { resourceId: '', amount: null };
 	}
 
-	// Fallback: use the binding resource from first global cost meta-category
-	if (actionMetaCategories) {
-		for (const [, metaCategory] of actionMetaCategories.entries()) {
-			if (metaCategory.costModel === 'global') {
-				return {
-					resourceId: metaCategory.bindingResourceId,
-					amount: metaCategory.globalCostAmount ?? null,
-				};
-			}
+	// Prefer global cost model meta-categories (fixed cost per action)
+	for (const [, metaCategory] of actionMetaCategories.entries()) {
+		if (metaCategory.costModel === 'global') {
+			return {
+				resourceId: metaCategory.bindingResourceId,
+				amount: metaCategory.globalCostAmount ?? null,
+			};
 		}
+	}
+
+	// Fall back to per-item meta-categories (variable cost per action)
+	for (const [, metaCategory] of actionMetaCategories.entries()) {
+		return {
+			resourceId: metaCategory.bindingResourceId,
+			amount: null,
+		};
 	}
 
 	return { resourceId: '', amount: null };

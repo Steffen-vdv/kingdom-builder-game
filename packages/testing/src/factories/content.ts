@@ -1,5 +1,6 @@
 import {
 	createActionCategoryRegistry,
+	createActionMetaCategoryRegistry,
 	createActionRegistry,
 	createBuildingRegistry,
 	createDevelopmentRegistry,
@@ -10,6 +11,7 @@ import {
 	Registry,
 	type ActionCategoryConfig as SessionActionCategoryConfig,
 	type ActionConfig,
+	type ActionMetaCategoryConfig,
 	type BuildingConfig,
 	type DevelopmentConfig,
 } from '@kingdom-builder/protocol';
@@ -30,6 +32,7 @@ function nextId(prefix: string) {
 
 export interface ContentFactory {
 	categories: Registry<ContentActionCategoryConfig>;
+	actionMetaCategories: Registry<ActionMetaCategoryConfig>;
 	actions: Registry<ActionConfig>;
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
@@ -49,6 +52,9 @@ export function createContentFactory(
 	const categories = options.isolated
 		? new Registry<ContentActionCategoryConfig>()
 		: createActionCategoryRegistry();
+	// Meta-categories always use real definitions - they define the cost model
+	// which is needed even in isolated test scenarios
+	const actionMetaCategories = createActionMetaCategoryRegistry();
 	const actions = options.isolated
 		? new Registry<ActionConfig>()
 		: createActionRegistry();
@@ -149,6 +155,7 @@ export function createContentFactory(
 
 	return {
 		categories,
+		actionMetaCategories,
 		actions,
 		buildings,
 		developments,
