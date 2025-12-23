@@ -13,9 +13,26 @@ type ActionBuilderConfig = ActionDef;
 
 export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	private readonly effectGroupIds = new Set<string>();
+	private metaCategorySet = false;
 
 	constructor() {
-		super({ effects: [] }, 'Action');
+		// metaCategory is validated at build() time
+		super({ effects: [] } as unknown as ActionBuilderConfig, 'Action');
+	}
+
+	/**
+	 * Sets the meta-category for this action. Required for all actions.
+	 * Games define their own meta-categories (e.g., 'commands', 'research').
+	 */
+	metaCategory(value: string) {
+		if (this.metaCategorySet) {
+			throw new Error(
+				'Action already has metaCategory(). Remove the extra call.',
+			);
+		}
+		this.config.metaCategory = value;
+		this.metaCategorySet = true;
+		return this;
 	}
 
 	category(category: string) {
@@ -105,5 +122,14 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	free(flag = true) {
 		this.config.free = flag;
 		return this;
+	}
+
+	override build(): ActionBuilderConfig {
+		if (!this.metaCategorySet) {
+			throw new Error(
+				'Action is missing metaCategory(). Call metaCategory() before build().',
+			);
+		}
+		return super.build();
 	}
 }

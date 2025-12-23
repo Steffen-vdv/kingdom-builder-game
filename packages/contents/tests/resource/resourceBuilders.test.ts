@@ -69,7 +69,7 @@ describe('resource builder', () => {
 	});
 
 	it('enforces valid bounds', () => {
-		expect(() => resource('resource:bounds').lowerBound(5).upperBound(4)).toThrowError('Resource builder lowerBound must be less than or equal to upperBound (5 > 4).');
+		expect(() => resource('resource:bounds').lowerBound(5).upperBound(4)).toThrowError('Resource builder lowerBound must be <= upperBound (5 > 4).');
 	});
 });
 

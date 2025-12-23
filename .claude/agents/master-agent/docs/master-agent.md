@@ -16,6 +16,37 @@ directly. The restrictions:
 
 ---
 
+## -1. Branch Ownership (CRITICAL)
+
+**You own the entire branch, not just your current session's changes.**
+
+There are no other agents working on your branch. You are the sole owner and
+are responsible for the integrity and completeness of the entire branch compared
+to origin/main. This includes:
+
+- Commits from previous sessions (which may have been compacted/resumed)
+- Pre-existing issues introduced before your session started
+- Test failures, type errors, or regressions anywhere in the branch
+
+**You cannot deflect responsibility by saying:**
+
+- "This was broken in the last commit, so it's not my job"
+- "The previous session introduced this issue"
+- "This existed before my session got resumed/compacted"
+- "The branch had issues before I started"
+
+If it's broken on your branch and not broken on origin/main, **you fix it**.
+Period. The QA workflow will block pushes until the branch is healthy.
+
+**Practical implications:**
+
+1. When you resume a session, run tests and typecheck to verify branch health
+2. If tests fail, fix them before continuing with new work
+3. If previous commits introduced issues, amend or fix-forward as appropriate
+4. The branch must be in a shippable state before you can push
+
+---
+
 ## 0. Explicit Approval Required
 
 **NEVER start implementation without explicit user approval.**

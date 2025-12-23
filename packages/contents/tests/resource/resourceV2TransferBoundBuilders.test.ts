@@ -31,13 +31,16 @@ describe('Resource transfer builders', () => {
 		expect(params.recipient).not.toBe(recipient);
 	});
 
-	it('rejects unsupported reconciliation modes', () => {
+	it('rejects invalid reconciliation modes', () => {
 		expect(() =>
-			transferEndpoint('resource:gold').reconciliation('reject').change({
-				type: 'amount',
-				amount: -1,
-			}),
-		).toThrowError('Resource transfer endpoint builder reconciliation mode "reject" is not supported yet. Supported modes: clamp.');
+			transferEndpoint('resource:gold')
+				// @ts-expect-error - testing invalid mode
+				.reconciliation('invalid')
+				.change({
+					type: 'amount',
+					amount: -1,
+				}),
+		).toThrowError('Resource transfer endpoint builder reconciliation mode "invalid" is invalid. Valid modes: clamp, pass, reject.');
 	});
 
 	it('requires donor and recipient payloads before build', () => {

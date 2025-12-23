@@ -712,7 +712,7 @@ export function createActionRegistry() {
 			.metaCategory(MetaCategory.Commands)
 			.name('Initial Setup (Dev Mode)')
 			.icon('🛠️')
-			.system(SystemRole.INITIAL_SETUP)
+			.system(SystemRole.INITIAL_SETUP_DEVMODE)
 			.free()
 			// Resources (dev mode gets more)
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.gold).amount(100).reject().build()).build())

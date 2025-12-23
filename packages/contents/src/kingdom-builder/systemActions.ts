@@ -46,44 +46,21 @@ export function findActionsByRole(actions: Registry<ActionDef>, role: SystemRole
  * Extracts system action IDs from an actions registry.
  * This is used to provide systemActionIds to the engine.
  */
-export function extractSystemActionIds(actions: Registry<ActionDef>, _devMode = false): SystemActionIds {
-	const initialSetupActions = findActionsByRole(actions, SystemRole.INITIAL_SETUP);
+export function extractSystemActionIds(actions: Registry<ActionDef>): SystemActionIds {
+	const initialSetupAction = findActionByRole(actions, SystemRole.INITIAL_SETUP);
+	const devmodeSetupAction = findActionByRole(actions, SystemRole.INITIAL_SETUP_DEVMODE);
 	const compensationAction = findActionByRole(actions, SystemRole.COMPENSATION);
 
-	if (initialSetupActions.length === 0) {
+	if (!initialSetupAction) {
 		throw new Error('No initial setup action found with systemRole "initial-setup"');
 	}
 	if (!compensationAction) {
 		throw new Error('No compensation action found with systemRole "compensation"');
 	}
 
-	// Find the regular and devmode setup actions
-	let initialSetup: string | undefined;
-	let initialSetupDevmode: string | undefined;
-
-	for (const action of initialSetupActions) {
-		if (!action.id) {
-			continue;
-		}
-		// If the action ID contains 'devmode', it's the devmode setup
-		if (action.id.includes('devmode')) {
-			initialSetupDevmode = action.id;
-		} else {
-			initialSetup = action.id;
-		}
-	}
-
-	// If no devmode action found, use the regular one for both
-	if (!initialSetup && initialSetupDevmode) {
-		initialSetup = initialSetupDevmode;
-	}
-	if (!initialSetupDevmode && initialSetup) {
-		initialSetupDevmode = initialSetup;
-	}
-
-	if (!initialSetup || !initialSetupDevmode) {
-		throw new Error('Could not determine initial setup action IDs');
-	}
+	// Fall back to regular setup if no devmode-specific action exists
+	const initialSetup = initialSetupAction.id;
+	const initialSetupDevmode = devmodeSetupAction?.id ?? initialSetup;
 
 	return {
 		initialSetup,

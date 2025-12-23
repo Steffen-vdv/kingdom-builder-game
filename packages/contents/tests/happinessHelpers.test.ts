@@ -1,6 +1,6 @@
 import { developmentTarget, effect, passiveParams, resultModParams, resourceAddEffect } from '../src/infrastructure/builders';
 import { PassiveMethods, ResourceMethods, ResultModMethods, Types } from '../src/infrastructure/builderShared';
-import { EvaluationTargetTypes } from '../src/infrastructure/builders/advancedEffectParams';
+import { EvaluationTargetTypes, TARGET_EFFECT_RESOURCE_ADD } from '../src/infrastructure/builders/advancedEffectParams';
 import { DevelopmentId } from '../src/developments';
 import { createTierPassiveEffect, growthBonusEffect, happinessTierId } from '../src/infrastructure/happinessHelpers';
 import { Resource } from '../src/internal';
@@ -27,10 +27,12 @@ describe('happiness helpers', () => {
 		expect(firstParams.evaluation).toEqual({
 			type: EvaluationTargetTypes.Development,
 			id: DevelopmentId.Farm,
+			targetEffect: TARGET_EFFECT_RESOURCE_ADD,
 		});
 		expect(secondParams.evaluation).toEqual({
 			type: EvaluationTargetTypes.Development,
 			id: DevelopmentId.House,
+			targetEffect: TARGET_EFFECT_RESOURCE_ADD,
 		});
 	});
 
@@ -67,6 +69,7 @@ describe('happiness helpers', () => {
 		expect(config.effects?.[0]?.params?.evaluation).toEqual({
 			type: EvaluationTargetTypes.Development,
 			id: DevelopmentId.Farm,
+			targetEffect: TARGET_EFFECT_RESOURCE_ADD,
 		});
 	});
 });
