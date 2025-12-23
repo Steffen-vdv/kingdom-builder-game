@@ -11,6 +11,7 @@ import { type ActionCardOption } from './OptionCard';
 import { getFocusGradient } from './focusGradients';
 import { stripSummary } from './stripSummary';
 import type { ActionFocus } from './types';
+import { TIER_BADGE_CLASSES } from './actionsPanelStyles';
 
 export type { ActionCardOption } from './OptionCard';
 
@@ -44,6 +45,10 @@ export interface ActionCardProps {
 	multiStep?: boolean | undefined;
 	assets: TranslationAssets;
 	resourceMetadata?: TranslationResourceMetadataSelectors;
+	/** Current tier for multi-tier actions */
+	currentTier?: number | undefined;
+	/** Max tier for multi-tier actions */
+	maxTier?: number | undefined;
 }
 
 export default function ActionCard({
@@ -74,6 +79,8 @@ export default function ActionCard({
 	multiStep = false,
 	assets,
 	resourceMetadata,
+	currentTier,
+	maxTier,
 }: ActionCardProps): ReactElement {
 	const focusClass = getFocusGradient(focus);
 	const isBack = variant === 'back';
@@ -155,6 +162,16 @@ export default function ActionCard({
 		variant === 'front' && multiStep ? (
 			<MultiStepIndicator className="mt-0.5 shrink-0" />
 		) : null;
+	const showTierBadge =
+		variant === 'front' &&
+		maxTier !== undefined &&
+		maxTier > 1 &&
+		currentTier !== undefined;
+	const tierBadge = showTierBadge ? (
+		<span className={TIER_BADGE_CLASSES}>
+			Tier {currentTier}/{maxTier}
+		</span>
+	) : null;
 
 	return (
 		<div
@@ -177,6 +194,7 @@ export default function ActionCard({
 							<div className={titleGroupClass}>
 								{frontMultiStepBadge}
 								<span className="text-base font-medium">{title}</span>
+								{tierBadge}
 							</div>
 							<div className={costBlockClass}>
 								{renderCosts(
