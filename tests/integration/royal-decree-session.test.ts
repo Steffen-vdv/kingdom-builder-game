@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createEngineSession } from '@kingdom-builder/engine';
 import {
 	ACTIONS,
+	ACTION_META_CATEGORIES,
 	BUILDINGS,
 	DEVELOPMENTS,
 	PHASES,
@@ -36,6 +37,7 @@ describe('royal decree via session', () => {
 	it('resolves every development option', () => {
 		const session = createEngineSession({
 			actions: ACTIONS,
+			actionMetaCategories: ACTION_META_CATEGORIES,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
 			phases: PHASES,
@@ -53,14 +55,17 @@ describe('royal decree via session', () => {
 		const goldId = getResourceId(Resource.gold);
 		expect(snapshot.game.resourceCatalog.resources.byId[goldId]).toBeDefined();
 		expect(snapshot.game.players[0]?.values[goldId]).toBeDefined();
-		const withGroup = ACTIONS.entries().find(([, def]) =>
-			def.effects.some(isEffectGroup),
-		);
+		// With tier migration, effects are in tiers['1'].effects
+		const withGroup = ACTIONS.entries().find(([, def]) => {
+			const effects = def.tiers?.['1']?.effects ?? [];
+			return effects.some(isEffectGroup);
+		});
 		if (!withGroup) {
 			throw new Error('Expected an action with effect groups');
 		}
 		const [royalActionId, royalDecree] = withGroup;
-		const developGroup = royalDecree.effects.find(isEffectGroup);
+		const royalEffects = royalDecree.tiers?.['1']?.effects ?? [];
+		const developGroup = royalEffects.find(isEffectGroup);
 		expect(developGroup).toBeDefined();
 		const options = developGroup?.options ?? [];
 		expect(options.length).toBeGreaterThan(0);
@@ -72,7 +77,8 @@ describe('royal decree via session', () => {
 					`Missing nested action definition for id "${option.actionId}".`,
 				);
 			}
-			const nestedDevelopmentEffect = nestedAction.effects.find(
+			const nestedEffects = nestedAction.tiers?.['1']?.effects ?? [];
+			const nestedDevelopmentEffect = nestedEffects.find(
 				(candidate) =>
 					candidate.type === 'development' && candidate.method === 'add',
 			);

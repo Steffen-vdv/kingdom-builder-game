@@ -237,6 +237,7 @@ describe('content-driven action log hooks', () => {
 
 			const session = createEngineSession({
 				actions: registries.actions,
+				actionMetaCategories: registries.actionMetaCategories,
 				buildings: registries.buildings,
 				developments: registries.developments,
 				populations: registries.populations,

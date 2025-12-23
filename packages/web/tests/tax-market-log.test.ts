@@ -104,6 +104,7 @@ describe('tax action logging with market', () => {
 		const scenario = createSyntheticTaxScenario();
 		const engineContext = createEngine({
 			actions: scenario.factory.actions,
+			actionMetaCategories: scenario.factory.actionMetaCategories,
 			buildings: scenario.factory.buildings,
 			developments: scenario.factory.developments,
 			phases: scenario.phases,
@@ -157,10 +158,14 @@ describe('tax action logging with market', () => {
 			actionCategories,
 			resourceMetadata,
 		});
+		// With tier migration, effects are in tiers['1'].effects
+		const stepEffects = {
+			effects: action.tiers?.['1']?.effects ?? [],
+		};
 		const diffResult = diffStepSnapshots(
 			before,
 			after,
-			action,
+			stepEffects,
 			translationDiffContext,
 			RESOURCE_KEYS,
 		);

@@ -27,6 +27,7 @@ describe('plow workshop translation', () => {
 		const synthetic = createSyntheticPlowContent();
 		const engine = createEngine({
 			actions: synthetic.factory.actions,
+			actionMetaCategories: synthetic.factory.actionMetaCategories,
 			buildings: synthetic.factory.buildings,
 			developments: synthetic.factory.developments,
 			populations: synthetic.factory.populations,

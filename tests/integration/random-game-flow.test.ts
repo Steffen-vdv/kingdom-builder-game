@@ -58,7 +58,9 @@ describe('random action flow', () => {
 					const beforeCost = playerResources[costResourceId];
 					const beforeGain = playerResources[gainResourceId];
 					const action = actionRegistry.get(actionId)!;
-					const gainEffect = action.effects.find(
+					// With tier migration, effects are in tiers['1'].effects
+					const effects = action.tiers?.['1']?.effects ?? [];
+					const gainEffect = effects.find(
 						(e) => e.type === 'resource' && e.method === 'add',
 					)!;
 					const gain = (gainEffect.params as { change: { amount: number } })

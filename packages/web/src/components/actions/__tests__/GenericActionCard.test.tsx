@@ -140,7 +140,13 @@ describe('GenericActionCard', () => {
 		const buildingActionConfig = {
 			id: 'build_mill',
 			name: 'Build Mill',
-			effects: [{ type: 'building', method: 'add', params: { id: 'mill' } }],
+			tiers: {
+				'1': {
+					effects: [
+						{ type: 'building', method: 'add', params: { id: 'mill' } },
+					],
+				},
+			},
 		};
 
 		const enabledMetadata: UseActionMetadataResult = {
@@ -217,9 +223,13 @@ describe('GenericActionCard', () => {
 			const nonBuildingActionConfig = {
 				id: 'raid',
 				name: 'Raid',
-				effects: [
-					{ type: 'resource', method: 'change', params: { amount: 5 } },
-				],
+				tiers: {
+					'1': {
+						effects: [
+							{ type: 'resource', method: 'change', params: { amount: 5 } },
+						],
+					},
+				},
 			};
 
 			const actionsMap = new Map([['raid', nonBuildingActionConfig]]);

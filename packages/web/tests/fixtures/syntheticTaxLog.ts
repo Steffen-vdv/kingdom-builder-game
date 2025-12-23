@@ -215,6 +215,7 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 		id: SYNTHETIC_IDS.taxAction,
 		name: 'Synthetic Levy',
 		icon: '📜',
+		free: true, // Skip global AP cost for tests
 		baseCosts: {},
 		effects: [
 			{

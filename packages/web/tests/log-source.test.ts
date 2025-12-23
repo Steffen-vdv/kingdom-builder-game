@@ -69,6 +69,7 @@ describe('log resource sources', () => {
 		const scenario = createSyntheticTaxScenario();
 		const engineContext = createEngine({
 			actions: scenario.factory.actions,
+			actionMetaCategories: scenario.factory.actionMetaCategories,
 			buildings: scenario.factory.buildings,
 			developments: scenario.factory.developments,
 			phases: scenario.phases,
@@ -131,6 +132,7 @@ describe('log resource sources', () => {
 		const scenario = createSyntheticTaxScenario();
 		const engineContext = createEngine({
 			actions: scenario.factory.actions,
+			actionMetaCategories: scenario.factory.actionMetaCategories,
 			buildings: scenario.factory.buildings,
 			developments: scenario.factory.developments,
 			phases: scenario.phases,
@@ -153,9 +155,11 @@ describe('log resource sources', () => {
 		while (engineContext.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) {
 			advance(engineContext);
 		}
+		// With tier migration, effects are in tiers['1'].effects
+		const taxAction = engineContext.actions.get(SYNTHETIC_IDS.taxAction);
 		const taxStep = {
 			id: SYNTHETIC_IDS.taxAction,
-			effects: engineContext.actions.get(SYNTHETIC_IDS.taxAction).effects,
+			effects: taxAction.tiers?.['1']?.effects ?? [],
 		};
 		const before = captureActivePlayer(engineContext);
 		performAction(SYNTHETIC_IDS.taxAction, engineContext);
@@ -187,6 +191,7 @@ describe('log resource sources', () => {
 		const scenario = createSyntheticTaxScenario();
 		const engineContext = createEngine({
 			actions: scenario.factory.actions,
+			actionMetaCategories: scenario.factory.actionMetaCategories,
 			buildings: scenario.factory.buildings,
 			developments: scenario.factory.developments,
 			phases: scenario.phases,

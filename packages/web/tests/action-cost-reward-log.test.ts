@@ -99,6 +99,7 @@ describe('action cost and reward logging', () => {
 			id: 'action:synthetic:refund',
 			name: 'Synthetic Refund',
 			icon: '♻️',
+			free: true, // Skip global AP cost for tests
 			baseCosts: {
 				[SYNTHETIC_RESOURCE_KEYS.coin]: 4,
 			},

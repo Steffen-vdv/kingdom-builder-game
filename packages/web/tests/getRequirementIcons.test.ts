@@ -121,7 +121,11 @@ const createTranslationContext = (
 			[
 				'test-action',
 				{
-					requirements,
+					tiers: {
+						'1': {
+							requirements,
+						},
+					},
 				},
 			],
 		]) as TranslationContext['actions'],

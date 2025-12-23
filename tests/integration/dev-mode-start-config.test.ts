@@ -21,13 +21,16 @@ function getDevModeStartingResources(): Map<string, number> {
 	const devModePackage = createDevModePackage();
 	// In dev-mode package, initial_setup has the dev resources
 	const devModeAction = devModePackage.actions.get(ActionId.initial_setup);
-	if (!devModeAction?.effects) {
-		throw new Error('Dev mode initial setup action not found');
+	const effects = devModeAction?.tiers?.['1']?.effects ?? [];
+	if (effects.length === 0) {
+		throw new Error(
+			'Dev mode initial setup action not found or has no effects',
+		);
 	}
 
 	const resources = new Map<string, number>();
 
-	for (const effect of devModeAction.effects as EffectConfig[]) {
+	for (const effect of effects as EffectConfig[]) {
 		if (effect.type === 'resource' && effect.method === 'add') {
 			const params = effect.params as {
 				resourceId?: string;
@@ -49,12 +52,13 @@ function getDevModeStartingResources(): Map<string, number> {
 function countDevelopmentsInDevModeSetup(developmentId: string): number {
 	const devModePackage = createDevModePackage();
 	const action = devModePackage.actions.get(ActionId.initial_setup);
-	if (!action?.effects) {
+	const effects = action?.tiers?.['1']?.effects ?? [];
+	if (effects.length === 0) {
 		return 0;
 	}
 
 	let count = 0;
-	for (const effect of action.effects as EffectConfig[]) {
+	for (const effect of effects as EffectConfig[]) {
 		if (effect.type === 'development' && effect.method === 'add') {
 			const params = effect.params as { id?: string };
 			if (params.id === developmentId) {

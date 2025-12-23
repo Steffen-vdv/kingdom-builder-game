@@ -64,6 +64,7 @@ function createPassiveHarness(
 	} satisfies Parameters<typeof createEngine>[0]['start'];
 	const engine = createEngine({
 		actions: scaffold.registries.actions,
+		actionMetaCategories: scaffold.actionMetaCategories,
 		buildings: scaffold.registries.buildings,
 		developments: scaffold.registries.developments,
 		populations: scaffold.registries.populations,

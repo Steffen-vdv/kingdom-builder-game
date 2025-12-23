@@ -19,7 +19,18 @@ describe('Building resource bonuses', () => {
 			id: buildingId,
 		});
 		// Unlock the build action (locked by default)
-		engineContext.activePlayer.actions.add(buildActionId);
+		// With tier migration, use actionStates instead of player.actions
+		const actionState = engineContext.activePlayer.actionStates[buildActionId];
+		if (actionState) {
+			actionState.locked = false;
+		} else {
+			engineContext.activePlayer.actionStates[buildActionId] = {
+				locked: false,
+				poolLocked: false,
+				currentTier: 1,
+				exhausted: false,
+			};
+		}
 		for (const [key, cost] of Object.entries(buildCosts)) {
 			engineContext.activePlayer.resourceValues[key] = cost ?? 0;
 		}
