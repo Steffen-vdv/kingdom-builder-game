@@ -57,6 +57,7 @@ You OWN:
 - Core mechanics correctness:
   effects, triggers, evaluators, passives, resources
 - Architecture reference accuracy for mechanics
+- Content domain integrity (see `docs/content-domain-guide.md`)
 
 You do NOT OWN:
 
@@ -64,21 +65,104 @@ You do NOT OWN:
 - Infra or concurrency
 - Test depth beyond flagging absence
 
+---
+
+## Verification Procedures
+
+**You MUST run these checks. Do not rely on visual inspection alone.**
+
+### 1. Hardcoded Game Data Detection
+
+Search for magic numbers/strings in WRONG packages (engine/web should not have game data):
+
+```bash
+# Hardcoded resource/action/building IDs outside contents
+grep -rn "'resource:core:\|'action:core:\|'building:core:" packages/engine/src/ packages/web/src/
+
+# Emoji hardcoding (icons should come from content metadata)
+grep -rn "'🪙\|'⚔️\|'🏠\|'👑\|'💰\|'🌾\|'⛏️\|'🪵" packages/engine/src/ packages/web/src/
+
+# Numeric literals that look like game balance values
+grep -rn "cost.*=.*[0-9]\+\|damage.*=.*[0-9]\+\|amount.*=.*[0-9]\+" packages/engine/src/
+grep -rn "value:.*[0-9]\+\|count:.*[0-9]\+" packages/engine/src/
+```
+
+**Any match in engine/web (not tests) = investigate. If it's game data, BLOCK.**
+
+**Exception:** Engine can use 0, 1, -1 for logic. Suspicious: 2, 5, 10, 100, etc.
+
+### 2. ID-Based Branching Detection (CRITICAL)
+
+Per CLAUDE.md section 2.3, code must depend on PROPERTIES, not WHICH entities.
+
+```bash
+# Direct ID comparisons (FORBIDDEN)
+grep -rn "=== CResource\.\|!== CResource\." packages/engine/src/ packages/web/src/
+grep -rn "=== CAction\.\|!== CAction\." packages/engine/src/ packages/web/src/
+grep -rn "=== BuildingId\.\|!== BuildingId\." packages/engine/src/ packages/web/src/
+grep -rn "=== ActionId\.\|!== ActionId\." packages/engine/src/ packages/web/src/
+
+# String-based ID parsing (FORBIDDEN)
+grep -rn "\.startsWith('core:\|\.startsWith('resource:\|\.startsWith('action:" packages/engine/src/ packages/web/src/
+grep -rn "\.includes('core:\|\.includes(':core')" packages/engine/src/ packages/web/src/
+grep -rn "\.split(':')" packages/engine/src/ packages/web/src/
+
+# ID substring checks
+grep -rn "id\.includes\|id\.startsWith\|id\.endsWith" packages/engine/src/ packages/web/src/
+```
+
+**Any match = BLOCK** unless there's a documented exception in code comments
+explaining why property-based approach isn't possible.
+
+### 3. Content Domain Integrity
+
+For changes to `packages/contents/src/`:
+
+```bash
+# Helper functions in content files (FORBIDDEN per content-domain-guide.md)
+grep -n "^function \|^const .* = (" packages/contents/src/actions.ts packages/contents/src/buildings.ts packages/contents/src/developments.ts
+
+# Loops generating content (FORBIDDEN)
+grep -n "\.forEach\|\.map(\|for (" packages/contents/src/actions.ts packages/contents/src/buildings.ts
+
+# Imports from infrastructure subdirectories (should only import from builders.ts)
+grep -n "from '\./infrastructure/" packages/contents/src/actions.ts packages/contents/src/buildings.ts | grep -v "from '\./infrastructure/builders"
+```
+
+**Content files should be declarative, not programmatic. Violations = BLOCK.**
+
+### 4. Content Leakage Detection
+
+Content definitions should ONLY live in `packages/contents/`:
+
+```bash
+# Action/building definitions outside contents
+grep -rn "\.name\s*=\s*['\"].*['\"]\s*$\|\.icon\s*=\s*['\"]" packages/engine/src/ packages/web/src/ | grep -v "\.test\."
+
+# Cost definitions outside contents
+grep -rn "\.cost\s*(\|addCost\s*(" packages/engine/src/ | grep -v "\.test\."
+```
+
+---
+
 ## Review Checklist
 
 ### Content-Driven
 
 BLOCK if:
 
-- Game data is hardcoded
+- Game data is hardcoded (detected via patterns above)
 - Balance numbers or behaviors live outside contents
+- Icons, names, or descriptions defined in engine/web
 
 ### Property-Based
 
 BLOCK if:
 
-- Logic branches on specific IDs
+- Logic branches on specific IDs (detected via patterns above)
 - ID strings are parsed to infer meaning
+- Code uses `=== CResource.X` instead of checking resource properties
+- Filtering by ID instead of by property (e.g., `globalCost`, `tier`, etc.)
 
 ### Mechanics Correctness
 
@@ -87,13 +171,27 @@ When mechanics change:
 - Identify affected systems
 - Validate trigger timing and scope
 - Validate evaluator scaling
-- Validate modifier lifecycle symmetry
+- Validate modifier lifecycle symmetry (add/remove pairs)
+
+**Specific checks:**
+
+```bash
+# Modifier symmetry: every addModifier should have removeModifier
+grep -rn "addModifier\|removeModifier" <changed_files>
+# Count should be balanced in the same logical context
+
+# Effect registration: new effects must be registered
+grep -rn "EFFECTS\.\|registerEffect" packages/engine/src/
+```
 
 ### Documentation
 
 BLOCK if:
 
 - Mechanics changed but architecture docs were not updated
+- New effect type added without updating effects documentation
+
+---
 
 ## What You Do NOT Do
 

@@ -242,16 +242,16 @@ in fast DELTA_REVIEW mode since the commits haven't changed.
 
 ## 4. Available Subagents
 
-| Subagent                    | Phase | Purpose                                     |
-| --------------------------- | ----- | ------------------------------------------- |
-| review-ci-tests-required    | 1     | Run tests, sign if passing                  |
-| review-claims-auditor       | 1     | Verify coder claims match actual changes    |
-| review-contracts-boundaries | 1     | Layer integrity, import rules, contracts    |
-| review-mechanics-content    | 1     | Game logic, content-driven architecture     |
-| review-infra-concurrency    | 1     | Infrastructure safety, concurrency analysis |
-| review-tests-docs-dry       | 1     | Test coverage, documentation, DRY principle |
-| review-lead                 | 2     | Aggregate Phase 1, produce final signature  |
-| safe-deployment-gate        | 3     | Verify final signature, execute push        |
+| Subagent                    | Phase | Purpose                                            |
+| --------------------------- | ----- | -------------------------------------------------- |
+| review-ci-tests-required    | 1     | Run tests, sign if passing                         |
+| review-claims-auditor       | 1     | Verify coder claims match actual changes           |
+| review-contracts-boundaries | 1     | Contracts, boundaries, cross-layer integration     |
+| review-mechanics-content    | 1     | Content-driven, property-based, no hardcoding      |
+| review-infra-concurrency    | 1     | Code safety, error handling, async, infrastructure |
+| review-tests-docs-dry       | 1     | Test coverage, documentation, DRY principle        |
+| review-lead                 | 2     | Aggregate Phase 1, produce final signature         |
+| safe-deployment-gate        | 3     | Verify final signature, execute push               |
 
 ---
 
@@ -306,16 +306,16 @@ The `description` parameter is user-facing and appears in the UI. Format:
 
 **Examples:**
 
-| Subagent                    | Good Description                                            |
-| --------------------------- | ----------------------------------------------------------- |
-| review-ci-tests-required    | "CI Tests - The Test Sergeant demands passing grades"       |
-| review-claims-auditor       | "Claims Auditor - Forensic accountant audits your claims"   |
-| review-contracts-boundaries | "Contracts - Border patrol checking import passports"       |
-| review-mechanics-content    | "Mechanics - Game design critic reviews your mechanics"     |
-| review-infra-concurrency    | "Infrastructure - Inspector checks the plumbing"            |
-| review-tests-docs-dry       | "Tests/Docs/DRY - The DRY Police investigate code humidity" |
-| review-lead                 | "Review Lead - The Boss demands a word with you"            |
-| safe-deployment-gate        | "Safe Deployment Gate - Guardian authorizes deployment"     |
+| Subagent                    | Good Description                                                         |
+| --------------------------- | ------------------------------------------------------------------------ |
+| review-ci-tests-required    | "CI Tests - The Test Sergeant demands passing grades"                    |
+| review-claims-auditor       | "Claims Auditor - Forensic accountant audits your claims"                |
+| review-contracts-boundaries | "Contracts - Integration auditor verifies layer completeness"            |
+| review-mechanics-content    | "Mechanics - Content purist hunts hardcoded game data"                   |
+| review-infra-concurrency    | "Code Safety - Error handling inspector checks for swallowed exceptions" |
+| review-tests-docs-dry       | "Tests/Docs/DRY - The DRY Police investigate code humidity"              |
+| review-lead                 | "Review Lead - The Boss demands a word with you"                         |
+| safe-deployment-gate        | "Safe Deployment Gate - Guardian authorizes deployment"                  |
 
 **Bad examples (FORBIDDEN):**
 
