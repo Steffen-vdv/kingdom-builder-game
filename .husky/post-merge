@@ -19,7 +19,7 @@ fi
 MERGED_FILES=$(git diff --name-only ORIG_HEAD HEAD -- '*.ts' '*.tsx' 2>/dev/null | tr '\n' ' ')
 if [ -n "$MERGED_FILES" ]; then
 	echo "Linting merged files..."
-	if ! npx eslint --cache $MERGED_FILES; then
+	if ! pnpm exec eslint --cache $MERGED_FILES; then
 		echo ""
 		echo "⚠️  Lint errors detected in merged files."
 		echo "   Please fix them before committing."
