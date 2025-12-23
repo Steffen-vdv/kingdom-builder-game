@@ -16,6 +16,7 @@ import type {
 	PhaseConfig,
 	RuleSet,
 	SessionActionCategoryRegistry,
+	SessionActionMetaCategoryRegistry,
 	SerializedRegistry,
 	ResourceDefinition,
 	ResourceGroupDefinition,
@@ -27,6 +28,7 @@ import {
 } from './buildSessionMetadata.js';
 import {
 	cloneActionCategoryRegistry,
+	cloneActionMetaCategoryRegistry,
 	cloneRegistry,
 	freezeSerializedRegistry,
 } from './registryUtils.js';
@@ -113,9 +115,14 @@ export function buildSessionManagerConfig(
 				cloneActionCategoryRegistry(baseOptions.actionCategories),
 			) as SessionActionCategoryRegistry);
 
+	const actionMetaCategories = freezeSerializedRegistry(
+		cloneActionMetaCategoryRegistry(baseOptions.actionMetaCategories),
+	) as SessionActionMetaCategoryRegistry;
+
 	const registries: SessionRegistriesPayload = {
 		actions: cloneRegistry(baseOptions.actions),
 		actionCategories,
+		actionMetaCategories,
 		buildings: cloneRegistry(baseOptions.buildings),
 		developments: cloneRegistry(baseOptions.developments),
 		resources,

@@ -1,7 +1,9 @@
 import type {
+	ActionMetaCategoryConfig,
 	Registry,
 	SerializedRegistry,
 	SessionActionCategoryRegistry,
+	SessionActionMetaCategoryRegistry,
 } from '@kingdom-builder/protocol';
 import type { ActionCategoryConfig as ContentActionCategoryConfig } from '@kingdom-builder/contents';
 
@@ -51,4 +53,29 @@ export const freezeSerializedRegistry = <DefinitionType>(
 		}
 	}
 	return Object.freeze(registry) as SerializedRegistry<DefinitionType>;
+};
+
+export const cloneActionMetaCategoryRegistry = (
+	registry: Registry<ActionMetaCategoryConfig>,
+): SessionActionMetaCategoryRegistry => {
+	const entries: SessionActionMetaCategoryRegistry = {};
+	for (const [id, definition] of registry.entries()) {
+		const entry: SessionActionMetaCategoryRegistry[string] = {
+			id: definition.id,
+			label: definition.label,
+			icon: definition.icon,
+			bindingResourceId: definition.bindingResourceId,
+			costModel: definition.costModel,
+			visibilityTrigger: definition.visibilityTrigger,
+			order: definition.order,
+		};
+		if (definition.globalCostAmount !== undefined) {
+			entry.globalCostAmount = definition.globalCostAmount;
+		}
+		if (definition.categoryIds) {
+			entry.categoryIds = [...definition.categoryIds];
+		}
+		entries[id] = entry;
+	}
+	return entries;
 };
