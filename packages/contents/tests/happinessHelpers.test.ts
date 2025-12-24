@@ -1,6 +1,5 @@
-import { developmentTarget, effect, passiveParams, resultModParams, resourceAddEffect } from '../src/infrastructure/builders';
-import { PassiveMethods, ResourceMethods, ResultModMethods, Types } from '../src/infrastructure/builderShared';
-import { EvaluationTargetTypes, TARGET_EFFECT_RESOURCE_ADD } from '../src/infrastructure/builders/advancedEffectParams';
+import { developmentTarget, effect, passiveParams, resultModParams, resourceAddEffect, EvaluationTargetTypes, TARGET_EFFECT_RESOURCE_ADD } from '../src/infrastructure/builders';
+import { PassiveMethods, ResourceMethods, ResultModMethods, Types } from '@kingdom-builder/contents-sdk';
 import { DevelopmentId } from '../src/developments';
 import { createTierPassiveEffect, growthBonusEffect, happinessTierId } from '../src/infrastructure/happinessHelpers';
 import { Resource } from '../src/internal';
