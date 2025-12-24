@@ -6,6 +6,7 @@ export interface AppNavigationState {
 	currentGameKey: number;
 	isDarkMode: boolean;
 	isDevMode: boolean;
+	contentId: string | undefined;
 	isMusicEnabled: boolean;
 	isSoundEnabled: boolean;
 	isBackgroundAudioMuted: boolean;

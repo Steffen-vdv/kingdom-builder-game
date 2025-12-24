@@ -49,6 +49,7 @@ export function GameProvider(props: GameProviderProps) {
 		darkMode = true,
 		onToggleDark = NOOP,
 		devMode = false,
+		contentId,
 		musicEnabled = true,
 		onToggleMusic = NOOP,
 		soundEnabled = true,
@@ -242,6 +243,7 @@ export function GameProvider(props: GameProviderProps) {
 						{
 							devMode,
 							playerName: playerNameRef.current,
+							contentId,
 						},
 						{ signal: controller.signal },
 					);

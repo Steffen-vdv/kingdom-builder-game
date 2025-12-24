@@ -24,12 +24,14 @@ export function createDevModePackage(): ContentPackage {
 		throw new Error('Dev mode initial setup action not found in base registry');
 	}
 
-	// Clone the devmode action with the standard initial_setup id and role
-	const overrideSetupAction: ActionDef = {
+	// Clone the devmode action with the standard initial_setup id and role.
+	// Type assertion required: exactOptionalPropertyTypes widens literal types
+	// during object spread. The source is already a valid ActionDef.
+	const overrideSetupAction = {
 		...devmodeSetupAction,
 		id: ActionId.initial_setup,
 		systemRole: SystemRole.INITIAL_SETUP,
-	};
+	} as ActionDef;
 
 	// Replace the initial_setup action in the registry
 	base.actions.remove(ActionId.initial_setup);

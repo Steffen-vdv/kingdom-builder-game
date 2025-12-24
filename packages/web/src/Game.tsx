@@ -9,6 +9,7 @@ interface GameProps {
 	darkMode?: boolean;
 	onToggleDark?: () => void;
 	devMode?: boolean;
+	contentId?: string | undefined;
 	musicEnabled?: boolean;
 	onToggleMusic?: () => void;
 	soundEnabled?: boolean;
@@ -30,6 +31,7 @@ export default function Game({
 	darkMode = true,
 	onToggleDark = () => {},
 	devMode = false,
+	contentId,
 	musicEnabled = true,
 	onToggleMusic = () => {},
 	soundEnabled = true,
@@ -51,6 +53,7 @@ export default function Game({
 			darkMode={darkMode}
 			onToggleDark={onToggleDark}
 			devMode={devMode}
+			contentId={contentId}
 			musicEnabled={musicEnabled}
 			onToggleMusic={onToggleMusic}
 			soundEnabled={soundEnabled}
