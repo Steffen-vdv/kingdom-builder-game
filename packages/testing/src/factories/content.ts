@@ -109,6 +109,9 @@ export function createContentFactory(
 			locked: definition.locked,
 			// metaCategory is required by the action registry schema
 			metaCategory: MetaCategory.Commands,
+			// In isolated mode, actions are free by default to avoid CP
+			// requirements since synthetic tests don't include CP
+			free: options.isolated ? true : definition.free,
 		};
 		actions.add(id, built);
 		return built;

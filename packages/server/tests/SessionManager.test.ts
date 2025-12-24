@@ -12,16 +12,16 @@ import {
 } from './helpers/expectSnapshotMetadata.js';
 
 describe('SessionManager', () => {
-	it('creates and retrieves sessions using synthetic content', () => {
+	it('creates and retrieves sessions using synthetic content', async () => {
 		const { manager, costResourceId, gainResourceId } =
 			createSyntheticSessionManager();
 		const sessionId = 'session-1';
-		const session = manager.createSession(sessionId, {
+		const session = await manager.createSession(sessionId, {
 			devMode: true,
 		});
-		expect(manager.getSession(sessionId)).toBe(session);
+		expect(await manager.getSession(sessionId)).toBe(session);
 		expect(manager.getSessionCount()).toBe(1);
-		const snapshot = manager.getSnapshot(sessionId);
+		const snapshot = await manager.getSnapshot(sessionId);
 		const staticMetadata = manager.getMetadata();
 		const mergedMetadata = mergeSessionMetadata({
 			baseMetadata: staticMetadata,
@@ -35,50 +35,50 @@ describe('SessionManager', () => {
 		expect(snapshot.game.devMode).toBe(true);
 	});
 
-	it('destroys sessions and releases resources', () => {
+	it('destroys sessions and releases resources', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const sessionId = 'session-destroy';
-		manager.createSession(sessionId);
+		await manager.createSession(sessionId);
 		const destroyed = manager.destroySession(sessionId);
 		expect(destroyed).toBe(true);
-		expect(manager.getSession(sessionId)).toBeUndefined();
+		expect(await manager.getSession(sessionId)).toBeUndefined();
 		expect(manager.getSessionCount()).toBe(0);
 	});
 
-	it('throws when creating a duplicate session identifier', () => {
+	it('throws when creating a duplicate session identifier', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const sessionId = 'duplicate';
-		manager.createSession(sessionId);
-		expect(() => manager.createSession(sessionId)).toThrow(
+		await manager.createSession(sessionId);
+		await expect(manager.createSession(sessionId)).rejects.toThrow(
 			`Session "${sessionId}" already exists.`,
 		);
 	});
 
-	it('provides rule snapshots from the active session', () => {
+	it('provides rule snapshots from the active session', async () => {
 		const { manager, gainResourceId } = createSyntheticSessionManager();
 		const sessionId = 'rules';
-		manager.createSession(sessionId);
-		const ruleSnapshot = manager.getRuleSnapshot(sessionId);
+		await manager.createSession(sessionId);
+		const ruleSnapshot = await manager.getRuleSnapshot(sessionId);
 		expect(ruleSnapshot.tieredResourceKey).toBe(gainResourceId);
 	});
 
-	it('enforces maximum session limits', () => {
+	it('enforces maximum session limits', async () => {
 		const { manager } = createSyntheticSessionManager({ maxSessions: 1 });
-		manager.createSession('limit-1');
-		expect(() => manager.createSession('limit-2')).toThrow(
+		await manager.createSession('limit-1');
+		await expect(manager.createSession('limit-2')).rejects.toThrow(
 			'Maximum session count reached.',
 		);
 	});
 
-	it('purges sessions that exceed the idle timeout', () => {
+	it('purges sessions that exceed the idle timeout', async () => {
 		let now = 0;
 		const { manager } = createSyntheticSessionManager({
 			maxIdleDurationMs: 1,
 			now: () => now,
 		});
-		manager.createSession('expire-me');
+		await manager.createSession('expire-me');
 		now = 2;
-		expect(manager.getSession('expire-me')).toBeUndefined();
+		expect(await manager.getSession('expire-me')).toBeUndefined();
 		expect(manager.getSessionCount()).toBe(0);
 	});
 
@@ -159,7 +159,7 @@ describe('SessionManager', () => {
 	it('keeps metadata stable after sessions mutate state', async () => {
 		const { manager, actionId } = createSyntheticSessionManager();
 		const snapshotMetadata = manager.getMetadata();
-		const session = manager.createSession('metadata-stability');
+		const session = await manager.createSession('metadata-stability');
 		const mergedInitial = mergeSessionMetadata({
 			baseMetadata: snapshotMetadata,
 			snapshotMetadata: session.getSnapshot().metadata,
@@ -170,8 +170,8 @@ describe('SessionManager', () => {
 		expect(manager.getMetadata()).toEqual(snapshotMetadata);
 	});
 
-	it('returns undefined when retrieving snapshots for unknown sessions', () => {
+	it('returns undefined when retrieving snapshots for unknown sessions', async () => {
 		const { manager } = createSyntheticSessionManager();
-		expect(manager.getSnapshot('missing')).toBeUndefined();
+		expect(await manager.getSnapshot('missing')).toBeUndefined();
 	});
 });

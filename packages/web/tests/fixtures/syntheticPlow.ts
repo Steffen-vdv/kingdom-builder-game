@@ -136,7 +136,7 @@ export interface SyntheticPlowContent {
 }
 
 export function createSyntheticPlowContent(): SyntheticPlowContent {
-	const factory = createContentFactory();
+	const factory = createContentFactory({ isolated: true });
 	const tierResourceKey = 'resource:synthetic:tier';
 	const expand = factory.action({
 		id: 'action:synthetic:expand',

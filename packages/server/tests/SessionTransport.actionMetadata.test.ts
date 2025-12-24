@@ -22,17 +22,17 @@ describe('SessionTransport action metadata', () => {
 		vi.restoreAllMocks();
 	});
 
-	it('returns sanitized action costs', () => {
+	it('returns sanitized action costs', async () => {
 		const { manager, actionId } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		const expectedCosts: Record<string, number> = {};
 		const rawCosts = session?.getActionCosts(actionId) ?? {};
@@ -41,7 +41,7 @@ describe('SessionTransport action metadata', () => {
 				expectedCosts[resourceKey] = amount;
 			}
 		}
-		const result = transport.getActionCosts({
+		const result = await transport.getActionCosts({
 			body: { sessionId, actionId },
 			headers: authorizedHeaders,
 		});
@@ -49,17 +49,17 @@ describe('SessionTransport action metadata', () => {
 		expect(result.costs).toEqual(expectedCosts);
 	});
 
-	it('returns requirements for actions', () => {
+	it('returns requirements for actions', async () => {
 		const { manager, actionId } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const requirements = transport.getActionRequirements({
+		const requirements = await transport.getActionRequirements({
 			body: { sessionId, actionId },
 			headers: authorizedHeaders,
 		});
@@ -67,17 +67,17 @@ describe('SessionTransport action metadata', () => {
 		expect(Array.isArray(requirements.requirements)).toBe(true);
 	});
 
-	it('returns effect groups for actions', () => {
+	it('returns effect groups for actions', async () => {
 		const { manager, actionId } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const options = transport.getActionOptions({
+		const options = await transport.getActionOptions({
 			body: { sessionId, actionId },
 			headers: authorizedHeaders,
 		});
@@ -85,77 +85,77 @@ describe('SessionTransport action metadata', () => {
 		expect(Array.isArray(options.groups)).toBe(true);
 	});
 
-	it('validates metadata request payloads', () => {
+	it('validates metadata request payloads', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		transport.createSession({
+		await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		expect(() =>
+		await expect(
 			transport.getActionCosts({
 				body: {},
 				headers: authorizedHeaders,
 			}),
-		).toThrowError(TransportError);
-		expect(() =>
+		).rejects.toThrowError(TransportError);
+		await expect(
 			transport.getActionRequirements({
 				body: {},
 				headers: authorizedHeaders,
 			}),
-		).toThrowError(TransportError);
-		expect(() =>
+		).rejects.toThrowError(TransportError);
+		await expect(
 			transport.getActionOptions({
 				body: {},
 				headers: authorizedHeaders,
 			}),
-		).toThrowError(TransportError);
+		).rejects.toThrowError(TransportError);
 	});
 
-	it('reports unknown actions for metadata lookups', () => {
+	it('reports unknown actions for metadata lookups', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		expect(() =>
+		await expect(
 			transport.getActionCosts({
 				body: { sessionId, actionId: 'missing' },
 				headers: authorizedHeaders,
 			}),
-		).toThrowError(/was not found/);
-		expect(() =>
+		).rejects.toThrowError(/was not found/);
+		await expect(
 			transport.getActionRequirements({
 				body: { sessionId, actionId: 'missing' },
 				headers: authorizedHeaders,
 			}),
-		).toThrowError(/was not found/);
-		expect(() =>
+		).rejects.toThrowError(/was not found/);
+		await expect(
 			transport.getActionOptions({
 				body: { sessionId, actionId: 'missing' },
 				headers: authorizedHeaders,
 			}),
-		).toThrowError(/was not found/);
+		).rejects.toThrowError(/was not found/);
 	});
 
-	it('wraps errors thrown while loading action definitions', () => {
+	it('wraps errors thrown while loading action definitions', async () => {
 		const { manager, actionId } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		if (!session) {
 			throw new Error('Session was not created.');
@@ -163,21 +163,21 @@ describe('SessionTransport action metadata', () => {
 		vi.spyOn(session, 'getActionDefinition').mockImplementation(() => {
 			throw new Error('registry failure');
 		});
-		expect(() =>
+		await expect(
 			transport.getActionCosts({
 				body: { sessionId, actionId },
 				headers: authorizedHeaders,
 			}),
-		).toThrowError(/was not found/);
+		).rejects.toThrowError(/was not found/);
 	});
 
-	it('validates action parameters before forwarding requests', () => {
+	it('validates action parameters before forwarding requests', async () => {
 		const { manager, actionId } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
@@ -188,7 +188,7 @@ describe('SessionTransport action metadata', () => {
 				},
 			},
 		} as const;
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		if (!session) {
 			throw new Error('Session was not created.');
@@ -197,24 +197,24 @@ describe('SessionTransport action metadata', () => {
 		const costSpy = vi
 			.spyOn(session, 'getActionCosts')
 			.mockReturnValue({} as never);
-		transport.getActionCosts({
+		await transport.getActionCosts({
 			body: { sessionId, actionId, params, playerId },
 			headers: authorizedHeaders,
 		});
 		expect(costSpy).toHaveBeenCalledWith(actionId, params, playerId);
 	});
 
-	it('rejects malformed action parameter payloads', () => {
+	it('rejects malformed action parameter payloads', async () => {
 		const { manager, actionId } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const attempt = () =>
+		await expect(
 			transport.getActionCosts({
 				body: {
 					sessionId,
@@ -228,10 +228,23 @@ describe('SessionTransport action metadata', () => {
 					},
 				},
 				headers: authorizedHeaders,
-			});
-		expect(attempt).toThrowError(TransportError);
+			}),
+		).rejects.toThrowError(TransportError);
 		try {
-			attempt();
+			await transport.getActionCosts({
+				body: {
+					sessionId,
+					actionId,
+					params: {
+						choices: {
+							invalid: {
+								optionId: 123,
+							},
+						},
+					},
+				},
+				headers: authorizedHeaders,
+			});
 		} catch (error) {
 			if (error instanceof TransportError) {
 				expect(error.code).toBe('INVALID_REQUEST');
@@ -239,30 +252,33 @@ describe('SessionTransport action metadata', () => {
 		}
 	});
 
-	it('rejects actions when getActionDefinition returns undefined', () => {
+	it('rejects actions when getActionDefinition returns undefined', async () => {
 		const { manager, actionId } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		if (!session) {
 			throw new Error('Session was not created.');
 		}
 		vi.spyOn(session, 'getActionDefinition').mockReturnValue(undefined);
-		const attempt = () =>
+		await expect(
 			transport.getActionCosts({
 				body: { sessionId, actionId },
 				headers: authorizedHeaders,
-			});
-		expect(attempt).toThrowError(TransportError);
+			}),
+		).rejects.toThrowError(TransportError);
 		try {
-			attempt();
+			await transport.getActionCosts({
+				body: { sessionId, actionId },
+				headers: authorizedHeaders,
+			});
 		} catch (error) {
 			if (error instanceof TransportError) {
 				expect(error.code).toBe('NOT_FOUND');

@@ -103,7 +103,7 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 
 	fastify.post('/sessions', async (request, reply) => {
 		try {
-			const response = transport.createSession({
+			const response = await transport.createSession({
 				body: request.body,
 				headers: extractHeaders(request),
 			});
@@ -117,7 +117,7 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 		'/sessions/:id/snapshot',
 		async (request, reply) => {
 			try {
-				const response = transport.getSessionState({
+				const response = await transport.getSessionState({
 					body: { sessionId: request.params.id },
 					headers: extractHeaders(request),
 				});
@@ -164,7 +164,7 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 		async (request, reply) => {
 			try {
 				const payload = mergeSessionPayload(request);
-				const response = transport.getActionCosts({
+				const response = await transport.getActionCosts({
 					body: payload,
 					headers: extractHeaders(request),
 				});
@@ -181,7 +181,7 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 			try {
 				const payload = mergeSessionPayload(request);
 				const headers = extractHeaders(request);
-				const response = transport.getActionRequirements({
+				const response = await transport.getActionRequirements({
 					body: payload,
 					headers,
 				});
@@ -198,7 +198,7 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 			try {
 				const payload = mergeSessionPayload(request);
 				const headers = extractHeaders(request);
-				const response = transport.getActionOptions({
+				const response = await transport.getActionOptions({
 					body: payload,
 					headers,
 				});
@@ -248,7 +248,7 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 		async (request, reply) => {
 			try {
 				const payload = mergeSessionPayload(request);
-				const response = transport.setDevMode({
+				const response = await transport.setDevMode({
 					body: payload,
 					headers: extractHeaders(request),
 				});
@@ -264,7 +264,7 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 		async (request, reply) => {
 			try {
 				const payload = mergeSessionPayload(request);
-				const response = transport.updatePlayerName({
+				const response = await transport.updatePlayerName({
 					body: payload,
 					headers: extractHeaders(request),
 				});

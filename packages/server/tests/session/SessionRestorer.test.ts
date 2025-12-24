@@ -178,13 +178,13 @@ describe('SessionRestorer', () => {
 		rmSync(testDir, { recursive: true, force: true });
 	});
 
-	it('returns undefined for non-existent session', () => {
+	it('returns undefined for non-existent session', async () => {
 		const { baseOptions } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
-		expect(restorer.restore('missing')).toBeUndefined();
+		expect(await restorer.restore('missing')).toBeUndefined();
 	});
 
-	it('restores a session with empty action log', () => {
+	it('restores a session with empty action log', async () => {
 		const { baseOptions } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
 
@@ -201,14 +201,14 @@ describe('SessionRestorer', () => {
 		};
 		persistence.save(data);
 
-		const restored = restorer.restore('session-1');
+		const restored = await restorer.restore('session-1');
 		expect(restored).toBeDefined();
 		expect(restored?.createdAt).toBe(data.createdAt);
 		expect(restored?.actionLog).toEqual([]);
 		expect(restored?.session).toBeDefined();
 	});
 
-	it('restores a session with devMode enabled', () => {
+	it('restores a session with devMode enabled', async () => {
 		const { baseOptions } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
 
@@ -224,13 +224,13 @@ describe('SessionRestorer', () => {
 		};
 		persistence.save(data);
 
-		const restored = restorer.restore('session-dev');
+		const restored = await restorer.restore('session-dev');
 		expect(restored).toBeDefined();
 		const snapshot = restored?.session.getSnapshot();
 		expect(snapshot?.game.devMode).toBe(true);
 	});
 
-	it('replays action log entries', () => {
+	it('replays action log entries', async () => {
 		const { baseOptions, actionId, gainResourceId } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
 
@@ -249,7 +249,7 @@ describe('SessionRestorer', () => {
 		};
 		persistence.save(data);
 
-		const restored = restorer.restore('session-replay');
+		const restored = await restorer.restore('session-replay');
 		expect(restored).toBeDefined();
 
 		const snapshot = restored?.session.getSnapshot();
@@ -258,7 +258,7 @@ describe('SessionRestorer', () => {
 		expect(player?.values[gainResourceId]).toBe(2);
 	});
 
-	it('replays player name changes', () => {
+	it('replays player name changes', async () => {
 		const { baseOptions } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
 
@@ -274,7 +274,7 @@ describe('SessionRestorer', () => {
 		};
 		persistence.save(data);
 
-		const restored = restorer.restore('session-names');
+		const restored = await restorer.restore('session-names');
 		expect(restored).toBeDefined();
 
 		const snapshot = restored?.session.getSnapshot();
@@ -284,7 +284,7 @@ describe('SessionRestorer', () => {
 		expect(player?.name).toBe('Alice');
 	});
 
-	it('replays dev mode changes', () => {
+	it('replays dev mode changes', async () => {
 		const { baseOptions } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
 
@@ -300,14 +300,14 @@ describe('SessionRestorer', () => {
 		};
 		persistence.save(data);
 
-		const restored = restorer.restore('session-devmode');
+		const restored = await restorer.restore('session-devmode');
 		expect(restored).toBeDefined();
 
 		const snapshot = restored?.session.getSnapshot();
 		expect(snapshot?.game.devMode).toBe(true);
 	});
 
-	it('applies player names from creation options', () => {
+	it('applies player names from creation options', async () => {
 		const { baseOptions } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
 
@@ -326,7 +326,7 @@ describe('SessionRestorer', () => {
 		};
 		persistence.save(data);
 
-		const restored = restorer.restore('session-initial-names');
+		const restored = await restorer.restore('session-initial-names');
 		expect(restored).toBeDefined();
 
 		const snapshot = restored?.session.getSnapshot();
@@ -340,7 +340,7 @@ describe('SessionRestorer', () => {
 		expect(playerB?.name).toBe('Carol');
 	});
 
-	it('returns the original action log for continued recording', () => {
+	it('returns the original action log for continued recording', async () => {
 		const { baseOptions, actionId } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
 
@@ -361,7 +361,7 @@ describe('SessionRestorer', () => {
 		};
 		persistence.save(data);
 
-		const restored = restorer.restore('session-log');
+		const restored = await restorer.restore('session-log');
 		expect(restored?.actionLog).toEqual(originalLog);
 	});
 });

@@ -16,7 +16,7 @@ import { sanitizePlayerName } from '../playerNameHelpers.js';
 
 type AuthorizationCallback = (role: AuthRole) => AuthContext;
 
-type RequireSession = (sessionId: string) => EngineSession;
+type RequireSession = (sessionId: string) => Promise<EngineSession>;
 
 type BuildStateResponse = (
 	sessionId: string,
@@ -51,9 +51,9 @@ export class SessionPlayerNameUpdateHandler {
 		this.recordPlayerNameChange = options.recordPlayerNameChange;
 	}
 
-	public handle(
+	public async handle(
 		context: SessionPlayerNameContext,
-	): SessionUpdatePlayerNameResponse {
+	): Promise<SessionUpdatePlayerNameResponse> {
 		context.requireAuthorization('session:advance');
 		const parsed = sessionUpdatePlayerNameRequestSchema.safeParse(
 			context.request.body,
@@ -73,7 +73,7 @@ export class SessionPlayerNameUpdateHandler {
 				'Player names must include visible characters.',
 			);
 		}
-		const session = this.requireSession(sessionId);
+		const session = await this.requireSession(sessionId);
 		session.updatePlayerName(playerId, sanitizedName);
 		// Record the player name change for persistence
 		this.recordPlayerNameChange(sessionId, playerId, sanitizedName);

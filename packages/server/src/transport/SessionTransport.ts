@@ -49,10 +49,12 @@ export class SessionTransport extends SessionTransportBase {
 		super(options);
 	}
 
-	public getActionCosts(request: TransportRequest): SessionActionCostResponse {
+	public async getActionCosts(
+		request: TransportRequest,
+	): Promise<SessionActionCostResponse> {
 		this.requireAuthorization(request, 'session:advance');
 		const { session, sessionId, actionId, params, playerId } =
-			this.parseActionMetadataRequest(
+			await this.parseActionMetadataRequest(
 				request,
 				sessionActionCostRequestSchema,
 				'Invalid action cost request.',
@@ -71,12 +73,12 @@ export class SessionTransport extends SessionTransportBase {
 		return sessionActionCostResponseSchema.parse(response);
 	}
 
-	public getActionRequirements(
+	public async getActionRequirements(
 		request: TransportRequest,
-	): SessionActionRequirementResponse {
+	): Promise<SessionActionRequirementResponse> {
 		this.requireAuthorization(request, 'session:advance');
 		const { session, sessionId, actionId, params, playerId } =
-			this.parseActionMetadataRequest(
+			await this.parseActionMetadataRequest(
 				request,
 				sessionActionRequirementRequestSchema,
 				'Invalid action requirement request.',
@@ -93,15 +95,16 @@ export class SessionTransport extends SessionTransportBase {
 		return sessionActionRequirementResponseSchema.parse(response);
 	}
 
-	public getActionOptions(
+	public async getActionOptions(
 		request: TransportRequest,
-	): SessionActionOptionsResponse {
+	): Promise<SessionActionOptionsResponse> {
 		this.requireAuthorization(request, 'session:advance');
-		const { session, sessionId, actionId } = this.parseActionMetadataRequest(
-			request,
-			sessionActionOptionsRequestSchema,
-			'Invalid action options request.',
-		);
+		const { session, sessionId, actionId } =
+			await this.parseActionMetadataRequest(
+				request,
+				sessionActionOptionsRequestSchema,
+				'Invalid action options request.',
+			);
 		const groups = session.getActionOptions(actionId);
 		const response = {
 			sessionId,
@@ -121,7 +124,7 @@ export class SessionTransport extends SessionTransportBase {
 			});
 		}
 		const { sessionId, playerId } = parsed.data;
-		const session = this.requireSession(sessionId);
+		const session = await this.requireSession(sessionId);
 		if (!session.hasAiController(playerId)) {
 			throw new TransportError(
 				'CONFLICT',
@@ -179,7 +182,7 @@ export class SessionTransport extends SessionTransportBase {
 			const ranTurn = await session.enqueue(() =>
 				session.runAiTurn(playerId, overrides),
 			);
-			const snapshot = this.sessionManager.getSnapshot(sessionId);
+			const snapshot = await this.sessionManager.getSnapshot(sessionId);
 			if (!snapshot) {
 				throw new TransportError(
 					'NOT_FOUND',
@@ -214,7 +217,7 @@ export class SessionTransport extends SessionTransportBase {
 			);
 		}
 		const { sessionId, playerId, options } = parsed.data;
-		const session = this.requireSession(sessionId);
+		const session = await this.requireSession(sessionId);
 		const result = await session.enqueue(() =>
 			session.simulateUpcomingPhases(playerId, options),
 		);
@@ -253,11 +256,11 @@ export class SessionTransport extends SessionTransportBase {
 		return sessionMetadataSnapshotResponseSchema.parse(response);
 	}
 
-	private parseActionMetadataRequest<S extends ActionMetadataSchema>(
+	private async parseActionMetadataRequest<S extends ActionMetadataSchema>(
 		request: TransportRequest,
 		schema: S,
 		errorMessage: string,
-	): ActionMetadataRequest {
+	): Promise<ActionMetadataRequest> {
 		const parsed = schema.safeParse(request.body);
 		if (!parsed.success) {
 			throw new TransportError('INVALID_REQUEST', errorMessage, {
@@ -265,7 +268,7 @@ export class SessionTransport extends SessionTransportBase {
 			});
 		}
 		const { sessionId, actionId } = parsed.data;
-		const session = this.requireSession(sessionId);
+		const session = await this.requireSession(sessionId);
 		this.requireActionDefinition(session, actionId, sessionId);
 		const metadataRequest: ActionMetadataRequest = {
 			session,

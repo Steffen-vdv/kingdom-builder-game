@@ -32,11 +32,11 @@ describe('SessionTransport runAiTurn', () => {
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		if (!session) {
 			throw new Error('Session was not created.');
@@ -111,11 +111,11 @@ describe('SessionTransport runAiTurn', () => {
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		if (!session) {
 			throw new Error('Session was not created.');
@@ -146,11 +146,11 @@ describe('SessionTransport runAiTurn', () => {
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		if (!session) {
 			throw new Error('Session was not created.');
@@ -179,11 +179,11 @@ describe('SessionTransport runAiTurn', () => {
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		if (!session) {
 			throw new Error('Session was not created.');
@@ -215,11 +215,11 @@ describe('SessionTransport runAiTurn', () => {
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		if (!session) {
 			throw new Error('Session was not created.');
@@ -273,11 +273,11 @@ describe('SessionTransport runAiTurn', () => {
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		if (!session) {
 			throw new Error('Session was not created.');
@@ -313,11 +313,11 @@ describe('SessionTransport runAiTurn', () => {
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		if (!session) {
 			throw new Error('Session was not created.');
@@ -349,11 +349,11 @@ describe('SessionTransport runAiTurn', () => {
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		if (!session) {
 			throw new Error('Session was not created.');

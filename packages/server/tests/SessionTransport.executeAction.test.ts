@@ -32,11 +32,11 @@ describe('SessionTransport executeAction', () => {
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		const expectedRawCosts = session?.getActionCosts(actionId) ?? {};
 		const expectedCosts: Record<string, number> = {};
@@ -65,11 +65,11 @@ describe('SessionTransport executeAction', () => {
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		const rejection = new Error('Action failure');
 		if (session) {
 			vi.spyOn(session, 'enqueue').mockImplementation(() =>
@@ -92,11 +92,11 @@ describe('SessionTransport executeAction', () => {
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		const failure: SessionRequirementFailure = {
 			requirement: {
@@ -143,11 +143,11 @@ describe('SessionTransport executeAction', () => {
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		const failures: SessionActionRequirementList = [
 			{
 				requirement: {

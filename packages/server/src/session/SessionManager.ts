@@ -1,12 +1,17 @@
 import {
 	createEngineSession,
 	type EngineSession,
+	type RuntimeResourceContent,
 } from '@kingdom-builder/engine';
 import type {
 	SessionRegistriesPayload,
 	ActionParametersPayload,
 	SessionPlayerId,
 } from '@kingdom-builder/protocol';
+import {
+	loadContentPackage,
+	DEFAULT_CONTENT_ID,
+} from '@kingdom-builder/contents';
 import type { SessionStaticMetadataPayload } from './buildSessionMetadata.js';
 import {
 	buildSessionAssets,
@@ -46,6 +51,8 @@ export interface SessionManagerOptions {
 }
 
 export interface CreateSessionOptions {
+	/** Content package identifier (e.g., "kingdom-builder:base") */
+	contentId?: string;
 	devMode?: boolean;
 	config?: EngineSessionOptions['config'];
 }
@@ -64,20 +71,27 @@ export class SessionManager {
 	private readonly runtimeConfig: SessionRuntimeConfig;
 	private readonly persistence: SessionPersistence | undefined;
 	private readonly restorer: SessionRestorer | undefined;
+	/**
+	 * When true, sessions use content from constructor's engineOptions
+	 * rather than loading content packages dynamically.
+	 * Used for testing with synthetic content.
+	 */
+	private readonly useStaticContent: boolean;
 
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
 			maxSessions,
 			now = Date.now,
-			engineOptions = {},
+			engineOptions,
 			persistence,
 		} = options;
 		this.persistence = persistence;
 		this.maxIdleDurationMs = maxIdleDurationMs;
 		this.maxSessions = maxSessions;
 		this.now = now;
-		const config = buildSessionManagerConfig(engineOptions);
+		this.useStaticContent = engineOptions !== undefined;
+		const config = buildSessionManagerConfig(engineOptions ?? {});
 		this.baseOptions = config.baseOptions;
 		this.registries = config.registries;
 		this.metadata = config.metadata;
@@ -92,11 +106,11 @@ export class SessionManager {
 		}
 	}
 
-	public createSession(
+	public async createSession(
 		sessionId: string,
 		options: CreateSessionOptions = {},
 		playerNames?: Partial<Record<SessionPlayerId, string>>,
-	): EngineSession {
+	): Promise<EngineSession> {
 		this.purgeExpiredSessions();
 		if (this.sessions.has(sessionId)) {
 			throw new Error(`Session "${sessionId}" already exists.`);
@@ -107,29 +121,66 @@ export class SessionManager {
 		) {
 			throw new Error('Maximum session count reached.');
 		}
+		const contentId = options.contentId ?? DEFAULT_CONTENT_ID;
 		const devMode = options.devMode ?? false;
 		const { config } = options;
-		const { actionCategories: _baseActionCategories, ...engineBaseOptions } =
-			this.baseOptions;
-		const sessionOptions: EngineSessionOptions = {
-			...engineBaseOptions,
-		};
+
+		let sessionOptions: EngineSessionOptions;
+		let contentBaseOptions: SessionBaseOptions;
+
+		if (this.useStaticContent) {
+			// Use constructor-provided content (for testing with synthetic content)
+			sessionOptions = {
+				actions: this.baseOptions.actions,
+				actionMetaCategories: this.baseOptions.actionMetaCategories,
+				buildings: this.baseOptions.buildings,
+				developments: this.baseOptions.developments,
+				phases: this.baseOptions.phases,
+				rules: this.baseOptions.rules,
+				resourceCatalog: this.baseOptions.resourceCatalog,
+			};
+			contentBaseOptions = this.baseOptions;
+		} else {
+			// Load the content package dynamically
+			const content = await loadContentPackage(contentId);
+			sessionOptions = {
+				actions: content.actions,
+				actionMetaCategories: content.actionMetaCategories,
+				buildings: content.buildings,
+				developments: content.developments,
+				phases: [...content.phases],
+				rules: content.rules,
+				resourceCatalog: content.resourceCatalog as RuntimeResourceContent,
+			};
+			contentBaseOptions = {
+				actions: content.actions,
+				actionMetaCategories: content.actionMetaCategories,
+				actionCategories: content.actionCategories,
+				buildings: content.buildings,
+				developments: content.developments,
+				phases: [...content.phases],
+				rules: content.rules,
+				resourceCatalog: content.resourceCatalog as RuntimeResourceContent,
+			};
+		}
+
 		if (config !== undefined) {
 			sessionOptions.config = config;
 		}
 		const session = createEngineSession(sessionOptions);
 		session.setDevMode(devMode);
 		const timestamp = this.now();
+
 		const { registries, metadata } = buildSessionAssets(
 			{
-				baseOptions: this.baseOptions,
+				baseOptions: contentBaseOptions,
 				resourceOverrides: this.resourceOverrides,
 				baseRegistries: this.registries,
 				baseMetadata: this.metadata,
 			},
 			config,
 		);
-		const creationOptions: SessionCreationOptions = { devMode };
+		const creationOptions: SessionCreationOptions = { devMode, contentId };
 		if (config !== undefined) {
 			creationOptions.config = config;
 		}
@@ -162,12 +213,14 @@ export class SessionManager {
 		return session;
 	}
 
-	public getSession(sessionId: string): EngineSession | undefined {
+	public async getSession(
+		sessionId: string,
+	): Promise<EngineSession | undefined> {
 		this.purgeExpiredSessions();
 		let record = this.sessions.get(sessionId);
 		if (!record) {
 			// Try to restore from persistence
-			record = this.tryRestoreFromPersistence(sessionId);
+			record = await this.tryRestoreFromPersistence(sessionId);
 			if (!record) {
 				return undefined;
 			}
@@ -267,13 +320,13 @@ export class SessionManager {
 		return this.persistence.purgeExpired();
 	}
 
-	public getSnapshot(sessionId: string) {
-		const session = this.getSession(sessionId);
+	public async getSnapshot(sessionId: string) {
+		const session = await this.getSession(sessionId);
 		return session ? session.getSnapshot() : undefined;
 	}
 
-	public getRuleSnapshot(sessionId: string) {
-		const session = this.getSession(sessionId);
+	public async getRuleSnapshot(sessionId: string) {
+		const session = await this.getSession(sessionId);
 		return session ? session.getRuleSnapshot() : undefined;
 	}
 
@@ -318,20 +371,43 @@ export class SessionManager {
 	/**
 	 * Attempts to restore a session from persistence.
 	 */
-	private tryRestoreFromPersistence(
+	private async tryRestoreFromPersistence(
 		sessionId: string,
-	): SessionRecord | undefined {
+	): Promise<SessionRecord | undefined> {
 		if (!this.restorer || !this.persistence) {
 			return undefined;
 		}
-		const restored = this.restorer.restore(sessionId);
+		const restored = await this.restorer.restore(sessionId);
 		if (!restored) {
 			return undefined;
 		}
+
+		let contentBaseOptions: SessionBaseOptions;
+
+		if (this.useStaticContent) {
+			// Use constructor-provided content (for testing with synthetic content)
+			contentBaseOptions = this.baseOptions;
+		} else {
+			// Load content package to build session assets
+			const contentId =
+				restored.creationOptions.contentId ?? DEFAULT_CONTENT_ID;
+			const content = await loadContentPackage(contentId);
+			contentBaseOptions = {
+				actions: content.actions,
+				actionMetaCategories: content.actionMetaCategories,
+				actionCategories: content.actionCategories,
+				buildings: content.buildings,
+				developments: content.developments,
+				phases: [...content.phases],
+				rules: content.rules,
+				resourceCatalog: content.resourceCatalog as RuntimeResourceContent,
+			};
+		}
+
 		const timestamp = this.now();
 		const { registries, metadata } = buildSessionAssets(
 			{
-				baseOptions: this.baseOptions,
+				baseOptions: contentBaseOptions,
 				resourceOverrides: this.resourceOverrides,
 				baseRegistries: this.registries,
 				baseMetadata: this.metadata,

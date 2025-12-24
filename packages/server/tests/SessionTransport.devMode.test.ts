@@ -22,7 +22,7 @@ const authorizedHeaders = {
 } satisfies Record<string, string>;
 
 describe('SessionTransport dev mode', () => {
-	it('toggles developer mode on demand', () => {
+	it('toggles developer mode on demand', async () => {
 		const { manager, actionId } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
@@ -31,11 +31,11 @@ describe('SessionTransport dev mode', () => {
 				: undefined,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: { devMode: false },
 			headers: authorizedHeaders,
 		});
-		const updated = transport.setDevMode({
+		const updated = await transport.setDevMode({
 			body: { sessionId, enabled: true },
 			headers: authorizedHeaders,
 		});
@@ -45,20 +45,23 @@ describe('SessionTransport dev mode', () => {
 		expectStaticMetadata(manager.getMetadata());
 	});
 
-	it('validates dev mode toggles before applying them', () => {
+	it('validates dev mode toggles before applying them', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const attempt = () =>
+		await expect(
 			transport.setDevMode({
 				headers: authorizedHeaders,
 				body: { sessionId: 123 },
-			});
-		expect(attempt).toThrow(TransportError);
+			}),
+		).rejects.toThrow(TransportError);
 		try {
-			attempt();
+			await transport.setDevMode({
+				headers: authorizedHeaders,
+				body: { sessionId: 123 },
+			});
 		} catch (error) {
 			if (error instanceof TransportError) {
 				expect(error.code).toBe('INVALID_REQUEST');

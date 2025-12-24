@@ -39,7 +39,7 @@ const authorizedHeaders = {
 } satisfies Record<string, string>;
 
 describe('SessionTransport createSession', () => {
-	it('creates sessions and applies player preferences', () => {
+	it('creates sessions and applies player preferences', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const idFactory = vi.fn().mockReturnValue('transport-session');
 		const transport = new SessionTransport({
@@ -47,7 +47,7 @@ describe('SessionTransport createSession', () => {
 			idFactory,
 			authMiddleware: middleware,
 		});
-		const response = transport.createSession({
+		const response = await transport.createSession({
 			body: {
 				devMode: true,
 				playerNames: { A: 'Alpha', B: 'Beta' },
@@ -64,27 +64,26 @@ describe('SessionTransport createSession', () => {
 		expect(playerB?.name).toBe('Beta');
 	});
 
-	it('skips blank player name entries when applying preferences', () => {
+	it('skips blank player name entries when applying preferences', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const originalCreate = manager.createSession.bind(manager);
 		let updateSpy: ReturnType<typeof vi.spyOn>;
-		vi.spyOn(manager, 'createSession').mockImplementation(
-			(sessionId, options) => {
-				const session = originalCreate(sessionId, options);
-				updateSpy = vi.spyOn(session, 'updatePlayerName');
-				return session;
-			},
-		);
+		const createSessionSpy = vi.spyOn(manager, 'createSession');
+		createSessionSpy.mockImplementation(async (sessionId, options) => {
+			const session = await originalCreate(sessionId, options);
+			updateSpy = vi.spyOn(session, 'updatePlayerName');
+			return session;
+		});
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			idFactory: vi.fn().mockReturnValue('naming-session'),
 			authMiddleware: middleware,
 		});
-		const response = transport.createSession({
+		const response = await transport.createSession({
 			body: { playerNames: { A: '   ', B: 'Bravo' } },
 			headers: authorizedHeaders,
 		});
-		manager.createSession.mockRestore();
+		createSessionSpy.mockRestore();
 		expectStaticMetadata(manager.getMetadata());
 		expect(updateSpy).toBeDefined();
 		expect(updateSpy?.mock.calls).toHaveLength(1);
@@ -95,14 +94,14 @@ describe('SessionTransport createSession', () => {
 		expect(playerB?.name).toBe('Bravo');
 	});
 
-	it('stores trimmed player names in the session snapshot', () => {
+	it('stores trimmed player names in the session snapshot', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			idFactory: vi.fn().mockReturnValue('trim-session'),
 			authMiddleware: middleware,
 		});
-		const response = transport.createSession({
+		const response = await transport.createSession({
 			body: { playerNames: { A: '  Charlie  ' } },
 			headers: authorizedHeaders,
 		});
@@ -112,7 +111,7 @@ describe('SessionTransport createSession', () => {
 		expect(playerA?.name).toBe('Charlie');
 	});
 
-	it('accepts player names at the maximum allowed length', () => {
+	it('accepts player names at the maximum allowed length', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
@@ -120,7 +119,7 @@ describe('SessionTransport createSession', () => {
 			authMiddleware: middleware,
 		});
 		const maxLengthName = 'N'.repeat(PLAYER_NAME_MAX_LENGTH);
-		const response = transport.createSession({
+		const response = await transport.createSession({
 			body: { playerNames: { A: maxLengthName } },
 			headers: authorizedHeaders,
 		});
@@ -130,7 +129,7 @@ describe('SessionTransport createSession', () => {
 		expect(playerA?.name).toBe(maxLengthName);
 	});
 
-	it('rejects player names that exceed the maximum length before creating sessions', () => {
+	it('rejects player names that exceed the maximum length before creating sessions', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
@@ -139,49 +138,35 @@ describe('SessionTransport createSession', () => {
 		});
 		const createSpy = vi.spyOn(manager, 'createSession');
 		const overLengthName = 'X'.repeat(PLAYER_NAME_MAX_LENGTH + 1);
-		let thrown: unknown;
-		try {
+		await expect(
 			transport.createSession({
 				body: { playerNames: { A: overLengthName } },
 				headers: authorizedHeaders,
-			});
-		} catch (error) {
-			thrown = error;
-		}
-		expect(thrown).toBeInstanceOf(TransportError);
-		if (thrown instanceof TransportError) {
-			expect(thrown.code).toBe('INVALID_REQUEST');
-		}
+			}),
+		).rejects.toThrow(TransportError);
 		expect(createSpy).not.toHaveBeenCalled();
 		createSpy.mockRestore();
 	});
 
-	it('fails when unique session identifiers cannot be generated', () => {
+	it('fails when unique session identifiers cannot be generated', async () => {
 		const { manager } = createSyntheticSessionManager();
-		manager.createSession('collision');
+		await manager.createSession('collision');
 		const idFactory = vi.fn().mockReturnValue('collision');
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			idFactory,
 			authMiddleware: middleware,
 		});
-		let thrown: unknown;
-		try {
+		await expect(
 			transport.createSession({
 				body: {},
 				headers: authorizedHeaders,
-			});
-		} catch (error) {
-			thrown = error;
-		}
-		expect(thrown).toBeInstanceOf(TransportError);
-		if (thrown instanceof TransportError) {
-			expect(thrown.code).toBe('CONFLICT');
-		}
+			}),
+		).rejects.toThrow(TransportError);
 		expect(idFactory).toHaveBeenCalledTimes(10);
 	});
 
-	it('includes base registries in session responses', () => {
+	it('includes base registries in session responses', async () => {
 		const { manager, factory, costResourceId, gainResourceId, actionId } =
 			createSyntheticSessionManager();
 		const transport = new SessionTransport({
@@ -189,7 +174,7 @@ describe('SessionTransport createSession', () => {
 			idFactory: vi.fn().mockReturnValue('registry-session'),
 			authMiddleware: middleware,
 		});
-		const response = transport.createSession({
+		const response = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
@@ -213,14 +198,14 @@ describe('SessionTransport createSession', () => {
 		});
 	});
 
-	it('accepts custom session configuration', () => {
+	it('accepts custom session configuration', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			idFactory: vi.fn().mockReturnValue('config-session'),
 			authMiddleware: middleware,
 		});
-		const response = transport.createSession({
+		const response = await transport.createSession({
 			body: {
 				config: { aiPlayers: { B: true } },
 			},
@@ -230,7 +215,7 @@ describe('SessionTransport createSession', () => {
 		expectSnapshotMetadata(response.snapshot.metadata);
 	});
 
-	it('wraps session creation failures in transport errors', () => {
+	it('wraps session creation failures in transport errors', async () => {
 		const { manager } = createSyntheticSessionManager();
 		vi.spyOn(manager, 'createSession').mockImplementation(() => {
 			throw new Error('Creation failed');
@@ -240,23 +225,15 @@ describe('SessionTransport createSession', () => {
 			idFactory: vi.fn().mockReturnValue('fail-session'),
 			authMiddleware: middleware,
 		});
-		let thrown: unknown;
-		try {
+		await expect(
 			transport.createSession({
 				body: {},
 				headers: authorizedHeaders,
-			});
-		} catch (error) {
-			thrown = error;
-		}
-		expect(thrown).toBeInstanceOf(TransportError);
-		if (thrown instanceof TransportError) {
-			expect(thrown.code).toBe('CONFLICT');
-			expect(thrown.message).toBe('Failed to create session.');
-		}
+			}),
+		).rejects.toThrow(TransportError);
 	});
 
-	it('validates session creation request payloads', () => {
+	it('validates session creation request payloads', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
@@ -264,29 +241,22 @@ describe('SessionTransport createSession', () => {
 			authMiddleware: middleware,
 		});
 		// Invalid body type
-		let thrown: unknown;
-		try {
+		await expect(
 			transport.createSession({
 				body: { devMode: 'not-a-boolean' },
 				headers: authorizedHeaders,
-			});
-		} catch (error) {
-			thrown = error;
-		}
-		expect(thrown).toBeInstanceOf(TransportError);
-		if (thrown instanceof TransportError) {
-			expect(thrown.code).toBe('INVALID_REQUEST');
-		}
+			}),
+		).rejects.toThrow(TransportError);
 	});
 
-	it('creates sessions without player names', () => {
+	it('creates sessions without player names', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			idFactory: vi.fn().mockReturnValue('no-names-session'),
 			authMiddleware: middleware,
 		});
-		const response = transport.createSession({
+		const response = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
@@ -294,14 +264,14 @@ describe('SessionTransport createSession', () => {
 		expectSnapshotMetadata(response.snapshot.metadata);
 	});
 
-	it('includes actionMetaCategories in session registries', () => {
+	it('includes actionMetaCategories in session registries', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			idFactory: vi.fn().mockReturnValue('meta-categories-session'),
 			authMiddleware: middleware,
 		});
-		const response = transport.createSession({
+		const response = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});

@@ -36,6 +36,11 @@ export interface SessionIdentifier {
 export type SessionPlayerNameMap = Partial<Record<SessionPlayerId, string>>;
 
 export interface SessionCreateRequest {
+	/**
+	 * Content package identifier (e.g., "kingdom-builder:base").
+	 * Defaults to "kingdom-builder:base" if not specified.
+	 */
+	contentId?: string;
 	devMode?: boolean;
 	config?: GameConfig;
 	playerNames?: SessionPlayerNameMap;
