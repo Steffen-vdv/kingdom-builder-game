@@ -22,3 +22,6 @@ export function getResourceId(resource: ResourceKey): ResourceKey {
 }
 
 export { resourceAddEffect } from './resourceEffects';
+
+// Re-export SystemRole from contents-sdk (single source of truth)
+export { SystemRole, type SystemRoleValue } from '@kingdom-builder/contents-sdk';

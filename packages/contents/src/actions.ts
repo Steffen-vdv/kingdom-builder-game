@@ -13,7 +13,7 @@
  */
 import { actionSchema, type ActionConfig, Registry } from '@kingdom-builder/protocol';
 import { z, type ZodType } from 'zod';
-import { Resource } from './internal';
+import { Resource, SystemRole } from './internal';
 import { DevelopmentId } from './developments';
 import { BuildingId } from './buildingIds';
 import {
@@ -44,7 +44,10 @@ import {
 	ResourceMethods,
 	ResultModMethods,
 	Types,
-} from './infrastructure/builderShared';
+	resourceAmountChange,
+	resourceTransferAmount,
+	resourceTransferPercent,
+} from '@kingdom-builder/contents-sdk';
 import { Focus } from './infrastructure/defs';
 import {
 	ActionId as ActionIdValues,
@@ -67,7 +70,6 @@ import {
 } from './actionIds';
 import { ActionCategoryId as ActionCategoryValues, type ActionCategoryId as ActionCategoryIdValue } from './actionCategories';
 import { MetaCategory, type MetaCategoryValue } from './constants';
-import { resourceAmountChange, resourceTransferAmount, resourceTransferPercent } from './infrastructure/helpers/resourceEffects';
 import { ReconciliationMode, resourceChange } from './resource';
 
 // Re-export IDs for external consumers
@@ -97,6 +99,8 @@ export interface ActionDef extends ActionConfig {
 	category?: ActionCategoryIdValue;
 	order?: number;
 	focus?: Focus;
+	/** System role for system actions (e.g., 'initial-setup', 'compensation') */
+	systemRole?: string;
 }
 
 /**
@@ -686,7 +690,7 @@ export function createActionRegistry() {
 			.metaCategory(MetaCategory.Commands)
 			.name('Initial Setup')
 			.icon('🎮')
-			.system()
+			.system(SystemRole.INITIAL_SETUP)
 			.free()
 			// Resources
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.gold).amount(10).reject().build()).build())
@@ -710,7 +714,7 @@ export function createActionRegistry() {
 			.metaCategory(MetaCategory.Commands)
 			.name('Initial Setup (Dev Mode)')
 			.icon('🛠️')
-			.system()
+			.system(SystemRole.INITIAL_SETUP_DEVMODE)
 			.free()
 			// Resources (dev mode gets more)
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.gold).amount(100).reject().build()).build())
@@ -751,7 +755,7 @@ export function createActionRegistry() {
 			.metaCategory(MetaCategory.Commands)
 			.name('Player Compensation')
 			.icon('⚖️')
-			.system()
+			.system(SystemRole.COMPENSATION)
 			.free()
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.cp).amount(1).reject().build()).build())
 			.build(),

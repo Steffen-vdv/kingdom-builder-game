@@ -1,8 +1,6 @@
 import type { EffectConfig } from '@kingdom-builder/protocol';
-import { resourceChange } from '../resource';
-import { effect } from '../infrastructure/builders/evaluators/effectBuilder';
-import { ResourceMethods, Types } from '../infrastructure/builderShared';
-import type { Params } from '../infrastructure/builderShared';
+import { resourceChange, effect, ResourceMethods, Types } from '@kingdom-builder/contents-sdk';
+import type { Params } from '@kingdom-builder/contents-sdk';
 
 export function resourceAddEffect(resourceId: string, amount: number): EffectConfig {
 	const params = resourceChange(resourceId).amount(amount).build();

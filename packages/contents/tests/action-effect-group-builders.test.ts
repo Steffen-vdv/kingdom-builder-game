@@ -1,7 +1,6 @@
-import { ActionBuilder, action, actionParams, building } from '../src/infrastructure/builders';
-import { actionEffectGroup, actionEffectGroupOption } from '../src/infrastructure/builders/actionEffectGroups';
-import type { ActionEffectGroupDef } from '../src/infrastructure/builders/actionEffectGroups';
-import { DevelopActions } from '../src/actions';
+import { ActionBuilder, action, actionParams, building, actionEffectGroup, actionEffectGroupOption } from '../src/infrastructure/builders';
+import type { ActionEffectGroupDef } from '../src/infrastructure/builders';
+import { DevelopActions, MetaCategory } from '../src/actions';
 import { describe, expect, it } from 'vitest';
 
 const developFarmActionId = DevelopActions.develop_farm;
@@ -42,6 +41,7 @@ describe('action effect group builder safeguards', () => {
 		const built = action()
 			.id('group_action')
 			.name('Group Action')
+			.metaCategory(MetaCategory.Commands)
 			.effectGroup(
 				actionEffectGroup('choose')
 					.title('Pick a project')

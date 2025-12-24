@@ -119,6 +119,22 @@ importers:
 
   packages/contents:
     dependencies:
+      '@kingdom-builder/contents-sdk':
+        specifier: workspace:*
+        version: link:../contents-sdk
+      '@kingdom-builder/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@types/node@25.0.3)(jiti@2.6.1)(jsdom@27.3.0(postcss@8.5.6))(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/contents-sdk:
+    dependencies:
       '@kingdom-builder/protocol':
         specifier: workspace:*
         version: link:../protocol

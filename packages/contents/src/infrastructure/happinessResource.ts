@@ -8,12 +8,10 @@
  * The actual happiness resource definition is exposed via
  * getHappinessResourceDefinition() and consumed by resources.ts.
  */
-import { PassiveMethods, Types } from './builderShared';
-import { passiveParams } from './builders';
+import { PassiveMethods, Types, passiveParams, resource } from '@kingdom-builder/contents-sdk';
+import type { ResourceTierDefinition, ResourceDefinition } from '@kingdom-builder/contents-sdk';
 import { createTierPassiveEffect } from './happinessHelpers';
 import { HAPPINESS_TIER_ICONS, getTierConfigs } from '../rules.config';
-import { resource } from './resource/resourceBuilder';
-import type { ResourceTierDefinition, ResourceDefinition } from './resource/types';
 
 type HappinessTierSlug = keyof typeof HAPPINESS_TIER_ICONS;
 

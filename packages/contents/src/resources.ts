@@ -11,12 +11,10 @@
  * - Use .lowerBound() and .upperBound() to set value constraints
  * - Always end with .build() to finalize the resource
  */
-import { resource, resourceCategory, resourceGroup, boundTo, ReconciliationMode } from './infrastructure/resource';
+import { resource, resourceCategory, resourceGroup, boundTo } from './infrastructure/resource';
 import type { ResourceDefinition, ResourceCategoryDefinition, ResourceGroupDefinition } from './infrastructure/resource';
-import { resourceChange } from './infrastructure/resource/effects';
-import { PassiveMethods, ResourceMethods, Types } from './infrastructure/builderShared';
+import { resourceChange, resourceAmountChange, PassiveMethods, ResourceMethods, Types } from '@kingdom-builder/contents-sdk';
 import { effect, passiveParams, resourceAssignmentPassiveId } from './infrastructure/builders';
-import { resourceAmountChange } from './infrastructure/helpers/resourceEffects';
 import { Resource } from './internal';
 import { getHappinessResourceDefinition } from './infrastructure/happinessResource';
 
@@ -127,7 +125,7 @@ const researchResource = resource('resource:core:research')
 	.icon('🧬')
 	.label('Research Points')
 	.description("Research Points represent your kingdom's scientific and technological " + 'advancement. Accumulate them to unlock new buildings and upgrade ' + 'existing actions.')
-	.lowerBound(0, ReconciliationMode.REJECT)
+	.lowerBound(0)
 	.section('economy')
 	.build();
 

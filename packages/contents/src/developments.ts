@@ -2,7 +2,7 @@ import { Registry, developmentSchema } from '@kingdom-builder/protocol';
 import { Resource, getResourceId } from './internal';
 import type { ResourceKey } from './internal';
 import { development, effect, developmentParams } from './infrastructure/builders';
-import { Types, DevelopmentMethods, ResourceMethods } from './infrastructure/builderShared';
+import { Types, DevelopmentMethods, ResourceMethods } from '@kingdom-builder/contents-sdk';
 import { Focus } from './infrastructure/defs';
 import type { DevelopmentDef } from './infrastructure/defs';
 import { resourceChange } from './resource';

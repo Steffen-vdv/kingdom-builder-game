@@ -1,9 +1,59 @@
-// Infrastructure resource builders and utilities
-export * from './types';
-export * from './resourceBuilder';
-export * from './groupBuilder';
-export * from './categoryBuilder';
-export * from './registry';
+// Re-export resource types and builders from contents-sdk
+export {
+	boundTo,
+	resource,
+	resourceGroup,
+	resourceCategory,
+	createResourceRegistry,
+	createResourceGroupRegistry,
+	createResourceCategoryRegistry,
+	resourceChange,
+	resourceTransfer,
+	transferEndpoint,
+	increaseUpperBound,
+	ReconciliationMode,
+	RoundingMode,
+	VALID_RECONCILIATION_MODES,
+	VALID_ROUNDING_MODES,
+} from '@kingdom-builder/contents-sdk';
+
+export type {
+	ResourceBoundReference,
+	ResourceBoundValue,
+	ResourceMetadata,
+	ResourceBounds,
+	ResourceTierThreshold,
+	ResourceTierDefinition,
+	ResourceTierTrackMetadata,
+	ResourceTierTrack,
+	ResourceSection,
+	ResourceDefinition,
+	ResourceGroupParent,
+	ResourceGroupDefinition,
+	ResourceCategoryItem,
+	ResourceCategoryDefinition,
+	ResourceBuilder,
+	ResourceGroupBuilder,
+	ResourceCategoryBuilder,
+	ResourceRegistry,
+	ResourceGroupRegistry,
+	ResourceCategoryRegistry,
+	ResourceChangeBuilder,
+	ResourceChangeEffectParams,
+	ResourceChangeParameters,
+	ResourceAmountChangeParameters,
+	ResourcePercentChangeParameters,
+	ResourceChangeRoundingMode,
+	ResourceReconciliationMode,
+	ResourceTransferBuilder,
+	ResourceTransferEndpointBuilder,
+	ResourceTransferEffectParams,
+	ResourceTransferEndpointPayload,
+	ResourceUpperBoundIncreaseBuilder,
+	ResourceUpperBoundIncreaseParams,
+	ResourceValueWriteOptions,
+	ResourcePlayerScope,
+} from '@kingdom-builder/contents-sdk';
+
+// Game-specific catalog builder
 export * from './catalog';
-export * from './reconciliation';
-export * from './effects';

@@ -80,6 +80,19 @@ function normalizeBoundValueWithReconciliation(
 	});
 }
 
+/**
+ * Helper to extract reconciliation mode from a bound value.
+ * Checks the bound reference's embedded reconciliation if available.
+ */
+function getEmbeddedReconciliation(
+	bound: ContentBoundValue | undefined,
+): RuntimeReconciliationMode | undefined {
+	if (bound && typeof bound === 'object' && 'reconciliation' in bound) {
+		return bound.reconciliation as RuntimeReconciliationMode;
+	}
+	return undefined;
+}
+
 function normalizeBounds(
 	definition: ContentResourceDefinition | ContentResourceGroupParent,
 ): RuntimeResourceBounds {
@@ -92,9 +105,18 @@ function normalizeBounds(
 	const context = `"${definition.id}"`;
 
 	// For dynamic bounds, we need reconciliation embedded in the reference
-	// for the cascading system. Use the explicit mode if specified, else 'clamp'.
-	const lowerCascadeMode = lowerBoundReconciliation ?? 'clamp';
-	const upperCascadeMode = upperBoundReconciliation ?? 'clamp';
+	// for the cascading system. Priority:
+	// 1. Explicit top-level *BoundReconciliation
+	// 2. Reconciliation embedded in the bound reference (from contents-sdk)
+	// 3. Default to 'clamp'
+	const lowerCascadeMode =
+		lowerBoundReconciliation ??
+		getEmbeddedReconciliation(lowerBound) ??
+		'clamp';
+	const upperCascadeMode =
+		upperBoundReconciliation ??
+		getEmbeddedReconciliation(upperBound) ??
+		'clamp';
 
 	// Normalize bound values, passing the reconciliation for dynamic bounds
 	const normalizedLower = normalizeBoundValueWithReconciliation(

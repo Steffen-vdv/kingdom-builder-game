@@ -10,7 +10,8 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@kingdom-builder/protocol": "workspace:*"
+		"@kingdom-builder/protocol": "workspace:*",
+		"@kingdom-builder/contents-sdk": "workspace:*"
 	},
 	"devDependencies": {
 		"typescript": "5.9.3",

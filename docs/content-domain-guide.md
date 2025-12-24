@@ -41,11 +41,9 @@ packages/contents/src/
 ├── registries/          # Registry exports
 │
 └── infrastructure/      # TECHNICAL CODE - DO NOT ADD GAME DATA HERE
-    ├── builders.ts      # Builder function exports
-    ├── builderShared.ts # Shared constants (Types, Methods)
-    ├── builders/        # Builder implementations
-    ├── helpers/         # Technical helper functions
-    └── resource/        # Resource system infrastructure (builders, types, registry)
+    ├── builders.ts      # Builder function exports (re-exports from @kingdom-builder/contents-sdk)
+    ├── builders/        # Game-specific builder implementations
+    └── resource/        # Resource system infrastructure (re-exports from contents-sdk)
 ```
 
 ---
@@ -68,7 +66,7 @@ These define **game data** using builder patterns:
 2. **Inline all values** - Don't extract into variables (except shared requirements)
 3. **Accept duplication** - Copy-paste is better than abstraction
 4. **No imports from `./infrastructure/` subdirectories** - Only import from
-   `./infrastructure/builders` and `./infrastructure/builderShared`
+   `./infrastructure/builders` (which re-exports from `@kingdom-builder/contents-sdk`)
 
 ### Infrastructure Files (`infrastructure/` directory)
 

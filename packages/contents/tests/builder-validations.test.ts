@@ -1,6 +1,6 @@
 import { action, actionParams, effect, requirement, compareRequirement, passiveParams, attackParams, happinessTier, actionMetaCategory } from '../src/infrastructure/builders';
 import { DEVELOPMENT_ACTION_IDS } from '../src/actions';
-import { Types, PassiveMethods } from '../src/infrastructure/builderShared';
+import { Types, PassiveMethods } from '@kingdom-builder/contents-sdk';
 import { MetaCategory } from '../src/constants';
 import { describe, expect, it } from 'vitest';
 
@@ -125,14 +125,12 @@ describe('content builder safeguards', () => {
 	});
 
 	it('requires actions to specify metaCategory', () => {
-		expect(() => action().id('test').name('Test').build()).toThrowError(
-			'Action is missing metaCategory(). Call metaCategory(MetaCategory.Actions) or metaCategory(MetaCategory.Research) before build().',
-		);
+		expect(() => action().id('test').name('Test').build()).toThrowError('Action is missing metaCategory(). Call metaCategory() before build().');
 	});
 
 	it('blocks duplicate metaCategory calls on actions', () => {
 		const builder = action().metaCategory(MetaCategory.Commands);
-		expect(() => builder.metaCategory(MetaCategory.Research)).toThrowError('Action already has metaCategory(). Remove the extra metaCategory() call.');
+		expect(() => builder.metaCategory(MetaCategory.Research)).toThrowError('Action already has metaCategory(). Remove the extra call.');
 	});
 });
 

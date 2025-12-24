@@ -1,11 +1,8 @@
 import type { EffectConfig, PassiveMetadata } from '@kingdom-builder/protocol';
-import type { ResourceTierTrackMetadata } from './resource';
-import { costModParams, globalTarget, resultModParams, resourceAddEffect, effect } from './builders';
-import { Types, CostModMethods, ResultModMethods, PassiveMethods } from './builderShared';
-import { formatPassiveRemoval } from './text';
-import type { passiveParams } from './builders';
-import { Resource } from '../internal';
-import type { ResourceKey } from '../internal';
+import type { ResourceTierTrackMetadata, passiveParams } from '@kingdom-builder/contents-sdk';
+import { costModParams, globalTarget, resultModParams, effect, Types, CostModMethods, ResultModMethods, PassiveMethods, formatPassiveRemoval } from '@kingdom-builder/contents-sdk';
+import { resourceAddEffect } from '../internal/resourceEffects';
+import { ResourceId } from '../constants';
 
 export type HappinessTierSlug = 'despair' | 'misery' | 'grim' | 'unrest' | 'steady' | 'content' | 'joyful' | 'elated' | 'ecstatic';
 
@@ -24,8 +21,8 @@ export const happinessModifierId = (slug: HappinessTierSlug, kind: HappinessModi
 export const resourceGainModifier = (id: string, percent: number) =>
 	effect(Types.ResultMod, ResultModMethods.ADD).round('up').params(resultModParams().id(id).evaluation(globalTarget()).percent(percent).build()).build();
 
-const GOLD_RESOURCE_KEY: ResourceKey = Resource.gold;
-const GROWTH_RESOURCE_KEY: ResourceKey = Resource.growth;
+const GOLD_RESOURCE_KEY = ResourceId.gold;
+const GROWTH_RESOURCE_KEY = ResourceId.growth;
 
 export const actionDiscountModifier = (id: string) => effect(Types.CostMod, CostModMethods.ADD).round('up').params(costModParams().id(id).resourceId(GOLD_RESOURCE_KEY).percent(-0.2).build()).build();
 

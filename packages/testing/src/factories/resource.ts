@@ -12,6 +12,22 @@ import {
 	type ResourceRegistry,
 } from '@kingdom-builder/contents';
 
+/**
+ * Helper to apply reconciliation mode to a bound value.
+ * For static values (numbers), returns as-is (reconciliation not applicable).
+ * For dynamic references, merges the reconciliation mode into the reference.
+ */
+function applyReconciliationToBound(
+	bound: ResourceBoundValue,
+	reconciliation: ResourceReconciliationMode | undefined,
+): ResourceBoundValue {
+	if (typeof bound === 'number' || reconciliation === undefined) {
+		return bound;
+	}
+	// It's a reference object, merge in the reconciliation
+	return { ...bound, reconciliation };
+}
+
 type ResourceDefinition = ReturnType<ResourceBuilder['build']>;
 type ResourceGroupDefinition = ReturnType<ResourceGroupBuilder['build']>;
 type ResourceTierTrack = Parameters<ResourceBuilder['tierTrack']>[0];
@@ -110,17 +126,36 @@ export function resourceDefinition(
 	const lowerBoundReconciliation = overrides.bounds?.lowerBoundReconciliation;
 	const upperBoundReconciliation = overrides.bounds?.upperBoundReconciliation;
 	if (lowerBound !== undefined) {
-		builder.lowerBound(lowerBound, lowerBoundReconciliation);
+		builder.lowerBound(
+			applyReconciliationToBound(lowerBound, lowerBoundReconciliation),
+		);
 	}
 	if (upperBound !== undefined) {
-		builder.upperBound(upperBound, upperBoundReconciliation);
+		builder.upperBound(
+			applyReconciliationToBound(upperBound, upperBoundReconciliation),
+		);
 	}
 
 	if (overrides.tierTrack) {
 		builder.tierTrack(overrides.tierTrack);
 	}
 
-	return builder.build();
+	const built = builder.build();
+
+	// Apply top-level reconciliation modes for static bounds
+	// The engine reads these for bound-level reconciliation
+	if (lowerBoundReconciliation !== undefined) {
+		(
+			built as { lowerBoundReconciliation?: ResourceReconciliationMode }
+		).lowerBoundReconciliation = lowerBoundReconciliation;
+	}
+	if (upperBoundReconciliation !== undefined) {
+		(
+			built as { upperBoundReconciliation?: ResourceReconciliationMode }
+		).upperBoundReconciliation = upperBoundReconciliation;
+	}
+
+	return built;
 }
 
 export interface ResourceGroupParentOverrides {
