@@ -13,6 +13,7 @@ import {
 	Types,
 	PassiveMethods,
 } from '@kingdom-builder/contents';
+import { SystemRole } from '@kingdom-builder/contents-sdk';
 import type { PhaseConfig, RuleSet } from '@kingdom-builder/protocol';
 import type { ContentFactory } from '@kingdom-builder/testing';
 
@@ -94,10 +95,9 @@ export function createSyntheticSessionManager(
 		icon: '🌱',
 	});
 
-	// Create synthetic system actions for initial setup
+	// Create synthetic system actions for initial setup with systemRole
 	// These give players the initial resources defined in the start config
 	const initialSetupActionId = '__synth_initial_setup__';
-	const initialSetupDevmodeActionId = '__synth_initial_setup_devmode__';
 	const compensationActionId = '__synth_compensation__';
 
 	// Initial setup action gives players starting resources
@@ -106,6 +106,7 @@ export function createSyntheticSessionManager(
 		name: 'Synthetic Initial Setup',
 		metaCategory: 'meta:commands',
 		system: true,
+		systemRole: SystemRole.INITIAL_SETUP,
 		free: true,
 		baseCosts: {},
 		effects: [
@@ -128,50 +129,17 @@ export function createSyntheticSessionManager(
 		],
 	});
 
-	// DevMode setup (same as normal for synthetic tests)
-	factory.actions.add(initialSetupDevmodeActionId, {
-		id: initialSetupDevmodeActionId,
-		name: 'Synthetic Initial Setup (DevMode)',
-		metaCategory: 'meta:commands',
-		system: true,
-		free: true,
-		baseCosts: {},
-		effects: [
-			{
-				type: 'resource',
-				method: 'add',
-				params: {
-					resourceId: costResourceId,
-					change: { type: 'amount', amount: 1 },
-				},
-			},
-			{
-				type: 'resource',
-				method: 'add',
-				params: {
-					resourceId: cpResourceId,
-					change: { type: 'amount', amount: 5 },
-				},
-			},
-		],
-	});
-
-	// Compensation actions (empty for synthetic tests)
+	// Compensation action (empty for synthetic tests)
 	factory.actions.add(compensationActionId, {
 		id: compensationActionId,
 		name: 'Synthetic Compensation',
 		metaCategory: 'meta:commands',
 		system: true,
+		systemRole: SystemRole.COMPENSATION,
 		free: true,
 		baseCosts: {},
 		effects: [],
 	});
-
-	const systemActionIds = {
-		initialSetup: initialSetupActionId,
-		initialSetupDevmode: initialSetupDevmodeActionId,
-		compensation: compensationActionId,
-	};
 	const phases: PhaseConfig[] = [
 		{ id: 'main', action: true, steps: [{ id: 'main' }] },
 		{
@@ -234,7 +202,6 @@ export function createSyntheticSessionManager(
 			groups,
 		},
 		primaryIconId: engineOverrides.primaryIconId ?? defaultPrimaryIconId,
-		systemActionIds,
 	};
 	const manager = new SessionManager({
 		...rest,

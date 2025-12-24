@@ -16,7 +16,7 @@ type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
  */
 export interface SessionRestorerOptions {
 	persistence: SessionPersistence;
-	baseOptions: Omit<EngineSessionOptions, 'devMode' | 'config'>;
+	baseOptions: Omit<EngineSessionOptions, 'config'>;
 }
 
 /**
@@ -34,10 +34,7 @@ export interface RestoredSession {
  */
 export class SessionRestorer {
 	private readonly persistence: SessionPersistence;
-	private readonly baseOptions: Omit<
-		EngineSessionOptions,
-		'devMode' | 'config'
-	>;
+	private readonly baseOptions: Omit<EngineSessionOptions, 'config'>;
 
 	public constructor(options: SessionRestorerOptions) {
 		this.persistence = options.persistence;
@@ -68,7 +65,6 @@ export class SessionRestorer {
 		const { config, playerNames } = persisted.creationOptions;
 		const sessionOptions: EngineSessionOptions = {
 			...this.baseOptions,
-			devMode,
 		};
 		if (config !== undefined) {
 			sessionOptions.config = config;

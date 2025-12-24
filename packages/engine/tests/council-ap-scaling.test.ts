@@ -54,15 +54,8 @@ function getCouncilApGain(): number {
 const COUNCIL_AP_GAIN = getCouncilApGain();
 
 function createRealContentEngine() {
-	// Use the actual content definitions
+	// Use empty registries - no actions have systemRole, so setup is skipped
 	const actions = new Registry<ActionConfig>();
-
-	// No-op system action IDs to skip initial setup
-	const SKIP_SETUP_ACTION_IDS = {
-		initialSetup: '__council_test_noop_initial__',
-		initialSetupDevmode: '__council_test_noop_devmode__',
-		compensation: '__council_test_noop_compensation__',
-	};
 
 	const engine = createEngine({
 		actions,
@@ -74,7 +67,6 @@ function createRealContentEngine() {
 			resources: RESOURCE_REGISTRY,
 			groups: RESOURCE_GROUP_REGISTRY,
 		},
-		systemActionIds: SKIP_SETUP_ACTION_IDS,
 	});
 
 	return engine;

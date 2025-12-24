@@ -65,9 +65,10 @@ export class SessionCreationHandler {
 		}
 		const sessionId = this.generateSessionId();
 		try {
-			const options: CreateSessionOptions = {
-				devMode: data.devMode,
-			};
+			const options: CreateSessionOptions = {};
+			if (data.devMode !== undefined) {
+				options.devMode = data.devMode;
+			}
 			if (data.config !== undefined) {
 				options.config = data.config;
 			}

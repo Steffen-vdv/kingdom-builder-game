@@ -25,13 +25,6 @@ const PHASES: PhaseDef[] = [
 	},
 ];
 
-// No-op system action IDs to skip initial setup
-const SKIP_SETUP_ACTION_IDS = {
-	initialSetup: '__noop_initial_setup__',
-	initialSetupDevmode: '__noop_initial_setup_devmode__',
-	compensation: '__noop_compensation__',
-};
-
 const RULES: RuleSet = {
 	defaultActionAPCost: 1,
 	absorptionCapPct: 1,
@@ -68,7 +61,6 @@ describe('createEngine config overrides', () => {
 			rules: RULES,
 			resourceCatalog,
 			config,
-			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
 		expect(engine.actions).not.toBe(baseContent.actions);
 		expect(() => engine.actions.get(overrideAction.id)).not.toThrow();
@@ -89,7 +81,6 @@ describe('createEngine config overrides', () => {
 			rules: RULES,
 			resourceCatalog,
 			config,
-			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
 		expect(engine.actions).toBe(baseContent.actions);
 	});

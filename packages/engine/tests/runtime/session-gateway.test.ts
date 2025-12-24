@@ -49,7 +49,6 @@ type GatewayOptions = Parameters<typeof createLocalSessionGateway>[1];
 
 interface CreateGatewayOptions {
 	gatewayOptions?: GatewayOptions;
-	devMode?: boolean;
 }
 
 function createGateway(options?: CreateGatewayOptions) {
@@ -89,7 +88,6 @@ function createGateway(options?: CreateGatewayOptions) {
 		phases: REAL_PHASES,
 		rules: REAL_RULES,
 		resourceCatalog: BASE_RESOURCE_CATALOG,
-		devMode: options?.devMode,
 	});
 	return {
 		gateway: createLocalSessionGateway(session, options?.gatewayOptions),
@@ -102,14 +100,11 @@ function createGateway(options?: CreateGatewayOptions) {
 
 describe('createLocalSessionGateway', () => {
 	it('creates sessions without leaking snapshots', async () => {
-		// Pass devMode during engine creation so devMode setup runs
-		const { gateway } = createGateway({ devMode: true });
+		const { gateway } = createGateway();
 		const created = await gateway.createSession({
-			devMode: true,
 			playerNames: { A: 'Hero' },
 		});
 		expect(created.sessionId).toBe('local-session');
-		expect(created.snapshot.game.devMode).toBe(true);
 		expect(created.snapshot.game.players[0]?.name).toBe('Hero');
 		expect(created.registries.actionCategories).toEqual({});
 		expect(created.registries.resources).toEqual({});
@@ -126,8 +121,8 @@ describe('createLocalSessionGateway', () => {
 			sessionId: created.sessionId,
 		});
 		expect(fetched.snapshot.game.players[0]?.name).toBe('Hero');
-		// Initial gold from devMode setup (100)
-		expect(fetched.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(100);
+		// Initial gold from base content package (10)
+		expect(fetched.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(10);
 		expect(fetched.registries.actionCategories).toEqual({});
 	});
 

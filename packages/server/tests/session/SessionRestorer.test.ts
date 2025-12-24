@@ -15,11 +15,16 @@ import {
 	resourceDefinition,
 } from '@kingdom-builder/testing';
 import type { PhaseConfig, RuleSet } from '@kingdom-builder/protocol';
+import { SystemRole } from '@kingdom-builder/contents-sdk';
 
 function createTestSetup() {
-	const factory = createContentFactory();
+	// Use isolated mode to avoid inheriting real actions that reference
+	// resources not in our synthetic catalog
+	const factory = createContentFactory({ isolated: true });
 	const costResourceId = 'resource:synthetic:cost';
 	const gainResourceId = 'resource:synthetic:gain';
+	// Real actionMetaCategories bind actions to command-points
+	const commandPointsId = 'resource:core:command-points';
 
 	const { resources, groups } = createResourceRegistries({
 		resources: [
@@ -31,6 +36,11 @@ function createTestSetup() {
 			resourceDefinition({
 				id: gainResourceId,
 				metadata: { label: 'Gain', icon: '⭐' },
+				bounds: { lowerBound: 0 },
+			}),
+			resourceDefinition({
+				id: commandPointsId,
+				metadata: { label: 'Command Points', icon: '⚡' },
 				bounds: { lowerBound: 0 },
 			}),
 		],
@@ -50,9 +60,8 @@ function createTestSetup() {
 		],
 	});
 
-	// Create synthetic system actions
+	// Create synthetic system actions with systemRole for engine discovery
 	const initialSetupActionId = '__synth_initial_setup__';
-	const initialSetupDevmodeActionId = '__synth_initial_setup_devmode__';
 	const compensationActionId = '__synth_compensation__';
 
 	factory.actions.add(initialSetupActionId, {
@@ -60,6 +69,7 @@ function createTestSetup() {
 		name: 'Synthetic Initial Setup',
 		metaCategory: 'meta:commands',
 		system: true,
+		systemRole: SystemRole.INITIAL_SETUP,
 		free: true,
 		baseCosts: {},
 		effects: [
@@ -71,22 +81,11 @@ function createTestSetup() {
 					change: { type: 'amount', amount: 10 },
 				},
 			},
-		],
-	});
-
-	factory.actions.add(initialSetupDevmodeActionId, {
-		id: initialSetupDevmodeActionId,
-		name: 'Synthetic Initial Setup (DevMode)',
-		metaCategory: 'meta:commands',
-		system: true,
-		free: true,
-		baseCosts: {},
-		effects: [
 			{
 				type: 'resource',
 				method: 'add',
 				params: {
-					resourceId: costResourceId,
+					resourceId: commandPointsId,
 					change: { type: 'amount', amount: 10 },
 				},
 			},
@@ -98,6 +97,7 @@ function createTestSetup() {
 		name: 'Synthetic Compensation',
 		metaCategory: 'meta:commands',
 		system: true,
+		systemRole: SystemRole.COMPENSATION,
 		free: true,
 		baseCosts: {},
 		effects: [],
@@ -139,16 +139,12 @@ function createTestSetup() {
 
 	const baseOptions = {
 		actions: factory.actions,
+		actionMetaCategories: factory.actionMetaCategories,
 		buildings: factory.buildings,
 		developments: factory.developments,
 		phases,
 		rules,
 		resourceCatalog: { resources, groups },
-		systemActionIds: {
-			initialSetup: initialSetupActionId,
-			initialSetupDevmode: initialSetupDevmodeActionId,
-			compensation: compensationActionId,
-		},
 	};
 
 	return {

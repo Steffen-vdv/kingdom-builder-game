@@ -63,12 +63,10 @@ describe('createEngine configuration overrides', () => {
 				buildings: [],
 				developments: [],
 			},
-			devMode: true,
 		});
 		expect(engine.actions.has(baseActionId)).toBe(true);
-		expect(engine.game.devMode).toBe(true);
-		// In dev mode, player should have 100 gold from system action
+		// Starting resources come from content package (base = 10 gold)
 		const [playerA] = engine.game.players;
-		expect(playerA.resourceValues[Resource.gold]).toBe(100);
+		expect(playerA.resourceValues[Resource.gold]).toBe(10);
 	});
 });

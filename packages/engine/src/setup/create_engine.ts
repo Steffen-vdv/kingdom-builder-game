@@ -35,10 +35,10 @@ import {
 	initializePlayerActions,
 } from './player_setup';
 import { snapshotPlayer, type ActionTrace } from '../log';
-
-// Import and re-export SystemActionIds from contents (single source of truth)
-import type { SystemActionIds } from '@kingdom-builder/contents';
-export type { SystemActionIds };
+import {
+	SystemRole,
+	type SystemRoleValue,
+} from '@kingdom-builder/contents-sdk';
 
 export interface EngineCreationOptions {
 	actions: Registry<ActionDef>;
@@ -48,9 +48,7 @@ export interface EngineCreationOptions {
 	phases: PhaseConfig[];
 	rules: RuleSet;
 	config?: GameConfig;
-	devMode?: boolean;
 	resourceCatalog?: RuntimeResourceContent;
-	systemActionIds?: SystemActionIds;
 }
 
 type ValidatedConfig = ReturnType<typeof validateGameConfig>;
@@ -235,12 +233,22 @@ function runSystemActionEffects(
 	return { id: actionId, before, after };
 }
 
-// Default system action IDs from @kingdom-builder/contents
-const DEFAULT_SYSTEM_ACTION_IDS = {
-	initialSetup: 'initial_setup',
-	initialSetupDevmode: 'initial_setup_devmode',
-	compensation: 'compensation',
-};
+/**
+ * Finds a system action by its role.
+ * System actions declare their role via .system(SystemRole.XXX) in the builder.
+ * Returns undefined if no action with the specified role is found.
+ */
+function findSystemAction(
+	actions: Registry<ActionDef>,
+	role: SystemRoleValue,
+): ActionDef | undefined {
+	for (const [, action] of actions.entries()) {
+		if (action.systemRole === role) {
+			return action;
+		}
+	}
+	return undefined;
+}
 
 export function createEngine({
 	actions,
@@ -250,9 +258,7 @@ export function createEngine({
 	phases,
 	rules,
 	config,
-	devMode = false,
 	resourceCatalog,
-	systemActionIds = DEFAULT_SYSTEM_ACTION_IDS,
 }: EngineCreationOptions) {
 	registerCoreEffects();
 	registerCoreEvaluators();
@@ -319,33 +325,45 @@ export function createEngine({
 	aiSystem.register(playerTwo.id, createTaxCollectorController(playerTwo.id));
 	engineContext.aiSystem = aiSystem;
 
-	// Select the appropriate initial setup action based on mode
-	const setupActionId = devMode
-		? systemActionIds.initialSetupDevmode
-		: systemActionIds.initialSetup;
+	// Find system actions by role (content package determines what actions exist)
+	const initialSetupAction = findSystemAction(
+		actions,
+		SystemRole.INITIAL_SETUP,
+	);
+	const compensationAction = findSystemAction(actions, SystemRole.COMPENSATION);
 
-	// Run initial setup for player 1 and capture trace
-	engineContext.game.currentPlayerIndex = 0;
-	const setupTraceA = runSystemActionEffects(setupActionId, engineContext);
-	if (setupTraceA) {
-		engineContext.initialSetupTraces.A.push(setupTraceA);
-	}
+	// Run initial setup for player 1 and capture trace (if action exists)
+	if (initialSetupAction) {
+		engineContext.game.currentPlayerIndex = 0;
+		const setupTraceA = runSystemActionEffects(
+			initialSetupAction.id,
+			engineContext,
+		);
+		if (setupTraceA) {
+			engineContext.initialSetupTraces.A.push(setupTraceA);
+		}
 
-	// Run initial setup for player 2 and capture trace
-	engineContext.game.currentPlayerIndex = 1;
-	const setupTraceB = runSystemActionEffects(setupActionId, engineContext);
-	if (setupTraceB) {
-		engineContext.initialSetupTraces.B.push(setupTraceB);
+		// Run initial setup for player 2 and capture trace
+		engineContext.game.currentPlayerIndex = 1;
+		const setupTraceB = runSystemActionEffects(
+			initialSetupAction.id,
+			engineContext,
+		);
+		if (setupTraceB) {
+			engineContext.initialSetupTraces.B.push(setupTraceB);
+		}
 	}
 
 	// Run compensation for player 2 (last player gets extra resources)
 	// Compensation trace is also stored for logging
-	const compensationTrace = runSystemActionEffects(
-		systemActionIds.compensation,
-		engineContext,
-	);
-	if (compensationTrace) {
-		engineContext.initialSetupTraces.B.push(compensationTrace);
+	if (compensationAction) {
+		const compensationTrace = runSystemActionEffects(
+			compensationAction.id,
+			engineContext,
+		);
+		if (compensationTrace) {
+			engineContext.initialSetupTraces.B.push(compensationTrace);
+		}
 	}
 
 	// Initialize player actions (unlocks non-system actions for players)
@@ -356,7 +374,6 @@ export function createEngine({
 	engineContext.game.currentPlayerIndex = 0;
 	engineContext.game.currentPhase = phases[0]?.id || '';
 	engineContext.game.currentStep = phases[0]?.steps[0]?.id || '';
-	engineContext.game.devMode = devMode;
 
 	// Initialize tier-based passives (e.g., happiness tiers)
 	services.initializeTierPassives(engineContext);
@@ -364,4 +381,5 @@ export function createEngine({
 	return engineContext;
 }
 
-export type { RuleSet, ResourceKey, PopulationRoleId };
+export { findSystemAction, SystemRole };
+export type { RuleSet, ResourceKey, PopulationRoleId, SystemRoleValue };

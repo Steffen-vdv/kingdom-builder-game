@@ -46,7 +46,7 @@ export interface SessionManagerOptions {
 }
 
 export interface CreateSessionOptions {
-	devMode?: EngineSessionOptions['devMode'];
+	devMode?: boolean;
 	config?: EngineSessionOptions['config'];
 }
 
@@ -113,7 +113,6 @@ export class SessionManager {
 			this.baseOptions;
 		const sessionOptions: EngineSessionOptions = {
 			...engineBaseOptions,
-			devMode,
 		};
 		if (config !== undefined) {
 			sessionOptions.config = config;
