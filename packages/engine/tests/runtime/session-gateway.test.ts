@@ -56,6 +56,7 @@ function createGateway(options?: CreateGatewayOptions) {
 	// (the meta-category binding resource) instead of gold from real actions
 	const content = createContentFactory({ isolated: true });
 	const gainGold = content.action({
+		free: false,
 		effects: [
 			{
 				type: 'resource',

@@ -15,7 +15,7 @@ describe('action cost helpers', () => {
 		// Use isolated mode to get empty registries, ensuring actionCostResource
 		// falls back to the meta-category binding resource (command-points)
 		const content = createContentFactory({ isolated: true });
-		const standardAction = content.action({ baseCosts: {} });
+		const standardAction = content.action({ baseCosts: {}, free: false });
 		const systemAction = content.action({ baseCosts: {}, system: true });
 		const engineContext = createTestEngine({ actions: content.actions });
 		const cpKey = engineContext.actionCostResource;
