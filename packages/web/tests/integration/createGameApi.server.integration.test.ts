@@ -102,7 +102,7 @@ describe.skipIf(!runIntegration)(
 			const humanPlayer =
 				players.find((player) => !player.aiControlled) ?? players[0];
 			const resolvedHuman = expectPlayer(humanPlayer);
-			const session = manager.getSession(sessionId);
+			const session = await manager.getSession(sessionId);
 			expect(session).toBeDefined();
 			if (!session) {
 				throw new Error('Session was not created.');
