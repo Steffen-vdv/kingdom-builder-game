@@ -130,7 +130,6 @@ export function createContentFactory(
 			system: definition.system,
 			locked: definition.locked,
 			oneTime: definition.oneTime,
-			free: definition.free,
 			// metaCategory is required by the action registry schema
 			metaCategory: MetaCategory.Commands,
 			// In isolated mode, actions are free by default to avoid CP
