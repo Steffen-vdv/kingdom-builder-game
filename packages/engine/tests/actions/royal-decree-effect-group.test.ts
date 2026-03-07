@@ -94,6 +94,14 @@ describe('royal decree action effect group', () => {
 		}
 		const developmentId = effectDevelopmentId;
 
+		// Effect groups are in tier 2; upgrade before performing
+		engineContext.activePlayer.actionStates[actionId] = {
+			locked: false,
+			poolLocked: false,
+			currentTier: 2,
+			exhausted: false,
+		};
+
 		const nextLandId = `${engineContext.activePlayer.id}-L${engineContext.activePlayer.lands.length + 1}`;
 		const params = {
 			landId: nextLandId,
@@ -133,8 +141,10 @@ describe('royal decree action effect group', () => {
 		).length;
 		expect(tilledAfter).toBe(tilledBefore + 1);
 
+		const currentTierEffects =
+			engineContext.actions.get(actionId).tiers['2']?.effects ?? [];
 		const traceIds = traces.map((trace) => trace.id);
-		const expectedNested = allRoyalDecreeEffects.flatMap((effect) => {
+		const expectedNested = currentTierEffects.flatMap((effect) => {
 			if (!isEffectGroup(effect)) {
 				if (effect.type === 'action' && effect.method === 'perform') {
 					const nestedId = (effect.params as { id?: string } | undefined)?.id;
@@ -166,10 +176,7 @@ describe('royal decree action effect group', () => {
 					0;
 			}
 		}
-		const mainActionEffects = getAllEffectsFromAction(
-			engineContext.actions.get(actionId),
-		);
-		const happinessPenalty = mainActionEffects
+		const happinessPenalty = currentTierEffects
 			.filter(
 				(effect) => effect.type === 'resource' && effect.method === 'remove',
 			)
@@ -192,6 +199,7 @@ describe('royal decree action effect group', () => {
 		const resolved = resolveActionEffects(
 			engineContext.actions.get(actionId),
 			params,
+			2,
 		);
 		const performEffects = resolved.effects.filter(
 			(effect): effect is EffectDef =>
