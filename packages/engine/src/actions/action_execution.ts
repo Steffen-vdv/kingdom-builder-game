@@ -78,6 +78,39 @@ function getCurrentTier(
 	return getStartingTier(actionDefinition);
 }
 
+/**
+ * Tracks binding resource spent for pooled meta-categories.
+ * This drives tier progression curves in the pool fill algorithm.
+ */
+function trackMetaCategoryBindingSpent(
+	actionDefinition: { metaCategory?: string },
+	finalCosts: Record<string, number | undefined>,
+	engineContext: EngineContext,
+): void {
+	const metaCategoryId = actionDefinition.metaCategory;
+	if (!metaCategoryId) {
+		return;
+	}
+	const metaCategories = engineContext.actionMetaCategories;
+	if (!metaCategories?.has(metaCategoryId)) {
+		return;
+	}
+	const metaCategory = metaCategories.get(metaCategoryId);
+	// Only track for pooled meta-categories
+	if (!metaCategory.pool) {
+		return;
+	}
+	const bindingResourceId = metaCategory.bindingResourceId;
+	const bindingAmount = finalCosts[bindingResourceId] ?? 0;
+	if (bindingAmount <= 0) {
+		return;
+	}
+	const player = engineContext.activePlayer;
+	const currentSpent = player.metaCategoryBindingSpent[metaCategoryId] ?? 0;
+	player.metaCategoryBindingSpent[metaCategoryId] =
+		currentSpent + bindingAmount;
+}
+
 function evaluateRequirements(
 	actionId: string,
 	engineContext: EngineContext,
@@ -172,6 +205,7 @@ function executeAction<T extends string>(
 		throw new Error(affordability);
 	}
 	deductCostsFromPlayer(finalCosts, engineContext.activePlayer, engineContext);
+	trackMetaCategoryBindingSpent(actionDefinition, finalCosts, engineContext);
 	const passiveManager = engineContext.passives;
 	withResourceSourceFrames(
 		engineContext,
