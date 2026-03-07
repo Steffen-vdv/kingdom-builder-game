@@ -9,7 +9,7 @@ export default mergeConfig(
 			root: path.resolve(__dirname, 'packages/engine'),
 			include: ['tests/**/*.test.ts'],
 			setupFiles: [],
-			pool: 'forks',
+			pool: 'threads',
 			coverage: {
 				thresholds: {
 					statements: 80,

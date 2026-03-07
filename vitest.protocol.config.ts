@@ -8,7 +8,7 @@ export default mergeConfig(
 		test: {
 			root: path.resolve(__dirname, 'packages/protocol'),
 			include: ['tests/**/*.test.ts'],
-			pool: 'forks',
+			pool: 'threads',
 			coverage: {
 				thresholds: {
 					statements: 70,
