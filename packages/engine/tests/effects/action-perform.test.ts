@@ -105,7 +105,14 @@ describe('action:perform effect', () => {
 				[group.id]: { optionId: option.id },
 			},
 		} as const;
-		const resolved = resolveActionEffects(royalDecree, params);
+		// Effect groups are in tier 2; upgrade before resolving
+		engineContext.activePlayer.actionStates[royalDecreeId] = {
+			locked: false,
+			poolLocked: false,
+			currentTier: 2,
+			exhausted: false,
+		};
+		const resolved = resolveActionEffects(royalDecree, params, 2);
 		const toActionId = (effect: EffectDef) => {
 			const actionParams = effect.params as
 				| {
