@@ -89,8 +89,20 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 		return this;
 	}
 
-	system(flag = true) {
-		this.config.system = flag;
+	/**
+	 * Marks this action as a system action, optionally with a specific role.
+	 * System actions are run by the engine at specific moments (e.g., game start).
+	 *
+	 * @param role Optional system role (e.g., 'initial-setup', 'compensation').
+	 *             If true/undefined, marks as system without a specific role.
+	 */
+	system(role?: string | boolean) {
+		if (typeof role === 'string') {
+			this.config.system = true;
+			this.config.systemRole = role;
+		} else {
+			this.config.system = role ?? true;
+		}
 		return this;
 	}
 

@@ -1,9 +1,5 @@
 import type { ActionEffect, EffectConfig, RequirementConfig } from '@kingdom-builder/protocol';
-import {
-	ActionEffectGroupBuilder,
-	RequirementBuilder,
-	type ActionEffectGroupDef,
-} from '@kingdom-builder/contents-sdk';
+import { ActionEffectGroupBuilder, RequirementBuilder, type ActionEffectGroupDef } from '@kingdom-builder/contents-sdk';
 import type { ResourceKey } from '../../../internal';
 
 /**

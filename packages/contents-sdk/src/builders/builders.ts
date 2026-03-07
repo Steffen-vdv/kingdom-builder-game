@@ -62,6 +62,15 @@ export {
 	developmentParams,
 	landParams,
 	passiveParams,
+	actionPoolParams,
+	actionUpgradeParams,
+	PassiveEffectParamsBuilder,
+	resolveEffectConfig,
+} from './builders/effectParams';
+
+export type {
+	ActionPoolEffectParams,
+	ActionUpgradeEffectParams,
 } from './builders/effectParams';
 
 export {

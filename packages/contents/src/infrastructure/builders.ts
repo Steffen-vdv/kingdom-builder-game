@@ -92,12 +92,7 @@ export type {
 export { ActionBuilder, ActionTierBuilder, actionTier, type ActionTierConfig } from './builders/domain';
 
 // Game-specific: ActionMetaCategoryBuilder (Kingdom Builder only)
-export {
-	ActionMetaCategoryBuilder,
-	type ActionMetaCategoryConfig,
-	type ActionMetaCategoryCostModel,
-	type ActionMetaCategoryVisibilityTrigger,
-} from './builders/domain';
+export { ActionMetaCategoryBuilder, type ActionMetaCategoryConfig, type ActionMetaCategoryCostModel, type ActionMetaCategoryVisibilityTrigger } from './builders/domain';
 
 // Game-specific: Pool builders for research system
 export {
@@ -114,12 +109,7 @@ export {
 } from './builders/pool';
 
 // Game-specific: Effect params for action pool/upgrade
-export {
-	actionPoolParams,
-	actionUpgradeParams,
-	type ActionPoolEffectParams,
-	type ActionUpgradeEffectParams,
-} from './builders/effectParams';
+export { actionPoolParams, actionUpgradeParams, type ActionPoolEffectParams, type ActionUpgradeEffectParams } from './builders/effectParams';
 
 // Game-specific: resourceAddEffect uses internal resource constants
 export { resourceAddEffect } from '../internal/resourceEffects';
