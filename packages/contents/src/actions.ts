@@ -50,6 +50,7 @@ import {
 	resourceTransferPercent,
 } from '@kingdom-builder/contents-sdk';
 import { Focus } from './infrastructure/defs';
+import { PhaseId } from './phaseTypes';
 import {
 	ActionId as ActionIdValues,
 	BasicActionId as BasicActionIdValues,
@@ -282,25 +283,14 @@ export function createActionRegistry() {
 			.metaCategory(MetaCategory.Commands)
 			.name('Hold Festival')
 			.icon('🎉')
+			.locked()
 			.tier(1, (t) =>
 				t
-					.cost(Resource.gold, 3)
-					.requirement(compareRequirement().left(resourceEvaluator().resourceId(Resource.warWeariness)).operator('eq').right(0).build())
+					.cost(Resource.gold, 5)
 					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.happiness, 3)).build())
-					.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceChange(Resource.fortificationStrength).amount(3).reconciliation().build()).build())
 					.effect(
 						effect(Types.Passive, PassiveMethods.ADD)
-							.params(passiveParams().id('hold_festival_penalty').name('Festival Hangover').icon('🤮').removeOnUpkeepStep())
-							.effect(
-								effect(Types.ResultMod, ResultModMethods.ADD)
-									.params(resultModParams().id('hold_festival_attack_happiness_penalty').actionId(BasicActionIdValues.raid))
-									.effect(
-										effect(Types.Resource, ResourceMethods.REMOVE)
-											.params(resourceAmountChange(Resource.happiness, 3, { reconciliation: true }))
-											.build(),
-									)
-									.build(),
-							)
+							.params(passiveParams().id('hold_festival_skip_growth').name('Festival Aftermath').icon('😴').skipPhase(PhaseId.Growth).removeOnUpkeepStep())
 							.build(),
 					),
 			)
@@ -1100,6 +1090,19 @@ export function createActionRegistry() {
 					.cost(Resource.gold, 12)
 					.effect(effect(Types.CostMod, CostModMethods.ADD).params(costModParams().id('tax_reform_t3').actionId(BasicActionIdValues.tax).resourceId(Resource.gold).amount(-2)).build()),
 			)
+			.focus(Focus.Economy)
+			.build(),
+	);
+
+	registry.add(
+		ResearchId.festivities,
+		action()
+			.id(ResearchId.festivities)
+			.metaCategory(MetaCategory.Research)
+			.name('Festivities')
+			.icon('🎊')
+			.oneTime()
+			.tier(1, (t) => t.cost(Resource.research, 6).effect(effect(Types.Action, ActionMethods.ADD).params(actionParams().id(BasicActionIdValues.hold_festival)).build()))
 			.focus(Focus.Economy)
 			.build(),
 	);

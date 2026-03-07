@@ -24,6 +24,7 @@ export const ResearchTier1Id = {
 	crop_rotation: 'research:crop_rotation',
 	basic_fortification: 'research:basic_fortification',
 	tax_reform: 'research:tax_reform',
+	festivities: 'research:festivities',
 } as const;
 
 export type ResearchTier1Id = ValueOf<typeof ResearchTier1Id>;
@@ -83,6 +84,7 @@ export const RESEARCH_TIER_1_IDS: readonly ResearchTier1Id[] = [
 	ResearchTier1Id.crop_rotation,
 	ResearchTier1Id.basic_fortification,
 	ResearchTier1Id.tax_reform,
+	ResearchTier1Id.festivities,
 ];
 
 export const RESEARCH_TIER_2_IDS: readonly ResearchTier2Id[] = [
