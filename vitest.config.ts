@@ -25,6 +25,7 @@ export default defineConfig({
 		},
 	},
 	test: {
+		pool: 'threads',
 		include: ['**/*.test.ts', '**/*.test.tsx'],
 		exclude: ['**/node_modules/**'],
 		setupFiles: [
