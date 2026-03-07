@@ -181,7 +181,9 @@ export const getSyntheticFestivalDetails = (
 		resources,
 	} = scenario;
 	const festival = registries.actions.get(festivalActionId);
-	const happinessEff = festival.effects.find(
+	// With tier migration, effects are in tiers['1'].effects
+	const festivalEffects = festival.tiers?.['1']?.effects ?? [];
+	const happinessEff = festivalEffects.find(
 		(e: EffectDef) => e.type === 'resource',
 	) as EffectDef<{
 		resourceId: string;
@@ -195,7 +197,7 @@ export const getSyntheticFestivalDetails = (
 			label: happinessKey,
 		};
 	const happinessAmt = Number(happinessEff.params.change.amount);
-	const fortEff = festival.effects.find(
+	const fortEff = festivalEffects.find(
 		(e: EffectDef) =>
 			e.type === 'resource' &&
 			(e.params as { resourceId?: string }).resourceId ===
@@ -210,7 +212,7 @@ export const getSyntheticFestivalDetails = (
 		fortEff.method === 'remove'
 			? -Number(fortEff.params.change.amount)
 			: Number(fortEff.params.change.amount);
-	const passive = festival.effects.find(
+	const passive = festivalEffects.find(
 		(e: EffectDef) => e.type === 'passive',
 	) as EffectDef;
 	const passiveMeta = passive.params as

@@ -3,6 +3,8 @@ export type { ActionCategoryId as ActionCategoryIdValue } from './actionCategori
 export { ACTION_META_CATEGORIES, createActionMetaCategoryRegistry, MetaCategory } from './actionMetaCategories';
 export type { MetaCategoryValue } from './actionMetaCategories';
 export { ACTIONS, createActionRegistry, ActionId, ACTION_INFO } from './actions';
+export { ResearchId, ResearchTier1Id, ResearchTier2Id, ResearchTier3Id, RESEARCH_TIER_1_IDS, RESEARCH_TIER_2_IDS, RESEARCH_TIER_3_IDS, ALL_RESEARCH_IDS } from './researchIds';
+export type { ResearchId as ResearchIdType } from './researchIds';
 export { BUILDINGS, createBuildingRegistry, BuildingId, BUILDING_INFO } from './buildings';
 export { DEVELOPMENTS, createDevelopmentRegistry, DEVELOPMENT_INFO } from './developments';
 export { PHASES, PhaseId, PhaseStepId } from './phases';

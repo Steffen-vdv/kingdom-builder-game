@@ -246,6 +246,7 @@ export function createPhaseTestEnvironment() {
 	// Actions from content factory don't have systemRole, so setup is skipped
 	const engineContext = createEngine({
 		actions: content.actions,
+		actionMetaCategories: content.actionMetaCategories,
 		buildings: content.buildings,
 		developments: content.developments,
 		phases,

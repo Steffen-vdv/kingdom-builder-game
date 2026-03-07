@@ -142,7 +142,7 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 		id: 'action:synthetic:expand',
 		name: 'Expand Fields',
 		icon: '🌾',
-		locked: true,
+		free: true, // Skip global AP cost for tests
 		baseCosts: {
 			[SYNTHETIC_RESOURCE_KEYS.gold]: 2,
 		},
@@ -162,7 +162,7 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 		id: 'action:synthetic:till',
 		name: 'Till Soil',
 		icon: '🧑\u200d🌾',
-		locked: true,
+		free: true, // Skip global AP cost for tests
 		effects: [{ type: 'land', method: 'till' }],
 	});
 	const plowPassiveParams = {
@@ -175,7 +175,7 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 		id: 'action:synthetic:plow',
 		name: 'Plow Furrows',
 		icon: '🚜',
-		locked: true,
+		free: true, // Skip global AP cost for tests
 		baseCosts: {
 			[SYNTHETIC_RESOURCE_KEYS.gold]: 6,
 		},

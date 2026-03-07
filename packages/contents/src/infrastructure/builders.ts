@@ -2,13 +2,12 @@
  * Infrastructure builders for Kingdom Builder content.
  *
  * Re-exports from @kingdom-builder/contents-sdk (canonical source),
- * plus game-specific extensions like ActionMetaCategoryBuilder.
+ * plus game-specific extensions like ActionMetaCategoryBuilder and pool builders.
  */
 
 // Re-export everything from contents-sdk
 export {
-	// Domain builders
-	ActionBuilder,
+	// Domain builders (base versions)
 	ActionCategoryBuilder,
 	BaseBuilder,
 	BuildingBuilder,
@@ -67,7 +66,7 @@ export {
 	compareRequirement,
 	requirementEvaluatorCompare,
 	winCondition,
-	action,
+	action as sdkAction,
 	actionCategory,
 	building,
 	development,
@@ -89,14 +88,39 @@ export type {
 	WinConditionDef,
 } from '@kingdom-builder/contents-sdk';
 
+// Game-specific: ActionBuilder with tier support (overrides SDK version)
+export { ActionBuilder, ActionTierBuilder, actionTier, type ActionTierConfig } from './builders/domain';
+
 // Game-specific: ActionMetaCategoryBuilder (Kingdom Builder only)
 export { ActionMetaCategoryBuilder, type ActionMetaCategoryConfig, type ActionMetaCategoryCostModel, type ActionMetaCategoryVisibilityTrigger } from './builders/domain';
+
+// Game-specific: Pool builders for research system
+export {
+	pool,
+	PoolBuilder,
+	tierProgressionCurve,
+	TierProgressionCurveBuilder,
+	tierWeights,
+	TierWeightsBuilder,
+	type PoolConfig,
+	type TierProgressionCurveConfig,
+	type TierProgressionThreshold,
+	type TierWeightsConfig,
+} from './builders/pool';
+
+// Game-specific: Effect params for action pool/upgrade
+export { actionPoolParams, actionUpgradeParams, type ActionPoolEffectParams, type ActionUpgradeEffectParams } from './builders/effectParams';
 
 // Game-specific: resourceAddEffect uses internal resource constants
 export { resourceAddEffect } from '../internal/resourceEffects';
 
-// Factory function for game-specific ActionMetaCategoryBuilder
-import { ActionMetaCategoryBuilder } from './builders/domain';
+// Factory functions for game-specific builders
+import { ActionBuilder, ActionMetaCategoryBuilder } from './builders/domain';
+
+export function action() {
+	return new ActionBuilder();
+}
+
 export function actionMetaCategory() {
 	return new ActionMetaCategoryBuilder();
 }

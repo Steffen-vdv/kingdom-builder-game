@@ -215,7 +215,6 @@ export function buildAttackEffect(
 export const ACTION_DEFS: Record<string, ActionDefinition> = {
 	attack: {
 		meta: SYNTH_ATTACK,
-		locked: true,
 		attack: {
 			target: { resource: SYNTH_RESOURCE_IDS.castleHP },
 			attacker: [{ kind: 'action', id: SYNTH_PLUNDER.id }],
@@ -230,7 +229,6 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 	},
 	buildingAttack: {
 		meta: SYNTH_BUILDING_ATTACK,
-		locked: true,
 		attack: {
 			target: { building: SYNTH_BUILDING.id },
 			attacker: [
@@ -245,7 +243,6 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 	},
 	plunder: {
 		meta: SYNTH_PLUNDER,
-		locked: true,
 		extra: [
 			{
 				kind: 'resource',
@@ -263,7 +260,6 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 	},
 	partial: {
 		meta: SYNTH_PARTIAL_ATTACK,
-		locked: true,
 		attack: {
 			target: { resource: SYNTH_RESOURCE_IDS.castleHP },
 			combatResources: ['power'],

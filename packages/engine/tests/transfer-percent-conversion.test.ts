@@ -13,9 +13,21 @@ import {
 	Resource,
 	ActionId,
 } from '@kingdom-builder/contents';
+import type { EffectConfig } from '@kingdom-builder/protocol';
 
 // Use ActionId constant instead of hardcoding
 const PLUNDER_ACTION_ID = ActionId.plunder;
+
+// Helper to get all effects from an action's tiers
+function getAllEffectsFromAction(action: {
+	tiers: Record<string, { effects: EffectConfig[] }>;
+}): EffectConfig[] {
+	const effects: EffectConfig[] = [];
+	for (const tier of Object.values(action.tiers)) {
+		effects.push(...tier.effects);
+	}
+	return effects;
+}
 
 describe('transfer percent conversion bug', () => {
 	it('Plunder action should use decimal modifiers, not whole percentages', () => {
@@ -24,17 +36,16 @@ describe('transfer percent conversion bug', () => {
 		const plunderAction = actionRegistry.get(PLUNDER_ACTION_ID);
 		expect(plunderAction).toBeDefined();
 
-		console.log(
-			'Plunder action effects:',
-			JSON.stringify(plunderAction!.effects, null, 2),
-		);
+		const allEffects = getAllEffectsFromAction(plunderAction!);
+		console.log('Plunder action effects:', JSON.stringify(allEffects, null, 2));
 
 		// Find the gold transfer effect (25% transfer)
-		const goldTransferEffect = plunderAction!.effects?.find(
+		const goldTransferEffect = allEffects.find(
 			(effect) =>
 				effect.type === 'resource' &&
 				effect.method === 'transfer' &&
-				effect.params?.donor?.resourceId === Resource.gold,
+				(effect.params as { donor?: { resourceId?: string } })?.donor
+					?.resourceId === Resource.gold,
 		);
 
 		expect(goldTransferEffect).toBeDefined();
@@ -44,16 +55,20 @@ describe('transfer percent conversion bug', () => {
 		);
 
 		// Check the donor modifiers
-		const donorChange = goldTransferEffect!.params?.donor?.change;
+		const params = goldTransferEffect!.params as {
+			donor?: { change?: { type?: string; modifiers?: number[] } };
+			recipient?: { change?: { type?: string; modifiers?: number[] } };
+		};
+		const donorChange = params?.donor?.change;
 		if (donorChange?.type === 'percent') {
-			const modifiers = donorChange.modifiers;
+			const modifiers = donorChange.modifiers ?? [];
 			console.log('Donor modifiers:', modifiers);
 
 			// BUG CHECK: If modifiers[0] is -25 instead of -0.25, that's the bug!
 			const modifier = modifiers[0];
-			if (Math.abs(modifier) > 1) {
+			if (Math.abs(modifier ?? 0) > 1) {
 				console.error(
-					`BUG DETECTED: changePercent stores whole percentage (${modifier}) instead of decimal (${modifier / 100})`,
+					`BUG DETECTED: changePercent stores whole percentage (${modifier}) instead of decimal (${(modifier ?? 0) / 100})`,
 				);
 				console.error('This causes 100x too much gold to be transferred!');
 			}
@@ -64,9 +79,9 @@ describe('transfer percent conversion bug', () => {
 		}
 
 		// Check the recipient modifiers
-		const recipientChange = goldTransferEffect!.params?.recipient?.change;
+		const recipientChange = params?.recipient?.change;
 		if (recipientChange?.type === 'percent') {
-			const modifiers = recipientChange.modifiers;
+			const modifiers = recipientChange.modifiers ?? [];
 			console.log('Recipient modifiers:', modifiers);
 
 			// Expected: 0.25 for 25% addition

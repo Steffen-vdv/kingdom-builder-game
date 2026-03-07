@@ -5,12 +5,19 @@ import type {
 	SessionSnapshot,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
+import type {
+	Registry,
+	ActionMetaCategoryConfig,
+} from '@kingdom-builder/protocol';
+import { createContentFactory } from '@kingdom-builder/testing';
 import {
 	createSessionRegistries,
 	createResourceCatalogContent,
 } from './sessionRegistries';
 import { createEmptySnapshotMetadata } from './sessionFixtures';
 import { buildResourceMetadata } from './testResourceMetadata';
+
+type SessionRegistries = ReturnType<typeof createSessionRegistries>;
 
 interface PhaseOrderEntry {
 	id: string;
@@ -193,6 +200,7 @@ const ASSET_METADATA: Readonly<Record<string, SessionMetadataDescriptor>> =
 
 export interface TestSessionScaffold {
 	registries: SessionRegistries;
+	actionMetaCategories: Registry<ActionMetaCategoryConfig>;
 	metadata: SessionSnapshot['metadata'];
 	phases: SessionSnapshot['phases'];
 	ruleSnapshot: SessionRuleSnapshot;
@@ -276,6 +284,8 @@ const buildRuleSnapshot = (resourceKey: string): SessionRuleSnapshot => ({
 
 export function createTestSessionScaffold(): TestSessionScaffold {
 	const registries = createSessionRegistries();
+	// Create content factory to get actionMetaCategories for engine creation
+	const factory = createContentFactory();
 	const resourceMetadata = buildResourceMetadata();
 	const phaseMetadata = buildPhaseMetadata();
 	const metadata: SessionSnapshot['metadata'] = createEmptySnapshotMetadata({
@@ -300,6 +310,7 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 	const ruleSnapshot = buildRuleSnapshot(tieredResourceKey);
 	return {
 		registries,
+		actionMetaCategories: factory.actionMetaCategories,
 		metadata,
 		phases,
 		ruleSnapshot,

@@ -35,5 +35,6 @@ export type {
 } from './win_condition_types';
 export type { PhaseSkipConfig, PhaseSkipStep } from './passive_types';
 export { PopCapService } from './pop_cap_service';
+export { RngService } from './rng_service';
 export { Services } from './services';
 export type { RuleSet, CorePhaseIds } from './services_types';

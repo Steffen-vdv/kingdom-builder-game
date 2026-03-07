@@ -141,7 +141,9 @@ function selectRoyalDecree(
 	registries: ReturnType<typeof createTestSessionScaffold>['registries'],
 ) {
 	for (const [id, definition] of registries.actions.entries()) {
-		const hasOptions = definition.effects?.some((effect) => {
+		// With tier migration, effects are in tiers['1'].effects
+		const effects = definition.tiers?.['1']?.effects ?? [];
+		const hasOptions = effects.some((effect) => {
 			return Array.isArray((effect as { options?: unknown[] }).options);
 		});
 		if (hasOptions) {
@@ -309,22 +311,25 @@ describe('GenericActions effect group handling', () => {
 			[mockGame.actionCostResource]: 1,
 			[mockGame.secondaryResource]: 12,
 		});
-		const groups =
-			mockGame.actionReferences.royalDecree.definition.effects?.filter(
-				(
-					effect,
-				): effect is {
-					id?: string;
-					title?: string;
-					layout?: string;
-					options?: ReadonlyArray<{
-						id: string;
-						icon?: string;
-						actionId?: string;
-						params?: Record<string, unknown>;
-					}>;
-				} => Array.isArray((effect as { options?: unknown[] }).options),
-			) ?? [];
+		// With tier migration, effects are in tiers['1'].effects
+		const royalDecreeEffects =
+			mockGame.actionReferences.royalDecree.definition.tiers?.['1']?.effects ??
+			[];
+		const groups = royalDecreeEffects.filter(
+			(
+				effect,
+			): effect is {
+				id?: string;
+				title?: string;
+				layout?: string;
+				options?: ReadonlyArray<{
+					id: string;
+					icon?: string;
+					actionId?: string;
+					params?: Record<string, unknown>;
+				}>;
+			} => Array.isArray((effect as { options?: unknown[] }).options),
+		);
 		const primaryGroup = groups.find((group) => group.options?.length);
 		const primaryOption = primaryGroup?.options?.[0];
 		if (primaryGroup && primaryOption) {

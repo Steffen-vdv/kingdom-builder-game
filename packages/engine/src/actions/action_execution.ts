@@ -1,10 +1,13 @@
 import { runEffects } from '../effects';
 import { withResourceSourceFrames } from '../resource_sources';
 import { runRequirement } from '../requirements';
-import { resolveActionEffects } from '@kingdom-builder/protocol';
+import {
+	getActionTierConfig,
+	resolveActionEffects,
+} from '@kingdom-builder/protocol';
 import type { EngineContext } from '../context';
 import type { EffectDef } from '../effects';
-import type { RequirementFailure } from '../requirements';
+import type { RequirementDef, RequirementFailure } from '../requirements';
 import type { ActionParameters } from './action_parameters';
 import {
 	applyCostsWithPassives,
@@ -13,6 +16,7 @@ import {
 	verifyCostAffordability,
 } from './costs';
 import { cloneEngineContext } from './context_clone';
+import { getStartingTier } from '../pool/fillAlgorithm';
 
 /**
  * Validates that an action can be performed by a player.
@@ -33,12 +37,21 @@ function assertActionAvailable(
 		throw new Error(`System action "${actionId}" cannot be performed directly`);
 	}
 
-	// Locked actions must be unlocked (present in player's actions set)
-	if (actionDefinition.locked) {
-		const isUnlocked = engineContext.activePlayer.actions.has(actionId);
-		if (!isUnlocked) {
+	// Check action state - must be available (not locked, not pool-locked)
+	const actionState = engineContext.activePlayer.actionStates[actionId];
+	if (actionState) {
+		if (actionState.locked) {
 			throw new Error(`Action ${actionId} is locked`);
 		}
+		if (actionState.poolLocked) {
+			throw new Error(`Action ${actionId} is not in the active pool`);
+		}
+		if (actionState.exhausted) {
+			throw new Error(`Action ${actionId} is exhausted`);
+		}
+	} else if (actionDefinition.locked) {
+		// No state but definition says locked - treat as locked
+		throw new Error(`Action ${actionId} is locked`);
 	}
 
 	// Normal actions (neither system nor locked) are always allowed
@@ -48,13 +61,35 @@ interface RequirementError extends Error {
 	requirementFailure?: RequirementFailure;
 }
 
+/**
+ * Gets the player's current tier for an action.
+ * Falls back to the action's starting tier if no state exists.
+ */
+function getCurrentTier(
+	actionId: string,
+	engineContext: EngineContext,
+): number {
+	const actionState = engineContext.activePlayer.actionStates[actionId];
+	if (actionState) {
+		return actionState.currentTier;
+	}
+	// No state - use starting tier
+	const actionDefinition = engineContext.actions.get(actionId);
+	return getStartingTier(actionDefinition);
+}
+
 function evaluateRequirements(
 	actionId: string,
 	engineContext: EngineContext,
 ): void {
 	const actionDefinition = engineContext.actions.get(actionId);
-	for (const requirement of actionDefinition.requirements || []) {
-		const requirementResult = runRequirement(requirement, engineContext);
+	const tier = getCurrentTier(actionId, engineContext);
+	const tierConfig = getActionTierConfig(actionDefinition, tier);
+	for (const requirement of tierConfig.requirements) {
+		const requirementResult = runRequirement(
+			requirement as RequirementDef,
+			engineContext,
+		);
 		if (requirementResult === true) {
 			continue;
 		}
@@ -107,8 +142,10 @@ function executeAction<T extends string>(
 	const actionDefinition = engineContext.actions.get(actionId);
 	assertActionAvailable(actionId, engineContext);
 	evaluateRequirements(actionId, engineContext);
-	const baseCosts = { ...(actionDefinition.baseCosts || {}) };
-	const resolved = resolveActionEffects(actionDefinition, params);
+	const tier = getCurrentTier(actionId, engineContext);
+	const tierConfig = getActionTierConfig(actionDefinition, tier);
+	const baseCosts = { ...tierConfig.costs };
+	const resolved = resolveActionEffects(actionDefinition, params, tier);
 	if (resolved.missingSelections.length > 0) {
 		const formatted = resolved.missingSelections
 			.map((id) => `"${id}"`)

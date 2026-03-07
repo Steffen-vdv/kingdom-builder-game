@@ -121,11 +121,21 @@ export function getRequirementIcons(
 	translationContext: TranslationContext,
 ): string[] {
 	const actionDefinition = translationContext.actions.get(actionId);
-	if (!actionDefinition?.requirements) {
+	if (!actionDefinition?.tiers) {
+		return [];
+	}
+	// Get requirements from the first tier
+	const tierKeys = Object.keys(actionDefinition.tiers);
+	const startingTier =
+		tierKeys.length > 0
+			? String(Math.min(...tierKeys.map(Number).filter((n) => !isNaN(n))))
+			: '1';
+	const tierConfig = actionDefinition.tiers[startingTier];
+	if (!tierConfig?.requirements) {
 		return [];
 	}
 	const icons: string[] = [];
-	const requirements = actionDefinition.requirements as RequirementConfig[];
+	const requirements = tierConfig.requirements as RequirementConfig[];
 	for (const requirement of requirements) {
 		const registryKey = `${requirement.type}:${requirement.method}`;
 		const getter = REQUIREMENT_ICON_GETTERS.get(registryKey);

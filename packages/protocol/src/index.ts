@@ -28,6 +28,8 @@ export type { EffectDef } from './effects';
 export {
 	applyParamsToEffects,
 	coerceActionEffectGroupChoices,
+	getActionStartingTier,
+	getActionTierConfig,
 	resolveActionEffects,
 } from './effects/resolve';
 export type {
@@ -84,10 +86,13 @@ export type {
 	RequirementConfig,
 	EffectConfig,
 	ActionMetaCategoryConfig,
+	ActionMetaCategoryPool,
 	ActionCategoryConfig,
 	ActionEffectGroup,
 	ActionEffectGroupOption,
 	ActionEffect,
+	ActionTierConfig,
+	ActionTiersConfig,
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
@@ -123,6 +128,7 @@ export type {
 export type {
 	SessionPlayerId,
 	SessionLandSnapshot,
+	SessionActionState,
 	ForecastContribution,
 	ResourceForecastBreakdown,
 	ForecastBreakdownMap,

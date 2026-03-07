@@ -57,7 +57,9 @@ describe('raid translation summary', () => {
 			SYNTH_RESOURCE_IDS.warWeariness,
 		);
 		// format: stats are now resources with resourceId
-		const warEffect = attack.effects.find(
+		// With tier migration, effects are in tiers['1'].effects
+		const effects = attack.tiers?.['1']?.effects ?? [];
+		const warEffect = effects.find(
 			(effectDef: EffectDef) =>
 				effectDef.type === 'resource' &&
 				(effectDef.params as { resourceId?: string }).resourceId ===
@@ -177,7 +179,9 @@ describe('raid translation summary', () => {
 		);
 		const summaryTarget =
 			buildingDescriptor.icon || buildingDescriptor.label || building.id;
-		const attackEffect = buildingAttack.effects.find(
+		// With tier migration, effects are in tiers['1'].effects
+		const buildingAttackEffects = buildingAttack.tiers?.['1']?.effects ?? [];
+		const attackEffect = buildingAttackEffects.find(
 			(effectDef: EffectDef) => effectDef.type === 'attack',
 		);
 		const onDamage = (attackEffect?.params?.['onDamage'] ?? {}) as {

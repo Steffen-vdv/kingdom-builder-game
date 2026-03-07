@@ -218,6 +218,8 @@ function GenericActionCard({
 			promptDescription={currentGroup?.description}
 			options={optionCards}
 			onCancel={isPending ? cancelPending : undefined}
+			currentTier={action.currentTier}
+			maxTier={action.maxTier}
 			onClick={() => {
 				if (!canInteract || !baseEnabled) {
 					return;

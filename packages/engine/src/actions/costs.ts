@@ -1,9 +1,13 @@
 import { EFFECT_COST_COLLECTORS } from '../effects';
 import { runRequirement } from '../requirements';
-import { resolveActionEffects } from '@kingdom-builder/protocol';
+import {
+	getActionTierConfig,
+	resolveActionEffects,
+} from '@kingdom-builder/protocol';
+import { getStartingTier } from '../pool/fillAlgorithm';
 import type { EngineContext } from '../context';
 import type { EffectDef } from '../effects';
-import type { RequirementFailure } from '../requirements';
+import type { RequirementDef, RequirementFailure } from '../requirements';
 import type { CostBag } from '../services';
 import type { PlayerId, PlayerState } from '../state';
 import type { ActionParameters } from './action_parameters';
@@ -23,6 +27,23 @@ function getActionDefinitionOrThrow(
 		);
 	}
 	return actionDefinition;
+}
+
+/**
+ * Gets the player's current tier for an action.
+ * Falls back to the action's starting tier if no state exists.
+ */
+function getCurrentTier(
+	actionId: string,
+	engineContext: EngineContext,
+): number {
+	const actionState = engineContext.activePlayer.actionStates[actionId];
+	if (actionState) {
+		return actionState.currentTier;
+	}
+	// No state - use starting tier
+	const actionDefinition = engineContext.actions.get(actionId);
+	return getStartingTier(actionDefinition);
 }
 
 export function applyCostsWithPassives(
@@ -127,8 +148,10 @@ export function getActionCosts<T extends string>(
 			actionId,
 			engineContext,
 		);
-		const baseCosts = cloneCostBag(actionDefinition.baseCosts || {});
-		const resolved = resolveActionEffects(actionDefinition, params);
+		const tier = getCurrentTier(actionId, engineContext);
+		const tierConfig = getActionTierConfig(actionDefinition, tier);
+		const baseCosts = cloneCostBag(tierConfig.costs);
+		const resolved = resolveActionEffects(actionDefinition, params, tier);
 		applyEffectCostCollectors(resolved.effects, baseCosts, engineContext);
 		const finalCosts = applyCostsWithPassives(
 			actionDefinition.id,
@@ -173,9 +196,14 @@ export function getActionRequirements<T extends string>(
 ): RequirementFailure[] {
 	const actionDefinition = getActionDefinitionOrThrow(actionId, engineContext);
 	return withPlayerContext(engineContext, playerId, () => {
+		const tier = getCurrentTier(actionId, engineContext);
+		const tierConfig = getActionTierConfig(actionDefinition, tier);
 		const failures: RequirementFailure[] = [];
-		for (const requirement of actionDefinition.requirements || []) {
-			const requirementResult = runRequirement(requirement, engineContext);
+		for (const requirement of tierConfig.requirements) {
+			const requirementResult = runRequirement(
+				requirement as RequirementDef,
+				engineContext,
+			);
 			if (requirementResult === true) {
 				continue;
 			}

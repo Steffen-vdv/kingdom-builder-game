@@ -21,17 +21,21 @@ describe('cloneRegistry', () => {
 		const factory = createContentFactory();
 		const resourceKey = getFirstResourceKey();
 		const action = factory.action({
-			baseCosts: { [resourceKey]: 3 },
-			effects: [
-				{
-					type: 'resource',
-					method: 'add',
-					params: {
-						resource: resourceKey,
-						amount: 1,
-					},
+			tiers: {
+				'1': {
+					costs: { [resourceKey]: 3 },
+					effects: [
+						{
+							type: 'resource',
+							method: 'add',
+							params: {
+								resource: resourceKey,
+								amount: 1,
+							},
+						},
+					],
 				},
-			],
+			},
 		});
 		const original = factory.actions.get(action.id);
 
@@ -40,19 +44,18 @@ describe('cloneRegistry', () => {
 
 		expect(clonedEntry).toEqual(original);
 		expect(clonedEntry).not.toBe(original);
-		expect(clonedEntry.baseCosts).not.toBe(original.baseCosts);
-		expect(clonedEntry.effects).not.toBe(original.effects);
+		expect(clonedEntry.tiers['1'].costs).not.toBe(original.tiers['1'].costs);
+		expect(clonedEntry.tiers['1'].effects).not.toBe(
+			original.tiers['1'].effects,
+		);
 
-		(original.baseCosts as Record<string, number>)[resourceKey] = 6;
-		expect(clonedEntry.baseCosts?.[resourceKey]).toBe(3);
+		(original.tiers['1'].costs as Record<string, number>)[resourceKey] = 6;
+		expect(clonedEntry.tiers['1'].costs?.[resourceKey]).toBe(3);
 
 		(
-			(clonedEntry.effects?.[0] as ActionConfig['effects'][number])
-				.params as Record<string, unknown>
+			clonedEntry.tiers['1'].effects[0].params as Record<string, unknown>
 		).amount = 5;
-		expect(
-			(original.effects?.[0] as ActionConfig['effects'][number]).params?.amount,
-		).toBe(1);
+		expect(original.tiers['1'].effects[0].params?.amount).toBe(1);
 	});
 });
 
@@ -93,17 +96,21 @@ describe('freezeSerializedRegistry', () => {
 		const factory = createContentFactory();
 		const resourceKey = getFirstResourceKey();
 		const action = factory.action({
-			baseCosts: { [resourceKey]: 4 },
-			effects: [
-				{
-					type: 'resource',
-					method: 'add',
-					params: {
-						resource: resourceKey,
-						amount: 2,
-					},
+			tiers: {
+				'1': {
+					costs: { [resourceKey]: 4 },
+					effects: [
+						{
+							type: 'resource',
+							method: 'add',
+							params: {
+								resource: resourceKey,
+								amount: 2,
+							},
+						},
+					],
 				},
-			],
+			},
 		});
 
 		const frozen = freezeSerializedRegistry(cloneRegistry(factory.actions));
@@ -120,6 +127,6 @@ describe('freezeSerializedRegistry', () => {
 			(entry as ActionConfig).name = 'changed';
 		}).toThrow(TypeError);
 
-		expect(entry.baseCosts?.[resourceKey]).toBe(4);
+		expect(entry.tiers['1'].costs?.[resourceKey]).toBe(4);
 	});
 });

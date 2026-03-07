@@ -94,10 +94,18 @@ describe('engine property invariants', () => {
 						onBuild: toResourceEffects(gains),
 					});
 					const action = content.action({
-						baseCosts,
-						effects: [
-							{ type: 'building', method: 'add', params: { id: building.id } },
-						],
+						tiers: {
+							'1': {
+								costs: baseCosts,
+								effects: [
+									{
+										type: 'building',
+										method: 'add',
+										params: { id: building.id },
+									},
+								],
+							},
+						},
 					});
 					const engineContext = createTestEngine(content);
 					toMain(engineContext);

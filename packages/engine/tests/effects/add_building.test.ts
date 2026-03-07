@@ -12,7 +12,14 @@ describe('building:add effect', () => {
 	it('adds building and applies its passives', () => {
 		// Use isolated mode so actionCostResource returns command-points
 		const content = createContentFactory({ isolated: true });
-		const target = content.action({ baseCosts: { [CResource.gold]: 4 } });
+		const target = content.action({
+			tiers: {
+				'1': {
+					costs: { [CResource.gold]: 4 },
+					effects: [],
+				},
+			},
+		});
 		const building = content.building({
 			costs: { [CResource.gold]: 3 },
 			onBuild: [
@@ -29,9 +36,13 @@ describe('building:add effect', () => {
 			],
 		});
 		const grant = content.action({
-			effects: [
-				{ type: 'building', method: 'add', params: { id: building.id } },
-			],
+			tiers: {
+				'1': {
+					effects: [
+						{ type: 'building', method: 'add', params: { id: building.id } },
+					],
+				},
+			},
 		});
 		const engineContext = createTestEngine(content);
 		while (engineContext.game.currentPhase !== PhaseId.Main) {
@@ -58,9 +69,13 @@ describe('building:add effect', () => {
 		const content = createContentFactory({ isolated: true });
 		const building = content.building({ costs: { [CResource.gold]: 2 } });
 		const grant = content.action({
-			effects: [
-				{ type: 'building', method: 'add', params: { id: building.id } },
-			],
+			tiers: {
+				'1': {
+					effects: [
+						{ type: 'building', method: 'add', params: { id: building.id } },
+					],
+				},
+			},
 		});
 		const engineContext = createTestEngine(content);
 		while (engineContext.game.currentPhase !== PhaseId.Main) {
@@ -89,14 +104,22 @@ describe('building:add effect', () => {
 		const content = createContentFactory({ isolated: true });
 		const building = content.building();
 		const build = content.action({
-			effects: [
-				{ type: 'building', method: 'add', params: { id: building.id } },
-			],
+			tiers: {
+				'1': {
+					effects: [
+						{ type: 'building', method: 'add', params: { id: building.id } },
+					],
+				},
+			},
 		});
 		const demolish = content.action({
-			effects: [
-				{ type: 'building', method: 'remove', params: { id: building.id } },
-			],
+			tiers: {
+				'1': {
+					effects: [
+						{ type: 'building', method: 'remove', params: { id: building.id } },
+					],
+				},
+			},
 		});
 		const engineContext = createTestEngine(content);
 		while (engineContext.game.currentPhase !== PhaseId.Main) {
@@ -123,7 +146,12 @@ describe('building:add effect', () => {
 		const content = createContentFactory({ isolated: true });
 		const surcharge = 2;
 		const target = content.action({
-			baseCosts: { [CResource.gold]: 3 },
+			tiers: {
+				'1': {
+					costs: { [CResource.gold]: 3 },
+					effects: [],
+				},
+			},
 		});
 		const building = content.building({
 			onBuild: [
@@ -140,14 +168,22 @@ describe('building:add effect', () => {
 			],
 		});
 		const build = content.action({
-			effects: [
-				{ type: 'building', method: 'add', params: { id: building.id } },
-			],
+			tiers: {
+				'1': {
+					effects: [
+						{ type: 'building', method: 'add', params: { id: building.id } },
+					],
+				},
+			},
 		});
 		const demolish = content.action({
-			effects: [
-				{ type: 'building', method: 'remove', params: { id: building.id } },
-			],
+			tiers: {
+				'1': {
+					effects: [
+						{ type: 'building', method: 'remove', params: { id: building.id } },
+					],
+				},
+			},
 		});
 		const engineContext = createTestEngine(content);
 		while (engineContext.game.currentPhase !== PhaseId.Main) {
@@ -172,7 +208,7 @@ describe('building:add effect', () => {
 		expect(afterRemoval).toBe(baseCost);
 	});
 
-	it('adds passives for new structures and reports duplicate installations', () => {
+	it('adds passives for new structures', () => {
 		// Use isolated mode so actionCostResource returns command-points
 		const content = createContentFactory({ isolated: true });
 		const building = content.building({
@@ -219,10 +255,11 @@ describe('building:add effect', () => {
 			dependsOn: [{ type: 'building', id: building.id }],
 			removal: { type: 'building', id: building.id, detail: 'removed' },
 		});
-		expect(() => buildingAdd(effect, context, 1)).toThrow(
-			`Building ${building.id} already built`,
-		);
-		expect(addPassive).toHaveBeenCalledTimes(1);
+		// Note: buildingAdd no longer throws on duplicates. Duplicate prevention
+		// is now handled by the oneTime action property which sets exhausted=true.
+		buildingAdd(effect, context, 1);
+		// Second call still adds passive (the Set prevents duplicate building entry)
+		expect(addPassive).toHaveBeenCalledTimes(2);
 	});
 
 	it('collects building costs when requested and ignores undefined ids', () => {

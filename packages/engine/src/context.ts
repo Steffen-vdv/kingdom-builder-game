@@ -1,6 +1,6 @@
 import type { GameState, ResourceKey, PlayerId } from './state';
 import type { AISystem } from './ai';
-import type { Services, PassiveManager } from './services';
+import type { Services, PassiveManager, RngService } from './services';
 import type { ResourceSourceFrame } from './resource_sources';
 import type {
 	ActionConfig as ActionDef,
@@ -27,6 +27,7 @@ export class EngineContext {
 		public actionCostAmount: number | null,
 		public resourceCatalog: RuntimeResourceCatalog,
 		public actionMetaCategories: Registry<ActionMetaCategoryConfig>,
+		public rng: RngService,
 		public compensations: Record<PlayerId, PlayerStartConfig> = {
 			A: {},
 			B: {},

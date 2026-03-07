@@ -23,6 +23,7 @@ import {
 import {
 	Registry,
 	type ActionConfig,
+	type ActionMetaCategoryConfig,
 	type EffectConfig,
 } from '@kingdom-builder/protocol';
 
@@ -59,6 +60,7 @@ function createRealContentEngine() {
 
 	const engine = createEngine({
 		actions,
+		actionMetaCategories: new Registry<ActionMetaCategoryConfig>(),
 		buildings: new Registry(),
 		developments: new Registry(),
 		phases: PHASES,

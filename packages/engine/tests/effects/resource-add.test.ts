@@ -15,6 +15,15 @@ import {
 	type ResourcePercentParamsResult,
 } from '../helpers/resourceParams.ts';
 
+// Helper to get effects from first tier
+function getEffectsFromFirstTier(action: {
+	tiers: Record<string, { effects: unknown[] }>;
+}): unknown[] {
+	const tierKeys = Object.keys(action.tiers);
+	const firstTier = tierKeys.length > 0 ? tierKeys[0] : '1';
+	return action.tiers[firstTier!]?.effects ?? [];
+}
+
 describe('resource:add effect', () => {
 	it('increments a resource via action effect', () => {
 		// Use isolated mode so actionCostResource returns command-points
@@ -23,27 +32,35 @@ describe('resource:add effect', () => {
 		const grantGold = content.action({
 			id: 'grant_gold',
 			name: 'Grant Gold',
-			effects: [
-				{
-					type: 'resource',
-					method: 'add',
-					params: resourceAmountParams({
-						resourceId: CResource.gold,
-						amount: 3,
-					}),
+			tiers: {
+				'1': {
+					effects: [
+						{
+							type: 'resource',
+							method: 'add',
+							params: resourceAmountParams({
+								resourceId: CResource.gold,
+								amount: 3,
+							}),
+						},
+					],
 				},
-			],
+			},
 		});
 		const engineContext = createTestEngine(content);
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
 		const before = getResourceValue(engineContext.activePlayer, CResource.gold);
-		const params = grantGold.effects.find(
-			(effect) =>
-				effect.type === 'resource' &&
-				effect.method === 'add' &&
-				effect.params?.resourceId === CResource.gold,
-		)?.params as ResourceAmountParamsResult | undefined;
+		const effects = getEffectsFromFirstTier(grantGold);
+		const params = (
+			effects.find(
+				(effect) =>
+					(effect as { type?: string }).type === 'resource' &&
+					(effect as { method?: string }).method === 'add' &&
+					(effect as { params?: { resourceId?: string } }).params
+						?.resourceId === CResource.gold,
+			) as { params?: ResourceAmountParamsResult }
+		)?.params;
 		const amount = params?.amount ?? 0;
 		const cost = getActionCosts('grant_gold', engineContext)[CResource.cp] ?? 0;
 		engineContext.activePlayer.resourceValues[CResource.cp] = cost;
@@ -59,43 +76,55 @@ describe('resource:add effect', () => {
 		const roundUp = content.action({
 			id: 'round_up',
 			name: 'Round Up',
-			effects: [
-				{
-					type: 'resource',
-					method: 'add',
-					params: resourcePercentParams({
-						resourceId: CResource.gold,
-						percent: 0.24,
-						roundingMode: 'up',
-					}),
+			tiers: {
+				'1': {
+					effects: [
+						{
+							type: 'resource',
+							method: 'add',
+							params: resourcePercentParams({
+								resourceId: CResource.gold,
+								percent: 0.24,
+								roundingMode: 'up',
+							}),
+						},
+					],
 				},
-			],
+			},
 		});
 		const roundDown = content.action({
 			id: 'round_down',
 			name: 'Round Down',
-			effects: [
-				{
-					type: 'resource',
-					method: 'add',
-					params: resourcePercentParams({
-						resourceId: CResource.gold,
-						percent: 0.18,
-						roundingMode: 'down',
-					}),
+			tiers: {
+				'1': {
+					effects: [
+						{
+							type: 'resource',
+							method: 'add',
+							params: resourcePercentParams({
+								resourceId: CResource.gold,
+								percent: 0.18,
+								roundingMode: 'down',
+							}),
+						},
+					],
 				},
-			],
+			},
 		});
 		const engineContext = createTestEngine(content);
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
 
-		const roundUpParams = roundUp.effects.find(
-			(effect) =>
-				effect.type === 'resource' &&
-				effect.method === 'add' &&
-				effect.params?.resourceId === CResource.gold,
-		)?.params as ResourcePercentParamsResult | undefined;
+		const roundUpEffects = getEffectsFromFirstTier(roundUp);
+		const roundUpParams = (
+			roundUpEffects.find(
+				(effect) =>
+					(effect as { type?: string }).type === 'resource' &&
+					(effect as { method?: string }).method === 'add' &&
+					(effect as { params?: { resourceId?: string } }).params
+						?.resourceId === CResource.gold,
+			) as { params?: ResourcePercentParamsResult }
+		)?.params;
 		const roundUpBase = 5;
 		engineContext.activePlayer.resourceValues[CResource.gold] = roundUpBase;
 		engineContext.activePlayer.resourceValues[CResource.cp] =
@@ -106,12 +135,16 @@ describe('resource:add effect', () => {
 			roundUpBase + roundUpDelta,
 		);
 
-		const roundDownParams = roundDown.effects.find(
-			(effect) =>
-				effect.type === 'resource' &&
-				effect.method === 'add' &&
-				effect.params?.resourceId === CResource.gold,
-		)?.params as ResourcePercentParamsResult | undefined;
+		const roundDownEffects = getEffectsFromFirstTier(roundDown);
+		const roundDownParams = (
+			roundDownEffects.find(
+				(effect) =>
+					(effect as { type?: string }).type === 'resource' &&
+					(effect as { method?: string }).method === 'add' &&
+					(effect as { params?: { resourceId?: string } }).params
+						?.resourceId === CResource.gold,
+			) as { params?: ResourcePercentParamsResult }
+		)?.params;
 		const roundDownBase = 11;
 		engineContext.activePlayer.resourceValues[CResource.gold] = roundDownBase;
 		engineContext.activePlayer.resourceValues[CResource.cp] =

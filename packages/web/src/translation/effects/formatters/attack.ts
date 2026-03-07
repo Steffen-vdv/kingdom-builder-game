@@ -99,8 +99,15 @@ function buildActionLog(
 			const definition = translationContext.actions.get(id);
 			icon = definition.icon || '';
 			name = definition.name;
+			// Get effects from the first tier
+			const tierKeys = Object.keys(definition.tiers);
+			const startingTier =
+				tierKeys.length > 0
+					? String(Math.min(...tierKeys.map(Number).filter((n) => !isNaN(n))))
+					: '1';
+			const tierEffects = definition.tiers[startingTier]?.effects;
 			collectTransferSummaries(
-				definition.effects as EffectDef[] | undefined,
+				tierEffects as EffectDef[] | undefined,
 				transferSummaries,
 			);
 		} catch {

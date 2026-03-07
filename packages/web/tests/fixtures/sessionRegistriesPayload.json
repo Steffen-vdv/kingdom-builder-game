@@ -4,875 +4,983 @@
 			"id": "expand",
 			"name": "Expand",
 			"icon": "🌱",
-			"baseCosts": {
-				"ap": 1,
-				"gold": 2
-			},
-			"effects": [
-				{
-					"type": "land",
-					"method": "add",
-					"params": {
-						"count": 1
-					}
-				},
-				{
-					"type": "resource",
-					"method": "add",
-					"params": {
-						"resourceId": "resource:core:happiness",
-						"amount": 1
-					}
-				}
-			],
 			"category": "basic",
 			"metaCategory": "meta:commands",
 			"order": 1,
-			"focus": "economy"
+			"focus": "economy",
+			"tiers": {
+				"1": {
+					"costs": {
+						"ap": 1,
+						"gold": 2
+					},
+					"effects": [
+						{
+							"type": "land",
+							"method": "add",
+							"params": {
+								"count": 1
+							}
+						},
+						{
+							"type": "resource",
+							"method": "add",
+							"params": {
+								"resourceId": "resource:core:happiness",
+								"amount": 1
+							}
+						}
+					]
+				}
+			}
 		},
 		"develop_house": {
 			"id": "develop_house",
 			"name": "House",
 			"icon": "🏠",
-			"baseCosts": {
-				"ap": 1,
-				"gold": 3
-			},
-			"effects": [
-				{
-					"type": "development",
-					"method": "add",
-					"params": {
-						"id": "house",
-						"landId": "$landId"
-					}
-				}
-			],
 			"category": "basic",
 			"order": 200,
 			"focus": "economy",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"costs": {
+						"ap": 1,
+						"gold": 3
+					},
+					"effects": [
+						{
+							"type": "development",
+							"method": "add",
+							"params": {
+								"id": "house",
+								"landId": "$landId"
+							}
+						}
+					]
+				}
+			}
 		},
 		"develop_farm": {
 			"id": "develop_farm",
 			"name": "Farm",
 			"icon": "🌾",
-			"baseCosts": {
-				"ap": 1,
-				"gold": 3
-			},
-			"effects": [
-				{
-					"type": "development",
-					"method": "add",
-					"params": {
-						"id": "farm",
-						"landId": "$landId"
-					}
-				}
-			],
 			"category": "basic",
 			"order": 201,
 			"focus": "economy",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"costs": {
+						"ap": 1,
+						"gold": 3
+					},
+					"effects": [
+						{
+							"type": "development",
+							"method": "add",
+							"params": {
+								"id": "farm",
+								"landId": "$landId"
+							}
+						}
+					]
+				}
+			}
 		},
 		"develop_outpost": {
 			"id": "develop_outpost",
 			"name": "Outpost",
 			"icon": "🏹",
-			"baseCosts": {
-				"ap": 1,
-				"gold": 3
-			},
-			"effects": [
-				{
-					"type": "development",
-					"method": "add",
-					"params": {
-						"id": "outpost",
-						"landId": "$landId"
-					}
-				}
-			],
 			"category": "basic",
 			"order": 202,
 			"focus": "combat",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"costs": {
+						"ap": 1,
+						"gold": 3
+					},
+					"effects": [
+						{
+							"type": "development",
+							"method": "add",
+							"params": {
+								"id": "outpost",
+								"landId": "$landId"
+							}
+						}
+					]
+				}
+			}
 		},
 		"develop_watchtower": {
 			"id": "develop_watchtower",
 			"name": "Watchtower",
 			"icon": "🗼",
-			"baseCosts": {
-				"ap": 1,
-				"gold": 3
-			},
-			"effects": [
-				{
-					"type": "development",
-					"method": "add",
-					"params": {
-						"id": "watchtower",
-						"landId": "$landId"
-					}
-				}
-			],
 			"category": "basic",
 			"order": 203,
 			"focus": "combat",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"costs": {
+						"ap": 1,
+						"gold": 3
+					},
+					"effects": [
+						{
+							"type": "development",
+							"method": "add",
+							"params": {
+								"id": "watchtower",
+								"landId": "$landId"
+							}
+						}
+					]
+				}
+			}
 		},
 		"tax": {
 			"id": "tax",
 			"name": "Tax",
 			"icon": "💰",
-			"baseCosts": {
-				"ap": 1
-			},
-			"effects": [
-				{
+			"category": "basic",
+			"order": 3,
+			"focus": "economy",
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"costs": {
+						"ap": 1
+					},
 					"effects": [
+						{
+							"effects": [
+								{
+									"type": "resource",
+									"method": "add",
+									"params": {
+										"resourceId": "resource:core:gold",
+										"amount": 4
+									}
+								},
+								{
+									"type": "resource",
+									"method": "remove",
+									"params": {
+										"resourceId": "resource:core:happiness",
+										"amount": 0.5
+									},
+									"round": "up",
+									"meta": {
+										"allowShortfall": true
+									}
+								}
+							],
+							"evaluator": {
+								"type": "population",
+								"params": {
+									"id": "tax"
+								}
+							}
+						}
+					]
+				}
+			}
+		},
+		"hire_council": {
+			"id": "hire_council",
+			"name": "Hire Council",
+			"icon": "⚖️",
+			"category": "hire",
+			"order": 1,
+			"focus": "economy",
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"costs": {
+						"ap": 1,
+						"gold": 5
+					},
+					"effects": [
+						{
+							"type": "population",
+							"method": "add",
+							"params": {
+								"role": "council"
+							}
+						},
 						{
 							"type": "resource",
 							"method": "add",
 							"params": {
-								"resourceId": "resource:core:gold",
-								"amount": 4
+								"resourceId": "resource:core:happiness",
+								"amount": 1
 							}
+						}
+					],
+					"requirements": [
+						{
+							"type": "evaluator",
+							"method": "compare",
+							"params": {
+								"left": {
+									"type": "population"
+								},
+								"operator": "lt",
+								"right": {
+									"type": "resource",
+									"params": {
+										"resourceId": "resource:core:max-population"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		},
+		"hire_legion": {
+			"id": "hire_legion",
+			"name": "Hire Legion",
+			"icon": "🎖️",
+			"category": "hire",
+			"order": 2,
+			"focus": "economy",
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"costs": {
+						"ap": 1,
+						"gold": 5
+					},
+					"effects": [
+						{
+							"type": "population",
+							"method": "add",
+							"params": {
+								"role": "legion"
+							}
+						},
+						{
+							"type": "resource",
+							"method": "add",
+							"params": {
+								"resourceId": "resource:core:happiness",
+								"amount": 1
+							}
+						}
+					],
+					"requirements": [
+						{
+							"type": "evaluator",
+							"method": "compare",
+							"params": {
+								"left": {
+									"type": "population"
+								},
+								"operator": "lt",
+								"right": {
+									"type": "resource",
+									"params": {
+										"resourceId": "resource:core:max-population"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		},
+		"hire_fortifier": {
+			"id": "hire_fortifier",
+			"name": "Hire Fortifier",
+			"icon": "🔧",
+			"category": "hire",
+			"order": 3,
+			"focus": "economy",
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"costs": {
+						"ap": 1,
+						"gold": 5
+					},
+					"effects": [
+						{
+							"type": "population",
+							"method": "add",
+							"params": {
+								"role": "fortifier"
+							}
+						},
+						{
+							"type": "resource",
+							"method": "add",
+							"params": {
+								"resourceId": "resource:core:happiness",
+								"amount": 1
+							}
+						}
+					],
+					"requirements": [
+						{
+							"type": "evaluator",
+							"method": "compare",
+							"params": {
+								"left": {
+									"type": "population"
+								},
+								"operator": "lt",
+								"right": {
+									"type": "resource",
+									"params": {
+										"resourceId": "resource:core:max-population"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		},
+		"royal_decree": {
+			"id": "royal_decree",
+			"name": "Royal Decree",
+			"icon": "📜",
+			"category": "basic",
+			"order": 5,
+			"focus": "economy",
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"costs": {
+						"ap": 1,
+						"gold": 12
+					},
+					"effects": [
+						{
+							"type": "action",
+							"method": "perform",
+							"params": {
+								"id": "expand"
+							}
+						},
+						{
+							"type": "action",
+							"method": "perform",
+							"params": {
+								"id": "till",
+								"landId": "$landId"
+							}
+						},
+						{
+							"id": "royal_decree_develop",
+							"title": "Choose one:",
+							"layout": "compact",
+							"options": [
+								{
+									"id": "royal_decree_house",
+									"icon": "🏠",
+									"actionId": "develop_house",
+									"params": {
+										"developmentId": "house",
+										"landId": "$landId"
+									}
+								},
+								{
+									"id": "royal_decree_farm",
+									"icon": "🌾",
+									"actionId": "develop_farm",
+									"params": {
+										"developmentId": "farm",
+										"landId": "$landId"
+									}
+								},
+								{
+									"id": "royal_decree_outpost",
+									"icon": "🏹",
+									"actionId": "develop_outpost",
+									"params": {
+										"developmentId": "outpost",
+										"landId": "$landId"
+									}
+								},
+								{
+									"id": "royal_decree_watchtower",
+									"icon": "🗼",
+									"actionId": "develop_watchtower",
+									"params": {
+										"developmentId": "watchtower",
+										"landId": "$landId"
+									}
+								}
+							]
 						},
 						{
 							"type": "resource",
 							"method": "remove",
 							"params": {
 								"resourceId": "resource:core:happiness",
-								"amount": 0.5
+								"amount": 3
 							},
-							"round": "up",
 							"meta": {
 								"allowShortfall": true
 							}
 						}
-					],
-					"evaluator": {
-						"type": "population",
-						"params": {
-							"id": "tax"
-						}
-					}
-				}
-			],
-			"category": "basic",
-			"order": 3,
-			"focus": "economy",
-			"metaCategory": "meta:commands"
-		},
-		"hire_council": {
-			"id": "hire_council",
-			"name": "Hire Council",
-			"icon": "⚖️",
-			"baseCosts": {
-				"ap": 1,
-				"gold": 5
-			},
-			"requirements": [
-				{
-					"type": "evaluator",
-					"method": "compare",
-					"params": {
-						"left": {
-							"type": "population"
-						},
-						"operator": "lt",
-						"right": {
-							"type": "resource",
-							"params": {
-								"resourceId": "resource:core:max-population"
-							}
-						}
-					}
-				}
-			],
-			"effects": [
-				{
-					"type": "population",
-					"method": "add",
-					"params": {
-						"role": "council"
-					}
-				},
-				{
-					"type": "resource",
-					"method": "add",
-					"params": {
-						"resourceId": "resource:core:happiness",
-						"amount": 1
-					}
-				}
-			],
-			"category": "hire",
-			"order": 1,
-			"focus": "economy",
-			"metaCategory": "meta:commands"
-		},
-		"hire_legion": {
-			"id": "hire_legion",
-			"name": "Hire Legion",
-			"icon": "🎖️",
-			"baseCosts": {
-				"ap": 1,
-				"gold": 5
-			},
-			"requirements": [
-				{
-					"type": "evaluator",
-					"method": "compare",
-					"params": {
-						"left": {
-							"type": "population"
-						},
-						"operator": "lt",
-						"right": {
-							"type": "resource",
-							"params": {
-								"resourceId": "resource:core:max-population"
-							}
-						}
-					}
-				}
-			],
-			"effects": [
-				{
-					"type": "population",
-					"method": "add",
-					"params": {
-						"role": "legion"
-					}
-				},
-				{
-					"type": "resource",
-					"method": "add",
-					"params": {
-						"resourceId": "resource:core:happiness",
-						"amount": 1
-					}
-				}
-			],
-			"category": "hire",
-			"order": 2,
-			"focus": "economy",
-			"metaCategory": "meta:commands"
-		},
-		"hire_fortifier": {
-			"id": "hire_fortifier",
-			"name": "Hire Fortifier",
-			"icon": "🔧",
-			"baseCosts": {
-				"ap": 1,
-				"gold": 5
-			},
-			"requirements": [
-				{
-					"type": "evaluator",
-					"method": "compare",
-					"params": {
-						"left": {
-							"type": "population"
-						},
-						"operator": "lt",
-						"right": {
-							"type": "resource",
-							"params": {
-								"resourceId": "resource:core:max-population"
-							}
-						}
-					}
-				}
-			],
-			"effects": [
-				{
-					"type": "population",
-					"method": "add",
-					"params": {
-						"role": "fortifier"
-					}
-				},
-				{
-					"type": "resource",
-					"method": "add",
-					"params": {
-						"resourceId": "resource:core:happiness",
-						"amount": 1
-					}
-				}
-			],
-			"category": "hire",
-			"order": 3,
-			"focus": "economy",
-			"metaCategory": "meta:commands"
-		},
-		"royal_decree": {
-			"id": "royal_decree",
-			"name": "Royal Decree",
-			"icon": "📜",
-			"baseCosts": {
-				"ap": 1,
-				"gold": 12
-			},
-			"effects": [
-				{
-					"type": "action",
-					"method": "perform",
-					"params": {
-						"id": "expand"
-					}
-				},
-				{
-					"type": "action",
-					"method": "perform",
-					"params": {
-						"id": "till",
-						"landId": "$landId"
-					}
-				},
-				{
-					"id": "royal_decree_develop",
-					"title": "Choose one:",
-					"layout": "compact",
-					"options": [
-						{
-							"id": "royal_decree_house",
-							"icon": "🏠",
-							"actionId": "develop_house",
-							"params": {
-								"developmentId": "house",
-								"landId": "$landId"
-							}
-						},
-						{
-							"id": "royal_decree_farm",
-							"icon": "🌾",
-							"actionId": "develop_farm",
-							"params": {
-								"developmentId": "farm",
-								"landId": "$landId"
-							}
-						},
-						{
-							"id": "royal_decree_outpost",
-							"icon": "🏹",
-							"actionId": "develop_outpost",
-							"params": {
-								"developmentId": "outpost",
-								"landId": "$landId"
-							}
-						},
-						{
-							"id": "royal_decree_watchtower",
-							"icon": "🗼",
-							"actionId": "develop_watchtower",
-							"params": {
-								"developmentId": "watchtower",
-								"landId": "$landId"
-							}
-						}
 					]
-				},
-				{
-					"type": "resource",
-					"method": "remove",
-					"params": {
-						"resourceId": "resource:core:happiness",
-						"amount": 3
-					},
-					"meta": {
-						"allowShortfall": true
-					}
 				}
-			],
-			"category": "basic",
-			"order": 5,
-			"focus": "economy",
-			"metaCategory": "meta:commands"
+			}
 		},
 		"raid": {
 			"id": "raid",
 			"name": "Raid",
 			"icon": "🗡️",
-			"baseCosts": {
-				"ap": 1
-			},
-			"requirements": [
-				{
-					"type": "evaluator",
-					"method": "compare",
-					"params": {
-						"left": {
-							"type": "resource",
-							"params": {
-								"resourceId": "resource:core:war-weariness"
-							}
-						},
-						"operator": "lt",
-						"right": {
-							"type": "resource",
-							"params": {
-								"resourceId": "resource:population:role:legion"
-							}
-						}
-					}
-				}
-			],
-			"effects": [
-				{
-					"type": "attack",
-					"method": "perform",
-					"params": {
-						"stats": [
-							{
-								"role": "power",
-								"resourceId": "resource:core:army-strength"
-							},
-							{
-								"role": "absorption",
-								"resourceId": "resource:core:absorption"
-							},
-							{
-								"role": "fortification",
-								"resourceId": "resource:core:fortification-strength"
-							}
-						],
-						"target": {
-							"type": "resource",
-							"resourceId": "resource:core:castleHP"
-						},
-						"onDamage": {
-							"attacker": [
-								{
-									"type": "action",
-									"method": "perform",
-									"params": {
-										"id": "plunder"
-									}
-								}
-							]
-						}
-					}
-				},
-				{
-					"type": "resource",
-					"method": "add",
-					"params": {
-						"resourceId": "resource:core:war-weariness",
-						"change": {
-							"type": "amount",
-							"amount": 1
-						}
-					}
-				}
-			],
 			"category": "basic",
 			"order": 6,
 			"focus": "combat",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"costs": {
+						"ap": 1
+					},
+					"effects": [
+						{
+							"type": "attack",
+							"method": "perform",
+							"params": {
+								"stats": [
+									{
+										"role": "power",
+										"resourceId": "resource:core:army-strength"
+									},
+									{
+										"role": "absorption",
+										"resourceId": "resource:core:absorption"
+									},
+									{
+										"role": "fortification",
+										"resourceId": "resource:core:fortification-strength"
+									}
+								],
+								"target": {
+									"type": "resource",
+									"resourceId": "resource:core:castleHP"
+								},
+								"onDamage": {
+									"attacker": [
+										{
+											"type": "action",
+											"method": "perform",
+											"params": {
+												"id": "plunder"
+											}
+										}
+									]
+								}
+							}
+						},
+						{
+							"type": "resource",
+							"method": "add",
+							"params": {
+								"resourceId": "resource:core:war-weariness",
+								"change": {
+									"type": "amount",
+									"amount": 1
+								}
+							}
+						}
+					],
+					"requirements": [
+						{
+							"type": "evaluator",
+							"method": "compare",
+							"params": {
+								"left": {
+									"type": "resource",
+									"params": {
+										"resourceId": "resource:core:war-weariness"
+									}
+								},
+								"operator": "lt",
+								"right": {
+									"type": "resource",
+									"params": {
+										"resourceId": "resource:population:role:legion"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
 		},
 		"hold_festival": {
 			"id": "hold_festival",
 			"name": "Hold Festival",
 			"icon": "🎉",
-			"baseCosts": {
-				"ap": 1,
-				"gold": 3
-			},
-			"requirements": [
-				{
-					"type": "evaluator",
-					"method": "compare",
-					"params": {
-						"left": {
-							"type": "resource",
-							"params": {
-								"resourceId": "resource:core:war-weariness"
-							}
-						},
-						"operator": "eq",
-						"right": 0
-					}
-				}
-			],
-			"effects": [
-				{
-					"type": "resource",
-					"method": "add",
-					"params": {
-						"resourceId": "resource:core:happiness",
-						"amount": 3
-					}
-				},
-				{
-					"type": "resource",
-					"method": "remove",
-					"params": {
-						"resourceId": "resource:core:fortification-strength",
-						"change": {
-							"type": "amount",
-							"amount": 3
-						}
-					}
-				},
-				{
-					"type": "passive",
-					"method": "add",
-					"params": {
-						"id": "hold_festival_penalty",
-						"name": "Festival Hangover",
-						"icon": "🤮",
-						"onPayUpkeepStep": [
-							{
-								"type": "passive",
-								"method": "remove",
-								"params": {
-									"id": "hold_festival_penalty"
-								}
-							}
-						]
+			"category": "basic",
+			"order": 7,
+			"focus": "economy",
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"costs": {
+						"ap": 1,
+						"gold": 3
 					},
 					"effects": [
 						{
-							"type": "result_mod",
+							"type": "resource",
 							"method": "add",
 							"params": {
-								"id": "hold_festival_attack_happiness_penalty",
-								"actionId": "raid"
+								"resourceId": "resource:core:happiness",
+								"amount": 3
+							}
+						},
+						{
+							"type": "resource",
+							"method": "remove",
+							"params": {
+								"resourceId": "resource:core:fortification-strength",
+								"change": {
+									"type": "amount",
+									"amount": 3
+								}
+							}
+						},
+						{
+							"type": "passive",
+							"method": "add",
+							"params": {
+								"id": "hold_festival_penalty",
+								"name": "Festival Hangover",
+								"icon": "🤮",
+								"onPayUpkeepStep": [
+									{
+										"type": "passive",
+										"method": "remove",
+										"params": {
+											"id": "hold_festival_penalty"
+										}
+									}
+								]
 							},
 							"effects": [
 								{
-									"type": "resource",
-									"method": "remove",
+									"type": "result_mod",
+									"method": "add",
 									"params": {
-										"resourceId": "resource:core:happiness",
-										"amount": 3
+										"id": "hold_festival_attack_happiness_penalty",
+										"actionId": "raid"
 									},
-									"meta": {
-										"allowShortfall": true
+									"effects": [
+										{
+											"type": "resource",
+											"method": "remove",
+											"params": {
+												"resourceId": "resource:core:happiness",
+												"amount": 3
+											},
+											"meta": {
+												"allowShortfall": true
+											}
+										}
+									]
+								}
+							]
+						}
+					],
+					"requirements": [
+						{
+							"type": "evaluator",
+							"method": "compare",
+							"params": {
+								"left": {
+									"type": "resource",
+									"params": {
+										"resourceId": "resource:core:war-weariness"
+									}
+								},
+								"operator": "eq",
+								"right": 0
+							}
+						}
+					]
+				}
+			}
+		},
+		"plunder": {
+			"id": "plunder",
+			"name": "Plunder",
+			"icon": "🏴‍☠️",
+			"system": true,
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"effects": [
+						{
+							"type": "resource",
+							"method": "transfer",
+							"params": {
+								"resourceId": "resource:core:happiness",
+								"amount": 1
+							}
+						},
+						{
+							"type": "resource",
+							"method": "transfer",
+							"params": {
+								"resourceId": "resource:core:gold",
+								"percent": 25
+							}
+						}
+					]
+				}
+			}
+		},
+		"plow": {
+			"id": "plow",
+			"name": "Plow",
+			"icon": "🚜",
+			"system": true,
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"costs": {
+						"ap": 1,
+						"gold": 6
+					},
+					"effects": [
+						{
+							"type": "action",
+							"method": "perform",
+							"params": {
+								"id": "expand"
+							}
+						},
+						{
+							"type": "action",
+							"method": "perform",
+							"params": {
+								"id": "till"
+							}
+						},
+						{
+							"type": "passive",
+							"method": "add",
+							"params": {
+								"id": "plow_cost_mod",
+								"onPayUpkeepStep": [
+									{
+										"type": "passive",
+										"method": "remove",
+										"params": {
+											"id": "plow_cost_mod"
+										}
+									}
+								]
+							},
+							"effects": [
+								{
+									"type": "cost_mod",
+									"method": "add",
+									"params": {
+										"id": "plow_cost_all",
+										"resourceId": "resource:core:gold",
+										"amount": 2
 									}
 								}
 							]
 						}
 					]
 				}
-			],
-			"category": "basic",
-			"order": 7,
-			"focus": "economy",
-			"metaCategory": "meta:commands"
-		},
-		"plunder": {
-			"id": "plunder",
-			"name": "Plunder",
-			"icon": "🏴‍☠️",
-			"effects": [
-				{
-					"type": "resource",
-					"method": "transfer",
-					"params": {
-						"resourceId": "resource:core:happiness",
-						"amount": 1
-					}
-				},
-				{
-					"type": "resource",
-					"method": "transfer",
-					"params": {
-						"resourceId": "resource:core:gold",
-						"percent": 25
-					}
-				}
-			],
-			"system": true,
-			"metaCategory": "meta:commands"
-		},
-		"plow": {
-			"id": "plow",
-			"name": "Plow",
-			"icon": "🚜",
-			"baseCosts": {
-				"ap": 1,
-				"gold": 6
-			},
-			"effects": [
-				{
-					"type": "action",
-					"method": "perform",
-					"params": {
-						"id": "expand"
-					}
-				},
-				{
-					"type": "action",
-					"method": "perform",
-					"params": {
-						"id": "till"
-					}
-				},
-				{
-					"type": "passive",
-					"method": "add",
-					"params": {
-						"id": "plow_cost_mod",
-						"onPayUpkeepStep": [
-							{
-								"type": "passive",
-								"method": "remove",
-								"params": {
-									"id": "plow_cost_mod"
-								}
-							}
-						]
-					},
-					"effects": [
-						{
-							"type": "cost_mod",
-							"method": "add",
-							"params": {
-								"id": "plow_cost_all",
-								"resourceId": "resource:core:gold",
-								"amount": 2
-							}
-						}
-					]
-				}
-			],
-			"system": true,
-			"metaCategory": "meta:commands"
+			}
 		},
 		"till": {
 			"id": "till",
 			"name": "Till",
 			"icon": "🧑‍🌾",
-			"effects": [
-				{
-					"type": "land",
-					"method": "till"
-				}
-			],
 			"system": true,
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"effects": [
+						{
+							"type": "land",
+							"method": "till"
+						}
+					]
+				}
+			}
 		},
 		"build_town_charter": {
 			"id": "build_town_charter",
 			"name": "Town Charter",
 			"icon": "🏘️",
-			"effects": [
-				{
-					"type": "building",
-					"method": "add",
-					"params": {
-						"id": "town_charter"
-					}
-				}
-			],
 			"category": "build",
 			"order": 3,
 			"focus": "economy",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"effects": [
+						{
+							"type": "building",
+							"method": "add",
+							"params": {
+								"id": "town_charter"
+							}
+						}
+					]
+				}
+			}
 		},
 		"build_mill": {
 			"id": "build_mill",
 			"name": "Mill",
 			"icon": "⚙️",
-			"effects": [
-				{
-					"type": "building",
-					"method": "add",
-					"params": {
-						"id": "mill"
-					}
-				}
-			],
 			"category": "build",
 			"order": 4,
 			"focus": "economy",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"effects": [
+						{
+							"type": "building",
+							"method": "add",
+							"params": {
+								"id": "mill"
+							}
+						}
+					]
+				}
+			}
 		},
 		"build_raiders_guild": {
 			"id": "build_raiders_guild",
 			"name": "Raider's Guild",
 			"icon": "🏴‍☠️",
-			"effects": [
-				{
-					"type": "building",
-					"method": "add",
-					"params": {
-						"id": "raiders_guild"
-					}
-				}
-			],
 			"category": "build",
 			"order": 5,
 			"focus": "combat",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"effects": [
+						{
+							"type": "building",
+							"method": "add",
+							"params": {
+								"id": "raiders_guild"
+							}
+						}
+					]
+				}
+			}
 		},
 		"build_plow_workshop": {
 			"id": "build_plow_workshop",
 			"name": "Plow Workshop",
 			"icon": "🏭",
-			"effects": [
-				{
-					"type": "building",
-					"method": "add",
-					"params": {
-						"id": "plow_workshop"
-					}
-				}
-			],
 			"category": "build",
 			"order": 6,
 			"focus": "economy",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"effects": [
+						{
+							"type": "building",
+							"method": "add",
+							"params": {
+								"id": "plow_workshop"
+							}
+						}
+					]
+				}
+			}
 		},
 		"build_market": {
 			"id": "build_market",
 			"name": "Market",
 			"icon": "🏪",
-			"effects": [
-				{
-					"type": "building",
-					"method": "add",
-					"params": {
-						"id": "market"
-					}
-				}
-			],
 			"category": "build",
 			"order": 7,
 			"focus": "economy",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"effects": [
+						{
+							"type": "building",
+							"method": "add",
+							"params": {
+								"id": "market"
+							}
+						}
+					]
+				}
+			}
 		},
 		"build_castle_walls": {
 			"id": "build_castle_walls",
 			"name": "Castle Walls",
 			"icon": "🧱",
-			"effects": [
-				{
-					"type": "building",
-					"method": "add",
-					"params": {
-						"id": "castle_walls"
-					}
-				}
-			],
 			"category": "build",
 			"order": 10,
 			"focus": "combat",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"effects": [
+						{
+							"type": "building",
+							"method": "add",
+							"params": {
+								"id": "castle_walls"
+							}
+						}
+					]
+				}
+			}
 		},
 		"build_barracks": {
 			"id": "build_barracks",
 			"name": "Barracks",
 			"icon": "🪖",
-			"effects": [
-				{
-					"type": "building",
-					"method": "add",
-					"params": {
-						"id": "barracks"
-					}
-				}
-			],
 			"category": "build",
 			"order": 8,
 			"focus": "combat",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"effects": [
+						{
+							"type": "building",
+							"method": "add",
+							"params": {
+								"id": "barracks"
+							}
+						}
+					]
+				}
+			}
 		},
 		"build_citadel": {
 			"id": "build_citadel",
 			"name": "Citadel",
 			"icon": "🏯",
-			"effects": [
-				{
-					"type": "building",
-					"method": "add",
-					"params": {
-						"id": "citadel"
-					}
-				}
-			],
 			"category": "build",
 			"order": 9,
 			"focus": "combat",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"effects": [
+						{
+							"type": "building",
+							"method": "add",
+							"params": {
+								"id": "citadel"
+							}
+						}
+					]
+				}
+			}
 		},
 		"build_castle_gardens": {
 			"id": "build_castle_gardens",
 			"name": "Castle Gardens",
 			"icon": "🌷",
-			"effects": [
-				{
-					"type": "building",
-					"method": "add",
-					"params": {
-						"id": "castle_gardens"
-					}
-				}
-			],
 			"category": "build",
 			"order": 11,
 			"focus": "economy",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"effects": [
+						{
+							"type": "building",
+							"method": "add",
+							"params": {
+								"id": "castle_gardens"
+							}
+						}
+					]
+				}
+			}
 		},
 		"build_temple": {
 			"id": "build_temple",
 			"name": "Temple",
 			"icon": "⛪",
-			"effects": [
-				{
-					"type": "building",
-					"method": "add",
-					"params": {
-						"id": "temple"
-					}
-				}
-			],
 			"category": "build",
 			"order": 12,
 			"focus": "economy",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"effects": [
+						{
+							"type": "building",
+							"method": "add",
+							"params": {
+								"id": "temple"
+							}
+						}
+					]
+				}
+			}
 		},
 		"build_palace": {
 			"id": "build_palace",
 			"name": "Palace",
 			"icon": "👑",
-			"effects": [
-				{
-					"type": "building",
-					"method": "add",
-					"params": {
-						"id": "palace"
-					}
-				}
-			],
 			"category": "build",
 			"order": 13,
 			"focus": "economy",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"effects": [
+						{
+							"type": "building",
+							"method": "add",
+							"params": {
+								"id": "palace"
+							}
+						}
+					]
+				}
+			}
 		},
 		"build_great_hall": {
 			"id": "build_great_hall",
 			"name": "Great Hall",
 			"icon": "🏟️",
-			"effects": [
-				{
-					"type": "building",
-					"method": "add",
-					"params": {
-						"id": "great_hall"
-					}
-				}
-			],
 			"category": "build",
 			"order": 14,
 			"focus": "economy",
-			"metaCategory": "meta:commands"
+			"metaCategory": "meta:commands",
+			"tiers": {
+				"1": {
+					"effects": [
+						{
+							"type": "building",
+							"method": "add",
+							"params": {
+								"id": "great_hall"
+							}
+						}
+					]
+				}
+			}
 		}
 	},
 	"buildings": {

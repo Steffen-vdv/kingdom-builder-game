@@ -13,14 +13,18 @@ describe('resource removal penalties', () => {
 			amount: 1,
 		});
 		const action = content.action({
-			effects: [
-				{
-					type: 'resource',
-					method: 'remove',
-					params: penalty,
-					meta: { allowShortfall: true },
+			tiers: {
+				'1': {
+					effects: [
+						{
+							type: 'resource',
+							method: 'remove',
+							params: penalty,
+							meta: { allowShortfall: true },
+						},
+					],
 				},
-			],
+			},
 		});
 		const engineContext = createTestEngine(content);
 		advance(engineContext);
@@ -44,23 +48,27 @@ describe('resource removal penalties', () => {
 			amount: 0.5,
 		});
 		const action = content.action({
-			effects: [
-				{
-					// Use resource evaluator for population roles
-					evaluator: {
-						type: 'resource',
-						params: { resourceId: CResource.council },
-					},
+			tiers: {
+				'1': {
 					effects: [
 						{
-							type: 'resource',
-							method: 'remove',
-							params: penalty,
-							meta: { allowShortfall: true },
+							// Use resource evaluator for population roles
+							evaluator: {
+								type: 'resource',
+								params: { resourceId: CResource.council },
+							},
+							effects: [
+								{
+									type: 'resource',
+									method: 'remove',
+									params: penalty,
+									meta: { allowShortfall: true },
+								},
+							],
 						},
 					],
 				},
-			],
+			},
 		});
 		const engineContext = createTestEngine({ actions: content.actions });
 		advance(engineContext);

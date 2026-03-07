@@ -103,67 +103,53 @@ export const TOGGLE_BUTTON_CLASS_NAMES = [
 	'dark:hover:bg-slate-900',
 ] as const;
 
-export const TAB_LIST_CLASS_NAMES = [
-	'mt-4',
-	'flex',
-	'flex-wrap',
-	'gap-2',
-] as const;
-
-export const TAB_BUTTON_CLASS_NAMES = [
-	'flex-1',
-	'min-w-[10rem]',
-	'rounded-2xl',
+// Pool display mode styles
+export const POOL_SLOT_CLASS_NAMES = [
+	'rounded-xl',
 	'border',
-	'border-transparent',
-	'px-4',
-	'py-3',
-	'text-left',
-	'transition',
-	'hoverable',
-	'cursor-pointer',
-	'focus:outline-none',
-	'focus-visible:ring-2',
-	'focus-visible:ring-emerald-300',
-	'dark:focus-visible:ring-emerald-500/60',
+	'border-emerald-200',
+	'bg-emerald-50/50',
+	'p-2',
+	'dark:border-emerald-700/50',
+	'dark:bg-emerald-900/20',
 ] as const;
 
-export const TAB_BUTTON_ACTIVE_CLASS_NAMES = [
-	'bg-emerald-100',
-	'text-emerald-900',
-	'shadow-sm',
-	'shadow-emerald-500/20',
-	'hover:bg-emerald-200',
-	'dark:bg-emerald-500/20',
-	'dark:text-emerald-100',
-	'dark:shadow-black/40',
-	'dark:hover:bg-emerald-500/30',
-] as const;
-
-export const TAB_BUTTON_INACTIVE_CLASS_NAMES = [
-	'bg-white/60',
-	'text-slate-600',
-	'hover:bg-emerald-50',
-	'hover:text-emerald-700',
-	'dark:bg-slate-900/70',
-	'dark:text-slate-200',
-	'dark:hover:bg-slate-800/70',
-	'dark:hover:text-emerald-200',
-] as const;
-
-export const TAB_HEADER_CLASS_NAMES = [
+export const POOL_SLOT_EMPTY_CLASS_NAMES = [
+	'rounded-xl',
+	'border',
+	'border-dashed',
+	'border-slate-300',
+	'bg-slate-100/50',
+	'p-4',
 	'flex',
 	'items-center',
-	'gap-3',
+	'justify-center',
+	'min-h-[100px]',
+	'dark:border-slate-600',
+	'dark:bg-slate-800/30',
 ] as const;
 
-export const TAB_ICON_CLASS_NAMES = ['text-lg', 'leading-none'] as const;
-
-export const TAB_LABEL_CLASS_NAMES = [
+export const POOL_STATUS_CLASS_NAMES = [
 	'text-sm',
-	'font-semibold',
-	'text-slate-800',
-	'dark:text-slate-100',
+	'font-medium',
+	'text-slate-500',
+	'dark:text-slate-400',
+] as const;
+
+// Tier indicator badge for multi-tier actions
+export const TIER_BADGE_CLASS_NAMES = [
+	'inline-flex',
+	'items-center',
+	'gap-0.5',
+	'rounded',
+	'bg-amber-100',
+	'px-1.5',
+	'py-0.5',
+	'text-xs',
+	'font-medium',
+	'text-amber-700',
+	'dark:bg-amber-900/40',
+	'dark:text-amber-300',
 ] as const;
 
 export const joinClassNames = (classNames: readonly string[]) =>
@@ -178,14 +164,9 @@ export const INDICATOR_PILL_CLASSES = joinClassNames(
 	INDICATOR_PILL_CLASS_NAMES,
 );
 export const TOGGLE_BUTTON_CLASSES = joinClassNames(TOGGLE_BUTTON_CLASS_NAMES);
-export const TAB_LIST_CLASSES = joinClassNames(TAB_LIST_CLASS_NAMES);
-export const TAB_BUTTON_CLASSES = joinClassNames(TAB_BUTTON_CLASS_NAMES);
-export const TAB_BUTTON_ACTIVE_CLASSES = joinClassNames(
-	TAB_BUTTON_ACTIVE_CLASS_NAMES,
+export const POOL_SLOT_CLASSES = joinClassNames(POOL_SLOT_CLASS_NAMES);
+export const POOL_SLOT_EMPTY_CLASSES = joinClassNames(
+	POOL_SLOT_EMPTY_CLASS_NAMES,
 );
-export const TAB_BUTTON_INACTIVE_CLASSES = joinClassNames(
-	TAB_BUTTON_INACTIVE_CLASS_NAMES,
-);
-export const TAB_HEADER_CLASSES = joinClassNames(TAB_HEADER_CLASS_NAMES);
-export const TAB_ICON_CLASSES = joinClassNames(TAB_ICON_CLASS_NAMES);
-export const TAB_LABEL_CLASSES = joinClassNames(TAB_LABEL_CLASS_NAMES);
+export const POOL_STATUS_CLASSES = joinClassNames(POOL_STATUS_CLASS_NAMES);
+export const TIER_BADGE_CLASSES = joinClassNames(TIER_BADGE_CLASS_NAMES);

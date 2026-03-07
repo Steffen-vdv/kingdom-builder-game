@@ -57,25 +57,34 @@ function createGateway(options?: CreateGatewayOptions) {
 	const content = createContentFactory({ isolated: true });
 	const gainGold = content.action({
 		free: false,
-		effects: [
-			{
-				type: 'resource',
-				method: 'add',
-				params: resourceAmountParams({
-					resourceId: RESOURCE_GOLD,
-					amount: 2,
-				}),
+		tiers: {
+			'1': {
+				effects: [
+					{
+						type: 'resource',
+						method: 'add',
+						params: resourceAmountParams({
+							resourceId: RESOURCE_GOLD,
+							amount: 2,
+						}),
+					},
+				],
 			},
-		],
+		},
 	});
 	const failingAction = content.action({
-		requirements: [
-			{
-				type: 'vitest',
-				method: 'fail',
-				message: FAILURE_MESSAGE,
+		tiers: {
+			'1': {
+				requirements: [
+					{
+						type: 'vitest',
+						method: 'fail',
+						message: FAILURE_MESSAGE,
+					},
+				],
+				effects: [],
 			},
-		],
+		},
 	});
 	// Register test actions with the real ACTIONS registry
 	REAL_ACTIONS.add(gainGold.id, gainGold);

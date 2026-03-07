@@ -148,7 +148,9 @@ describe('plow action translation', () => {
 		const { translation, expand, till, plow, plowPassive } =
 			createTranslationHarness();
 		const summary = summarizeContent('action', plow.id, translation);
-		const passive = plow.effects.find((e: EffectDef) => e.type === 'passive');
+		// With tier migration, effects are in tiers['1'].effects
+		const plowEffects = plow.tiers?.['1']?.effects ?? [];
+		const passive = plowEffects.find((e: EffectDef) => e.type === 'passive');
 		const upkeepLabel = SYNTHETIC_UPKEEP_PHASE.label;
 		const upkeepIcon = SYNTHETIC_UPKEEP_PHASE.icon;
 		const costMod = passive?.effects.find(
@@ -216,7 +218,9 @@ describe('plow action translation', () => {
 		const summary = describeContent('action', plow.id, translation);
 		const { effects, description } = splitSummary(summary);
 		expect(description).toBeUndefined();
-		const passive = plow.effects.find((e: EffectDef) => e.type === 'passive');
+		// With tier migration, effects are in tiers['1'].effects
+		const plowEffects2 = plow.tiers?.['1']?.effects ?? [];
+		const passive = plowEffects2.find((e: EffectDef) => e.type === 'passive');
 		const costMod = passive?.effects.find(
 			(e: EffectDef) => e.type === 'cost_mod',
 		);
@@ -235,19 +239,6 @@ describe('plow action translation', () => {
 		const upkeepDescriptionLabel = `${
 			upkeepIcon ? `${upkeepIcon} ` : ''
 		}${upkeepLabel}`;
-		const expandLand = expand.effects.find((e: EffectDef) => e.type === 'land');
-		const landCount = (expandLand?.params as { count?: number })?.count ?? 0;
-		const expandHap = expand.effects.find(
-			(e: EffectDef) =>
-				e.type === 'resource' &&
-				((e.params as { key?: string }).resourceId === 'happiness' ||
-					(e.params as { resourceId?: string }).resourceId ===
-						'resource:synthetic:happiness'),
-		);
-		const hapChange = (expandHap?.params as { change?: { amount?: number } })
-			?.change;
-		const hapLegacyAmt = (expandHap?.params as { amount?: number })?.amount;
-		const hapAmt = hapChange?.amount ?? hapLegacyAmt ?? 0;
 		const hapLegacyDesc = translation.assets.resources?.happiness;
 		const hapDesc = translation.resourceMetadata?.get?.(
 			'resource:synthetic:happiness',
@@ -270,6 +261,21 @@ describe('plow action translation', () => {
 		const slotAsset = translation.assets.slot ?? {};
 		const slotIcon = slotAsset.icon ?? SYNTHETIC_SLOT_INFO.icon;
 		const slotLabel = slotAsset.label ?? SYNTHETIC_SLOT_INFO.label;
+		// With tier migration, effects are in tiers['1'].effects
+		const expandEffects = expand.tiers?.['1']?.effects ?? [];
+		const expandLand = expandEffects.find((e: EffectDef) => e.type === 'land');
+		const landCount = (expandLand?.params as { count?: number })?.count ?? 0;
+		const expandHap = expandEffects.find(
+			(e: EffectDef) =>
+				e.type === 'resource' &&
+				((e.params as { key?: string }).resourceId === 'happiness' ||
+					(e.params as { resourceId?: string }).resourceId ===
+						'resource:synthetic:happiness'),
+		);
+		const hapChange = (expandHap?.params as { change?: { amount?: number } })
+			?.change;
+		const hapLegacyAmt = (expandHap?.params as { amount?: number })?.amount;
+		const hapAmt = hapChange?.amount ?? hapLegacyAmt ?? 0;
 		// Simplified format:
 		// Describe: modifier icon + target label + keyword: resource + amount
 		expect(effects).toEqual([

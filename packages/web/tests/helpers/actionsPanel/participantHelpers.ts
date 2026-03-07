@@ -39,6 +39,7 @@ interface ParticipantData {
 	lands: Array<{ slotsFree: number }>;
 	buildings: Set<string>;
 	actions: Set<string>;
+	resourceTouched: Record<string, boolean>;
 }
 
 export function createParticipant(
@@ -47,6 +48,7 @@ export function createParticipant(
 	baseResources: Record<string, number>,
 	initialPopulation: Record<string, number>,
 	actionIds: string[],
+	resourceTouched: Record<string, boolean> = {},
 ): ParticipantData {
 	return {
 		id,
@@ -56,6 +58,7 @@ export function createParticipant(
 		lands: [],
 		buildings: new Set<string>(),
 		actions: new Set(actionIds),
+		resourceTouched: { ...resourceTouched },
 	};
 }
 
@@ -71,7 +74,7 @@ export function toPlayerSnapshot(
 			...participant.population,
 			[capacityStat]: 3,
 		},
-		resourceTouched: {},
+		resourceTouched: { ...participant.resourceTouched },
 		resourceBounds: {},
 		lands: participant.lands.map((land) => ({
 			...land,
@@ -82,7 +85,8 @@ export function toPlayerSnapshot(
 		})),
 		buildings: Array.from(participant.buildings),
 		actions: Array.from(participant.actions),
-		resourceSources: {},
+		actionStates: {},
+		metaCategoryBindingSpent: {},
 		skipPhases: {},
 		skipSteps: {},
 		passives: [],

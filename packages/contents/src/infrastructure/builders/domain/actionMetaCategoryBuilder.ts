@@ -1,3 +1,6 @@
+import type { PoolConfig } from '../pool';
+import { PoolBuilder } from '../pool';
+
 /**
  * Cost model for action meta-categories.
  * - 'global': All items share a uniform cost (e.g., 1 AP per action)
@@ -22,6 +25,8 @@ export interface ActionMetaCategoryConfig {
 	visibilityTrigger: ActionMetaCategoryVisibilityTrigger;
 	order: number;
 	categoryIds?: readonly string[];
+	/** Optional pool configuration for controlled action availability */
+	pool?: PoolConfig;
 }
 
 export class ActionMetaCategoryBuilder {
@@ -110,6 +115,22 @@ export class ActionMetaCategoryBuilder {
 		return this;
 	}
 
+	/**
+	 * Sets the pool configuration for controlled action availability.
+	 * When configured, the engine maintains a pool of available actions
+	 * that gets refreshed as actions are completed.
+	 * @param poolConfig Pool builder or config
+	 */
+	pool(poolConfig: PoolBuilder | PoolConfig) {
+		if (this.assigned.has('pool')) {
+			throw new Error('Action meta-category already set pool(). Remove the extra call.');
+		}
+		const config = poolConfig instanceof PoolBuilder ? poolConfig.build() : poolConfig;
+		this.config.pool = config;
+		this.assigned.add('pool');
+		return this;
+	}
+
 	build(): ActionMetaCategoryConfig {
 		if (!this.config.id) {
 			throw new Error("Action meta-category is missing id(). Call id('unique-id') before build().");
@@ -143,6 +164,7 @@ export class ActionMetaCategoryBuilder {
 			visibilityTrigger: this.config.visibilityTrigger,
 			order: this.config.order,
 			...(this.config.categoryIds !== undefined ? { categoryIds: this.config.categoryIds } : {}),
+			...(this.config.pool !== undefined ? { pool: this.config.pool } : {}),
 		};
 	}
 }

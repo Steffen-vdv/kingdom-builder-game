@@ -8,7 +8,14 @@ import { resourceAmountParams } from '../helpers/resourceParams.ts';
 describe('PassiveManager', () => {
 	it('applies and unregisters cost modifiers', () => {
 		const content = createContentFactory();
-		const action = content.action({ baseCosts: { [CResource.gold]: 1 } });
+		const action = content.action({
+			tiers: {
+				'1': {
+					costs: { [CResource.gold]: 1 },
+					effects: [],
+				},
+			},
+		});
 		const engineContext = createTestEngine({ actions: content.actions });
 		const baseCost = getActionCosts(action.id, engineContext);
 		const base = { [CResource.gold]: baseCost[CResource.gold] || 0 };
@@ -32,7 +39,14 @@ describe('PassiveManager', () => {
 
 	it('combines flat and percent cost modifiers additively', () => {
 		const content = createContentFactory();
-		const action = content.action({ baseCosts: { [CResource.gold]: 4 } });
+		const action = content.action({
+			tiers: {
+				'1': {
+					costs: { [CResource.gold]: 4 },
+					effects: [],
+				},
+			},
+		});
 		const engineContext = createTestEngine({ actions: content.actions });
 		const baseCost = getActionCosts(action.id, engineContext);
 		const base = { [CResource.gold]: baseCost[CResource.gold] || 0 };
@@ -58,7 +72,14 @@ describe('PassiveManager', () => {
 
 	it('rounds percent cost modifiers up when requested', () => {
 		const content = createContentFactory();
-		const action = content.action({ baseCosts: { [CResource.gold]: 7 } });
+		const action = content.action({
+			tiers: {
+				'1': {
+					costs: { [CResource.gold]: 7 },
+					effects: [],
+				},
+			},
+		});
 		const engineContext = createTestEngine({ actions: content.actions });
 		const baseCost = getActionCosts(action.id, engineContext);
 		const base = { [CResource.gold]: baseCost[CResource.gold] || 0 };

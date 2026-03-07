@@ -84,7 +84,12 @@ describe('happiness tier controller', () => {
 		const tierResourceId = customRules.tieredResourceId!;
 		const content = createContentFactory();
 		const costAction = content.action({
-			baseCosts: { [CResource.gold]: 20 },
+			tiers: {
+				'1': {
+					costs: { [CResource.gold]: 20 },
+					effects: [],
+				},
+			},
 		});
 		const engineContext = createTestEngine({
 			actions: content.actions,

@@ -47,6 +47,7 @@ function createTestSetup() {
 	});
 
 	const action = factory.action({
+		free: true, // Skip global AP cost for session restoration tests
 		baseCosts: { [costResourceId]: 1 },
 		effects: [
 			{
@@ -71,25 +72,28 @@ function createTestSetup() {
 		system: true,
 		systemRole: SystemRole.INITIAL_SETUP,
 		free: true,
-		baseCosts: {},
-		effects: [
-			{
-				type: 'resource',
-				method: 'add',
-				params: {
-					resourceId: costResourceId,
-					change: { type: 'amount', amount: 10 },
-				},
+		tiers: {
+			'1': {
+				effects: [
+					{
+						type: 'resource',
+						method: 'add',
+						params: {
+							resourceId: costResourceId,
+							change: { type: 'amount', amount: 10 },
+						},
+					},
+					{
+						type: 'resource',
+						method: 'add',
+						params: {
+							resourceId: commandPointsId,
+							change: { type: 'amount', amount: 10 },
+						},
+					},
+				],
 			},
-			{
-				type: 'resource',
-				method: 'add',
-				params: {
-					resourceId: commandPointsId,
-					change: { type: 'amount', amount: 10 },
-				},
-			},
-		],
+		},
 	});
 
 	factory.actions.add(compensationActionId, {
@@ -99,8 +103,9 @@ function createTestSetup() {
 		system: true,
 		systemRole: SystemRole.COMPENSATION,
 		free: true,
-		baseCosts: {},
-		effects: [],
+		tiers: {
+			'1': { effects: [] },
+		},
 	});
 
 	const phases: PhaseConfig[] = [

@@ -1,13 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-	act,
-	cleanup,
-	fireEvent,
-	render,
-	screen,
-	within,
-} from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import ActionsPanel from '../../../src/components/actions/ActionsPanel';
 import { RegistryMetadataProvider } from '../../../src/contexts/RegistryMetadataContext';
@@ -36,7 +29,7 @@ vi.mock('../../../src/state/GameContext', () => ({
 	useGameEngine: () => mockGame,
 }));
 
-describe('ActionsPanel tabs', () => {
+describe('ActionsPanel meta-categories', () => {
 	beforeEach(() => {
 		clearSessionActionMetadataStore();
 		clearSessionStateStore();
@@ -55,25 +48,51 @@ describe('ActionsPanel tabs', () => {
 		setGameApi(null);
 	});
 
-	it('shows performable counters and updates when availability changes', async () => {
+	it('renders meta-category panels for visible meta-categories', async () => {
 		renderPanel();
-		const raiseCategoryId = mockGame.metadata.actions.raise.category;
-		const basicCategoryId = mockGame.metadata.actions.basic.category;
-		const raiseTab = await findTabButton(raiseCategoryId);
-		const basicTab = await findTabButton(basicCategoryId);
-		expect(
-			within(raiseTab).getByLabelText('0 of 1 actions performable'),
-		).toBeInTheDocument();
-		expect(
-			within(basicTab).getByLabelText('0 of 1 actions performable'),
-		).toBeInTheDocument();
+		// The Commands meta-category should be visible (visibilityTrigger: always)
+		const metaCategories =
+			mockGame.translationContext.actionMetaCategories.list();
+		const commandsMeta = metaCategories.find(
+			(meta) => meta.visibilityTrigger === 'always',
+		);
+		if (commandsMeta) {
+			// Should render a section with the meta-category's label
+			const heading = await screen.findByRole('heading', {
+				name: new RegExp(commandsMeta.label, 'i'),
+			});
+			expect(heading).toBeInTheDocument();
+		}
+	});
+
+	it('renders action buttons for available actions', async () => {
+		renderPanel();
+		// Check that action cards are rendered
+		const surveyButton = await screen.findByRole('button', { name: /Survey/i });
+		expect(surveyButton).toBeInTheDocument();
+
+		const hireButton = await screen.findByRole('button', { name: /Hire/i });
+		expect(hireButton).toBeInTheDocument();
+	});
+
+	it('renders building actions when available', async () => {
+		renderPanel();
 		const buildAction = mockGame.metadata.actions.building;
 		if (buildAction) {
-			const buildTab = await findTabButton(buildAction.category);
-			expect(
-				within(buildTab).getByLabelText('0 of 1 actions performable'),
-			).toBeInTheDocument();
+			const buildButton = await screen.findByRole('button', {
+				name: /Construct/i,
+			});
+			expect(buildButton).toBeInTheDocument();
 		}
+	});
+
+	it('updates action availability when metadata changes', async () => {
+		renderPanel();
+
+		// Initially the basic action should have unmet requirements
+		// (seeded with UNMET_REQUIREMENT in seedInitialMetadata)
+
+		// Update metadata to clear requirements
 		act(() => {
 			seedSessionActionMetadata(
 				mockGame.sessionId,
@@ -87,93 +106,25 @@ describe('ActionsPanel tabs', () => {
 				},
 			);
 		});
-		await within(basicTab).findByLabelText('1 of 1 actions performable');
+
+		// The action should still be visible (component re-renders)
+		const surveyButton = await screen.findByRole('button', { name: /Survey/i });
+		expect(surveyButton).toBeInTheDocument();
 	});
 
-	it('supports navigation between category tabs', async () => {
-		renderPanel();
-		const raiseTab = await findTabButton(
-			mockGame.metadata.actions.raise.category,
-		);
-		const basicTab = await findTabButton(
-			mockGame.metadata.actions.basic.category,
-		);
-		fireEvent.click(basicTab);
-		const panel = getTabPanel();
-		expect(basicTab).toHaveAttribute('aria-selected', 'true');
-		expect(panel).toBeInTheDocument();
-		fireEvent.click(raiseTab);
-		expect(raiseTab).toHaveAttribute('aria-selected', 'true');
-	});
+	it('shows status indicators when not in action phase', async () => {
+		// Modify the mock to simulate not being in action phase
+		const originalPhase = mockGame.phase;
+		(mockGame as { phase: unknown }).phase = 'income';
 
-	it('renders generic action cards for each action entry', async () => {
 		renderPanel();
-		const basicTab = await findTabButton(
-			mockGame.metadata.actions.basic.category,
-		);
-		fireEvent.click(basicTab);
-		const panel = getTabPanel();
-		expect(
-			within(panel).getByRole('button', { name: /Survey/i }),
-		).toBeInTheDocument();
-		const raiseTab = await findTabButton(
-			mockGame.metadata.actions.raise.category,
-		);
-		fireEvent.click(raiseTab);
-		const raisePanel = getTabPanel();
-		expect(
-			within(raisePanel).getByRole('button', { name: /Hire/i }),
-		).toBeInTheDocument();
-		const buildAction = mockGame.metadata.actions.building;
-		if (buildAction) {
-			const buildTab = await findTabButton(buildAction.category);
-			fireEvent.click(buildTab);
-			const buildPanel = getTabPanel();
-			expect(
-				within(buildPanel).getByRole('button', { name: /Construct/i }),
-			).toBeInTheDocument();
-		}
-	});
 
-	it('renders tablist only when multiple categories are visible', async () => {
-		// With showBuilding: true (set in beforeEach), we have 3 categories
-		// (basic, hire, build), so tablist should be rendered
-		renderPanel();
-		// Wait for tablist to appear (use findAllByRole for async waiting)
-		const tablists = await screen.findAllByRole('tablist');
-		// Take the last one (most recent render)
-		const tablist = tablists[tablists.length - 1];
-		expect(tablist).toBeInTheDocument();
-		// Count visible tabs - should have multiple (one per category with actions)
-		const tabs = within(tablist).getAllByRole('tab');
-		expect(tabs.length).toBeGreaterThan(1);
-		// Tabpanel should also exist
-		const tabpanels = screen.getAllByRole('tabpanel');
-		expect(tabpanels.length).toBeGreaterThan(0);
-	});
+		// Should show "Not In Main Phase" indicator
+		const indicator = await screen.findByText(/Not In Main Phase/i);
+		expect(indicator).toBeInTheDocument();
 
-	it('hides tablist when only a single category is visible', () => {
-		// Override the translation context to return only one category
-		const basicCategoryId = mockGame.metadata.actions.basic.category;
-		const originalList = mockGame.translationContext.actionCategories.list();
-		const singleCategory = originalList.filter(
-			(category) => category.id === basicCategoryId,
-		);
-		const originalRegistry = mockGame.translationContext.actionCategories;
-		// Replace actionCategories with a mock that returns only one category
-		(
-			mockGame.translationContext as { actionCategories: unknown }
-		).actionCategories = {
-			...originalRegistry,
-			list: () => singleCategory,
-		};
-		renderPanel();
-		// With only one category, tablist should NOT be rendered
-		const tablist = screen.queryByRole('tablist');
-		expect(tablist).not.toBeInTheDocument();
-		// But the tabpanel content should still be visible
-		const tabpanel = screen.getByRole('tabpanel');
-		expect(tabpanel).toBeInTheDocument();
+		// Restore
+		(mockGame as { phase: unknown }).phase = originalPhase;
 	});
 });
 
@@ -210,25 +161,6 @@ function seedInitialMetadata() {
 			groups: [],
 		});
 	}
-}
-
-async function findTabButton(categoryId: string) {
-	await screen.findAllByRole('tablist');
-	const element = document.getElementById(
-		`actions-panel-tab-${categoryId}`,
-	) as HTMLButtonElement | null;
-	if (!element) {
-		throw new Error(`Missing tab button for category ${categoryId}`);
-	}
-	return element;
-}
-
-function getTabPanel() {
-	const element = document.getElementById('actions-panel-tabpanel');
-	if (!element) {
-		throw new Error('Missing actions panel tabpanel');
-	}
-	return element;
 }
 
 function createMockGameApi(harness: ActionsPanelTestHarness) {

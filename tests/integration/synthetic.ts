@@ -2,9 +2,11 @@ import { createEngine } from '@kingdom-builder/engine';
 import {
 	Registry,
 	actionSchema,
+	actionMetaCategorySchema,
 	buildingSchema,
 	developmentSchema,
 	type ActionConfig,
+	type ActionMetaCategoryConfig,
 	type BuildingConfig,
 	type DevelopmentConfig,
 	type StartConfig,
@@ -29,54 +31,72 @@ export function createSyntheticContext() {
 	const startAp = 3;
 
 	const actionsReg = new Registry<ActionConfig>(actionSchema);
+	const actionMetaCategories = new Registry<ActionMetaCategoryConfig>(
+		actionMetaCategorySchema,
+	);
 	const actions: ActionConfig[] = [
 		{
 			id: 'a1',
 			name: 'a1',
-			baseCosts: { [costResourceId]: 1 },
 			metaCategory: 'meta:commands',
-			effects: [
-				{
-					type: 'resource',
-					method: 'add',
-					params: {
-						resourceId: gainResourceId,
-						change: { type: 'amount', amount: 1 },
-					},
+			free: true,
+			tiers: {
+				'1': {
+					costs: { [costResourceId]: 1 },
+					effects: [
+						{
+							type: 'resource',
+							method: 'add',
+							params: {
+								resourceId: gainResourceId,
+								change: { type: 'amount', amount: 1 },
+							},
+						},
+					],
 				},
-			],
+			},
 		},
 		{
 			id: 'a2',
 			name: 'a2',
-			baseCosts: { [costResourceId]: 1 },
 			metaCategory: 'meta:commands',
-			effects: [
-				{
-					type: 'resource',
-					method: 'add',
-					params: {
-						resourceId: gainResourceId,
-						change: { type: 'amount', amount: 2 },
-					},
+			free: true,
+			tiers: {
+				'1': {
+					costs: { [costResourceId]: 1 },
+					effects: [
+						{
+							type: 'resource',
+							method: 'add',
+							params: {
+								resourceId: gainResourceId,
+								change: { type: 'amount', amount: 2 },
+							},
+						},
+					],
 				},
-			],
+			},
 		},
 		{
 			id: 'a3',
 			name: 'a3',
-			baseCosts: { [costResourceId]: 1 },
 			metaCategory: 'meta:commands',
-			effects: [
-				{
-					type: 'resource',
-					method: 'add',
-					params: {
-						resourceId: gainResourceId,
-						change: { type: 'amount', amount: 3 },
-					},
+			free: true,
+			tiers: {
+				'1': {
+					costs: { [costResourceId]: 1 },
+					effects: [
+						{
+							type: 'resource',
+							method: 'add',
+							params: {
+								resourceId: gainResourceId,
+								change: { type: 'amount', amount: 3 },
+							},
+						},
+					],
 				},
-			],
+			},
 		},
 	];
 	actions.forEach((a) => actionsReg.add(a.id, a));
@@ -161,6 +181,7 @@ export function createSyntheticContext() {
 
 	const engineContext = createEngine({
 		actions: actionsReg,
+		actionMetaCategories,
 		buildings,
 		developments,
 		phases,

@@ -8,13 +8,26 @@ describe('land:till effect', () => {
 	it('tills the specified land and marks it as tilled', () => {
 		const content = createContentFactory();
 		const tillAction = content.action({
-			locked: true,
-			effects: [
-				{ type: 'land', method: LandMethods.TILL, params: { landId: 'A-L2' } },
-			],
+			tiers: {
+				'1': {
+					effects: [
+						{
+							type: 'land',
+							method: LandMethods.TILL,
+							params: { landId: 'A-L2' },
+						},
+					],
+				},
+			},
 		});
 		const engineContext = createTestEngine({ actions: content.actions });
-		engineContext.activePlayer.actions.add(tillAction.id);
+		// Mark action as available (not locked, not pool-locked)
+		engineContext.activePlayer.actionStates[tillAction.id] = {
+			locked: false,
+			poolLocked: false,
+			currentTier: 1,
+			exhausted: false,
+		};
 		engineContext.activePlayer.resourceValues[CResource.cp] = 10;
 		const land = engineContext.activePlayer.lands[1];
 		const before = land.slotsMax;
@@ -30,13 +43,25 @@ describe('land:till effect', () => {
 	it('throws if the land is already tilled', () => {
 		const content = createContentFactory();
 		const tillAction = content.action({
-			locked: true,
-			effects: [
-				{ type: 'land', method: LandMethods.TILL, params: { landId: 'A-L2' } },
-			],
+			tiers: {
+				'1': {
+					effects: [
+						{
+							type: 'land',
+							method: LandMethods.TILL,
+							params: { landId: 'A-L2' },
+						},
+					],
+				},
+			},
 		});
 		const engineContext = createTestEngine({ actions: content.actions });
-		engineContext.activePlayer.actions.add(tillAction.id);
+		engineContext.activePlayer.actionStates[tillAction.id] = {
+			locked: false,
+			poolLocked: false,
+			currentTier: 1,
+			exhausted: false,
+		};
 		engineContext.activePlayer.resourceValues[CResource.cp] = 10;
 		performAction(tillAction.id, engineContext);
 		expect(() => performAction(tillAction.id, engineContext)).toThrow(
@@ -47,11 +72,19 @@ describe('land:till effect', () => {
 	it('tills the first available land when no id is given', () => {
 		const content = createContentFactory();
 		const tillAction = content.action({
-			locked: true,
-			effects: [{ type: 'land', method: LandMethods.TILL }],
+			tiers: {
+				'1': {
+					effects: [{ type: 'land', method: LandMethods.TILL }],
+				},
+			},
 		});
 		const engineContext = createTestEngine({ actions: content.actions });
-		engineContext.activePlayer.actions.add(tillAction.id);
+		engineContext.activePlayer.actionStates[tillAction.id] = {
+			locked: false,
+			poolLocked: false,
+			currentTier: 1,
+			exhausted: false,
+		};
 		engineContext.activePlayer.resourceValues[CResource.cp] = 10;
 		performAction(tillAction.id, engineContext);
 		const tilledCount = engineContext.activePlayer.lands.filter(

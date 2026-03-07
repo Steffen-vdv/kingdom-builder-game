@@ -58,6 +58,9 @@ export const ActionMethods = {
 	ADD: 'add',
 	REMOVE: 'remove',
 	PERFORM: 'perform',
+	UPGRADE: 'upgrade',
+	POOL_ADD: 'pool-add',
+	POOL_REMOVE: 'pool-remove',
 } as const;
 
 export const AttackMethods = {

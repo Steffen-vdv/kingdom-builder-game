@@ -85,10 +85,9 @@ describe('sessionSelectors', () => {
 	): SessionPlayerStateSnapshot => ({
 		id,
 		name: `Player ${id}`,
-		resources: { [primaryResource]: 5, ...(overrides.resources ?? {}) },
-		stats: { ...(overrides.stats ?? {}) },
 		resourceTouched: { ...(overrides.resourceTouched ?? {}) },
-		population: { ...(overrides.population ?? {}) },
+		values: { [primaryResource]: 5, ...(overrides.values ?? {}) },
+		resourceBounds: { ...(overrides.resourceBounds ?? {}) },
 		lands: overrides.lands ?? [
 			{
 				id: `${id}-L1`,
@@ -107,7 +106,8 @@ describe('sessionSelectors', () => {
 		],
 		buildings: overrides.buildings ?? [],
 		actions: overrides.actions ?? [],
-		resourceSources: overrides.resourceSources ?? {},
+		actionStates: overrides.actionStates ?? {},
+		metaCategoryBindingSpent: overrides.metaCategoryBindingSpent ?? {},
 		skipPhases: overrides.skipPhases ?? {},
 		skipSteps: overrides.skipSteps ?? {},
 		passives: overrides.passives ?? [],

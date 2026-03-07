@@ -141,8 +141,10 @@ export function getBuildActionId(
 	buildingId: string,
 ) {
 	for (const [id, def] of engineContext.actions.entries()) {
+		// With tier migration, effects are in tiers['1'].effects
+		const effects = def.tiers?.['1']?.effects ?? [];
 		const effect = findEffect(
-			def.effects,
+			effects,
 			(e) => e.type === 'building' && e.method === 'add',
 		);
 		if (!effect) {

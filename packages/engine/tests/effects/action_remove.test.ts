@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { performAction, getActionCosts, advance } from '../../src';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '@kingdom-builder/testing';
@@ -9,31 +9,48 @@ import type { EngineContext } from '../../src/context';
 describe('action:remove effect', () => {
 	it('removes an action', () => {
 		const content = createContentFactory();
+		// Action starts unlocked
 		const extra = content.action();
 		const remove = content.action({
-			effects: [{ type: 'action', method: 'remove', params: { id: extra.id } }],
+			tiers: {
+				'1': {
+					effects: [
+						{ type: 'action', method: 'remove', params: { id: extra.id } },
+					],
+				},
+			},
 		});
 		const engineContext = createTestEngine(content);
 		while (engineContext.game.currentPhase !== PhaseId.Main) {
 			advance(engineContext);
 		}
-		engineContext.activePlayer.actions.add(extra.id);
+		// Ensure action starts unlocked
+		engineContext.activePlayer.actionStates[extra.id] = {
+			locked: false,
+			poolLocked: false,
+			currentTier: 1,
+			exhausted: false,
+		};
 		const cost = getActionCosts(remove.id, engineContext);
 		engineContext.activePlayer.resourceValues[CResource.cp] =
 			cost[CResource.cp] ?? 0;
 		performAction(remove.id, engineContext);
-		expect(engineContext.activePlayer.actions.has(extra.id)).toBe(false);
+		// After remove, action should be locked
+		expect(engineContext.activePlayer.actionStates[extra.id]?.locked).toBe(
+			true,
+		);
 	});
 
-	it('floors multiplier values when deleting actions repeatedly', () => {
+	it('floors multiplier values when locking actions repeatedly', () => {
 		const content = createContentFactory();
 		const extra = content.action();
-		const deleteSpy = vi.fn();
+		// actionStates is modified directly by the effect handler
+		const actionStates: Record<string, { locked: boolean }> = {
+			[extra.id]: { locked: false },
+		};
 		const context = {
 			activePlayer: {
-				actions: {
-					delete: deleteSpy,
-				},
+				actionStates,
 			},
 		} as unknown as EngineContext;
 		const effect: EffectDef = {
@@ -42,16 +59,14 @@ describe('action:remove effect', () => {
 			params: { id: extra.id },
 		};
 		actionRemove(effect, context, 2.3);
-		expect(deleteSpy).toHaveBeenCalledTimes(2);
-		expect(deleteSpy).toHaveBeenCalledWith(extra.id);
+		// Effect sets locked = true (runs 2 times but result is same)
+		expect(actionStates[extra.id]?.locked).toBe(true);
 	});
 
 	it('throws when action identifiers are missing', () => {
 		const context = {
 			activePlayer: {
-				actions: {
-					delete: vi.fn(),
-				},
+				actionStates: {},
 			},
 		} as unknown as EngineContext;
 		expect(() =>

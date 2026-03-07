@@ -30,6 +30,15 @@ function nextId(prefix: string) {
 	return `${prefix}_${seq}`;
 }
 
+/**
+ * Legacy action definition format (for backward compatibility in tests).
+ * Accepts baseCosts and effects at root level and converts to tiers.
+ */
+export interface LegacyActionDefinition extends Partial<ActionConfig> {
+	baseCosts?: Record<string, number>;
+	effects?: Array<{ type: string; method: string; params?: unknown }>;
+}
+
 export interface ContentFactory {
 	categories: Registry<ContentActionCategoryConfig>;
 	actionMetaCategories: Registry<ActionMetaCategoryConfig>;
@@ -39,7 +48,7 @@ export interface ContentFactory {
 	category(
 		definition?: Partial<ContentActionCategoryConfig>,
 	): ContentActionCategoryConfig;
-	action(definition?: Partial<ActionConfig>): ActionConfig;
+	action(definition?: LegacyActionDefinition): ActionConfig;
 	building(definition?: Partial<BuildingConfig>): BuildingConfig;
 	development(definition?: Partial<DevelopmentConfig>): DevelopmentConfig;
 }
@@ -96,17 +105,31 @@ export function createContentFactory(
 		return built;
 	}
 
-	function action(definition: Partial<ActionConfig> = {}): ActionConfig {
+	function action(definition: LegacyActionDefinition = {}): ActionConfig {
 		const id = definition.id ?? nextId('action');
-		const built = {
+
+		// Handle legacy format: convert root-level baseCosts/effects to tiers
+		let tierConfig = definition.tiers;
+		if (!tierConfig) {
+			const legacyCosts = definition.baseCosts;
+			const legacyEffects = (definition.effects ??
+				[]) as ActionConfig['tiers']['1']['effects'];
+			tierConfig = {
+				'1': {
+					...(legacyCosts ? { costs: legacyCosts } : {}),
+					effects: legacyEffects,
+				},
+			} as ActionConfig['tiers'];
+		}
+
+		const built: ActionConfig = {
 			id,
 			name: definition.name ?? id,
 			icon: definition.icon,
-			baseCosts: definition.baseCosts ?? {},
-			requirements: definition.requirements ?? [],
-			effects: definition.effects ?? [],
+			tiers: tierConfig,
 			system: definition.system,
 			locked: definition.locked,
+			oneTime: definition.oneTime,
 			// metaCategory is required by the action registry schema
 			metaCategory: MetaCategory.Commands,
 			// In isolated mode, actions are free by default to avoid CP

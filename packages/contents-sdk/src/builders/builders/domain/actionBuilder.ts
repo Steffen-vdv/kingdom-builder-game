@@ -1,5 +1,6 @@
 import type {
 	ActionEffect,
+	ActionTiersConfig,
 	EffectConfig,
 	RequirementConfig,
 } from '@kingdom-builder/protocol';
@@ -13,11 +14,15 @@ type ActionBuilderConfig = ActionDef;
 
 export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	private readonly effectGroupIds = new Set<string>();
+	private readonly baseCosts: Record<string, number> = {};
+	private readonly effectsList: ActionEffect[] = [];
+	private readonly requirementsList: RequirementConfig[] = [];
 	private metaCategorySet = false;
 
 	constructor() {
 		// metaCategory is validated at build() time
-		super({ effects: [] } as unknown as ActionBuilderConfig, 'Action');
+		// tiers will be constructed from flat inputs during build()
+		super({ tiers: {} } as unknown as ActionBuilderConfig, 'Action');
 	}
 
 	/**
@@ -51,20 +56,18 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	}
 
 	cost(key: ResourceKey, amount: number) {
-		this.config.baseCosts = this.config.baseCosts || {};
-		this.config.baseCosts[key] = amount;
+		this.baseCosts[key] = amount;
 		return this;
 	}
 
 	requirement(req: RequirementConfig | RequirementBuilder) {
 		const built = req instanceof RequirementBuilder ? req.build() : req;
-		this.config.requirements = this.config.requirements || [];
-		this.config.requirements.push(built);
+		this.requirementsList.push(built);
 		return this;
 	}
 
 	effect(effect: EffectConfig) {
-		this.config.effects.push(effect);
+		this.effectsList.push(effect);
 		return this;
 	}
 
@@ -84,7 +87,7 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 			);
 		}
 		this.effectGroupIds.add(built.id);
-		this.config.effects.push(built as ActionEffect);
+		this.effectsList.push(built as ActionEffect);
 		return this;
 	}
 
@@ -130,6 +133,21 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 				'Action is missing metaCategory(). Call metaCategory() before build().',
 			);
 		}
+
+		// Build tier-1 config from flat inputs
+		const tiers: ActionTiersConfig = {
+			1: {
+				effects: [...this.effectsList],
+				...(Object.keys(this.baseCosts).length > 0
+					? { costs: { ...this.baseCosts } }
+					: {}),
+				...(this.requirementsList.length > 0
+					? { requirements: [...this.requirementsList] }
+					: {}),
+			},
+		};
+		this.config.tiers = tiers;
+
 		return super.build();
 	}
 }

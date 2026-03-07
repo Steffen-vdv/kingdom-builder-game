@@ -16,12 +16,12 @@ function createActionFixtures() {
 	const performDevelopment = content.action({
 		id: 'perform-development',
 		name: 'Perform Development',
-		effects: [],
+		tiers: { '1': { effects: [] } },
 	});
 	const rallyTroops = content.action({
 		id: 'rally-troops',
 		name: 'Rally Troops',
-		effects: [],
+		tiers: { '1': { effects: [] } },
 	});
 
 	const installOption: ActionEffectGroupOption = {
@@ -53,21 +53,25 @@ function createActionFixtures() {
 	const action = content.action({
 		id: 'resolve-effects-action',
 		name: 'Resolve Effects',
-		effects: [
-			{
-				type: 'resource',
-				method: 'add',
-				params: {
-					amount: '$amount',
-					resourceId: '$resourceId',
-					note: 'base-effect',
-				},
-				meta: {
-					tokens: ['$logToken', { label: '$logLabel' }],
-				},
+		tiers: {
+			'1': {
+				effects: [
+					{
+						type: 'resource',
+						method: 'add',
+						params: {
+							amount: '$amount',
+							resourceId: '$resourceId',
+							note: 'base-effect',
+						},
+						meta: {
+							tokens: ['$logToken', { label: '$logLabel' }],
+						},
+					},
+					group,
+				],
 			},
-			group,
-		],
+		},
 	});
 
 	return { action, group, installOption, rallyOption };

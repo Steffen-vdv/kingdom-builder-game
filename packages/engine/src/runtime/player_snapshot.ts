@@ -190,6 +190,15 @@ export function snapshotPlayer(
 		player,
 		context.resourceCatalog,
 	);
+	// Derive available actions from actionStates
+	// An action is available if it's neither content-locked nor pool-locked
+	const availableActions: string[] = [];
+	for (const [actionId, state] of Object.entries(player.actionStates)) {
+		if (!state.locked && !state.poolLocked) {
+			availableActions.push(actionId);
+		}
+	}
+
 	return {
 		id: player.id,
 		name: player.name,
@@ -199,7 +208,9 @@ export function snapshotPlayer(
 		resourceBounds,
 		lands: player.lands.map((land) => cloneLand(land)),
 		buildings: Array.from(player.buildings),
-		actions: Array.from(player.actions),
+		actions: availableActions,
+		actionStates: { ...player.actionStates },
+		metaCategoryBindingSpent: { ...player.metaCategoryBindingSpent },
 		skipPhases: cloneSkipPhases(player.skipPhases),
 		skipSteps: cloneSkipSteps(player.skipSteps),
 		passives: clonePassives(context, player.id),

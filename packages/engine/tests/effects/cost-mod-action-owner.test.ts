@@ -9,10 +9,20 @@ describe('cost_mod owner scope', () => {
 	it('applies only to the player who added the modifier', () => {
 		const content = createContentFactory();
 		const firstActionDefinition = content.action({
-			baseCosts: { [CResource.gold]: 1 },
+			tiers: {
+				'1': {
+					costs: { [CResource.gold]: 1 },
+					effects: [],
+				},
+			},
 		});
 		const secondActionDefinition = content.action({
-			baseCosts: { [CResource.gold]: 1 },
+			tiers: {
+				'1': {
+					costs: { [CResource.gold]: 1 },
+					effects: [],
+				},
+			},
 		});
 		const engineContext = createTestEngine(content);
 		while (engineContext.game.currentPhase !== PhaseId.Main) {
@@ -39,10 +49,11 @@ describe('cost_mod owner scope', () => {
 			],
 			engineContext,
 		);
+		// Get base costs from tier config (access tiers directly)
 		const firstActionBaseCost =
-			firstActionDefinition.baseCosts[CResource.gold] ?? 0;
+			firstActionDefinition.tiers['1']?.costs?.[CResource.gold] ?? 0;
 		const secondActionBaseCost =
-			secondActionDefinition.baseCosts[CResource.gold] ?? 0;
+			secondActionDefinition.tiers['1']?.costs?.[CResource.gold] ?? 0;
 		const firstPlayerFirstActionCost =
 			getActionCosts(firstActionDefinition.id, engineContext)[CResource.gold] ??
 			0;

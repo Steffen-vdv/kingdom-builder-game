@@ -70,7 +70,7 @@ registerEffectFormatter('action', 'add', {
 		if (!id) {
 			return null;
 		}
-		const { label, system, locked } = getActionPresentation(id, context);
+		const { label } = getActionPresentation(id, context);
 		const card = describeContent('action', id, context);
 		return [
 			`Unlock Action: ${label}`,
@@ -78,7 +78,7 @@ registerEffectFormatter('action', 'add', {
 				title: label,
 				items: card,
 				_hoist: true,
-				...((system || locked) && { _desc: true }),
+				_desc: true,
 			},
 		];
 	},

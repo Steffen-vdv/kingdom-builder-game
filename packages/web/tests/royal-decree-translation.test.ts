@@ -83,7 +83,9 @@ function isActionEffectGroup(entry: unknown): entry is ActionEffectGroupEntry {
 function extractGroupOptions(
 	action: ActionConfig,
 ): RoyalDecreeActionInfo | undefined {
-	for (const entry of action.effects ?? []) {
+	// With tier migration, effects are in tiers['1'].effects
+	const effects = action.tiers?.['1']?.effects ?? [];
+	for (const entry of effects) {
 		if (!isActionEffectGroup(entry)) {
 			continue;
 		}

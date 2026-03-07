@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { advance, performAction } from '../../src';
 import { createTestEngine } from '../helpers';
 import { Resource as CResource } from '@kingdom-builder/contents';
+import type { EffectConfig } from '@kingdom-builder/protocol';
 
 interface EffectGroup {
 	id: string;
@@ -14,6 +15,17 @@ function isEffectGroup(effect: unknown): effect is EffectGroup {
 		effect !== null &&
 		Array.isArray((effect as { options?: unknown }).options)
 	);
+}
+
+// Helper to get all effects from an action's tiers
+function getAllEffectsFromAction(action: {
+	tiers: Record<string, { effects: EffectConfig[] }>;
+}): EffectConfig[] {
+	const effects: EffectConfig[] = [];
+	for (const tier of Object.values(action.tiers)) {
+		effects.push(...tier.effects);
+	}
+	return effects;
 }
 
 function toMain(engineContext: ReturnType<typeof createTestEngine>) {
@@ -33,8 +45,9 @@ describe('royal decree auto land targeting', () => {
 
 		const [actionId, royalDecree] = engineContext.actions
 			.entries()
-			.find(([, def]) => def.effects.some(isEffectGroup))!;
-		const group = royalDecree.effects.find(isEffectGroup)!;
+			.find(([, def]) => getAllEffectsFromAction(def).some(isEffectGroup))!;
+		const allEffects = getAllEffectsFromAction(royalDecree);
+		const group = allEffects.find(isEffectGroup)!;
 		const option = group.options[0]!;
 		const nestedAction = engineContext.actions.get(option.actionId);
 		if (!nestedAction) {
@@ -42,7 +55,8 @@ describe('royal decree auto land targeting', () => {
 				`Missing nested action definition for id "${option.actionId}".`,
 			);
 		}
-		const nestedDevelopmentEffect = nestedAction.effects.find(
+		const nestedActionEffects = getAllEffectsFromAction(nestedAction);
+		const nestedDevelopmentEffect = nestedActionEffects.find(
 			(candidate) =>
 				candidate.type === 'development' && candidate.method === 'add',
 		);

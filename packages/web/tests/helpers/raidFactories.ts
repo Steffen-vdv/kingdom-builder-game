@@ -95,6 +95,7 @@ function createBaseEngine() {
 	const factory = createContentFactory({ isolated: true });
 	const engineContext = createEngine({
 		actions: factory.actions,
+		actionMetaCategories: factory.actionMetaCategories,
 		buildings: factory.buildings,
 		developments: factory.developments,
 		populations: factory.populations,
@@ -124,6 +125,7 @@ function buildAction(
 		baseCosts: definition.baseCosts,
 		system: definition.system,
 		locked: definition.locked,
+		free: true, // Skip global AP cost for tests
 		effects,
 	});
 }

@@ -1,5 +1,13 @@
 import type { EffectHandler, EffectCostCollector } from '.';
 
+/**
+ * Effect handler for building:add.
+ * Adds a building to the player and runs its onBuild effects.
+ *
+ * Note: This handler no longer checks if the building is already built.
+ * Prevention of duplicate building is handled by the oneTime action property,
+ * which sets exhausted=true after the build action completes.
+ */
 export const buildingAdd: EffectHandler = (
 	effect,
 	context,
@@ -11,9 +19,6 @@ export const buildingAdd: EffectHandler = (
 	}
 	const iterations = Math.floor(multiplier);
 	for (let index = 0; index < iterations; index++) {
-		if (context.activePlayer.buildings.has(id)) {
-			throw new Error(`Building ${id} already built`);
-		}
 		context.activePlayer.buildings.add(id);
 		const building = context.buildings.get(id);
 		if (building.onBuild) {

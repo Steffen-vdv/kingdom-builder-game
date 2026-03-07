@@ -22,35 +22,48 @@ import {
 describe('action effect groups integration', () => {
 	function setup() {
 		const rewardAmount = 4;
+		// With tier migration, actions use tiers['1'] for costs and effects
 		const rewardAction: ActionConfig = {
 			id: 'reward_action',
 			name: 'Grant Gold',
-			baseCosts: {},
-			effects: [
-				{
-					type: 'resource',
-					method: 'add',
-					params: {
-						resourceId: Resource.gold,
-						change: { type: 'amount', amount: rewardAmount },
-					},
+			metaCategory: 'meta:commands',
+			free: true,
+			tiers: {
+				'1': {
+					costs: {},
+					effects: [
+						{
+							type: 'resource',
+							method: 'add',
+							params: {
+								resourceId: Resource.gold,
+								change: { type: 'amount', amount: rewardAmount },
+							},
+						},
+					],
 				},
-			],
+			},
 		};
 		const alternateAction: ActionConfig = {
 			id: 'mood_action',
 			name: 'Lift Morale',
-			baseCosts: {},
-			effects: [
-				{
-					type: 'resource',
-					method: 'add',
-					params: {
-						resourceId: Resource.happiness,
-						change: { type: 'amount', amount: 1 },
-					},
+			metaCategory: 'meta:commands',
+			free: true,
+			tiers: {
+				'1': {
+					costs: {},
+					effects: [
+						{
+							type: 'resource',
+							method: 'add',
+							params: {
+								resourceId: Resource.happiness,
+								change: { type: 'amount', amount: 1 },
+							},
+						},
+					],
 				},
-			],
+			},
 		};
 		const group: ActionEffectGroup = actionEffectGroup('reward_group')
 			.title('Select decree')
@@ -68,8 +81,14 @@ describe('action effect groups integration', () => {
 		const chooser: ActionConfig = {
 			id: 'royal_directive',
 			name: 'Royal directive',
-			baseCosts: {},
-			effects: [group],
+			metaCategory: 'meta:commands',
+			// Note: not free - test expects AP cost to be charged
+			tiers: {
+				'1': {
+					costs: {},
+					effects: [group],
+				},
+			},
 		};
 		const actions = new Registry<ActionConfig>();
 		actions.add(rewardAction.id, rewardAction);
@@ -80,7 +99,8 @@ describe('action effect groups integration', () => {
 			advance(engineContext);
 		}
 		const stored = engineContext.actions.get(chooser.id);
-		if (!stored.effects.some((effect) => 'options' in (effect as object))) {
+		const storedEffects = stored.tiers?.['1']?.effects ?? [];
+		if (!storedEffects.some((effect) => 'options' in (effect as object))) {
 			throw new Error('Test setup failed: action lacks effect group entry');
 		}
 		const unresolved = resolveActionEffects(stored);

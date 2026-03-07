@@ -62,9 +62,11 @@ describe('land till formatter', () => {
 	it('summarizes till action', () => {
 		const { context, registries } = createContext();
 		const slotDisplay = selectSlotDisplay(context.assets);
+		// With tier migration, effects are in tiers['1'].effects
 		const tillId = Array.from(registries.actions.keys()).find((actionId) => {
 			const action = registries.actions.get(actionId);
-			return action.effects?.some(
+			const effects = action.tiers?.['1']?.effects ?? [];
+			return effects.some(
 				(effect) => effect.type === 'land' && effect.method === 'till',
 			);
 		});

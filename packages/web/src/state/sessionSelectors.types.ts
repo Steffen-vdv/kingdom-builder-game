@@ -2,6 +2,7 @@ import type {
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
+	SessionActionState,
 	SessionPlayerStateSnapshot,
 } from '@kingdom-builder/protocol';
 
@@ -26,7 +27,10 @@ type SessionPlayerView = Omit<
 > & {
 	lands: SessionLandView[];
 	buildings: Set<string>;
+	/** @deprecated Use actionStates instead */
 	actions: Set<string>;
+	/** Action availability states keyed by action ID */
+	actionStates: Record<string, SessionActionState>;
 };
 type SessionActionOption = {
 	id: string;
@@ -35,8 +39,13 @@ type SessionActionOption = {
 	system?: boolean | undefined;
 	order?: number | undefined;
 	category?: string | undefined;
+	metaCategory: string;
 	focus?: unknown;
 	baseCosts?: Record<string, number | undefined> | undefined;
+	/** Current tier for this action (from player's actionStates) */
+	currentTier?: number;
+	/** Max tier available for this action */
+	maxTier?: number;
 };
 type SessionBuildingOption = {
 	id: string;

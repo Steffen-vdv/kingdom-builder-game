@@ -40,6 +40,50 @@ const actionMetaCategoryVisibilityTriggerSchema = z.enum([
 	'resource-touched',
 ]);
 
+/**
+ * Tier weights for pool fill mode. Maps tier number to relative weight.
+ * Keys are numeric strings that represent tier numbers.
+ */
+const tierWeightsSchema = z.record(z.string(), z.number());
+
+/**
+ * A threshold in the tier progression curve.
+ */
+const tierProgressionThresholdSchema = z.object({
+	/** Minimum binding resource spent to use this threshold */
+	bindingSpent: z.number(),
+	/** Tier weights at this threshold */
+	weights: tierWeightsSchema,
+});
+
+/**
+ * Tier progression curve fill mode for action pools.
+ */
+const tierProgressionCurveFillModeSchema = z.object({
+	type: z.literal('tier-progression-curve'),
+	thresholds: z.array(tierProgressionThresholdSchema).min(1).readonly(),
+});
+
+/**
+ * Fill mode configuration for action pools.
+ * Currently only supports tier-progression-curve.
+ */
+const poolFillModeSchema = tierProgressionCurveFillModeSchema;
+
+/**
+ * Pool configuration for meta-categories with controlled action availability.
+ */
+const actionMetaCategoryPoolSchema = z.object({
+	/** Number of actions to keep available in the pool */
+	size: z.number().int().min(1),
+	/** How to select actions for the pool */
+	fillMode: poolFillModeSchema,
+});
+
+export type ActionMetaCategoryPool = z.infer<
+	typeof actionMetaCategoryPoolSchema
+>;
+
 export const actionMetaCategorySchema = z.object({
 	id: z.string(),
 	label: z.string(),
@@ -56,6 +100,8 @@ export const actionMetaCategorySchema = z.object({
 	order: z.number(),
 	/** Optional sub-category IDs for grouping within this meta-category */
 	categoryIds: z.array(z.string()).readonly().optional(),
+	/** Optional pool configuration for controlled action availability */
+	pool: actionMetaCategoryPoolSchema.optional(),
 });
 
 export type ActionMetaCategoryConfig = z.infer<typeof actionMetaCategorySchema>;
@@ -108,13 +154,40 @@ export type ActionEffectGroupOption = z.infer<
 export type ActionEffectGroup = z.infer<typeof actionEffectGroupSchema>;
 export type ActionEffect = z.infer<typeof actionEffectSchema>;
 
+/**
+ * Configuration for a single tier of an action.
+ * Each tier has its own costs, effects, and requirements.
+ */
+const actionTierSchema = z.object({
+	/** Resource costs for this tier */
+	costs: costBagSchema.optional(),
+	/** Effects executed when this tier is performed */
+	effects: z.array(actionEffectSchema),
+	/** Requirements that must be met to perform this tier */
+	requirements: z.array(requirementSchema).optional(),
+});
+
+export type ActionTierConfig = z.infer<typeof actionTierSchema>;
+
+/**
+ * Map of tier numbers to tier configurations.
+ * Keys are numeric strings.
+ * Tier numbers must be positive integers and consecutive.
+ */
+const actionTiersSchema = z.record(z.string(), actionTierSchema);
+
+export type ActionTiersConfig = z.infer<typeof actionTiersSchema>;
+
 export const actionSchema = z.object({
 	id: z.string(),
 	name: z.string(),
 	icon: z.string().optional(),
-	baseCosts: costBagSchema.optional(),
-	requirements: z.array(requirementSchema).optional(),
-	effects: z.array(actionEffectSchema),
+	/**
+	 * Tier configurations for this action. Each action must have at least
+	 * one tier. Tier numbers must be consecutive positive integers.
+	 * The lowest defined tier is the starting tier for new players.
+	 */
+	tiers: actionTiersSchema,
 	/**
 	 * The meta-category this action belongs to. Determines cost model and
 	 * UI grouping. Required for all actions (system actions may use any).
@@ -139,6 +212,12 @@ export const actionSchema = z.object({
 	 * normal actions. Examples: plow, build actions, hire actions.
 	 */
 	locked: z.boolean().optional(),
+	/**
+	 * When true, the action locks after completing each tier and automatically
+	 * upgrades to the next tier. For pooled meta-categories, the action
+	 * returns to the candidate pool at the new tier.
+	 */
+	oneTime: z.boolean().optional(),
 	/**
 	 * When true, the action bypasses the global action cost (e.g., AP).
 	 * Only valid for system actions. Useful for initial setup actions that

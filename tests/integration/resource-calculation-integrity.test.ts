@@ -80,13 +80,15 @@ describe('Percent Modifier Serialization', () => {
 	it('transfer modifiers survive JSON serialization', () => {
 		const actions = createActionRegistry();
 		const plunderAction = actions.get(ActionId.plunder);
+		// With tier migration, effects are in tiers['1'].effects
+		const plunderEffects = plunderAction?.tiers?.['1']?.effects ?? [];
 
-		if (!plunderAction?.effects) {
+		if (plunderEffects.length === 0) {
 			throw new Error('Plunder action should have effects');
 		}
 
 		// Find the transfer effect
-		const transferEffect = plunderAction.effects.find(
+		const transferEffect = plunderEffects.find(
 			(effect) => effect.type === 'resource' && effect.method === 'transfer',
 		);
 

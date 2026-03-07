@@ -18,7 +18,18 @@ describe('Building placement integration', () => {
 		});
 		const player = engineContext.activePlayer;
 		// Unlock the build action (locked by default)
-		player.actions.add(buildActionId);
+		// With tier migration, use actionStates instead of player.actions
+		const actionState = player.actionStates[buildActionId];
+		if (actionState) {
+			actionState.locked = false;
+		} else {
+			player.actionStates[buildActionId] = {
+				locked: false,
+				poolLocked: false,
+				currentTier: 1,
+				exhausted: false,
+			};
+		}
 		for (const [resourceId, cost] of Object.entries(buildCosts)) {
 			player.resourceValues[resourceId] =
 				(player.resourceValues[resourceId] || 0) + (cost ?? 0);

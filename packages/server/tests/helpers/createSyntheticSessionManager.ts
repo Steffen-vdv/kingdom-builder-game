@@ -108,25 +108,28 @@ export function createSyntheticSessionManager(
 		system: true,
 		systemRole: SystemRole.INITIAL_SETUP,
 		free: true,
-		baseCosts: {},
-		effects: [
-			{
-				type: 'resource',
-				method: 'add',
-				params: {
-					resourceId: costResourceId,
-					change: { type: 'amount', amount: 1 },
-				},
+		tiers: {
+			'1': {
+				effects: [
+					{
+						type: 'resource',
+						method: 'add',
+						params: {
+							resourceId: costResourceId,
+							change: { type: 'amount', amount: 1 },
+						},
+					},
+					{
+						type: 'resource',
+						method: 'add',
+						params: {
+							resourceId: cpResourceId,
+							change: { type: 'amount', amount: 5 },
+						},
+					},
+				],
 			},
-			{
-				type: 'resource',
-				method: 'add',
-				params: {
-					resourceId: cpResourceId,
-					change: { type: 'amount', amount: 5 },
-				},
-			},
-		],
+		},
 	});
 
 	// Compensation action (empty for synthetic tests)
@@ -137,8 +140,9 @@ export function createSyntheticSessionManager(
 		system: true,
 		systemRole: SystemRole.COMPENSATION,
 		free: true,
-		baseCosts: {},
-		effects: [],
+		tiers: {
+			'1': { effects: [] },
+		},
 	});
 	const phases: PhaseConfig[] = [
 		{ id: 'main', action: true, steps: [{ id: 'main' }] },
@@ -192,6 +196,8 @@ export function createSyntheticSessionManager(
 	const defaultPrimaryIconId = gainResourceId;
 	const engineOptions: NonNullable<SessionManagerOptions['engineOptions']> = {
 		actions: engineOverrides.actions ?? factory.actions,
+		actionMetaCategories:
+			engineOverrides.actionMetaCategories ?? factory.actionMetaCategories,
 		actionCategories: engineOverrides.actionCategories ?? factory.categories,
 		buildings: engineOverrides.buildings ?? factory.buildings,
 		developments: engineOverrides.developments ?? factory.developments,
