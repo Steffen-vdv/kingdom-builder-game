@@ -14,6 +14,7 @@ export default function App() {
 		currentGameKey,
 		isDarkMode,
 		isDevMode,
+		contentId,
 		isMusicEnabled,
 		isSoundEnabled,
 		isBackgroundAudioMuted,
@@ -49,6 +50,7 @@ export default function App() {
 					darkMode={isDarkMode}
 					onToggleDark={toggleDarkMode}
 					devMode={isDevMode}
+					contentId={contentId}
 					musicEnabled={isMusicEnabled}
 					onToggleMusic={toggleMusic}
 					soundEnabled={isSoundEnabled}

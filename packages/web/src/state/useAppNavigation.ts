@@ -24,6 +24,7 @@ export function useAppNavigation(): AppNavigationState {
 	const [currentGameKey, setCurrentGameKey] = useState(0);
 	const [isDarkMode, setIsDarkMode] = useDarkModePreference();
 	const [isDevMode, setIsDevMode] = useState(false);
+	const [contentId, setContentId] = useState<string | undefined>(undefined);
 	const [navigationState, setNavigationState] = useState<HistoryState | null>(
 		null,
 	);
@@ -202,6 +203,7 @@ export function useAppNavigation(): AppNavigationState {
 		const nextGameKey = currentGameKey + 1;
 		clearResumeSessionState(updateResumeHistory);
 		setIsDevMode(false);
+		setContentId(undefined);
 		setCurrentGameKey(nextGameKey);
 		setCurrentScreen(Screen.Game);
 		pushHistoryState(
@@ -224,6 +226,7 @@ export function useAppNavigation(): AppNavigationState {
 		const nextGameKey = currentGameKey + 1;
 		clearResumeSessionState(updateResumeHistory);
 		setIsDevMode(true);
+		setContentId('kingdom-builder:dev-mode');
 		setIsAutoAdvanceEnabled(true);
 		setCurrentGameKey(nextGameKey);
 		setCurrentScreen(Screen.Game);
@@ -298,6 +301,7 @@ export function useAppNavigation(): AppNavigationState {
 		currentGameKey,
 		isDarkMode,
 		isDevMode,
+		contentId,
 		isMusicEnabled,
 		isSoundEnabled,
 		isBackgroundAudioMuted,

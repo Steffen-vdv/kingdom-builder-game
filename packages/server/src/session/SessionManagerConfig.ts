@@ -86,9 +86,6 @@ export function buildSessionManagerConfig(
 			groups: RESOURCE_GROUP_REGISTRY,
 			categories: RESOURCE_CATEGORY_REGISTRY,
 		},
-		...(engineOverrides.systemActionIds
-			? { systemActionIds: engineOverrides.systemActionIds }
-			: {}),
 	};
 
 	const primaryIconId = primaryIconOverride ?? PRIMARY_ICON_ID ?? null;

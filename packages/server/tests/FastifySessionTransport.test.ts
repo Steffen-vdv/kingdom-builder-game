@@ -487,7 +487,7 @@ describe('FastifySessionTransport', () => {
 		const { sessionId } = createResponse.json() as {
 			sessionId: string;
 		};
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		if (!session) {
 			throw new Error('Session was not created.');
@@ -577,7 +577,7 @@ describe('FastifySessionTransport', () => {
 		const { sessionId } = createResponse.json() as {
 			sessionId: string;
 		};
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		if (!session) {
 			throw new Error('Session was not created.');
@@ -616,7 +616,7 @@ describe('FastifySessionTransport', () => {
 		const { sessionId } = createResponse.json() as {
 			sessionId: string;
 		};
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		if (!session) {
 			throw new Error('Session was not created.');
@@ -649,7 +649,7 @@ describe('FastifySessionTransport', () => {
 		const { sessionId } = createResponse.json() as {
 			sessionId: string;
 		};
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		if (!session) {
 			throw new Error('Session was not created.');
@@ -678,7 +678,7 @@ describe('FastifySessionTransport', () => {
 		const { sessionId } = createResponse.json() as {
 			sessionId: string;
 		};
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		const expected = { forecast: [{ id: 'main' }] };
 		const snapshotResp = await app.inject({

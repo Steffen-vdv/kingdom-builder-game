@@ -29,7 +29,7 @@ describe('SessionTransport advanceSession', () => {
 			idFactory: vi.fn().mockReturnValue('advance-session'),
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
@@ -51,11 +51,11 @@ describe('SessionTransport advanceSession', () => {
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		const conflict = new Error('advance failed');
 		if (session) {
 			vi.spyOn(session, 'enqueue').mockImplementation(() =>
@@ -119,7 +119,7 @@ describe('SessionTransport advanceSession', () => {
 			sessionManager: manager,
 			authMiddleware: limited,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: { authorization: 'Bearer creator-only' },
 		});

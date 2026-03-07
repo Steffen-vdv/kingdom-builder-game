@@ -9,9 +9,12 @@ import type { ContentPackage } from '@kingdom-builder/contents-sdk';
 import { createActionRegistry, ACTIONS, ACTION_INFO } from '../../actions';
 import { createBuildingRegistry, BUILDINGS, BUILDING_INFO } from '../../buildings';
 import { createDevelopmentRegistry, DEVELOPMENT_INFO } from '../../developments';
+import { createActionMetaCategoryRegistry } from '../../actionMetaCategories';
+import { createActionCategoryRegistry } from '../../actionCategories';
 import { PHASES } from '../../phases';
 import { RULES } from '../../rules';
 import { buildResourceCatalog } from '../../resource';
+import { PRIMARY_ICON_ID } from '../../startup';
 
 /**
  * Creates the base game content package.
@@ -23,13 +26,14 @@ export function createBasePackage(): ContentPackage {
 		name: 'Kingdom Builder',
 		description: 'The full Kingdom Builder experience',
 		actions: createActionRegistry(),
+		actionMetaCategories: createActionMetaCategoryRegistry(),
+		actionCategories: createActionCategoryRegistry(),
 		buildings: createBuildingRegistry(),
 		developments: createDevelopmentRegistry(),
-		resources: buildResourceCatalog(),
+		resourceCatalog: buildResourceCatalog(),
 		rules: RULES,
 		phases: PHASES,
-		startConfig: {}, // TODO: Add start config
-		winConditions: {}, // TODO: Add win conditions
+		primaryIconId: PRIMARY_ICON_ID,
 	};
 }
 

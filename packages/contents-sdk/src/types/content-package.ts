@@ -5,8 +5,34 @@
  * The engine/server loads the appropriate package based on contentId.
  */
 
-import type { Registry } from '@kingdom-builder/protocol';
+import type {
+	Registry,
+	ActionMetaCategoryConfig,
+	PhaseConfig,
+	RuleSet,
+} from '@kingdom-builder/protocol';
 import type { ActionDef, BuildingDef, DevelopmentDef } from './defs';
+import type { ActionCategoryConfig } from '../builders/builders';
+
+/**
+ * Resource catalog containing all resource-related registries.
+ * Uses flexible types to accommodate different resource catalog
+ * implementations.
+ */
+export interface ResourceCatalog {
+	readonly resources: {
+		readonly byId: Record<string, unknown>;
+		readonly ordered: readonly unknown[];
+	};
+	readonly groups: {
+		readonly byId: Record<string, unknown>;
+		readonly ordered?: readonly unknown[];
+	};
+	readonly categories?: {
+		readonly byId: Record<string, unknown>;
+		readonly ordered?: readonly unknown[];
+	};
+}
 
 /**
  * A content package contains all the game content for a specific mode.
@@ -25,39 +51,29 @@ export interface ContentPackage {
 	/** Action definitions registry */
 	readonly actions: Registry<ActionDef>;
 
+	/** Action meta-category definitions registry */
+	readonly actionMetaCategories: Registry<ActionMetaCategoryConfig>;
+
+	/** Action category definitions registry */
+	readonly actionCategories: Registry<ActionCategoryConfig>;
+
 	/** Building definitions registry */
 	readonly buildings: Registry<BuildingDef>;
 
 	/** Development definitions registry */
 	readonly developments: Registry<DevelopmentDef>;
 
-	/**
-	 * Resource definitions - games define their own resource structure.
-	 * The SDK doesn't prescribe the exact shape, allowing flexibility.
-	 */
-	readonly resources: unknown;
+	/** Resource catalog with resources, groups, and categories */
+	readonly resourceCatalog: ResourceCatalog;
 
-	/**
-	 * Game rules configuration.
-	 * The SDK doesn't prescribe the exact shape, allowing flexibility.
-	 */
-	readonly rules: unknown;
+	/** Game rules configuration */
+	readonly rules: RuleSet;
 
-	/**
-	 * Phase configuration.
-	 * The SDK doesn't prescribe the exact shape, allowing flexibility.
-	 */
-	readonly phases: unknown;
+	/** Phase configuration */
+	readonly phases: readonly PhaseConfig[];
 
-	/**
-	 * Start configuration for new games.
-	 */
-	readonly startConfig: unknown;
-
-	/**
-	 * Win conditions configuration.
-	 */
-	readonly winConditions?: unknown;
+	/** Primary icon ID for this content package */
+	readonly primaryIconId?: string;
 }
 
 /**

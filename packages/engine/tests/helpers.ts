@@ -10,12 +10,13 @@ import {
 	RESOURCE_GROUP_REGISTRY,
 	RESOURCE_CATEGORY_REGISTRY,
 } from '@kingdom-builder/contents';
-import type {
-	ActionConfig as ActionDef,
-	BuildingConfig as BuildingDef,
-	DevelopmentConfig as DevelopmentDef,
+import {
 	Registry,
-	RuleSet,
+	actionSchema,
+	type ActionConfig as ActionDef,
+	type BuildingConfig as BuildingDef,
+	type DevelopmentConfig as DevelopmentDef,
+	type RuleSet,
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../src/phases.ts';
 
@@ -53,29 +54,36 @@ type EngineOverrides = Partial<typeof BASE> & {
 };
 
 /**
- * No-op system action IDs used when skipping initial setup.
- * These actions don't exist, so no setup effects run.
+ * Creates a copy of the actions registry without system roles.
+ * This causes the engine to skip initial setup and compensation.
  */
-const SKIP_SETUP_ACTION_IDS = {
-	initialSetup: '__noop_initial_setup__',
-	initialSetupDevmode: '__noop_initial_setup_devmode__',
-	compensation: '__noop_compensation__',
-};
+function createActionsWithoutSystemRoles(
+	sourceActions: Registry<ActionDef>,
+): Registry<ActionDef> {
+	const registry = new Registry<ActionDef>(actionSchema);
+	for (const [id, action] of sourceActions.entries()) {
+		// Remove systemRole from system actions
+		if (action.systemRole) {
+			const { systemRole: _, ...actionWithoutRole } = action;
+			registry.add(id, actionWithoutRole);
+		} else {
+			registry.add(id, action);
+		}
+	}
+	return registry;
+}
 
 export function createTestEngine(overrides: EngineOverrides = {}) {
 	const { rules, skipInitialSetup = false, ...rest } = overrides;
+	const baseActions = rest.actions ?? ACTIONS;
 	const options = {
 		...BASE,
 		...rest,
 		rules: rules ?? RULES,
+		// When skipInitialSetup is true, use actions without system roles
+		actions: skipInitialSetup
+			? createActionsWithoutSystemRoles(baseActions)
+			: baseActions,
 	};
-	if (skipInitialSetup) {
-		// Provide fake action IDs that don't exist, so no setup effects run
-		(
-			options as typeof options & {
-				systemActionIds: typeof SKIP_SETUP_ACTION_IDS;
-			}
-		).systemActionIds = SKIP_SETUP_ACTION_IDS;
-	}
 	return createEngine(options);
 }

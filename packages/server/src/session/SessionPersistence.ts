@@ -35,6 +35,8 @@ export type ActionLogEntry =
  * Options used when creating a session, needed for replay.
  */
 export interface SessionCreationOptions {
+	/** Content package identifier used for this session */
+	contentId?: string;
 	devMode?: boolean;
 	config?: GameConfig;
 	playerNames?: Partial<Record<SessionPlayerId, string>>;

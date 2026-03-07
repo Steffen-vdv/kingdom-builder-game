@@ -28,13 +28,13 @@ describe('SessionTransport metadata snapshots', () => {
 		expect(snapshot.registries).toEqual(manager.getRegistries());
 	});
 
-	it('returns session metadata when a session id is provided', () => {
+	it('returns session metadata when a session id is provided', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});

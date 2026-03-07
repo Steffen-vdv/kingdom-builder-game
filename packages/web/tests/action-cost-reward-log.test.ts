@@ -13,7 +13,6 @@ import {
 	type SyntheticResourceKey,
 	SYNTHETIC_PHASE_IDS,
 	SYNTHETIC_ASSETS,
-	SKIP_SETUP_ACTION_IDS,
 	buildStartConfigEffects,
 } from './fixtures/syntheticTaxLog';
 import {
@@ -116,12 +115,12 @@ describe('action cost and reward logging', () => {
 		});
 		const engineContext = createEngine({
 			actions: scenario.factory.actions,
+			actionMetaCategories: scenario.factory.actionMetaCategories,
 			buildings: scenario.factory.buildings,
 			developments: scenario.factory.developments,
 			phases: scenario.phases,
 			rules: scenario.rules,
 			resourceCatalog: scenario.resourceCatalog,
-			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
 		runEffects(buildStartConfigEffects(scenario.start), engineContext);
 		engineContext.assets = SYNTHETIC_ASSETS;

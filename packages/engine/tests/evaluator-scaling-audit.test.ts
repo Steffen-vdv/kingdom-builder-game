@@ -89,12 +89,7 @@ const FARM_INCOME = getFarmIncome();
 // ============================================================================
 
 function createMinimalEngine() {
-	const SKIP_SETUP_ACTION_IDS = {
-		initialSetup: '__scaling_test_noop_initial__',
-		initialSetupDevmode: '__scaling_test_noop_devmode__',
-		compensation: '__scaling_test_noop_compensation__',
-	};
-
+	// Empty actions registry - no systemRole actions, so setup is skipped
 	return createEngine({
 		actions: new Registry<ActionConfig>(),
 		buildings: new Registry(),
@@ -105,7 +100,6 @@ function createMinimalEngine() {
 			resources: RESOURCE_REGISTRY,
 			groups: RESOURCE_GROUP_REGISTRY,
 		},
-		systemActionIds: SKIP_SETUP_ACTION_IDS,
 	});
 }
 

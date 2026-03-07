@@ -22,4 +22,5 @@ export type {
 	ContentPackage,
 	ContentPackageFactory,
 	ContentPackageLoader,
+	ResourceCatalog,
 } from './content-package';

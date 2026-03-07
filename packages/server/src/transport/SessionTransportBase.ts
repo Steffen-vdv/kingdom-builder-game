@@ -81,18 +81,22 @@ export class SessionTransportBase {
 		});
 	}
 
-	public createSession(request: TransportRequest): SessionCreateResponse {
+	public async createSession(
+		request: TransportRequest,
+	): Promise<SessionCreateResponse> {
 		return this.sessionCreationHandler.handle({
 			request,
 			requireAuthorization: (role) => this.requireAuthorization(request, role),
 		});
 	}
 
-	public getSessionState(request: TransportRequest): SessionStateResponse {
+	public async getSessionState(
+		request: TransportRequest,
+	): Promise<SessionStateResponse> {
 		const sessionId = this.parseSessionIdentifier(request.body);
 		this.requireAuthorization(request, 'session:advance');
-		this.requireSession(sessionId);
-		const snapshot = this.sessionManager.getSnapshot(sessionId);
+		await this.requireSession(sessionId);
+		const snapshot = await this.sessionManager.getSnapshot(sessionId);
 		if (!snapshot) {
 			throw new TransportError(
 				'NOT_FOUND',
@@ -125,7 +129,9 @@ export class SessionTransportBase {
 		});
 	}
 
-	public setDevMode(request: TransportRequest): SessionSetDevModeResponse {
+	public async setDevMode(
+		request: TransportRequest,
+	): Promise<SessionSetDevModeResponse> {
 		this.requireAuthorization(request, 'session:advance');
 		const parsed = sessionSetDevModeRequestSchema.safeParse(request.body);
 		if (!parsed.success) {
@@ -136,11 +142,11 @@ export class SessionTransportBase {
 			);
 		}
 		const { sessionId, enabled } = parsed.data;
-		const session = this.requireSession(sessionId);
+		const session = await this.requireSession(sessionId);
 		session.setDevMode(enabled);
 		// Record the dev mode change for persistence
 		this.sessionManager.recordDevModeChange(sessionId, enabled);
-		const snapshot = this.sessionManager.getSnapshot(sessionId);
+		const snapshot = await this.sessionManager.getSnapshot(sessionId);
 		if (!snapshot) {
 			throw new TransportError(
 				'NOT_FOUND',
@@ -152,9 +158,9 @@ export class SessionTransportBase {
 		);
 	}
 
-	public updatePlayerName(
+	public async updatePlayerName(
 		request: TransportRequest,
-	): SessionUpdatePlayerNameResponse {
+	): Promise<SessionUpdatePlayerNameResponse> {
 		return this.sessionPlayerNameHandler.handle({
 			request,
 			requireAuthorization: (role) => this.requireAuthorization(request, role),
@@ -208,11 +214,11 @@ export class SessionTransportBase {
 		}
 		return parsed.data;
 	}
-	protected generateSessionId(): string {
+	protected async generateSessionId(): Promise<string> {
 		let attempts = 0;
 		while (attempts < 10) {
 			const sessionId = this.idFactory();
-			if (!this.sessionManager.getSession(sessionId)) {
+			if (!(await this.sessionManager.getSession(sessionId))) {
 				return sessionId;
 			}
 			attempts += 1;
@@ -222,8 +228,8 @@ export class SessionTransportBase {
 			'Failed to generate a unique session identifier.',
 		);
 	}
-	protected requireSession(sessionId: string): EngineSession {
-		const session = this.sessionManager.getSession(sessionId);
+	protected async requireSession(sessionId: string): Promise<EngineSession> {
+		const session = await this.sessionManager.getSession(sessionId);
 		if (!session) {
 			throw new TransportError(
 				'NOT_FOUND',

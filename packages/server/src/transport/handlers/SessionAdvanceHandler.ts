@@ -14,7 +14,7 @@ import type { AuthContext, AuthRole } from '../../auth/AuthContext.js';
 
 type AuthorizationCallback = (role: AuthRole) => AuthContext;
 
-type RequireSession = (sessionId: string) => EngineSession;
+type RequireSession = (sessionId: string) => Promise<EngineSession>;
 
 type BuildStateResponse = (
 	sessionId: string,
@@ -58,7 +58,7 @@ export class SessionAdvanceHandler {
 			);
 		}
 		const { sessionId } = parsed.data;
-		const session = this.requireSession(sessionId);
+		const session = await this.requireSession(sessionId);
 		try {
 			const result = await session.enqueue(() => {
 				const advance = session.advancePhase();

@@ -63,7 +63,7 @@ export class SessionActionExecutionHandler {
 			params,
 			'Invalid action request.',
 		);
-		const session = this.sessionManager.getSession(sessionId);
+		const session = await this.sessionManager.getSession(sessionId);
 		if (!session) {
 			const response = actionExecuteErrorResponseSchema.parse({
 				status: 'error',

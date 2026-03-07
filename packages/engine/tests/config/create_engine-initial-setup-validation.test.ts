@@ -11,6 +11,7 @@ import {
 	RESOURCE_GROUP_REGISTRY,
 	RESOURCE_CATEGORY_REGISTRY,
 } from '@kingdom-builder/contents';
+import { SystemRole } from '@kingdom-builder/contents-sdk';
 import { Registry, actionSchema } from '@kingdom-builder/protocol';
 import type { ActionConfig } from '@kingdom-builder/protocol';
 
@@ -50,6 +51,7 @@ describe('createEngine initial setup validation', () => {
 				name: 'Invalid Setup',
 				metaCategory: MetaCategory.Commands,
 				system: true,
+				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
 				effects: [
 					{
@@ -64,17 +66,11 @@ describe('createEngine initial setup validation', () => {
 			};
 
 			const actions = createActionsRegistry(invalidSetupAction);
-			const systemActionIds = {
-				initialSetup: 'test_invalid_setup',
-				initialSetupDevmode: 'test_invalid_setup',
-				compensation: '__noop__',
-			};
 
 			expect(() =>
 				createEngine({
 					...baseConfig,
 					actions,
-					systemActionIds,
 				}),
 			).toThrowError(/unknown resource.*resource:nonexistent:fake/i);
 		});
@@ -86,6 +82,7 @@ describe('createEngine initial setup validation', () => {
 				name: 'Invalid Group Mutation',
 				metaCategory: MetaCategory.Commands,
 				system: true,
+				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
 				effects: [
 					{
@@ -100,17 +97,11 @@ describe('createEngine initial setup validation', () => {
 			};
 
 			const actions = createActionsRegistry(invalidSetupAction);
-			const systemActionIds = {
-				initialSetup: 'test_group_mutation',
-				initialSetupDevmode: 'test_group_mutation',
-				compensation: '__noop__',
-			};
 
 			expect(() =>
 				createEngine({
 					...baseConfig,
 					actions,
-					systemActionIds,
 				}),
 			).toThrowError(/cannot mutate group parent/i);
 		});
@@ -123,6 +114,7 @@ describe('createEngine initial setup validation', () => {
 				name: 'Missing Resource ID',
 				metaCategory: MetaCategory.Commands,
 				system: true,
+				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
 				effects: [
 					{
@@ -137,17 +129,11 @@ describe('createEngine initial setup validation', () => {
 			};
 
 			const actions = createActionsRegistry(invalidSetupAction);
-			const systemActionIds = {
-				initialSetup: 'test_missing_resource_id',
-				initialSetupDevmode: 'test_missing_resource_id',
-				compensation: '__noop__',
-			};
 
 			expect(() =>
 				createEngine({
 					...baseConfig,
 					actions,
-					systemActionIds,
 				}),
 			).toThrowError(/expected a non-empty resourceId/i);
 		});
@@ -158,6 +144,7 @@ describe('createEngine initial setup validation', () => {
 				name: 'Missing Params',
 				metaCategory: MetaCategory.Commands,
 				system: true,
+				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
 				effects: [
 					{
@@ -169,17 +156,11 @@ describe('createEngine initial setup validation', () => {
 			};
 
 			const actions = createActionsRegistry(invalidSetupAction);
-			const systemActionIds = {
-				initialSetup: 'test_missing_params',
-				initialSetupDevmode: 'test_missing_params',
-				compensation: '__noop__',
-			};
 
 			expect(() =>
 				createEngine({
 					...baseConfig,
 					actions,
-					systemActionIds,
 				}),
 			).toThrowError(/missing required params/i);
 		});
@@ -190,6 +171,7 @@ describe('createEngine initial setup validation', () => {
 				name: 'Invalid Amount',
 				metaCategory: MetaCategory.Commands,
 				system: true,
+				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
 				effects: [
 					{
@@ -204,17 +186,11 @@ describe('createEngine initial setup validation', () => {
 			};
 
 			const actions = createActionsRegistry(invalidSetupAction);
-			const systemActionIds = {
-				initialSetup: 'test_invalid_amount',
-				initialSetupDevmode: 'test_invalid_amount',
-				compensation: '__noop__',
-			};
 
 			expect(() =>
 				createEngine({
 					...baseConfig,
 					actions,
-					systemActionIds,
 				}),
 			).toThrowError(/expected numeric amount/i);
 		});
@@ -227,6 +203,7 @@ describe('createEngine initial setup validation', () => {
 				name: 'Non-System Action',
 				metaCategory: MetaCategory.Commands,
 				system: false, // Not a system action
+				systemRole: SystemRole.INITIAL_SETUP, // Has role but system=false
 				effects: [
 					{
 						type: 'resource',
@@ -240,17 +217,11 @@ describe('createEngine initial setup validation', () => {
 			};
 
 			const actions = createActionsRegistry(nonSystemAction);
-			const systemActionIds = {
-				initialSetup: 'test_non_system',
-				initialSetupDevmode: 'test_non_system',
-				compensation: '__noop__',
-			};
 
 			expect(() =>
 				createEngine({
 					...baseConfig,
 					actions,
-					systemActionIds,
 				}),
 			).toThrowError(/cannot run non-system action.*as system action/i);
 		});
@@ -264,6 +235,7 @@ describe('createEngine initial setup validation', () => {
 				name: 'Underflow Setup',
 				metaCategory: MetaCategory.Commands,
 				system: true,
+				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
 				effects: [
 					// Start with some gold
@@ -288,17 +260,11 @@ describe('createEngine initial setup validation', () => {
 			};
 
 			const actions = createActionsRegistry(underflowSetupAction);
-			const systemActionIds = {
-				initialSetup: 'test_underflow_setup',
-				initialSetupDevmode: 'test_underflow_setup',
-				compensation: '__noop__',
-			};
 
 			// This should NOT throw - bounds are clamped, not rejected
 			const ctx = createEngine({
 				...baseConfig,
 				actions,
-				systemActionIds,
 			});
 
 			// Gold should be clamped to lower bound (0), not negative
@@ -314,6 +280,7 @@ describe('createEngine initial setup validation', () => {
 				name: 'Unknown Development',
 				metaCategory: MetaCategory.Commands,
 				system: true,
+				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
 				effects: [
 					{
@@ -333,17 +300,11 @@ describe('createEngine initial setup validation', () => {
 			};
 
 			const actions = createActionsRegistry(invalidSetupAction);
-			const systemActionIds = {
-				initialSetup: 'test_unknown_development',
-				initialSetupDevmode: 'test_unknown_development',
-				compensation: '__noop__',
-			};
 
 			expect(() =>
 				createEngine({
 					...baseConfig,
 					actions,
-					systemActionIds,
 				}),
 			).toThrowError(/nonexistent_development/i);
 		});
@@ -354,6 +315,7 @@ describe('createEngine initial setup validation', () => {
 				name: 'Unknown Building',
 				metaCategory: MetaCategory.Commands,
 				system: true,
+				systemRole: SystemRole.INITIAL_SETUP,
 				free: true,
 				effects: [
 					{
@@ -365,17 +327,11 @@ describe('createEngine initial setup validation', () => {
 			};
 
 			const actions = createActionsRegistry(invalidSetupAction);
-			const systemActionIds = {
-				initialSetup: 'test_unknown_building',
-				initialSetupDevmode: 'test_unknown_building',
-				compensation: '__noop__',
-			};
 
 			expect(() =>
 				createEngine({
 					...baseConfig,
 					actions,
-					systemActionIds,
 				}),
 			).toThrowError(/nonexistent_building/i);
 		});

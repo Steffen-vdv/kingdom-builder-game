@@ -127,6 +127,13 @@ export const actionSchema = z.object({
 	 */
 	system: z.boolean().optional(),
 	/**
+	 * System role for engine-triggered actions. The engine finds system
+	 * actions by role (e.g., "initial-setup", "compensation") rather than
+	 * by ID. This allows content packages to provide different implementations
+	 * of the same role.
+	 */
+	systemRole: z.string().optional(),
+	/**
 	 * Locked actions are player actions that start unavailable but can be
 	 * unlocked via the action:add effect. Once unlocked, they behave like
 	 * normal actions. Examples: plow, build actions, hire actions.

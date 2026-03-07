@@ -10,12 +10,10 @@ import type { SessionResourceDefinition } from '@kingdom-builder/protocol/sessio
 import {
 	createSyntheticPlowContent,
 	SYNTHETIC_RESOURCES,
-	SYNTHETIC_RESOURCES,
 	SYNTHETIC_RESOURCE_KEYS,
 	SYNTHETIC_SLOT_INFO,
 	SYNTHETIC_LAND_INFO,
 	SYNTHETIC_PASSIVE_INFO,
-	SKIP_SETUP_ACTION_IDS,
 	buildStartConfigEffects,
 } from './fixtures/syntheticPlow';
 import {
@@ -112,13 +110,12 @@ describe('sub-action logging', () => {
 		const synthetic = createSyntheticPlowContent();
 		const engineContext = createEngine({
 			actions: synthetic.factory.actions,
+			actionMetaCategories: synthetic.factory.actionMetaCategories,
 			buildings: synthetic.factory.buildings,
 			developments: synthetic.factory.developments,
-			populations: synthetic.factory.populations,
 			phases: synthetic.phases,
 			rules: synthetic.rules,
 			resourceCatalog: synthetic.resourceCatalog,
-			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
 		runEffects(buildStartConfigEffects(synthetic.start), engineContext);
 		const baseAssets = createDefaultTranslationAssets();

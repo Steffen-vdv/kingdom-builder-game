@@ -36,7 +36,7 @@ const authorizedHeaders = {
 } satisfies Record<string, string>;
 
 describe('SessionTransport session state', () => {
-	it('returns session state snapshots', () => {
+	it('returns session state snapshots', async () => {
 		const { manager, actionId, costResourceId, gainResourceId } =
 			createSyntheticSessionManager();
 		const transport = new SessionTransport({
@@ -46,11 +46,11 @@ describe('SessionTransport session state', () => {
 				: undefined,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const state = transport.getSessionState({
+		const state = await transport.getSessionState({
 			body: { sessionId },
 			headers: authorizedHeaders,
 		});
@@ -68,7 +68,7 @@ describe('SessionTransport session state', () => {
 		});
 	});
 
-	it('throws when a session cannot be located', () => {
+	it('throws when a session cannot be located', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
@@ -77,14 +77,17 @@ describe('SessionTransport session state', () => {
 				: undefined,
 			authMiddleware: middleware,
 		});
-		const expectNotFound = () =>
+		await expect(
 			transport.getSessionState({
 				body: { sessionId: 'missing' },
 				headers: authorizedHeaders,
-			});
-		expect(expectNotFound).toThrow(TransportError);
+			}),
+		).rejects.toThrow(TransportError);
 		try {
-			expectNotFound();
+			await transport.getSessionState({
+				body: { sessionId: 'missing' },
+				headers: authorizedHeaders,
+			});
 		} catch (error) {
 			if (error instanceof TransportError) {
 				expect(error.code).toBe('NOT_FOUND');
@@ -92,18 +95,20 @@ describe('SessionTransport session state', () => {
 		}
 	});
 
-	it('validates session identifiers before fetching state', () => {
+	it('validates session identifiers before fetching state', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 		});
-		const attempt = () =>
+		await expect(
 			transport.getSessionState({
 				body: {},
-			});
-		expect(attempt).toThrow(TransportError);
+			}),
+		).rejects.toThrow(TransportError);
 		try {
-			attempt();
+			await transport.getSessionState({
+				body: {},
+			});
 		} catch (error) {
 			if (error instanceof TransportError) {
 				expect(error.code).toBe('INVALID_REQUEST');

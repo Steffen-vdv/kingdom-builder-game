@@ -1,16 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { createEngineSession } from '@kingdom-builder/engine';
 import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	PHASES,
-	RULES,
 	Resource,
 	getResourceId,
-	RESOURCE_REGISTRY,
-	RESOURCE_GROUP_REGISTRY,
 	ActionId,
+	createDevModePackage,
 } from '@kingdom-builder/contents';
 import { DevelopmentId } from '@kingdom-builder/contents/developments';
 import type { EffectConfig } from '@kingdom-builder/protocol';
@@ -21,10 +15,12 @@ import type { EffectConfig } from '@kingdom-builder/protocol';
 
 /**
  * Extract resource amounts from the dev mode initial setup action.
- * This parses the action definition to get the expected starting values.
+ * The dev-mode content package overrides initial_setup with dev resources.
  */
 function getDevModeStartingResources(): Map<string, number> {
-	const devModeAction = ACTIONS.get(ActionId.initial_setup_devmode);
+	const devModePackage = createDevModePackage();
+	// In dev-mode package, initial_setup has the dev resources
+	const devModeAction = devModePackage.actions.get(ActionId.initial_setup);
 	if (!devModeAction?.effects) {
 		throw new Error('Dev mode initial setup action not found');
 	}
@@ -47,13 +43,12 @@ function getDevModeStartingResources(): Map<string, number> {
 }
 
 /**
- * Count the number of a specific development type added by an action.
+ * Count the number of a specific development type added by the dev mode
+ * setup action.
  */
-function countDevelopmentsInAction(
-	actionId: string,
-	developmentId: string,
-): number {
-	const action = ACTIONS.get(actionId);
+function countDevelopmentsInDevModeSetup(developmentId: string): number {
+	const devModePackage = createDevModePackage();
+	const action = devModePackage.actions.get(ActionId.initial_setup);
 	if (!action?.effects) {
 		return 0;
 	}
@@ -71,25 +66,28 @@ function countDevelopmentsInAction(
 }
 
 const DEV_MODE_RESOURCES = getDevModeStartingResources();
-const DEV_MODE_HOUSE_COUNT = countDevelopmentsInAction(
-	ActionId.initial_setup_devmode,
+const DEV_MODE_HOUSE_COUNT = countDevelopmentsInDevModeSetup(
 	DevelopmentId.House,
 );
 
 describe('dev mode start configuration', () => {
-	it('applies content-driven overrides when dev mode is enabled', () => {
+	it('applies content-driven overrides when using dev-mode content package', () => {
+		// Load the dev-mode content package which has boosted starting resources
+		const devModeContent = createDevModePackage();
+
 		const session = createEngineSession({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			phases: PHASES,
-			rules: RULES,
-			resourceCatalog: {
-				resources: RESOURCE_REGISTRY,
-				groups: RESOURCE_GROUP_REGISTRY,
-			},
-			devMode: true,
+			actions: devModeContent.actions,
+			actionMetaCategories: devModeContent.actionMetaCategories,
+			buildings: devModeContent.buildings,
+			developments: devModeContent.developments,
+			phases: devModeContent.phases,
+			rules: devModeContent.rules,
+			resourceCatalog: devModeContent.resourceCatalog,
 		});
+
+		// Set the devMode flag (this is separate from the content package)
+		session.setDevMode(true);
+
 		const snapshot = session.getSnapshot();
 		const [player, opponent] = snapshot.game.players;
 		if (!player || !opponent) {
@@ -121,17 +119,17 @@ describe('dev mode start configuration', () => {
 	});
 
 	it('applies onBuild effects for start config developments', () => {
+		// Load the dev-mode content package
+		const devModeContent = createDevModePackage();
+
 		const session = createEngineSession({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			phases: PHASES,
-			rules: RULES,
-			resourceCatalog: {
-				resources: RESOURCE_REGISTRY,
-				groups: RESOURCE_GROUP_REGISTRY,
-			},
-			devMode: true,
+			actions: devModeContent.actions,
+			actionMetaCategories: devModeContent.actionMetaCategories,
+			buildings: devModeContent.buildings,
+			developments: devModeContent.developments,
+			phases: devModeContent.phases,
+			rules: devModeContent.rules,
+			resourceCatalog: devModeContent.resourceCatalog,
 		});
 		const snapshot = session.getSnapshot();
 		const [player] = snapshot.game.players;

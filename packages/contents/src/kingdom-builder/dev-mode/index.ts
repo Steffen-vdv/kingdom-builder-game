@@ -6,17 +6,36 @@
  */
 
 import type { ContentPackage } from '@kingdom-builder/contents-sdk';
+import { SystemRole } from '@kingdom-builder/contents-sdk';
 import { createBasePackage } from '../base';
+import { ActionId, type ActionDef } from '../../actions';
 
 /**
  * Creates the dev-mode content package.
- * This imports base game content and overrides the initial_setup action.
+ * This imports base game content and overrides the initial_setup action
+ * with the dev-mode version that provides abundant starting resources.
  */
 export function createDevModePackage(): ContentPackage {
 	const base = createBasePackage();
 
-	// TODO: Override the initial_setup action with dev-mode version
-	// that provides abundant starting resources
+	// Get the devmode initial setup action from the base registry
+	const devmodeSetupAction = base.actions.get(ActionId.initial_setup_devmode);
+	if (!devmodeSetupAction) {
+		throw new Error('Dev mode initial setup action not found in base registry');
+	}
+
+	// Clone the devmode action with the standard initial_setup id and role.
+	// Type assertion required: exactOptionalPropertyTypes widens literal types
+	// during object spread. The source is already a valid ActionDef.
+	const overrideSetupAction = {
+		...devmodeSetupAction,
+		id: ActionId.initial_setup,
+		systemRole: SystemRole.INITIAL_SETUP,
+	} as ActionDef;
+
+	// Replace the initial_setup action in the registry
+	base.actions.remove(ActionId.initial_setup);
+	base.actions.add(ActionId.initial_setup, overrideSetupAction);
 
 	return {
 		...base,

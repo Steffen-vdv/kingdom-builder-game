@@ -34,13 +34,13 @@ interface SessionCreationContext {
 export class SessionCreationHandler {
 	private readonly sessionManager: SessionManager;
 
-	private readonly generateSessionId: () => string;
+	private readonly generateSessionId: () => Promise<string>;
 
 	private readonly buildStateResponse: BuildStateResponse;
 
 	public constructor(options: {
 		sessionManager: SessionManager;
-		generateSessionId: () => string;
+		generateSessionId: () => Promise<string>;
 		buildStateResponse: BuildStateResponse;
 	}) {
 		this.sessionManager = options.sessionManager;
@@ -48,7 +48,9 @@ export class SessionCreationHandler {
 		this.buildStateResponse = options.buildStateResponse;
 	}
 
-	public handle(context: SessionCreationContext): SessionCreateResponse {
+	public async handle(
+		context: SessionCreationContext,
+	): Promise<SessionCreateResponse> {
 		context.requireAuthorization('session:create');
 		const parsed = sessionCreateRequestSchema.safeParse(context.request.body);
 		if (!parsed.success) {
@@ -63,15 +65,22 @@ export class SessionCreationHandler {
 		if (data.playerNames) {
 			sanitizedEntries = sanitizePlayerNameEntries(data.playerNames);
 		}
-		const sessionId = this.generateSessionId();
+		const sessionId = await this.generateSessionId();
 		try {
-			const options: CreateSessionOptions = {
-				devMode: data.devMode,
-			};
+			const options: CreateSessionOptions = {};
+			if (data.contentId !== undefined) {
+				options.contentId = data.contentId;
+			}
+			if (data.devMode !== undefined) {
+				options.devMode = data.devMode;
+			}
 			if (data.config !== undefined) {
 				options.config = data.config;
 			}
-			const session = this.sessionManager.createSession(sessionId, options);
+			const session = await this.sessionManager.createSession(
+				sessionId,
+				options,
+			);
 			if (sanitizedEntries && sanitizedEntries.length > 0) {
 				for (const [playerId, sanitizedName] of sanitizedEntries) {
 					session.updatePlayerName(playerId, sanitizedName);
@@ -82,7 +91,7 @@ export class SessionCreationHandler {
 				cause: error,
 			});
 		}
-		const snapshot = this.sessionManager.getSnapshot(sessionId);
+		const snapshot = await this.sessionManager.getSnapshot(sessionId);
 		if (!snapshot) {
 			throw new TransportError(
 				'NOT_FOUND',

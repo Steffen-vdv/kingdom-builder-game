@@ -5,19 +5,21 @@ import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
 
 describe('SessionTransport authorization', () => {
-	it('rejects requests without authentication tokens', () => {
+	it('rejects requests without authentication tokens', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: createTokenAuthMiddleware({ tokens: {} }),
 		});
-		const attempt = () =>
+		await expect(
 			transport.createSession({
 				body: {},
-			});
-		expect(attempt).toThrow(TransportError);
+			}),
+		).rejects.toThrow(TransportError);
 		try {
-			attempt();
+			await transport.createSession({
+				body: {},
+			});
 		} catch (error) {
 			if (error instanceof TransportError) {
 				expect(error.code).toBe('UNAUTHORIZED');
@@ -25,18 +27,20 @@ describe('SessionTransport authorization', () => {
 		}
 	});
 
-	it('requires configured authorization middleware for protected operations', () => {
+	it('requires configured authorization middleware for protected operations', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 		});
-		const attempt = () =>
+		await expect(
 			transport.createSession({
 				body: {},
-			});
-		expect(attempt).toThrow(TransportError);
+			}),
+		).rejects.toThrow(TransportError);
 		try {
-			attempt();
+			await transport.createSession({
+				body: {},
+			});
 		} catch (error) {
 			if (error instanceof TransportError) {
 				expect(error.code).toBe('UNAUTHORIZED');
@@ -44,7 +48,7 @@ describe('SessionTransport authorization', () => {
 		}
 	});
 
-	it('permits admin roles to satisfy authorization checks', () => {
+	it('permits admin roles to satisfy authorization checks', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const adminMiddleware = createTokenAuthMiddleware({
 			tokens: {
@@ -55,14 +59,14 @@ describe('SessionTransport authorization', () => {
 			sessionManager: manager,
 			authMiddleware: adminMiddleware,
 		});
-		const response = transport.createSession({
+		const response = await transport.createSession({
 			body: {},
 			headers: { authorization: 'Bearer admin' },
 		});
 		expect(response.sessionId).toBeDefined();
 	});
 
-	it('propagates unexpected authorization errors', () => {
+	it('propagates unexpected authorization errors', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
@@ -70,11 +74,11 @@ describe('SessionTransport authorization', () => {
 				throw new Error('middleware exploded');
 			},
 		});
-		expect(() =>
+		await expect(
 			transport.createSession({
 				body: {},
 				headers: { authorization: 'Bearer failing' },
 			}),
-		).toThrowError(/middleware exploded/);
+		).rejects.toThrowError(/middleware exploded/);
 	});
 });

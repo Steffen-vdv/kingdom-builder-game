@@ -15,11 +15,16 @@ import {
 	resourceDefinition,
 } from '@kingdom-builder/testing';
 import type { PhaseConfig, RuleSet } from '@kingdom-builder/protocol';
+import { SystemRole } from '@kingdom-builder/contents-sdk';
 
 function createTestSetup() {
-	const factory = createContentFactory();
+	// Use isolated mode to avoid inheriting real actions that reference
+	// resources not in our synthetic catalog
+	const factory = createContentFactory({ isolated: true });
 	const costResourceId = 'resource:synthetic:cost';
 	const gainResourceId = 'resource:synthetic:gain';
+	// Real actionMetaCategories bind actions to command-points
+	const commandPointsId = 'resource:core:command-points';
 
 	const { resources, groups } = createResourceRegistries({
 		resources: [
@@ -31,6 +36,11 @@ function createTestSetup() {
 			resourceDefinition({
 				id: gainResourceId,
 				metadata: { label: 'Gain', icon: '⭐' },
+				bounds: { lowerBound: 0 },
+			}),
+			resourceDefinition({
+				id: commandPointsId,
+				metadata: { label: 'Command Points', icon: '⚡' },
 				bounds: { lowerBound: 0 },
 			}),
 		],
@@ -50,9 +60,8 @@ function createTestSetup() {
 		],
 	});
 
-	// Create synthetic system actions
+	// Create synthetic system actions with systemRole for engine discovery
 	const initialSetupActionId = '__synth_initial_setup__';
-	const initialSetupDevmodeActionId = '__synth_initial_setup_devmode__';
 	const compensationActionId = '__synth_compensation__';
 
 	factory.actions.add(initialSetupActionId, {
@@ -60,6 +69,7 @@ function createTestSetup() {
 		name: 'Synthetic Initial Setup',
 		metaCategory: 'meta:commands',
 		system: true,
+		systemRole: SystemRole.INITIAL_SETUP,
 		free: true,
 		baseCosts: {},
 		effects: [
@@ -71,22 +81,11 @@ function createTestSetup() {
 					change: { type: 'amount', amount: 10 },
 				},
 			},
-		],
-	});
-
-	factory.actions.add(initialSetupDevmodeActionId, {
-		id: initialSetupDevmodeActionId,
-		name: 'Synthetic Initial Setup (DevMode)',
-		metaCategory: 'meta:commands',
-		system: true,
-		free: true,
-		baseCosts: {},
-		effects: [
 			{
 				type: 'resource',
 				method: 'add',
 				params: {
-					resourceId: costResourceId,
+					resourceId: commandPointsId,
 					change: { type: 'amount', amount: 10 },
 				},
 			},
@@ -98,6 +97,7 @@ function createTestSetup() {
 		name: 'Synthetic Compensation',
 		metaCategory: 'meta:commands',
 		system: true,
+		systemRole: SystemRole.COMPENSATION,
 		free: true,
 		baseCosts: {},
 		effects: [],
@@ -139,16 +139,12 @@ function createTestSetup() {
 
 	const baseOptions = {
 		actions: factory.actions,
+		actionMetaCategories: factory.actionMetaCategories,
 		buildings: factory.buildings,
 		developments: factory.developments,
 		phases,
 		rules,
 		resourceCatalog: { resources, groups },
-		systemActionIds: {
-			initialSetup: initialSetupActionId,
-			initialSetupDevmode: initialSetupDevmodeActionId,
-			compensation: compensationActionId,
-		},
 	};
 
 	return {
@@ -182,13 +178,13 @@ describe('SessionRestorer', () => {
 		rmSync(testDir, { recursive: true, force: true });
 	});
 
-	it('returns undefined for non-existent session', () => {
+	it('returns undefined for non-existent session', async () => {
 		const { baseOptions } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
-		expect(restorer.restore('missing')).toBeUndefined();
+		expect(await restorer.restore('missing')).toBeUndefined();
 	});
 
-	it('restores a session with empty action log', () => {
+	it('restores a session with empty action log', async () => {
 		const { baseOptions } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
 
@@ -205,14 +201,14 @@ describe('SessionRestorer', () => {
 		};
 		persistence.save(data);
 
-		const restored = restorer.restore('session-1');
+		const restored = await restorer.restore('session-1');
 		expect(restored).toBeDefined();
 		expect(restored?.createdAt).toBe(data.createdAt);
 		expect(restored?.actionLog).toEqual([]);
 		expect(restored?.session).toBeDefined();
 	});
 
-	it('restores a session with devMode enabled', () => {
+	it('restores a session with devMode enabled', async () => {
 		const { baseOptions } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
 
@@ -228,13 +224,13 @@ describe('SessionRestorer', () => {
 		};
 		persistence.save(data);
 
-		const restored = restorer.restore('session-dev');
+		const restored = await restorer.restore('session-dev');
 		expect(restored).toBeDefined();
 		const snapshot = restored?.session.getSnapshot();
 		expect(snapshot?.game.devMode).toBe(true);
 	});
 
-	it('replays action log entries', () => {
+	it('replays action log entries', async () => {
 		const { baseOptions, actionId, gainResourceId } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
 
@@ -253,7 +249,7 @@ describe('SessionRestorer', () => {
 		};
 		persistence.save(data);
 
-		const restored = restorer.restore('session-replay');
+		const restored = await restorer.restore('session-replay');
 		expect(restored).toBeDefined();
 
 		const snapshot = restored?.session.getSnapshot();
@@ -262,7 +258,7 @@ describe('SessionRestorer', () => {
 		expect(player?.values[gainResourceId]).toBe(2);
 	});
 
-	it('replays player name changes', () => {
+	it('replays player name changes', async () => {
 		const { baseOptions } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
 
@@ -278,7 +274,7 @@ describe('SessionRestorer', () => {
 		};
 		persistence.save(data);
 
-		const restored = restorer.restore('session-names');
+		const restored = await restorer.restore('session-names');
 		expect(restored).toBeDefined();
 
 		const snapshot = restored?.session.getSnapshot();
@@ -288,7 +284,7 @@ describe('SessionRestorer', () => {
 		expect(player?.name).toBe('Alice');
 	});
 
-	it('replays dev mode changes', () => {
+	it('replays dev mode changes', async () => {
 		const { baseOptions } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
 
@@ -304,14 +300,14 @@ describe('SessionRestorer', () => {
 		};
 		persistence.save(data);
 
-		const restored = restorer.restore('session-devmode');
+		const restored = await restorer.restore('session-devmode');
 		expect(restored).toBeDefined();
 
 		const snapshot = restored?.session.getSnapshot();
 		expect(snapshot?.game.devMode).toBe(true);
 	});
 
-	it('applies player names from creation options', () => {
+	it('applies player names from creation options', async () => {
 		const { baseOptions } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
 
@@ -330,7 +326,7 @@ describe('SessionRestorer', () => {
 		};
 		persistence.save(data);
 
-		const restored = restorer.restore('session-initial-names');
+		const restored = await restorer.restore('session-initial-names');
 		expect(restored).toBeDefined();
 
 		const snapshot = restored?.session.getSnapshot();
@@ -344,7 +340,7 @@ describe('SessionRestorer', () => {
 		expect(playerB?.name).toBe('Carol');
 	});
 
-	it('returns the original action log for continued recording', () => {
+	it('returns the original action log for continued recording', async () => {
 		const { baseOptions, actionId } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
 
@@ -365,7 +361,7 @@ describe('SessionRestorer', () => {
 		};
 		persistence.save(data);
 
-		const restored = restorer.restore('session-log');
+		const restored = await restorer.restore('session-log');
 		expect(restored?.actionLog).toEqual(originalLog);
 	});
 });

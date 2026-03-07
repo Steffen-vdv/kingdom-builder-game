@@ -1,8 +1,12 @@
-export { createEngine } from './setup/create_engine';
+export {
+	createEngine,
+	findSystemAction,
+	SystemRole,
+} from './setup/create_engine';
 export type {
 	ResourceKey,
 	PopulationRoleId,
-	SystemActionIds,
+	SystemRoleValue,
 } from './setup/create_engine';
 export type { RuntimeResourceContent } from './resource';
 export { getResourceValue, setResourceValue } from './resource';

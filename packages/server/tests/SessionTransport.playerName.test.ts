@@ -25,15 +25,15 @@ const authorizedHeaders = {
 } satisfies Record<string, string>;
 
 describe('SessionTransport updatePlayerName', () => {
-	it('sanitizes and applies updated player names', () => {
+	it('sanitizes and applies updated player names', async () => {
 		const { manager } = createSyntheticSessionManager();
-		const session = manager.createSession('player-session');
+		const session = await manager.createSession('player-session');
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
 		const updateSpy = vi.spyOn(session, 'updatePlayerName');
-		const response = transport.updatePlayerName({
+		const response = await transport.updatePlayerName({
 			body: {
 				sessionId: 'player-session',
 				playerId: 'A',
@@ -48,9 +48,9 @@ describe('SessionTransport updatePlayerName', () => {
 		expectStaticMetadata(manager.getMetadata());
 	});
 
-	it('rejects player names that exceed the maximum length', () => {
+	it('rejects player names that exceed the maximum length', async () => {
 		const { manager } = createSyntheticSessionManager();
-		manager.createSession('length-check');
+		await manager.createSession('length-check');
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
@@ -58,7 +58,7 @@ describe('SessionTransport updatePlayerName', () => {
 		const overLengthName = 'Q'.repeat(PLAYER_NAME_MAX_LENGTH + 1);
 		let thrown: unknown;
 		try {
-			transport.updatePlayerName({
+			await transport.updatePlayerName({
 				body: {
 					sessionId: 'length-check',
 					playerId: 'A',
@@ -75,16 +75,16 @@ describe('SessionTransport updatePlayerName', () => {
 		}
 	});
 
-	it('rejects player names that trim to empty strings', () => {
+	it('rejects player names that trim to empty strings', async () => {
 		const { manager } = createSyntheticSessionManager();
-		manager.createSession('empty-name');
+		await manager.createSession('empty-name');
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
 		let thrown: unknown;
 		try {
-			transport.updatePlayerName({
+			await transport.updatePlayerName({
 				body: {
 					sessionId: 'empty-name',
 					playerId: 'A',
@@ -101,7 +101,7 @@ describe('SessionTransport updatePlayerName', () => {
 		}
 	});
 
-	it('fails when sessions are missing', () => {
+	it('fails when sessions are missing', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
@@ -109,7 +109,7 @@ describe('SessionTransport updatePlayerName', () => {
 		});
 		let thrown: unknown;
 		try {
-			transport.updatePlayerName({
+			await transport.updatePlayerName({
 				body: {
 					sessionId: 'missing-session',
 					playerId: 'A',
@@ -126,16 +126,16 @@ describe('SessionTransport updatePlayerName', () => {
 		}
 	});
 
-	it('requires authorization to update player names', () => {
+	it('requires authorization to update player names', async () => {
 		const { manager } = createSyntheticSessionManager();
-		manager.createSession('unauthorized');
+		await manager.createSession('unauthorized');
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
 		let thrown: unknown;
 		try {
-			transport.updatePlayerName({
+			await transport.updatePlayerName({
 				body: {
 					sessionId: 'unauthorized',
 					playerId: 'A',

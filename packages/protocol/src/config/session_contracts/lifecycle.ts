@@ -20,6 +20,7 @@ import {
 } from './shared';
 
 export const sessionCreateRequestSchema = z.object({
+	contentId: z.string().optional(),
 	devMode: z.boolean().optional(),
 	config: gameConfigSchema.optional(),
 	playerNames: sessionPlayerNameMapSchema.optional(),

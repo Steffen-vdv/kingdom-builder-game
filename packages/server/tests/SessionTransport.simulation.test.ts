@@ -24,11 +24,11 @@ describe('SessionTransport simulateUpcomingPhases', () => {
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		const { sessionId } = transport.createSession({
+		const { sessionId } = await transport.createSession({
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const session = manager.getSession(sessionId);
+		const session = await manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		const expected = { forecast: [{ phaseId: 'main', steps: [] }] };
 		let playerId: string | null = null;

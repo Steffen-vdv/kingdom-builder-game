@@ -224,13 +224,6 @@ export function createPhaseTestEnvironment() {
 		},
 	];
 
-	// No-op system action IDs to skip initial setup
-	const SKIP_SETUP_ACTION_IDS = {
-		initialSetup: '__noop_initial_setup__',
-		initialSetupDevmode: '__noop_initial_setup_devmode__',
-		compensation: '__noop_compensation__',
-	};
-
 	const rules: RuleSet = {
 		defaultActionAPCost: 1,
 		absorptionCapPct: 1,
@@ -250,6 +243,7 @@ export function createPhaseTestEnvironment() {
 		winConditions: RULES.winConditions,
 	};
 
+	// Actions from content factory don't have systemRole, so setup is skipped
 	const engineContext = createEngine({
 		actions: content.actions,
 		buildings: content.buildings,
@@ -260,7 +254,6 @@ export function createPhaseTestEnvironment() {
 			resources: testResourceRegistry,
 			groups: testResourceGroupRegistry,
 		},
-		systemActionIds: SKIP_SETUP_ACTION_IDS,
 	});
 
 	// Manually set up initial state (previously handled by start config)

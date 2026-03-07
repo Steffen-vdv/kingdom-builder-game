@@ -47,6 +47,7 @@ import { clone } from './clone';
 interface CreateSessionOptions {
 	devMode?: boolean;
 	playerName?: string;
+	contentId?: string | undefined;
 }
 export interface CreateSessionResult {
 	sessionId: string;
@@ -100,6 +101,7 @@ export async function createSession(
 	const sessionRequest: SessionCreateRequest = {
 		devMode,
 		playerNames: { A: playerName },
+		...(options.contentId ? { contentId: options.contentId } : {}),
 	};
 	const api = ensureGameApi();
 	const response = await api.createSession(sessionRequest, requestOptions);

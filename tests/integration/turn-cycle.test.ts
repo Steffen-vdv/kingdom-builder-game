@@ -61,24 +61,19 @@ const { resources: turnResources, groups: turnResourceGroups } =
 
 describe('Turn cycle integration', () => {
 	it('advances players through all phases sequentially', () => {
-		const content = createContentFactory();
+		// Use isolated mode to avoid loading real content that references
+		// resources not in our test catalog
+		const content = createContentFactory({ isolated: true });
 		const engineContext = createEngine({
 			actions: content.actions,
+			actionMetaCategories: content.actionMetaCategories,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 			phases,
 			rules,
 			resourceCatalog: {
 				resources: turnResources,
 				groups: turnResourceGroups,
-			},
-			// Skip real setup actions by providing non-existent IDs;
-			// this test focuses on phase cycling, not initial setup
-			systemActionIds: {
-				initialSetup: 'test:skip:initial',
-				initialSetupDevmode: 'test:skip:devmode',
-				compensation: 'test:skip:compensation',
 			},
 		});
 
