@@ -13,6 +13,11 @@ export interface DeveloperResourceTarget {
 	target: number;
 }
 
+export interface DeveloperActionTierTarget {
+	actionId: string;
+	tier: number;
+}
+
 export interface DeveloperPresetOptions {
 	playerId: PlayerId;
 	resources?: DeveloperResourceTarget[];
@@ -20,6 +25,7 @@ export interface DeveloperPresetOptions {
 	landCount?: number;
 	developments?: string[];
 	buildings?: string[];
+	actionTiers?: DeveloperActionTierTarget[];
 }
 
 function applyEffect(
@@ -140,6 +146,26 @@ function ensureBuilding(context: EngineContext, id: string): void {
 	applyEffect(context, effect);
 }
 
+function ensureActionTier(
+	context: EngineContext,
+	actionId: string,
+	tier: number,
+): void {
+	const player = context.activePlayer;
+	if (!player.actionStates[actionId]) {
+		player.actionStates[actionId] = {
+			locked: false,
+			poolLocked: false,
+			currentTier: 1,
+			exhausted: false,
+		};
+	}
+	const state = player.actionStates[actionId];
+	if (state) {
+		state.currentTier = tier;
+	}
+}
+
 function withPlayer(
 	context: EngineContext,
 	playerId: PlayerId,
@@ -188,6 +214,11 @@ export function applyDeveloperPreset(
 		if (options.buildings) {
 			for (const id of options.buildings) {
 				ensureBuilding(context, id);
+			}
+		}
+		if (options.actionTiers) {
+			for (const entry of options.actionTiers) {
+				ensureActionTier(context, entry.actionId, entry.tier);
 			}
 		}
 	});

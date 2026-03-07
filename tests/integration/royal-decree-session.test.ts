@@ -3,6 +3,7 @@ import { createEngineSession } from '@kingdom-builder/engine';
 import {
 	ACTIONS,
 	ACTION_META_CATEGORIES,
+	ActionId,
 	BUILDINGS,
 	DEVELOPMENTS,
 	PHASES,
@@ -55,16 +56,22 @@ describe('royal decree via session', () => {
 		const goldId = getResourceId(Resource.gold);
 		expect(snapshot.game.resourceCatalog.resources.byId[goldId]).toBeDefined();
 		expect(snapshot.game.players[0]?.values[goldId]).toBeDefined();
-		// With tier migration, effects are in tiers['1'].effects
+		const playerId = snapshot.game.players[0]!.id;
+		// Upgrade Royal Decree to tier 2 so effect groups are available
+		session.applyDeveloperPreset({
+			playerId,
+			actionTiers: [{ actionId: ActionId.royal_decree, tier: 2 }],
+		});
+		// Royal Decree's development choices are in tier 2
 		const withGroup = ACTIONS.entries().find(([, def]) => {
-			const effects = def.tiers?.['1']?.effects ?? [];
+			const effects = def.tiers?.['2']?.effects ?? [];
 			return effects.some(isEffectGroup);
 		});
 		if (!withGroup) {
 			throw new Error('Expected an action with effect groups');
 		}
 		const [royalActionId, royalDecree] = withGroup;
-		const royalEffects = royalDecree.tiers?.['1']?.effects ?? [];
+		const royalEffects = royalDecree.tiers?.['2']?.effects ?? [];
 		const developGroup = royalEffects.find(isEffectGroup);
 		expect(developGroup).toBeDefined();
 		const options = developGroup?.options ?? [];
@@ -104,7 +111,6 @@ describe('royal decree via session', () => {
 			}
 			developmentIdByOption.set(option.id, effectDevelopmentId);
 		}
-		const playerId = snapshot.game.players[0]!.id;
 		for (const option of options) {
 			session.applyDeveloperPreset({
 				playerId,

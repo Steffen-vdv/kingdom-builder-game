@@ -210,6 +210,7 @@ describe('EngineSession', () => {
 
 	it('clones action effect groups for option queries', () => {
 		const session = createTestSession();
+		advanceToMain(session);
 		// Find an action with effect groups in any tier
 		const withGroup = ACTIONS.entries().find(([, def]) => {
 			for (const tierConfig of Object.values(def.tiers)) {
@@ -230,6 +231,27 @@ describe('EngineSession', () => {
 			throw new Error('Expected an action with effect groups');
 		}
 		const [actionId, definition] = withGroup;
+		// Determine which tier has effect groups and set it
+		let effectGroupTier = 1;
+		for (const [tierKey, tierConfig] of Object.entries(definition.tiers)) {
+			if (
+				tierConfig.effects.some(
+					(effect) =>
+						typeof effect === 'object' &&
+						effect !== null &&
+						'options' in effect,
+				)
+			) {
+				effectGroupTier = Number(tierKey);
+				break;
+			}
+		}
+		const snapshot = session.getSnapshot();
+		const playerId = snapshot.game.players[0]!.id;
+		session.applyDeveloperPreset({
+			playerId,
+			actionTiers: [{ actionId, tier: effectGroupTier }],
+		});
 		const groups = session.getActionOptions(actionId);
 		expect(groups.length).toBeGreaterThan(0);
 		// Find the first group in any tier

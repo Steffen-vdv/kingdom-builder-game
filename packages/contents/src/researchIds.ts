@@ -41,6 +41,7 @@ export const ResearchTier2Id = {
 	irrigation: 'research:irrigation',
 	siege_engineering: 'research:siege_engineering',
 	bureaucratic_reform: 'research:bureaucratic_reform',
+	expanded_decree: 'research:expanded_decree',
 } as const;
 
 export type ResearchTier2Id = ValueOf<typeof ResearchTier2Id>;
@@ -57,6 +58,7 @@ export const ResearchTier3Id = {
 	fertile_lands: 'research:fertile_lands',
 	impenetrable_fortress: 'research:impenetrable_fortress',
 	royal_authority: 'research:royal_authority',
+	grand_decree: 'research:grand_decree',
 } as const;
 
 export type ResearchTier3Id = ValueOf<typeof ResearchTier3Id>;
@@ -95,6 +97,7 @@ export const RESEARCH_TIER_2_IDS: readonly ResearchTier2Id[] = [
 	ResearchTier2Id.irrigation,
 	ResearchTier2Id.siege_engineering,
 	ResearchTier2Id.bureaucratic_reform,
+	ResearchTier2Id.expanded_decree,
 ];
 
 export const RESEARCH_TIER_3_IDS: readonly ResearchTier3Id[] = [
@@ -105,6 +108,7 @@ export const RESEARCH_TIER_3_IDS: readonly ResearchTier3Id[] = [
 	ResearchTier3Id.fertile_lands,
 	ResearchTier3Id.impenetrable_fortress,
 	ResearchTier3Id.royal_authority,
+	ResearchTier3Id.grand_decree,
 ];
 
 export const ALL_RESEARCH_IDS: readonly ResearchId[] = [...RESEARCH_TIER_1_IDS, ...RESEARCH_TIER_2_IDS, ...RESEARCH_TIER_3_IDS];

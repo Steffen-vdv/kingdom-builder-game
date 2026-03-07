@@ -46,6 +46,13 @@ describe('royal decree auto land targeting', () => {
 		const [actionId, royalDecree] = engineContext.actions
 			.entries()
 			.find(([, def]) => getAllEffectsFromAction(def).some(isEffectGroup))!;
+		// Effect groups are in tier 2; upgrade before performing
+		engineContext.activePlayer.actionStates[actionId] = {
+			locked: false,
+			poolLocked: false,
+			currentTier: 2,
+			exhausted: false,
+		};
 		const allEffects = getAllEffectsFromAction(royalDecree);
 		const group = allEffects.find(isEffectGroup)!;
 		const option = group.options[0]!;

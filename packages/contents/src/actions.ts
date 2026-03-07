@@ -27,6 +27,7 @@ import {
 	actionEffectGroup,
 	actionEffectGroupOption,
 	actionEffectGroupOptionParams,
+	actionUpgradeParams,
 	attackParams,
 	passiveParams,
 	resultModParams,
@@ -186,7 +187,7 @@ export function createActionRegistry() {
 			.build(),
 	);
 
-	// Royal Decree effect group
+	// Royal Decree effect groups
 	const royalDecreeDevelopGroup = actionEffectGroup('royal_decree_develop')
 		.layout('compact')
 		.option(
@@ -220,6 +221,39 @@ export function createActionRegistry() {
 				.params(actionEffectGroupOptionParams().actionId(DevelopActionIdValues.develop_watchtower).developmentId(DevelopmentId.Watchtower).landId('$landId')),
 		);
 
+	const royalDecreeDevelopGroup2 = actionEffectGroup('royal_decree_develop_2')
+		.layout('compact')
+		.option(
+			actionEffectGroupOption('royal_decree_house_2')
+				.icon('🏠')
+				.action(DevelopActionIdValues.develop_house)
+				.params(actionEffectGroupOptionParams().actionId(DevelopActionIdValues.develop_house).developmentId(DevelopmentId.House).landId('$landId')),
+		)
+		.option(
+			actionEffectGroupOption('royal_decree_farm_2')
+				.icon('🌾')
+				.action(DevelopActionIdValues.develop_farm)
+				.params(actionEffectGroupOptionParams().actionId(DevelopActionIdValues.develop_farm).developmentId(DevelopmentId.Farm).landId('$landId')),
+		)
+		.option(
+			actionEffectGroupOption('royal_decree_science_lab_2')
+				.icon('🔬')
+				.action(DevelopActionIdValues.develop_science_lab)
+				.params(actionEffectGroupOptionParams().actionId(DevelopActionIdValues.develop_science_lab).developmentId(DevelopmentId.ScienceLab).landId('$landId')),
+		)
+		.option(
+			actionEffectGroupOption('royal_decree_outpost_2')
+				.icon('🏹')
+				.action(DevelopActionIdValues.develop_outpost)
+				.params(actionEffectGroupOptionParams().actionId(DevelopActionIdValues.develop_outpost).developmentId(DevelopmentId.Outpost).landId('$landId')),
+		)
+		.option(
+			actionEffectGroupOption('royal_decree_watchtower_2')
+				.icon('🗼')
+				.action(DevelopActionIdValues.develop_watchtower)
+				.params(actionEffectGroupOptionParams().actionId(DevelopActionIdValues.develop_watchtower).developmentId(DevelopmentId.Watchtower).landId('$landId')),
+		);
+
 	registry.add(
 		BasicActionIdValues.royal_decree,
 		action()
@@ -229,6 +263,17 @@ export function createActionRegistry() {
 			.icon('📜')
 			.tier(1, (t) =>
 				t
+					.cost(Resource.gold, 6)
+					.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(BasicActionIdValues.expand)).build())
+					.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(BasicActionIdValues.till).landId('$landId')).build())
+					.effect(
+						effect(Types.Resource, ResourceMethods.REMOVE)
+							.params(resourceAmountChange(Resource.happiness, 2, { reconciliation: true }))
+							.build(),
+					),
+			)
+			.tier(2, (t) =>
+				t
 					.cost(Resource.gold, 12)
 					.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(BasicActionIdValues.expand)).build())
 					.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(BasicActionIdValues.till).landId('$landId')).build())
@@ -236,6 +281,19 @@ export function createActionRegistry() {
 					.effect(
 						effect(Types.Resource, ResourceMethods.REMOVE)
 							.params(resourceAmountChange(Resource.happiness, 3, { reconciliation: true }))
+							.build(),
+					),
+			)
+			.tier(3, (t) =>
+				t
+					.cost(Resource.gold, 18)
+					.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(BasicActionIdValues.expand)).build())
+					.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(BasicActionIdValues.till).landId('$landId')).build())
+					.effectGroup(royalDecreeDevelopGroup)
+					.effectGroup(royalDecreeDevelopGroup2)
+					.effect(
+						effect(Types.Resource, ResourceMethods.REMOVE)
+							.params(resourceAmountChange(Resource.happiness, 4, { reconciliation: true }))
 							.build(),
 					),
 			)
@@ -1507,6 +1565,46 @@ export function createActionRegistry() {
 							.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.happiness).amount(5).build()).build())
 							.build(),
 					),
+			)
+			.focus(Focus.Economy)
+			.build(),
+	);
+
+	// ═══════════════════════════════════════════════════════════════════════════
+	// RESEARCH ACTIONS - COMMAND UPGRADES
+	// ═══════════════════════════════════════════════════════════════════════════
+
+	registry.add(
+		ResearchId.expanded_decree,
+		action()
+			.id(ResearchId.expanded_decree)
+			.metaCategory(MetaCategory.Research)
+			.name('Expanded Decree')
+			.icon('📜')
+			.oneTime()
+			.tier(2, (t) =>
+				t
+					.cost(Resource.research, 12)
+					.cost(Resource.gold, 8)
+					.effect(effect(Types.Action, ActionMethods.UPGRADE).params(actionUpgradeParams().targetAction(BasicActionIdValues.royal_decree).build()).build()),
+			)
+			.focus(Focus.Economy)
+			.build(),
+	);
+
+	registry.add(
+		ResearchId.grand_decree,
+		action()
+			.id(ResearchId.grand_decree)
+			.metaCategory(MetaCategory.Research)
+			.name('Grand Decree')
+			.icon('📜')
+			.oneTime()
+			.tier(3, (t) =>
+				t
+					.cost(Resource.research, 25)
+					.cost(Resource.gold, 15)
+					.effect(effect(Types.Action, ActionMethods.UPGRADE).params(actionUpgradeParams().targetAction(BasicActionIdValues.royal_decree).build()).build()),
 			)
 			.focus(Focus.Economy)
 			.build(),
