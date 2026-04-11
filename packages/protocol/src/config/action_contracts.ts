@@ -97,7 +97,7 @@ export const actionExecuteRequestSchema = z.object({
 export const actionExecuteSuccessResponseSchema = z.object({
 	status: z.literal('success'),
 	snapshot: z.custom<SessionSnapshot>(
-		(value): value is SessionSnapshot => true,
+		(_value): _value is SessionSnapshot => true,
 	),
 	costs: z.record(z.string(), z.number()),
 	traces: z.array(actionTraceSchema),

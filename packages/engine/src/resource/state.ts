@@ -305,15 +305,13 @@ function adjustResourceBound(
 		return { previousBound, nextBound, valueClamped: false };
 	}
 	const current = player.resourceValues[resourceId] ?? 0;
-	let target = current;
-	if (direction === 'lower' && current < nextBound) {
-		target = nextBound;
-	} else if (direction === 'upper' && current > nextBound) {
-		target = nextBound;
-	} else {
+	const shouldClamp =
+		(direction === 'lower' && current < nextBound) ||
+		(direction === 'upper' && current > nextBound);
+	if (!shouldClamp) {
 		return { previousBound, nextBound, valueClamped: false };
 	}
-	applyValue(context, player, catalog, lookup, resourceId, target);
+	applyValue(context, player, catalog, lookup, resourceId, nextBound);
 	return { previousBound, nextBound, valueClamped: true };
 }
 

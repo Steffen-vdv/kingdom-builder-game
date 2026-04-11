@@ -29,7 +29,7 @@ export const sessionCreateRequestSchema = z.object({
 export const sessionCreateResponseSchema = z.object({
 	sessionId: sessionIdSchema,
 	snapshot: z.custom<SessionSnapshot>(
-		(value): value is SessionSnapshot => true,
+		(_value): _value is SessionSnapshot => true,
 	),
 	registries: sessionRegistriesSchema,
 });
@@ -43,10 +43,10 @@ export const sessionAdvanceRequestSchema = z.object({
 export const sessionAdvanceResponseSchema = z.object({
 	sessionId: sessionIdSchema,
 	snapshot: z.custom<SessionSnapshot>(
-		(value): value is SessionSnapshot => true,
+		(_value): _value is SessionSnapshot => true,
 	),
 	advance: z.custom<SessionAdvanceResult>(
-		(value): value is SessionAdvanceResult => true,
+		(_value): _value is SessionAdvanceResult => true,
 	),
 	registries: sessionRegistriesSchema,
 });

@@ -60,3 +60,12 @@ updates:
       include: scope
     labels:
       - dependencies
+    ignore:
+      # pnpm/action-setup v6 bootstraps the latest pnpm
+      # (currently 11.0.0-rc.0) and `pnpm self-update <version>`
+      # does not downgrade, leaving the v11 RC active. v11 RC
+      # rejects builds even when packages are listed in
+      # pnpm.onlyBuiltDependencies (ERR_PNPM_IGNORED_BUILDS).
+      # Stay on v4 until v6 is fixed or pnpm 11 is stable.
+      - dependency-name: 'pnpm/action-setup'
+        versions: ['>=5']

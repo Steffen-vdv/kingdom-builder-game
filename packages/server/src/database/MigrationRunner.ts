@@ -81,7 +81,9 @@ export class MigrationRunner {
 				applied.push(record);
 			} catch (error) {
 				const message = error instanceof Error ? error.message : String(error);
-				throw new Error(`Migration ${migration.filename} failed: ${message}`);
+				throw new Error(`Migration ${migration.filename} failed: ${message}`, {
+					cause: error,
+				});
 			}
 		}
 

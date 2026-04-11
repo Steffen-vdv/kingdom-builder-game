@@ -14,9 +14,9 @@ jobs:
         task: [format:check, typecheck, lint]
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10.33.0
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -32,9 +32,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10.33.0
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -55,9 +55,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10.33.0
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -76,9 +76,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10.33.0
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -97,9 +97,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10.33.0
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -114,9 +114,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10.33.0
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -142,9 +142,9 @@ jobs:
       - test-server
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10.33.0
       - uses: actions/setup-node@v6
         with:
           node-version: 22

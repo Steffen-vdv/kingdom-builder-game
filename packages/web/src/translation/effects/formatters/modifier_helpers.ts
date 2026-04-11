@@ -87,7 +87,7 @@ export function formatDevelopment(
 	);
 
 	let resourceIcon = '';
-	let amount = 0;
+	let amount: number;
 	let usePercent = false;
 	let round: 'up' | 'down' | undefined;
 

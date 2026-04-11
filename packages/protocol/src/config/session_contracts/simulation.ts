@@ -48,7 +48,7 @@ export const sessionRunAiRequestSchema = z.object({
 export const sessionRunAiResponseSchema = z.object({
 	sessionId: sessionIdSchema,
 	snapshot: z.custom<SessionSnapshot>(
-		(value): value is SessionSnapshot => true,
+		(_value): _value is SessionSnapshot => true,
 	),
 	registries: sessionRegistriesSchema,
 	ranTurn: z.boolean(),
@@ -65,7 +65,7 @@ export const sessionSimulateRequestSchema = z.object({
 export const sessionSimulateResponseSchema = z.object({
 	sessionId: sessionIdSchema,
 	result: z.custom<SimulateUpcomingPhasesResult>(
-		(value): value is SimulateUpcomingPhasesResult => true,
+		(_value): _value is SimulateUpcomingPhasesResult => true,
 	),
 });
 
