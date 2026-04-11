@@ -1,12 +1,7 @@
 import React, { useMemo } from 'react';
-import type {
-	ActionConfig,
-	ActionMetaCategoryConfig,
-	SessionActionState,
-} from '@kingdom-builder/protocol';
+import type { ActionMetaCategoryConfig } from '@kingdom-builder/protocol';
 import type { Summary } from '../../translation';
 import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
-import { useGameEngine } from '../../state/GameContext';
 import PoolSlots from './PoolSlots';
 import type { Action, DisplayPlayer } from './types';
 import type { ResourceDescriptorSelector } from './utils';
@@ -26,51 +21,6 @@ interface ResearchProgressionPanelProps {
 	canInteract: boolean;
 	selectResourceDescriptor: ResourceDescriptorSelector;
 	panelDisabled: boolean;
-}
-
-interface CatalogEntry {
-	id: string;
-	definition: ActionConfig;
-	startingTier: number;
-	maxTier: number;
-	state: SessionActionState;
-}
-
-type CatalogStatus =
-	| { kind: 'available' }
-	| { kind: 'locked' }
-	| { kind: 'completed' }
-	| { kind: 'upgraded'; tier: number };
-
-function getTierRange(definition: ActionConfig): {
-	startingTier: number;
-	maxTier: number;
-} {
-	const tierKeys = Object.keys(definition.tiers ?? {});
-	const tierNumbers = tierKeys.map(Number).filter((n) => !isNaN(n));
-	if (tierNumbers.length === 0) {
-		return { startingTier: 1, maxTier: 1 };
-	}
-	return {
-		startingTier: Math.min(...tierNumbers),
-		maxTier: Math.max(...tierNumbers),
-	};
-}
-
-function resolveCatalogStatus(entry: CatalogEntry): CatalogStatus {
-	if (entry.state.exhausted) {
-		return { kind: 'completed' };
-	}
-	if (entry.state.locked) {
-		return { kind: 'locked' };
-	}
-	if (entry.state.poolLocked) {
-		return { kind: 'locked' };
-	}
-	if (entry.state.currentTier > entry.startingTier) {
-		return { kind: 'upgraded', tier: entry.state.currentTier };
-	}
-	return { kind: 'available' };
 }
 
 interface ProgressionCurveProps {
@@ -156,8 +106,16 @@ function ProgressionCurve({
 					const weightEntries = Object.entries(threshold.weights).sort(
 						([a], [b]) => Number(a) - Number(b),
 					);
+					const totalWeight = weightEntries.reduce(
+						(sum, [, weight]) => sum + weight,
+						0,
+					);
 					const tooltip = weightEntries
-						.map(([tier, weight]) => `T${tier}: ${weight}`)
+						.map(([tier, weight]) => {
+							const percent =
+								totalWeight > 0 ? Math.round((weight / totalWeight) * 100) : 0;
+							return `T${tier}: ${percent}%`;
+						})
 						.join(' · ');
 					return (
 						<div
@@ -179,74 +137,6 @@ function ProgressionCurve({
 	);
 }
 
-interface CatalogRowProps {
-	entry: CatalogEntry;
-	status: CatalogStatus;
-}
-
-function CatalogRow({ entry, status }: CatalogRowProps) {
-	const { definition } = entry;
-	const icon = definition.icon ?? '';
-	const name = definition.name ?? entry.id;
-	const statusClasses = [
-		'ml-auto',
-		'rounded-full',
-		'px-2',
-		'py-0.5',
-		'text-[10px]',
-		'font-semibold',
-		'uppercase',
-		'tracking-wider',
-	];
-	let statusLabel: string;
-	let statusTone: string;
-	switch (status.kind) {
-		case 'available':
-			statusLabel = 'Available';
-			statusTone =
-				'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300';
-			break;
-		case 'locked':
-			statusLabel = 'Locked';
-			statusTone =
-				'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300';
-			break;
-		case 'completed':
-			statusLabel = 'Completed';
-			statusTone =
-				'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300';
-			break;
-		case 'upgraded':
-			statusLabel = `Tier ${status.tier}/${entry.maxTier}`;
-			statusTone =
-				'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
-			break;
-	}
-	const rowClasses = [
-		'flex',
-		'items-center',
-		'gap-2',
-		'rounded-md',
-		'px-2',
-		'py-1',
-		'text-sm',
-		'text-slate-700',
-		'dark:text-slate-200',
-		status.kind === 'locked' ? 'opacity-60' : '',
-	]
-		.filter(Boolean)
-		.join(' ');
-	return (
-		<li className={rowClasses}>
-			{icon && <span aria-hidden="true">{icon}</span>}
-			<span className="truncate">{name}</span>
-			<span className={[...statusClasses, statusTone].join(' ')}>
-				{statusLabel}
-			</span>
-		</li>
-	);
-}
-
 export default function ResearchProgressionPanel({
 	metaCategory,
 	actions,
@@ -256,7 +146,6 @@ export default function ResearchProgressionPanel({
 	selectResourceDescriptor,
 	panelDisabled,
 }: ResearchProgressionPanelProps) {
-	const { translationContext } = useGameEngine();
 	const resourceMetadata = useResourceMetadata();
 
 	const bindingDescriptor = useMemo(
@@ -281,42 +170,6 @@ export default function ResearchProgressionPanel({
 		() => actions.filter((action) => action.metaCategory === metaCategory.id),
 		[actions, metaCategory.id],
 	);
-
-	const catalogEntries = useMemo<CatalogEntry[]>(() => {
-		const entries: CatalogEntry[] = [];
-		for (const [id, state] of Object.entries(player.actionStates)) {
-			let definition: ActionConfig;
-			try {
-				definition = translationContext.actions.get(id);
-			} catch {
-				continue;
-			}
-			if (definition.metaCategory !== metaCategory.id) {
-				continue;
-			}
-			if (definition.system) {
-				continue;
-			}
-			const { startingTier, maxTier } = getTierRange(definition);
-			entries.push({ id, definition, startingTier, maxTier, state });
-		}
-		return entries;
-	}, [player.actionStates, translationContext.actions, metaCategory.id]);
-
-	const groupedByTier = useMemo(() => {
-		const map = new Map<number, CatalogEntry[]>();
-		for (const entry of catalogEntries) {
-			const list = map.get(entry.startingTier) ?? [];
-			list.push(entry);
-			map.set(entry.startingTier, list);
-		}
-		for (const list of map.values()) {
-			list.sort((a, b) =>
-				(a.definition.name ?? a.id).localeCompare(b.definition.name ?? b.id),
-			);
-		}
-		return Array.from(map.entries()).sort(([a], [b]) => a - b);
-	}, [catalogEntries]);
 
 	const bindingValue = player.values?.[metaCategory.bindingResourceId] ?? 0;
 	const bindingSpent = player.metaCategoryBindingSpent?.[metaCategory.id] ?? 0;
@@ -359,36 +212,6 @@ export default function ResearchProgressionPanel({
 				canInteract={canInteract}
 				selectResourceDescriptor={selectResourceDescriptor}
 			/>
-			{groupedByTier.length > 0 && (
-				<div className="mt-6">
-					<div className="mb-2 text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-						Catalog
-					</div>
-					<div className="flex flex-col gap-4">
-						{groupedByTier.map(([tier, entries]) => {
-							const completed = entries.filter(
-								(entry) => entry.state.exhausted,
-							).length;
-							return (
-								<div key={`tier-${tier}`} className="flex flex-col gap-1">
-									<div className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-										Tier {tier} — {completed}/{entries.length} completed
-									</div>
-									<ul className="flex flex-col gap-0.5">
-										{entries.map((entry) => (
-											<CatalogRow
-												key={entry.id}
-												entry={entry}
-												status={resolveCatalogStatus(entry)}
-											/>
-										))}
-									</ul>
-								</div>
-							);
-						})}
-					</div>
-				</div>
-			)}
 		</section>
 	);
 }
