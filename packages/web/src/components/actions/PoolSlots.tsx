@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Summary } from '../../translation';
-import BasicOptions from './BasicOptions';
+import GenericActions from './GenericActions';
 import type { Action, DisplayPlayer } from './types';
 import type { ResourceDescriptorSelector } from './utils';
 import {
@@ -35,7 +35,7 @@ export default function PoolSlots({
 		<div className="grid grid-cols-3 gap-2 mt-4">
 			{actions.map((action) => (
 				<div key={action.id} className={POOL_SLOT_CLASSES}>
-					<BasicOptions
+					<GenericActions
 						actions={[action]}
 						summaries={summaries}
 						player={player}
