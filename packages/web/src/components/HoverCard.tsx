@@ -207,6 +207,16 @@ export default function HoverCard() {
 					<ul className={CARD_LIST_CLASS}>{effectSummary}</ul>
 				</div>
 			)}
+			{renderedData.nextTierEffects &&
+				renderedData.nextTierEffects.length > 0 &&
+				!renderedData.thermometer && (
+					<div className="mt-2">
+						<div className={CARD_LABEL_CLASS}>Next tier →</div>
+						<ul className={CARD_LIST_CLASS}>
+							{renderSummary(renderedData.nextTierEffects)}
+						</ul>
+					</div>
+				)}
 			{(() => {
 				const desc = renderedData.description;
 				const hasDescription =
