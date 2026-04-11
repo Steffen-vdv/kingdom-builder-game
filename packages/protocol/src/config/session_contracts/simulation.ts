@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Equal, Expect } from '../schema_assertions';
 import type {
 	SessionRunAiAction,
 	SessionRunAiRequest,
@@ -68,12 +69,6 @@ export const sessionSimulateResponseSchema = z.object({
 		(_value): _value is SimulateUpcomingPhasesResult => true,
 	),
 });
-
-type Equal<X, Y> =
-	(<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2
-		? true
-		: false;
-type Expect<T extends true> = T;
 
 type _SimulateUpcomingPhasesOptionsSchemaMatches = Expect<
 	Equal<

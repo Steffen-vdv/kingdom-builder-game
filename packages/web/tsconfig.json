@@ -4,5 +4,5 @@
 		"composite": true
 	},
 	"references": [{ "path": "../protocol" }, { "path": "../contents" }],
-	"include": ["src"]
+	"include": ["src", "vite-env.d.ts"]
 }

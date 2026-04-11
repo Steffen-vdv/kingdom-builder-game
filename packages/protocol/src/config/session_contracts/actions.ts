@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { actionEffectGroupSchema, requirementSchema } from '../schema';
+import type { Equal, Expect } from '../schema_assertions';
 import type {
 	SessionActionCostRequest,
 	SessionActionCostResponse,
@@ -76,12 +77,6 @@ export const sessionActionOptionsResponseSchema = z.object({
 	sessionId: sessionIdSchema,
 	groups: z.array(actionEffectGroupSchema),
 });
-
-type Equal<X, Y> =
-	(<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2
-		? true
-		: false;
-type Expect<T extends true> = T;
 
 type _ActionParametersPayloadSchemaMatches = Expect<
 	Equal<z.infer<typeof actionParametersPayloadSchema>, ActionParametersPayload>

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Equal, Expect } from '../config/schema_assertions';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -64,12 +65,6 @@ export const visitorStatsResponseSchema = z.object({
 // ─────────────────────────────────────────────────────────────────────────────
 // Type verification
 // ─────────────────────────────────────────────────────────────────────────────
-
-type Equal<X, Y> =
-	(<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2
-		? true
-		: false;
-type Expect<T extends true> = T;
 
 type _HourlyStatsMatches = Expect<
 	Equal<z.infer<typeof hourlyVisitorStatsSchema>, HourlyVisitorStats>

@@ -9,6 +9,7 @@ import {
 	phaseSchema,
 	ruleSetSchema,
 } from '../schema';
+import type { Equal, Expect } from '../schema_assertions';
 import type {
 	SessionIdentifier,
 	SessionMetadataSnapshot,
@@ -338,12 +339,6 @@ export const sessionPlayerNameMapSchema = z
 export const sessionPlayerIdSchema = z
 	.union([z.literal('A'), z.literal('B')])
 	.transform((value) => value as SessionPlayerId);
-
-type Equal<X, Y> =
-	(<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2
-		? true
-		: false;
-type Expect<T extends true> = T;
 
 type _SessionIdMatches = Expect<
 	Equal<z.infer<typeof sessionIdSchema>, SessionIdentifier['sessionId']>

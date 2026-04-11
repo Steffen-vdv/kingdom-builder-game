@@ -28,7 +28,7 @@ export { type ActionDef } from './actions';
 export type { ActionId as ActionIdType } from './actions';
 export type { BuildingDef } from './infrastructure/defs';
 export type { DevelopmentDef } from './developments';
-export type { TriggerKey, Focus } from './infrastructure/defs';
+export type { TriggerKey } from './infrastructure/defs';
 export { Focus as FocusEnum, FocusDefinitions, type FocusValue, type FocusDefinition } from './constants';
 export type { ActionEffectGroupDef, ActionEffectGroupOptionDef } from './infrastructure/builders';
 export { BROOM_ICON, GENERAL_RESOURCE_ICON, RESOURCE_TRANSFER_ICON } from './infrastructure/defs';
