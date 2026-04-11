@@ -12,10 +12,14 @@ import { resourceAmountParams } from '../helpers/resourceParams.ts';
 describe('tax collector AI controller', () => {
 	function createControllerFixture(commandPoints: number = 2) {
 		// Use isolated mode so actionCostResource returns command-points
-		// (the meta-category binding resource) instead of gold from real actions
+		// (the meta-category binding resource) instead of gold from real actions.
+		// free: false is required so the Commands meta-category applies its CP
+		// cost; otherwise the controller's while loop never terminates because
+		// performAction does not consume CP.
 		const content = createContentFactory({ isolated: true });
 		content.action({
 			id: TAX_ACTION_ID,
+			free: false,
 			effects: [
 				{
 					type: 'resource',
