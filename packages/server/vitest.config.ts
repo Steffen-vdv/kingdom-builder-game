@@ -11,6 +11,7 @@ export default mergeConfig(
 		test: {
 			root: dirname,
 			include: ['tests/**/*.test.ts'],
+			pool: 'forks',
 		},
 		resolve: {
 			alias: {

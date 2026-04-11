@@ -25,13 +25,14 @@ export default defineConfig({
 		},
 	},
 	test: {
+		pool: 'threads',
 		include: ['**/*.test.ts', '**/*.test.tsx'],
 		exclude: ['**/node_modules/**'],
 		setupFiles: [
 			path.resolve(__dirname, 'tests/setup/react-act-environment.ts'),
 		],
 		coverage: {
-			provider: 'v8',
+			provider: 'istanbul',
 			reporter: ['text', 'html'],
 			exclude: [
 				'packages/web/**',

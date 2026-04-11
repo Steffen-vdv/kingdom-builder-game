@@ -8,6 +8,8 @@ export default mergeConfig(
 		test: {
 			root: path.resolve(__dirname, 'packages/engine'),
 			include: ['tests/**/*.test.ts'],
+			setupFiles: [],
+			pool: 'threads',
 			coverage: {
 				thresholds: {
 					statements: 80,

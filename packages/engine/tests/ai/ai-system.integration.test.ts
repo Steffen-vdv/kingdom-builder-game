@@ -20,10 +20,14 @@ describe('AISystem with tax collector controller', () => {
 		options: { playerIndex?: number; action?: ActionOverrides } = {},
 	) {
 		const { playerIndex = 1, action = {} } = options;
-		// Use isolated mode so actionCostResource returns command-points
+		// Use isolated mode so actionCostResource returns command-points.
+		// free: false is required so the Commands meta-category applies its CP
+		// cost; otherwise the controller's while loop never terminates because
+		// performAction does not consume CP.
 		const content = createContentFactory({ isolated: true });
 		content.action({
 			id: TAX_ACTION_ID,
+			free: false,
 			baseCosts: {},
 			effects: [
 				{
