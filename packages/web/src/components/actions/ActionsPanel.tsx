@@ -6,6 +6,7 @@ import { hasAiController } from '../../state/sessionAi';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
 import MetaCategoryPanel from './MetaCategoryPanel';
+import ResearchProgressionPanel from './ResearchProgressionPanel';
 import {
 	INDICATOR_PILL_CLASSES,
 	OVERLAY_CLASSES,
@@ -189,6 +190,7 @@ export default function ActionsPanel() {
 				summarizeActionWithInstallation(
 					actionDefinition.id,
 					translationContext,
+					actionDefinition.currentTier,
 				),
 			);
 		});
@@ -304,20 +306,27 @@ export default function ActionsPanel() {
 			</div>
 
 			{/* Render each visible meta-category panel */}
-			{visibleMetaCategories.map((group) => (
-				<div key={group.metaCategory.id} className="relative">
-					{panelDisabled && <div aria-hidden className={OVERLAY_CLASSES} />}
-					<MetaCategoryPanel
-						metaCategory={group.metaCategory}
-						actions={group.actions}
-						summaries={actionSummaries}
-						player={selectedPlayer}
-						canInteract={canInteract}
-						selectResourceDescriptor={selectResourceDescriptor}
-						panelDisabled={panelDisabled}
-					/>
-				</div>
-			))}
+			{visibleMetaCategories.map((group) => {
+				const usesTierProgressionCurve =
+					group.metaCategory.pool?.fillMode.type === 'tier-progression-curve';
+				const Panel = usesTierProgressionCurve
+					? ResearchProgressionPanel
+					: MetaCategoryPanel;
+				return (
+					<div key={group.metaCategory.id} className="relative">
+						{panelDisabled && <div aria-hidden className={OVERLAY_CLASSES} />}
+						<Panel
+							metaCategory={group.metaCategory}
+							actions={group.actions}
+							summaries={actionSummaries}
+							player={selectedPlayer}
+							canInteract={canInteract}
+							selectResourceDescriptor={selectResourceDescriptor}
+							panelDisabled={panelDisabled}
+						/>
+					</div>
+				);
+			})}
 
 			{/* Hidden availability observers */}
 			{actions.map((actionDefinition) => (

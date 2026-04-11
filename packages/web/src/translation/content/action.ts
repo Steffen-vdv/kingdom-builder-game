@@ -21,6 +21,29 @@ import type {
 } from '../log/timeline';
 import { formatActionTitle } from '../formatActionTitle';
 
+/**
+ * Reserved option key that callers use to tell the ActionTranslator which
+ * tier of a multi-tier action to render. Stripped before params are handed to
+ * resolveActionEffects so it never leaks into effect param substitution.
+ */
+const ACTION_TIER_OPTION_KEY = 'currentTier';
+
+function splitTierOption(options: Record<string, unknown> | undefined): {
+	tier: number | undefined;
+	params: ActionParametersPayload | undefined;
+} {
+	if (!options) {
+		return { tier: undefined, params: undefined };
+	}
+	const { [ACTION_TIER_OPTION_KEY]: rawTier, ...rest } = options;
+	const tier = typeof rawTier === 'number' ? rawTier : undefined;
+	const params =
+		Object.keys(rest).length > 0
+			? (rest as ActionParametersPayload)
+			: undefined;
+	return { tier, params };
+}
+
 class ActionTranslator implements ContentTranslator<
 	string,
 	Record<string, unknown>
@@ -31,10 +54,8 @@ class ActionTranslator implements ContentTranslator<
 		options?: Record<string, unknown>,
 	): Summary {
 		const definition = context.actions.get(id);
-		const resolved = resolveActionEffects(
-			definition,
-			options as ActionParametersPayload | undefined,
-		);
+		const { tier, params } = splitTierOption(options);
+		const resolved = resolveActionEffects(definition, params, tier);
 		const combined: Summary = [];
 		for (const step of resolved.steps) {
 			if (step.type === 'effects') {
@@ -51,10 +72,8 @@ class ActionTranslator implements ContentTranslator<
 		options?: Record<string, unknown>,
 	): Summary {
 		const definition = context.actions.get(id);
-		const resolved = resolveActionEffects(
-			definition,
-			options as ActionParametersPayload | undefined,
-		);
+		const { tier, params } = splitTierOption(options);
+		const resolved = resolveActionEffects(definition, params, tier);
 		const combined: Summary = [];
 		for (const step of resolved.steps) {
 			if (step.type === 'effects') {
@@ -68,18 +87,16 @@ class ActionTranslator implements ContentTranslator<
 	log(
 		id: string,
 		context: TranslationContext,
-		params?: Record<string, unknown>,
+		options?: Record<string, unknown>,
 	): ActionLogLineDescriptor[] {
 		const definition = context.actions.get(id);
 		let message = formatActionTitle(definition, context);
+		const { tier, params } = splitTierOption(options);
 		const extra = getActionLogHook(definition)?.(context, params);
 		if (extra) {
 			message += extra;
 		}
-		const resolved = resolveActionEffects(
-			definition,
-			params as ActionParametersPayload | undefined,
-		);
+		const resolved = resolveActionEffects(definition, params, tier);
 		const effectLogs: Summary = [];
 		for (const step of resolved.steps) {
 			if (step.type === 'effects') {

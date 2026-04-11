@@ -22,7 +22,10 @@ import { type Action, type DisplayPlayer, type HoverCardData } from './types';
 import { normalizeActionFocus } from './types';
 import type { UseActionMetadataResult } from '../../state/useActionMetadata';
 import { getActionAvailability } from './getActionAvailability';
-import { describeActionWithInstallation } from './actionSummaryHelpers';
+import {
+	describeActionWithInstallation,
+	summarizeActionWithInstallation,
+} from './actionSummaryHelpers';
 import { isBuildingAlreadyOwned } from './buildingOwnershipCheck';
 
 interface GenericActionCardProps {
@@ -174,7 +177,22 @@ function GenericActionCard({
 	const hoverContent = describeActionWithInstallation(
 		action.id,
 		translationContext,
+		action.currentTier,
 	);
+	const nextTierSummary = useMemo(() => {
+		if (
+			action.currentTier === undefined ||
+			action.maxTier === undefined ||
+			action.currentTier >= action.maxTier
+		) {
+			return undefined;
+		}
+		return summarizeActionWithInstallation(
+			action.id,
+			translationContext,
+			action.currentTier + 1,
+		);
+	}, [action.id, action.currentTier, action.maxTier, translationContext]);
 	const { effects, description } = splitSummary(hoverContent);
 	const createHoverDetails = (): HoverCardData => ({
 		title: hoverTitle,
@@ -220,6 +238,7 @@ function GenericActionCard({
 			onCancel={isPending ? cancelPending : undefined}
 			currentTier={action.currentTier}
 			maxTier={action.maxTier}
+			nextTierSummary={nextTierSummary}
 			onClick={() => {
 				if (!canInteract || !baseEnabled) {
 					return;

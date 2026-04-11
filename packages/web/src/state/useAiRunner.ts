@@ -135,6 +135,8 @@ async function presentAiActions({
 			: afterSnapshot
 				? clonePlayerSnapshot(afterSnapshot)
 				: clonePlayerSnapshot(beforeState);
+		const actionTierBefore =
+			beforePlayer?.actionStates?.[actionResult.actionId]?.currentTier;
 		const resolution = buildActionResolution({
 			actionId: actionResult.actionId,
 			actionDefinition: stepDefinition,
@@ -147,6 +149,9 @@ async function presentAiActions({
 			diffContext,
 			resourceKeys,
 			resources: registries.resources,
+			...(typeof actionTierBefore === 'number'
+				? { currentTier: actionTierBefore }
+				: {}),
 		});
 		const actionMeta = buildResolutionActionMeta(
 			action,

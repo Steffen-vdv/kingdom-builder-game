@@ -166,6 +166,8 @@ export function useActionPerformer({
 					});
 					return;
 				}
+				const actionTierBefore =
+					playerBefore.actionStates?.[action.id]?.currentTier;
 				const resolution = buildActionResolution({
 					actionId: action.id,
 					actionDefinition: stepDef,
@@ -178,6 +180,9 @@ export function useActionPerformer({
 					diffContext,
 					resourceKeys,
 					resources: registries.resources,
+					...(typeof actionTierBefore === 'number'
+						? { currentTier: actionTierBefore }
+						: {}),
 				});
 				const { timeline, logLines, summaries, headline } = resolution;
 				syncPhaseState(snapshotAfter);
