@@ -6,7 +6,6 @@ import {
 	SYNTHETIC_LAND_INFO,
 	SYNTHETIC_SLOT_INFO,
 	SYNTHETIC_RESOURCES,
-	SYNTHETIC_RESOURCES,
 	registerSyntheticPlowResources,
 } from './fixtures/syntheticPlow';
 import {

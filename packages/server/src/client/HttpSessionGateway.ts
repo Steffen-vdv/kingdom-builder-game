@@ -274,6 +274,7 @@ export class HttpSessionGateway implements SessionGateway {
 		} catch (error) {
 			throw new Error(
 				`Failed to parse response from ${response.url}: ${String(error)}`,
+				{ cause: error },
 			);
 		}
 	}
