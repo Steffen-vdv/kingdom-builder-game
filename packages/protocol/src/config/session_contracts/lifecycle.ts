@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { gameConfigSchema } from '../schema';
+import type { Equal, Expect } from '../schema_assertions';
 import type {
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
@@ -66,12 +67,6 @@ export const sessionUpdatePlayerNameRequestSchema = z.object({
 
 export const sessionUpdatePlayerNameResponseSchema =
 	sessionCreateResponseSchema;
-
-type Equal<X, Y> =
-	(<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2
-		? true
-		: false;
-type Expect<T extends true> = T;
 
 type _SessionCreateRequestMatches = Expect<
 	Equal<z.infer<typeof sessionCreateRequestSchema>, SessionCreateRequest>
