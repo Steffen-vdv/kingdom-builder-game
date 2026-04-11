@@ -3,7 +3,7 @@ import { BaseBuilder } from '@kingdom-builder/contents-sdk';
 import type { ActionDef } from '../../../actions';
 import type { ActionCategoryId } from '../../../actionCategories';
 import type { MetaCategoryValue } from '../../../constants';
-import type { Focus } from '../../defs';
+import type { FocusValue } from '../../defs';
 import { ActionTierBuilder, type ActionTierConfig } from './actionTierBuilder';
 
 type ActionBuilderConfig = ActionDef;
@@ -44,7 +44,7 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 		return this;
 	}
 
-	focus(focus: Focus) {
+	focus(focus: FocusValue) {
 		this.config.focus = focus;
 		return this;
 	}

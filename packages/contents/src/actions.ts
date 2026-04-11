@@ -50,7 +50,7 @@ import {
 	resourceTransferAmount,
 	resourceTransferPercent,
 } from '@kingdom-builder/contents-sdk';
-import { Focus } from './infrastructure/defs';
+import { Focus, type FocusValue } from './infrastructure/defs';
 import { PhaseId } from './phaseTypes';
 import {
 	ActionId as ActionIdValues,
@@ -102,7 +102,7 @@ export interface ActionDef extends ActionConfig {
 	metaCategory: MetaCategoryValue;
 	category?: ActionCategoryIdValue;
 	order?: number;
-	focus?: Focus;
+	focus?: FocusValue;
 	/** System role for system actions (e.g., 'initial-setup', 'compensation') */
 	systemRole?: string;
 }
