@@ -22,7 +22,6 @@ import type {
 	SerializedRegistry,
 	SessionRegistriesPayload,
 	SessionActionCategoryRegistry,
-	SessionActionMetaCategoryRegistry,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionOverviewMetadata,
@@ -102,30 +101,6 @@ const cloneActionCategoryRegistry = (): SessionActionCategoryRegistry => {
 	}
 	return deepFreeze(entries);
 };
-
-const cloneActionMetaCategoryRegistry =
-	(): SessionActionMetaCategoryRegistry => {
-		const entries: SessionActionMetaCategoryRegistry = {};
-		for (const [id, definition] of ACTION_META_CATEGORIES.entries()) {
-			const entry: SessionActionMetaCategoryRegistry[string] = {
-				id: definition.id,
-				label: definition.label,
-				icon: definition.icon,
-				bindingResourceId: definition.bindingResourceId,
-				costModel: definition.costModel,
-				visibilityTrigger: definition.visibilityTrigger,
-				order: definition.order,
-			};
-			if (definition.globalCostAmount !== undefined) {
-				entry.globalCostAmount = definition.globalCostAmount;
-			}
-			if (definition.categoryIds) {
-				entry.categoryIds = [...definition.categoryIds];
-			}
-			entries[id] = deepFreeze(entry);
-		}
-		return deepFreeze(entries);
-	};
 
 const cloneResourceCatalogRegistry = <DefinitionType>(registry: {
 	byId: Record<string, DefinitionType>;
@@ -330,7 +305,7 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 	const registries: SessionRegistriesPayload = {
 		actions: cloneRegistry(ACTIONS),
 		actionCategories: cloneActionCategoryRegistry(),
-		actionMetaCategories: cloneActionMetaCategoryRegistry(),
+		actionMetaCategories: cloneRegistry(ACTION_META_CATEGORIES),
 		buildings: cloneRegistry(BUILDINGS),
 		developments: cloneRegistry(DEVELOPMENTS),
 		resources: cloneResourceCatalogRegistry(RESOURCE_REGISTRY),

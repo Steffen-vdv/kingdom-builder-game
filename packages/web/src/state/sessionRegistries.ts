@@ -74,28 +74,6 @@ function createActionCategoryRegistry(
 	return registry;
 }
 
-function cloneActionMetaCategoryDefinition(
-	definition: ActionMetaCategoryConfig,
-): ActionMetaCategoryConfig {
-	const parsed = actionMetaCategorySchema.passthrough().parse(definition);
-	const result: ActionMetaCategoryConfig = {
-		id: parsed.id,
-		label: parsed.label,
-		icon: parsed.icon,
-		bindingResourceId: parsed.bindingResourceId,
-		costModel: parsed.costModel,
-		visibilityTrigger: parsed.visibilityTrigger,
-		order: parsed.order,
-	};
-	if (parsed.globalCostAmount !== undefined) {
-		result.globalCostAmount = parsed.globalCostAmount;
-	}
-	if (parsed.categoryIds !== undefined) {
-		result.categoryIds = [...parsed.categoryIds];
-	}
-	return result;
-}
-
 function createActionMetaCategoryRegistry(
 	metaCategories: Record<string, ActionMetaCategoryConfig> | undefined,
 ): Registry<ActionMetaCategoryConfig> {
@@ -106,7 +84,7 @@ function createActionMetaCategoryRegistry(
 		return registry;
 	}
 	for (const [id, definition] of Object.entries(metaCategories)) {
-		registry.add(id, cloneActionMetaCategoryDefinition(definition));
+		registry.add(id, clone(definition));
 	}
 	return registry;
 }
