@@ -14,8 +14,8 @@
 	"dependencies": {
 		"@formkit/auto-animate": "^0.9.0",
 		"clsx": "^2.1.1",
-		"react": "^19.2.4",
-		"react-dom": "^19.2.4"
+		"react": "^19.2.5",
+		"react-dom": "^19.2.5"
 	},
 	"devDependencies": {
 		"@kingdom-builder/contents": "workspace:*",
