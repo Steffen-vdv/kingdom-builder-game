@@ -27,7 +27,7 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	 */
 	metaCategory(metaCategory: MetaCategoryValue) {
 		if (this.metaCategorySet) {
-			throw new Error('Action already has metaCategory(). ' + 'Remove the extra metaCategory() call.');
+			throw new Error('Action already has metaCategory(). Remove the extra call.');
 		}
 		this.config.metaCategory = metaCategory;
 		this.metaCategorySet = true;
@@ -126,8 +126,14 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	}
 
 	override build(): ActionBuilderConfig {
+		if (this.config.id === undefined) {
+			throw new Error("Action is missing id(). Call id('unique-id') before build().");
+		}
+		if (this.config.name === undefined) {
+			throw new Error("Action is missing name(). Call name('Readable name') before build().");
+		}
 		if (!this.metaCategorySet) {
-			throw new Error('Action is missing metaCategory(). ' + 'Call metaCategory(MetaCategory.Commands) before build().');
+			throw new Error('Action is missing metaCategory(). Call metaCategory() before build().');
 		}
 		if (this.tiersMap.size === 0) {
 			throw new Error('Action must have at least one tier. ' + 'Call tier(1, t => t.effect(...)) before build().');
