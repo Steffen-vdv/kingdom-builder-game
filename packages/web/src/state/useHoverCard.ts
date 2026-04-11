@@ -27,6 +27,8 @@ export interface HoverCard {
 	breakdown?: Summary;
 	/** Optional thermometer visualization for tiered resources */
 	thermometer?: TierThermometerData;
+	/** Optional preview of the next tier for multi-tier actions */
+	nextTierEffects?: Summary;
 }
 
 interface HoverCardOptions {
