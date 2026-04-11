@@ -49,6 +49,8 @@ export interface ActionCardProps {
 	currentTier?: number | undefined;
 	/** Max tier for multi-tier actions */
 	maxTier?: number | undefined;
+	/** Pre-rendered summary for the next tier (for upgrade preview) */
+	nextTierSummary?: Summary | undefined;
 }
 
 export default function ActionCard({
@@ -81,6 +83,7 @@ export default function ActionCard({
 	resourceMetadata,
 	currentTier,
 	maxTier,
+	nextTierSummary,
 }: ActionCardProps): ReactElement {
 	const focusClass = getFocusGradient(focus);
 	const isBack = variant === 'back';
@@ -172,6 +175,24 @@ export default function ActionCard({
 			Tier {currentTier}/{maxTier}
 		</span>
 	) : null;
+	const showNextTierPreview =
+		variant === 'front' &&
+		implemented &&
+		nextTierSummary !== undefined &&
+		nextTierSummary.length > 0 &&
+		currentTier !== undefined &&
+		maxTier !== undefined &&
+		currentTier < maxTier;
+	const nextTierPreview = showNextTierPreview ? (
+		<div className="action-card__next-tier mt-2 border-t border-slate-200/60 dark:border-slate-700/60 pt-2">
+			<div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+				Next tier →
+			</div>
+			<ul className="action-card__summary action-card__summary--preview opacity-70 text-xs">
+				{renderSummary(nextTierSummary)}
+			</ul>
+		</div>
+	) : null;
 
 	return (
 		<div
@@ -211,6 +232,7 @@ export default function ActionCard({
 							</div>
 						</div>
 						<ul className="action-card__summary">{renderedSummary}</ul>
+						{nextTierPreview}
 					</div>
 				</button>
 				<div className="action-card__face action-card__face--back">

@@ -56,6 +56,40 @@ function getActionPresentation(id: string, context: TranslationContext) {
 	return { icon, name, system, locked, label };
 }
 
+function getMetaCategoryPresentation(id: string, context: TranslationContext) {
+	try {
+		const definition = context.actionMetaCategories.get(id);
+		const label = formatActionLabel(definition.icon, definition.label) || id;
+		return { icon: definition.icon, label };
+	} catch {
+		return { icon: '', label: id };
+	}
+}
+
+type UpgradeTarget =
+	| { mode: 'action'; actionId: string }
+	| { mode: 'metaCategory'; metaCategoryId: string };
+
+function extractUpgradeTarget(
+	params: Record<string, unknown> | undefined,
+): UpgradeTarget | null {
+	if (!params) {
+		return null;
+	}
+	const targetAction = params['targetAction'];
+	if (typeof targetAction === 'string' && targetAction.length > 0) {
+		return { mode: 'action', actionId: targetAction };
+	}
+	const randomInMetaCategory = params['randomInMetaCategory'];
+	if (
+		typeof randomInMetaCategory === 'string' &&
+		randomInMetaCategory.length > 0
+	) {
+		return { mode: 'metaCategory', metaCategoryId: randomInMetaCategory };
+	}
+	return null;
+}
+
 registerEffectFormatter('action', 'add', {
 	summarize: (effect, context) => {
 		const id = effect.params?.['id'] as string;
@@ -116,6 +150,63 @@ registerEffectFormatter('action', 'remove', {
 		}
 		const { label } = getActionPresentation(id, context);
 		return formatActionChangeSentence('lose', label, 'log');
+	},
+});
+
+registerEffectFormatter('action', 'upgrade', {
+	summarize: (effect, context) => {
+		const target = extractUpgradeTarget(effect.params);
+		if (!target) {
+			return null;
+		}
+		if (target.mode === 'action') {
+			const { label } = getActionPresentation(target.actionId, context);
+			return `Upgrade ${label}`;
+		}
+		const { label } = getMetaCategoryPresentation(
+			target.metaCategoryId,
+			context,
+		);
+		return `Upgrade random ${label}`;
+	},
+	describe: (effect, context) => {
+		const target = extractUpgradeTarget(effect.params);
+		if (!target) {
+			return null;
+		}
+		if (target.mode === 'action') {
+			const { label } = getActionPresentation(target.actionId, context);
+			const card = describeContent('action', target.actionId, context);
+			return [
+				`Upgrade ${label} to the next tier`,
+				{
+					title: label,
+					items: card,
+					_hoist: true,
+					_desc: true,
+				},
+			];
+		}
+		const { label } = getMetaCategoryPresentation(
+			target.metaCategoryId,
+			context,
+		);
+		return `Upgrade a random ${label} action to the next tier`;
+	},
+	log: (effect, context) => {
+		const target = extractUpgradeTarget(effect.params);
+		if (!target) {
+			return null;
+		}
+		if (target.mode === 'action') {
+			const { label } = getActionPresentation(target.actionId, context);
+			return `Upgraded ${label}`;
+		}
+		const { label } = getMetaCategoryPresentation(
+			target.metaCategoryId,
+			context,
+		);
+		return `Upgraded a random ${label}`;
 	},
 });
 

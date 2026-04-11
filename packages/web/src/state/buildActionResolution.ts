@@ -45,6 +45,11 @@ export interface BuildActionResolutionOptions {
 	diffContext: TranslationDiffContext;
 	resourceKeys: readonly SessionResourceKey[];
 	resources: SessionRegistries['resources'];
+	/**
+	 * Current tier of the performed action at the time the player invoked it,
+	 * used to pick the correct tier-specific effects when rendering log lines.
+	 */
+	currentTier?: number;
 }
 
 export interface BuildActionResolutionResult {
@@ -252,8 +257,13 @@ export function buildActionResolution({
 	diffContext,
 	resourceKeys,
 	resources,
+	currentTier,
 }: BuildActionResolutionOptions): BuildActionResolutionResult {
-	const stepEffects = resolveActionEffects(actionDefinition, params);
+	const stepEffects = resolveActionEffects(
+		actionDefinition,
+		params,
+		currentTier,
+	);
 	const diffOptions = translationContext.rules.tieredResourceKey
 		? { tieredResourceKey: translationContext.rules.tieredResourceKey }
 		: undefined;
@@ -265,11 +275,15 @@ export function buildActionResolution({
 		Array.from(resourceKeys),
 		diffOptions,
 	);
+	const logOptions: Record<string, unknown> | undefined =
+		typeof currentTier === 'number'
+			? { ...(params ?? {}), currentTier }
+			: params;
 	const rawMessages = logContent(
 		'action',
 		actionId,
 		translationContext,
-		params,
+		logOptions,
 	);
 	const messages = ensureTimelineLines(rawMessages);
 	const costLines = buildActionCostLines({

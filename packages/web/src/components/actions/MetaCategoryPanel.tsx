@@ -3,6 +3,7 @@ import type { ActionMetaCategoryConfig } from '@kingdom-builder/protocol';
 import type { Summary } from '../../translation';
 import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
 import BasicOptions from './BasicOptions';
+import PoolSlots from './PoolSlots';
 import type { Action, DisplayPlayer } from './types';
 import type { ResourceDescriptorSelector } from './utils';
 import {
@@ -10,8 +11,6 @@ import {
 	HEADER_CLASSES,
 	SECTION_CLASSES,
 	TITLE_CLASSES,
-	POOL_SLOT_CLASSES,
-	POOL_SLOT_EMPTY_CLASSES,
 	POOL_STATUS_CLASSES,
 } from './actionsPanelStyles';
 
@@ -92,8 +91,6 @@ export default function MetaCategoryPanel({
 
 	// Pool display mode
 	if (hasPool) {
-		const emptySlots = Math.max(0, poolSize - metaCategoryActions.length);
-
 		return (
 			<section
 				className={SECTION_CLASSES}
@@ -110,29 +107,14 @@ export default function MetaCategoryPanel({
 						{metaCategoryActions.length} of {poolSize} available
 					</div>
 				</div>
-				<div className="grid grid-cols-3 gap-2 mt-4">
-					{metaCategoryActions.map((action) => (
-						<div key={action.id} className={POOL_SLOT_CLASSES}>
-							<BasicOptions
-								actions={[action]}
-								summaries={summaries}
-								player={player}
-								canInteract={canInteract}
-								selectResourceDescriptor={selectResourceDescriptor}
-							/>
-						</div>
-					))}
-					{/* Render empty slots */}
-					{Array.from({ length: emptySlots }).map((_, index) => (
-						<div
-							key={`empty-${index}`}
-							className={POOL_SLOT_EMPTY_CLASSES}
-							aria-label="Empty pool slot"
-						>
-							<span className="text-gray-400">Empty</span>
-						</div>
-					))}
-				</div>
+				<PoolSlots
+					actions={metaCategoryActions}
+					poolSize={poolSize}
+					summaries={summaries}
+					player={player}
+					canInteract={canInteract}
+					selectResourceDescriptor={selectResourceDescriptor}
+				/>
 			</section>
 		);
 	}

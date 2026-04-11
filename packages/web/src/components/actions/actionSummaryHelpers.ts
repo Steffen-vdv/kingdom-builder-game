@@ -116,8 +116,16 @@ export function resolveInstallationTarget(
 export function summarizeActionWithInstallation(
 	actionId: string,
 	translationContext: TranslationContext,
+	currentTier?: number,
 ): Summary {
-	const baseSummary = summarizeContent('action', actionId, translationContext);
+	const actionOptions =
+		typeof currentTier === 'number' ? { currentTier } : undefined;
+	const baseSummary = summarizeContent(
+		'action',
+		actionId,
+		translationContext,
+		actionOptions,
+	);
 	const target = resolveInstallationTarget(actionId, translationContext);
 	if (!target) {
 		return baseSummary;
@@ -162,11 +170,15 @@ export function summarizeActionWithInstallation(
 export function describeActionWithInstallation(
 	actionId: string,
 	translationContext: TranslationContext,
+	currentTier?: number,
 ): Summary {
+	const actionOptions =
+		typeof currentTier === 'number' ? { currentTier } : undefined;
 	const baseDescription = describeContent(
 		'action',
 		actionId,
 		translationContext,
+		actionOptions,
 	);
 	const target = resolveInstallationTarget(actionId, translationContext);
 	if (!target) {
