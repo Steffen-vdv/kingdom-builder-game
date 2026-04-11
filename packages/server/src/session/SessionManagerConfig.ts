@@ -28,7 +28,6 @@ import {
 } from './buildSessionMetadata.js';
 import {
 	cloneActionCategoryRegistry,
-	cloneActionMetaCategoryRegistry,
 	cloneRegistry,
 	freezeSerializedRegistry,
 } from './registryUtils.js';
@@ -113,7 +112,7 @@ export function buildSessionManagerConfig(
 			) as SessionActionCategoryRegistry);
 
 	const actionMetaCategories = freezeSerializedRegistry(
-		cloneActionMetaCategoryRegistry(baseOptions.actionMetaCategories),
+		cloneRegistry(baseOptions.actionMetaCategories),
 	) as SessionActionMetaCategoryRegistry;
 
 	const registries: SessionRegistriesPayload = {

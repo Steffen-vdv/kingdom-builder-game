@@ -57,6 +57,27 @@ describe('cloneRegistry', () => {
 		).amount = 5;
 		expect(original.tiers['1'].effects[0].params?.amount).toBe(1);
 	});
+
+	it('preserves pool config on meta-categories that define one', () => {
+		const factory = createContentFactory();
+		const source = factory.actionMetaCategories
+			.entries()
+			.find(([, definition]) => definition.pool !== undefined);
+		if (!source) {
+			throw new Error(
+				'Expected at least one meta-category with a pool for this test.',
+			);
+		}
+		const [sourceId, sourceDefinition] = source;
+
+		const cloned = cloneRegistry(factory.actionMetaCategories);
+		const clonedEntry = cloned[sourceId];
+
+		expect(clonedEntry.pool).toBeDefined();
+		expect(clonedEntry.pool).toEqual(sourceDefinition.pool);
+		expect(clonedEntry.pool).not.toBe(sourceDefinition.pool);
+		expect(clonedEntry.pool?.fillMode.type).toBe('tier-progression-curve');
+	});
 });
 
 describe('cloneActionCategoryRegistry', () => {
