@@ -1,13 +1,13 @@
 import { Registry, developmentSchema } from '@kingdom-builder/protocol';
-import { Resource, getResourceId } from './internal';
-import type { ResourceKey } from './internal';
-import { development, effect, developmentParams } from './infrastructure/builders';
+import { Resource, getResourceId } from './constants';
+import type { ResourceKey } from './constants';
+import { development, effect, developmentParams } from '../../infrastructure/builders';
 import { Types, DevelopmentMethods, ResourceMethods } from '@kingdom-builder/contents-sdk';
-import { Focus } from './infrastructure/defs';
-import type { DevelopmentDef } from './infrastructure/defs';
+import { Focus } from '../../infrastructure/defs';
+import type { DevelopmentDef } from '../../infrastructure/defs';
 import { resourceChange } from './resource';
 
-export type { DevelopmentDef } from './infrastructure/defs';
+export type { DevelopmentDef } from '../../infrastructure/defs';
 
 export const DevelopmentId = {
 	Farm: 'farm',

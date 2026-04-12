@@ -8,7 +8,7 @@
 import type { ContentPackage } from '@kingdom-builder/contents-sdk';
 import { SystemRole } from '@kingdom-builder/contents-sdk';
 import { createBasePackage } from '../base';
-import { ActionId, type ActionDef } from '../../actions';
+import { ActionId, type ActionDef } from '../content/actions';
 
 /**
  * Creates the dev-mode content package.

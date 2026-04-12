@@ -12,7 +12,7 @@
  */
 import { actionSchema, type ActionConfig, Registry } from '@kingdom-builder/protocol';
 import { z, type ZodType } from 'zod';
-import { Resource, SystemRole } from './internal';
+import { Resource, SystemRole } from './constants';
 import { DevelopmentId } from './developments';
 import { BuildingId } from './buildingIds';
 import {
@@ -34,7 +34,7 @@ import {
 	costModParams,
 	developmentTarget,
 	populationTarget,
-} from './infrastructure/builders';
+} from '../../infrastructure/builders';
 import {
 	ActionMethods,
 	AttackMethods,
@@ -50,7 +50,7 @@ import {
 	resourceTransferAmount,
 	resourceTransferPercent,
 } from '@kingdom-builder/contents-sdk';
-import { Focus, type FocusValue } from './infrastructure/defs';
+import { Focus, type FocusValue } from '../../infrastructure/defs';
 import { PhaseId } from './phaseTypes';
 import {
 	ActionId as ActionIdValues,

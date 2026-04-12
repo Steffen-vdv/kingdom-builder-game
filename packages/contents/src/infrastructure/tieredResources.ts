@@ -1,6 +1,6 @@
 import type { RuleSet } from '@kingdom-builder/protocol';
 import type { ResourceTierTrackMetadata } from '@kingdom-builder/contents-sdk';
-import { RULES } from '../rules';
+import { RULES } from '../kingdom-builder/content/rules';
 
 export type TierSummaryGroup = Map<string, string>;
 export type TierSummaryStore = Map<string, TierSummaryGroup>;

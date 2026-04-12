@@ -6,15 +6,15 @@
  */
 
 import type { ContentPackage } from '@kingdom-builder/contents-sdk';
-import { createActionRegistry, ACTIONS, ACTION_INFO } from '../../actions';
-import { createBuildingRegistry, BUILDINGS, BUILDING_INFO } from '../../buildings';
-import { createDevelopmentRegistry, DEVELOPMENT_INFO } from '../../developments';
-import { createActionMetaCategoryRegistry } from '../../actionMetaCategories';
-import { createActionCategoryRegistry } from '../../actionCategories';
-import { PHASES } from '../../phases';
-import { RULES } from '../../rules';
-import { buildResourceCatalog } from '../../resource';
-import { PRIMARY_ICON_ID } from '../../startup';
+import { createActionRegistry, ACTIONS, ACTION_INFO } from '../content/actions';
+import { createBuildingRegistry, BUILDINGS, BUILDING_INFO } from '../content/buildings';
+import { createDevelopmentRegistry, DEVELOPMENT_INFO } from '../content/developments';
+import { createActionMetaCategoryRegistry } from '../content/actionMetaCategories';
+import { createActionCategoryRegistry } from '../content/actionCategories';
+import { PHASES } from '../content/phases';
+import { RULES } from '../content/rules';
+import { buildResourceCatalog } from '../content/resource';
+import { PRIMARY_ICON_ID } from '../content/startup';
 
 /**
  * Creates the base game content package.
@@ -45,6 +45,6 @@ export { PHASES };
 export { RULES };
 
 // Re-export registries for testing and advanced usage
-export { createActionRegistry } from '../../actions';
-export { createBuildingRegistry } from '../../buildings';
-export { createDevelopmentRegistry } from '../../developments';
+export { createActionRegistry } from '../content/actions';
+export { createBuildingRegistry } from '../content/buildings';
+export { createDevelopmentRegistry } from '../content/developments';

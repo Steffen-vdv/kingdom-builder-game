@@ -1,7 +1,7 @@
 import { action, actionParams, effect, requirement, compareRequirement, passiveParams, attackParams, happinessTier, actionMetaCategory } from '../src/infrastructure/builders';
-import { DEVELOPMENT_ACTION_IDS } from '../src/actions';
+import { DEVELOPMENT_ACTION_IDS } from '../src/kingdom-builder/content/actions';
 import { Types, PassiveMethods } from '@kingdom-builder/contents-sdk';
-import { MetaCategory } from '../src/constants';
+import { MetaCategory } from '../src/kingdom-builder/content/constants';
 import { describe, expect, it } from 'vitest';
 
 const firstDevelopmentActionId = DEVELOPMENT_ACTION_IDS[0];

@@ -1,6 +1,6 @@
 import { action, actionParams, actionTier, actionEffectGroup, actionEffectGroupOption } from '../src/infrastructure/builders';
 import type { ActionEffectGroupDef } from '../src/infrastructure/builders';
-import { DevelopActions, MetaCategory } from '../src/actions';
+import { DevelopActions, MetaCategory } from '../src/kingdom-builder/content/actions';
 import { describe, expect, it } from 'vitest';
 
 const developFarmActionId = DevelopActions.develop_farm;

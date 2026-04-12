@@ -30,12 +30,14 @@ vi.mock('../src/state/useContentPackages', () => ({
 				name: 'Kingdom Builder',
 				description: 'The full experience.',
 				icon: '🏰',
+				space: 'Kingdom Builder',
 			},
 			{
 				id: 'kingdom-builder:dev-mode',
 				name: 'Dev Mode',
 				description: 'For testing.',
 				icon: '🧪',
+				space: 'Kingdom Builder',
 			},
 		],
 		defaultContentId: 'kingdom-builder:base',
@@ -97,10 +99,10 @@ beforeEach(() => {
 });
 
 describe('<App />', () => {
-	it('renders main menu with game mode cards', () => {
+	it('renders main menu with content space cards', () => {
 		render(<App />);
 		expect(screen.getByText('Begin Your Reign')).toBeInTheDocument();
-		expect(screen.getByText('Dev Mode')).toBeInTheDocument();
+		expect(screen.getByText('2 game modes')).toBeInTheDocument();
 	});
 
 	it('surfaces continue button when resume point exists', () => {

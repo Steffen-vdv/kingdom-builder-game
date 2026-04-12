@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { increaseUpperBound, resourceTransfer, transferEndpoint, type ResourceTransferEndpointPayload } from '../../src/resource';
+import { increaseUpperBound, resourceTransfer, transferEndpoint, type ResourceTransferEndpointPayload } from '../../src/kingdom-builder/content/resource';
 
 describe('Resource transfer builders', () => {
 	it('builds donor and recipient payloads with change helpers', () => {

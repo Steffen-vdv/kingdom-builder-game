@@ -180,6 +180,7 @@ const contentPackageMetaSchema = z.object({
 	name: z.string(),
 	description: z.string().optional(),
 	icon: z.string().optional(),
+	space: z.string().optional(),
 });
 
 export const runtimeConfigResponseSchema = z

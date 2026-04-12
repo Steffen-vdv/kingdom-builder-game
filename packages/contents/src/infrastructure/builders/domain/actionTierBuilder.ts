@@ -1,6 +1,9 @@
 import type { ActionEffect, EffectConfig, RequirementConfig } from '@kingdom-builder/protocol';
 import { ActionEffectGroupBuilder, RequirementBuilder, type ActionEffectGroupDef } from '@kingdom-builder/contents-sdk';
-import type { ResourceKey } from '../../../internal';
+// Builders accept any string resource key so that multiple
+// content spaces (kingdom-builder, byte-sized-empire, etc.)
+// can use the same infrastructure.
+type ResourceKey = string;
 
 /**
  * Configuration for a single tier of an action.

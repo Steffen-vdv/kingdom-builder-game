@@ -1,9 +1,6 @@
 import type { ActionTiersConfig } from '@kingdom-builder/protocol';
 import { BaseBuilder } from '@kingdom-builder/contents-sdk';
-import type { ActionDef } from '../../../actions';
-import type { ActionCategoryId } from '../../../actionCategories';
-import type { MetaCategoryValue } from '../../../constants';
-import type { FocusValue } from '../../defs';
+import type { ActionDef } from '@kingdom-builder/contents-sdk';
 import { ActionTierBuilder, type ActionTierConfig } from './actionTierBuilder';
 
 type ActionBuilderConfig = ActionDef;
@@ -25,17 +22,17 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	 * Sets the meta-category for this action. Required for all actions.
 	 * @param metaCategory - The meta-category ID (e.g., MetaCategory.Commands)
 	 */
-	metaCategory(metaCategory: MetaCategoryValue) {
+	metaCategory(metaCategory: string) {
 		if (this.metaCategorySet) {
-			throw new Error('Action already has metaCategory(). Remove the extra call.');
+			throw new Error('Action already has metaCategory().' + ' Remove the extra call.');
 		}
-		this.config.metaCategory = metaCategory;
+		(this.config as Record<string, unknown>).metaCategory = metaCategory;
 		this.metaCategorySet = true;
 		return this;
 	}
 
-	category(category: ActionCategoryId) {
-		this.config.category = category;
+	category(category: string) {
+		(this.config as Record<string, unknown>).category = category;
 		return this;
 	}
 
@@ -44,8 +41,8 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 		return this;
 	}
 
-	focus(focus: FocusValue) {
-		this.config.focus = focus;
+	focus(focus: string) {
+		(this.config as Record<string, unknown>).focus = focus;
 		return this;
 	}
 
