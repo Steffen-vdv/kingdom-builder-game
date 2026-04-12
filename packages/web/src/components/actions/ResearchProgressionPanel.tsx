@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { ActionMetaCategoryConfig } from '@kingdom-builder/protocol';
+import type { ActionMetaCategoryConfig } from '@boardsmith/protocol';
 import type { Summary } from '../../translation';
 import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
 import PoolSlots from './PoolSlots';

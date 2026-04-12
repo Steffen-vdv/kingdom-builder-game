@@ -29,7 +29,7 @@ import type {
 	SessionEffectLogMap,
 	SessionResourceCatalog,
 	SessionMetadataDescriptor,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { PassiveRecordSnapshot } from './types';
 import type { ActionTrace as EngineActionTrace } from '../log';
 import {

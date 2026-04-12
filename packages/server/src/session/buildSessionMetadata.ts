@@ -13,7 +13,7 @@ import {
 	UPKEEP_INFO,
 	TRANSFER_INFO,
 	PHASES,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import type {
 	BuildingConfig,
 	DevelopmentConfig,
@@ -24,7 +24,7 @@ import type {
 	SessionMetadataSnapshot,
 	SessionPhaseMetadata,
 	SessionTriggerMetadata,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 type SessionMetadataDescriptorMap = Record<string, SessionMetadataDescriptor>;
 type SessionPhaseStep = NonNullable<SessionPhaseMetadata['steps']>[number];

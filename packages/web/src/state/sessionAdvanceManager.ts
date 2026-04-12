@@ -1,4 +1,4 @@
-import type { SessionAdvanceResult } from '@kingdom-builder/protocol/session';
+import type { SessionAdvanceResult } from '@boardsmith/protocol/session';
 import { cloneValue } from './cloneValue';
 import type { SessionStateRecord } from './sessionStateStore';
 

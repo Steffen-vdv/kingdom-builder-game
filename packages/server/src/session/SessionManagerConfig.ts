@@ -12,7 +12,7 @@ import {
 	RESOURCE_CATEGORY_REGISTRY,
 	CONTENT_PACKAGE_META,
 	DEFAULT_CONTENT_ID,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import type {
 	SessionRegistriesPayload,
 	PhaseConfig,
@@ -24,7 +24,7 @@ import type {
 	ResourceGroupDefinition,
 	ResourceCategoryDefinition,
 	ContentPackageMeta,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import {
 	buildSessionMetadata,
 	type SessionStaticMetadataPayload,

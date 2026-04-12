@@ -5,7 +5,7 @@
  * Used by the engine/server to select game modes.
  */
 
-import type { ContentPackage, ContentPackageLoader } from '@kingdom-builder/contents-sdk';
+import type { ContentPackage, ContentPackageLoader } from '@boardsmith/contents-sdk';
 
 /**
  * Available content package IDs

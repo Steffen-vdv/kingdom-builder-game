@@ -3,7 +3,7 @@ import type {
 	ActionConfig as ActionDef,
 	ActionMetaCategoryConfig,
 	Registry,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { createInitialActionState, runPoolFill } from '../pool/fillAlgorithm';
 import type { RngService } from '../services';
 

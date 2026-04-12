@@ -1,5 +1,5 @@
-import type { Registry } from '@kingdom-builder/protocol';
-import type * as ProtocolSession from '@kingdom-builder/protocol/session';
+import type { Registry } from '@boardsmith/protocol';
+import type * as ProtocolSession from '@boardsmith/protocol/session';
 import type { SessionRegistries } from '../../../src/state/sessionRegistries';
 
 function cloneValue<DefinitionType>(value: DefinitionType): DefinitionType {

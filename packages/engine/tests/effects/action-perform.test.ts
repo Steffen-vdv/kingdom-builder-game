@@ -3,13 +3,10 @@ import { actionPerform } from '../../src/effects/action_perform';
 import { advance, resolveActionEffects } from '../../src';
 import { createTestEngine } from '../helpers';
 import { Land } from '../../src/state';
-import { createContentFactory } from '@kingdom-builder/testing';
-import * as protocol from '@kingdom-builder/protocol';
-import type {
-	EffectConfig,
-	ResolvedActionEffects,
-} from '@kingdom-builder/protocol';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { createContentFactory } from '@boardsmith/testing';
+import * as protocol from '@boardsmith/protocol';
+import type { EffectConfig, ResolvedActionEffects } from '@boardsmith/protocol';
+import { Resource as CResource } from '@boardsmith/contents';
 
 interface EffectGroupOption {
 	id: string;

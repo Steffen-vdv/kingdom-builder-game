@@ -199,7 +199,7 @@ export default [
 				{
 					paths: [
 						{
-							name: '@kingdom-builder/contents',
+							name: '@boardsmith/contents',
 							message:
 								'Web tests must rely on selectors or synthetic ' +
 								'fixtures instead of importing contents directly.',

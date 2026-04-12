@@ -1,5 +1,5 @@
-import { createEngine, getActionCosts } from '@kingdom-builder/engine';
-import { resolveActionEffects } from '@kingdom-builder/protocol';
+import { createEngine, getActionCosts } from '@boardsmith/engine';
+import { resolveActionEffects } from '@boardsmith/protocol';
 import {
 	ACTIONS,
 	BUILDINGS,
@@ -10,10 +10,10 @@ import {
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
 	ACTION_META_CATEGORIES,
-} from '@kingdom-builder/contents';
-import type { EffectDef } from '@kingdom-builder/protocol';
-import { PlayerState, Land } from '@kingdom-builder/engine/state';
-import { runEffects } from '@kingdom-builder/engine/effects';
+} from '@boardsmith/contents';
+import type { EffectDef } from '@boardsmith/protocol';
+import { PlayerState, Land } from '@boardsmith/engine/state';
+import { runEffects } from '@boardsmith/engine/effects';
 
 type EngineForTest = ReturnType<typeof createEngine>;
 

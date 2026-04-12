@@ -1,12 +1,12 @@
 import {
 	sessionCreateRequestSchema,
 	sessionCreateResponseSchema,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type {
 	SessionCreateResponse,
 	SessionSnapshot,
 	SessionStateResponse,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { TransportRequest } from '../TransportTypes.js';
 import { TransportError } from '../TransportTypes.js';
 import type { AuthContext, AuthRole } from '../../auth/AuthContext.js';

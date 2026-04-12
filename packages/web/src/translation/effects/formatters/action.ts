@@ -1,4 +1,4 @@
-import { resolveActionEffects } from '@kingdom-builder/protocol';
+import { resolveActionEffects } from '@boardsmith/protocol';
 import { describeContent } from '../../content';
 import { registerEffectFormatter, logEffects } from '../factory';
 import type { TranslationContext } from '../../context';

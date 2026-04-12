@@ -11,7 +11,7 @@ import type { PlayerState } from '../../src/state';
 import type {
 	ActionConfig,
 	ActionMetaCategoryConfig,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 function createMockPlayerState(
 	overrides: Partial<PlayerState> = {},

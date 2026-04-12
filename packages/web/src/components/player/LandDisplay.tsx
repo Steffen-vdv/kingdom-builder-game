@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import type {
 	ActionEffect,
 	SessionPlayerStateSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { describeContent, splitSummary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';

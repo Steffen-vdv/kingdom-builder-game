@@ -1,5 +1,5 @@
-import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
-import type { SessionPlayerId } from '@kingdom-builder/protocol/session';
+import type { ActionParametersPayload } from '@boardsmith/protocol/actions';
+import type { SessionPlayerId } from '@boardsmith/protocol/session';
 
 function stableSerialize(value: unknown): string {
 	if (value === null || value === undefined) {

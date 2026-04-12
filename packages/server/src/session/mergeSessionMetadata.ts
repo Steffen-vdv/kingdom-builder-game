@@ -3,7 +3,7 @@ import type {
 	SessionOverviewMetadata,
 	SessionOverviewHero,
 	SessionOverviewTokenMap,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { SessionStaticMetadataPayload } from './buildSessionMetadata.js';
 
 type MetadataRecord<T> = Record<string, T>;

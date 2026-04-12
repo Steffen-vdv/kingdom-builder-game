@@ -1,7 +1,4 @@
-import type {
-	AttackOnDamageLogEntry,
-	EffectDef,
-} from '@kingdom-builder/protocol';
+import type { AttackOnDamageLogEntry, EffectDef } from '@boardsmith/protocol';
 import type { SummaryEntry } from '../../content';
 import { summarizeEffects, describeEffects } from '../factory';
 import { prefixOwnerSummary } from './attack/summary';

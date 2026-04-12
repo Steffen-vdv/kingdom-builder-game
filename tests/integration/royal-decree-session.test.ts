@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createEngineSession } from '@kingdom-builder/engine';
+import { createEngineSession } from '@boardsmith/engine';
 import {
 	ACTIONS,
 	ACTION_META_CATEGORIES,
@@ -13,7 +13,7 @@ import {
 	type ResourceKey,
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 
 interface EffectGroupOption {
 	id: string;

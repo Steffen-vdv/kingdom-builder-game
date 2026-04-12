@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import type { ActionMetaCategoryConfig } from '@kingdom-builder/protocol';
+import type { ActionMetaCategoryConfig } from '@boardsmith/protocol';
 import { type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { hasAiController } from '../../state/sessionAi';

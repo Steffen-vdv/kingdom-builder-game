@@ -4,7 +4,7 @@ import {
 	describeEffects,
 	logEffects,
 } from '../src/translation/effects';
-import type { EffectDef, SessionPlayerId } from '@kingdom-builder/protocol';
+import type { EffectDef, SessionPlayerId } from '@boardsmith/protocol';
 import { createTranslationContext } from '../src/translation/context';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import {

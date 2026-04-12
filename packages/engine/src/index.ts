@@ -32,7 +32,7 @@ export type {
 	SessionRuleSnapshot as RuleSnapshot,
 	SessionPassiveRecordSnapshot as PassiveRecordSnapshot,
 	SessionActionDefinitionSummary as ActionDefinitionSummary,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 export {
 	simulateUpcomingPhases,
 	type SimulateUpcomingPhasesOptions,
@@ -81,9 +81,9 @@ export type {
 	AttackOnDamageLogEntry,
 	AttackPlayerDiff,
 	AttackPowerLog,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 export { collectTriggerEffects } from './triggers';
-export { applyParamsToEffects } from '@kingdom-builder/protocol';
+export { applyParamsToEffects } from '@boardsmith/protocol';
 export { snapshotPlayer } from './log';
 export type { PlayerSnapshot, ActionTrace } from './log';
 export type { PlayerId } from './state';

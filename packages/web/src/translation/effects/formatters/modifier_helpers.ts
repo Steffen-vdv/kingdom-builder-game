@@ -1,4 +1,4 @@
-import type { EffectDef, DevelopmentConfig } from '@kingdom-builder/protocol';
+import type { EffectDef, DevelopmentConfig } from '@boardsmith/protocol';
 import { humanizeIdentifier } from '../stringUtils';
 import type { TranslationContext } from '../../context';
 import {

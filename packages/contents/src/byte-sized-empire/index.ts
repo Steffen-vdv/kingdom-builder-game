@@ -7,8 +7,8 @@
  * unlocked capabilities, and happiness as a multiplier engine.
  */
 
-import type { ContentPackage } from '@kingdom-builder/contents-sdk';
-import { createResourceRegistry, createResourceGroupRegistry, createResourceCategoryRegistry } from '@kingdom-builder/contents-sdk';
+import type { ContentPackage } from '@boardsmith/contents-sdk';
+import { createResourceRegistry, createResourceGroupRegistry, createResourceCategoryRegistry } from '@boardsmith/contents-sdk';
 import { getResourceDefinitions, getResourceGroupDefinitions, getResourceCategoryDefinitions } from './resources';
 import { createActionRegistry, createActionMetaCategoryRegistry, createActionCategoryRegistry } from './actions';
 import { createBuildingRegistry } from './buildings';

@@ -2,7 +2,7 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	SessionPlayerId,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type {
 	TranslationActionCategoryRegistry,
 	TranslationAssets,

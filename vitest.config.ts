@@ -4,24 +4,15 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
 	resolve: {
 		alias: {
-			'@kingdom-builder/engine': path.resolve(__dirname, 'packages/engine/src'),
-			'@kingdom-builder/contents': path.resolve(
-				__dirname,
-				'packages/contents/src',
-			),
-			'@kingdom-builder/contents-sdk': path.resolve(
+			'@boardsmith/engine': path.resolve(__dirname, 'packages/engine/src'),
+			'@boardsmith/contents': path.resolve(__dirname, 'packages/contents/src'),
+			'@boardsmith/contents-sdk': path.resolve(
 				__dirname,
 				'packages/contents-sdk/src',
 			),
-			'@kingdom-builder/testing': path.resolve(
-				__dirname,
-				'packages/testing/src',
-			),
-			'@kingdom-builder/protocol': path.resolve(
-				__dirname,
-				'packages/protocol/src',
-			),
-			'@kingdom-builder/web': path.resolve(__dirname, 'packages/web/src'),
+			'@boardsmith/testing': path.resolve(__dirname, 'packages/testing/src'),
+			'@boardsmith/protocol': path.resolve(__dirname, 'packages/protocol/src'),
+			'@boardsmith/web': path.resolve(__dirname, 'packages/web/src'),
 		},
 	},
 	test: {

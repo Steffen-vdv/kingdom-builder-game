@@ -3,7 +3,7 @@ import type {
 	SessionGameConclusionSnapshot,
 	SessionRuleSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import Button from '../common/Button';
 import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
 import { toDescriptorDisplay } from '../player/registryDisplays';

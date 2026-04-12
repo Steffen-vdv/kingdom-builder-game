@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react';
 
 export const MUSIC_PREFERENCE_STORAGE_KEY =
-	'kingdom-builder.preferences.musicEnabled';
+	'boardsmith.preferences.musicEnabled';
 export const SOUND_PREFERENCE_STORAGE_KEY =
-	'kingdom-builder.preferences.soundEnabled';
+	'boardsmith.preferences.soundEnabled';
 export const BACKGROUND_AUDIO_MUTE_STORAGE_KEY =
-	'kingdom-builder.preferences.backgroundAudioMuted';
+	'boardsmith.preferences.backgroundAudioMuted';
 
 type PreferenceUpdater = boolean | ((previousValue: boolean) => boolean);
 

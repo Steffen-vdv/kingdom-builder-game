@@ -2,7 +2,7 @@ import type {
 	AttackTarget,
 	EffectConfig,
 	EffectDef,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { ResourceKey } from '../../types';
 import { ParamsBuilder } from '../builderShared';
 import { resolveEffectConfig } from './effectParams';

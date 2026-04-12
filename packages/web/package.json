@@ -1,5 +1,5 @@
 {
-	"name": "@kingdom-builder/web",
+	"name": "@boardsmith/web",
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",
@@ -18,9 +18,9 @@
 		"react-dom": "^19.2.5"
 	},
 	"devDependencies": {
-		"@kingdom-builder/contents": "workspace:*",
-		"@kingdom-builder/engine": "workspace:*",
-		"@kingdom-builder/server": "workspace:*",
+		"@boardsmith/contents": "workspace:*",
+		"@boardsmith/engine": "workspace:*",
+		"@boardsmith/server": "workspace:*",
 		"fastify": "^5.8.4",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",

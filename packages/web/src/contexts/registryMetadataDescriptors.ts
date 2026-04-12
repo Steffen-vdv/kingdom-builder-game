@@ -1,10 +1,10 @@
-import type { Registry, ResourceDefinition } from '@kingdom-builder/protocol';
+import type { Registry, ResourceDefinition } from '@boardsmith/protocol';
 import type {
 	SessionMetadataDescriptor,
 	SessionPhaseMetadata,
 	SessionPhaseStepMetadata,
 	SessionTriggerMetadata,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 
 export interface RegistryMetadataDescriptor {
 	id: string;

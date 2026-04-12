@@ -1,4 +1,4 @@
-import type { ActionConfig } from '@kingdom-builder/protocol';
+import type { ActionConfig } from '@boardsmith/protocol';
 
 /**
  * Extracts the target building ID from an action's effects.

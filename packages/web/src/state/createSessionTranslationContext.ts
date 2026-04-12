@@ -1,7 +1,7 @@
 import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import {
 	createTranslationContext,
 	type TranslationContext,

@@ -7,7 +7,7 @@ import { QUIT_CONFIRMATION_DESCRIPTION } from '../src/GameLayout';
 // Render the application with the real engine to ensure that
 // dynamic action effects (e.g. build with "$id") don't crash
 // the rendering pipeline when summarized.
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('@boardsmith/engine', async () => {
 	// Re-export the actual engine source since vitest doesn't
 	// resolve the monorepo alias.
 	return await import('../../engine/src');

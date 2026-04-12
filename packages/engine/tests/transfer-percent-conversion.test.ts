@@ -8,12 +8,8 @@
  * - Bug: 25 * 100 = 2500 gold (2500%!)
  */
 import { describe, it, expect } from 'vitest';
-import {
-	createActionRegistry,
-	Resource,
-	ActionId,
-} from '@kingdom-builder/contents';
-import type { EffectConfig } from '@kingdom-builder/protocol';
+import { createActionRegistry, Resource, ActionId } from '@boardsmith/contents';
+import type { EffectConfig } from '@boardsmith/protocol';
 
 // Use ActionId constant instead of hardcoding
 const PLUNDER_ACTION_ID = ActionId.plunder;

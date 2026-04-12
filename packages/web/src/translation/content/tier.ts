@@ -1,4 +1,4 @@
-import type { HappinessTierDefinition } from '@kingdom-builder/protocol';
+import type { HappinessTierDefinition } from '@boardsmith/protocol';
 import { summarizeEffects } from '../effects';
 import { translateTierSummary } from './tierSummaries';
 import { registerContentTranslator } from './factory';

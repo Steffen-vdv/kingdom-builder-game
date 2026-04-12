@@ -11,4 +11,4 @@ export {
 	actionPoolParams,
 	type ActionUpgradeEffectParams,
 	type ActionPoolEffectParams,
-} from '@kingdom-builder/contents-sdk';
+} from '@boardsmith/contents-sdk';

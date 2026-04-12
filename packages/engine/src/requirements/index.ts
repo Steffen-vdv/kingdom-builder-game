@@ -1,7 +1,7 @@
-import { Registry } from '@kingdom-builder/protocol';
+import { Registry } from '@boardsmith/protocol';
 import type { EngineContext } from '../context';
 import { evaluatorCompare } from './evaluator_compare';
-import type { RequirementConfig } from '@kingdom-builder/protocol';
+import type { RequirementConfig } from '@boardsmith/protocol';
 
 export type RequirementDef = RequirementConfig;
 

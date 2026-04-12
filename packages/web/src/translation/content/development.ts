@@ -1,5 +1,5 @@
-import type { EffectDef } from '@kingdom-builder/protocol';
-import { applyParamsToEffects } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
+import { applyParamsToEffects } from '@boardsmith/protocol';
 import { registerContentTranslator } from './factory';
 import type { ContentTranslator, Summary } from './types';
 import { PhasedTranslator } from './phased';

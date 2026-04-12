@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createEngine, runEffects } from '@kingdom-builder/engine';
-import type { StartConfig } from '@kingdom-builder/protocol';
+import { createEngine, runEffects } from '@boardsmith/engine';
+import type { StartConfig } from '@boardsmith/protocol';
 import {
 	snapshotPlayer,
 	diffStepSnapshots,

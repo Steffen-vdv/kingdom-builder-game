@@ -1,7 +1,4 @@
-import type {
-	EffectConfig,
-	PlayerStartConfig,
-} from '@kingdom-builder/protocol';
+import type { EffectConfig, PlayerStartConfig } from '@boardsmith/protocol';
 import { ParamsBuilder } from '../../builderShared';
 import { resolveEffectConfig } from '../effectParams';
 import type { EffectBuilder } from '../evaluators';

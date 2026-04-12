@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createResourceGroupRegistry, createResourceRegistry, resource, type ResourceTierTrack } from '../../src/kingdom-builder/content/resource';
-import { resourceDefinition, resourceGroupDefinition } from '@kingdom-builder/testing';
+import { resourceDefinition, resourceGroupDefinition } from '@boardsmith/testing';
 import { RESOURCE_GROUP_REGISTRY } from '../../src/kingdom-builder/content/registries/resource';
 
 describe('resource builder', () => {

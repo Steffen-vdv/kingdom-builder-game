@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import type { SessionPlayerId } from '@kingdom-builder/protocol';
-import type { SessionAdvanceSkipSnapshot } from '@kingdom-builder/protocol/session';
+import type { SessionPlayerId } from '@boardsmith/protocol';
+import type { SessionAdvanceSkipSnapshot } from '@boardsmith/protocol/session';
 import { describeSkipEvent } from '../src/utils/describeSkipEvent';
 import { createTranslationContext } from '../src/translation/context';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';

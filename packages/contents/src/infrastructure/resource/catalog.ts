@@ -1,6 +1,6 @@
 import { getResourceDefinitions, getResourceGroupDefinitions, getResourceCategoryDefinitions } from '../../kingdom-builder/content/resources';
-import { createResourceCategoryRegistry, createResourceGroupRegistry, createResourceRegistry } from '@kingdom-builder/contents-sdk';
-import type { ResourceCategoryRegistry, ResourceGroupRegistry, ResourceRegistry } from '@kingdom-builder/contents-sdk';
+import { createResourceCategoryRegistry, createResourceGroupRegistry, createResourceRegistry } from '@boardsmith/contents-sdk';
+import type { ResourceCategoryRegistry, ResourceGroupRegistry, ResourceRegistry } from '@boardsmith/contents-sdk';
 
 export interface ResourceCatalog {
 	readonly resources: ResourceRegistry;

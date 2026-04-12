@@ -1,7 +1,7 @@
 import type {
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import {
 	buildActionLogTimeline,
 	formatActionLogLines,

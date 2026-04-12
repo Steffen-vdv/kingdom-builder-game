@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { runEffects, type EffectDef, type AttackLog } from '../src/index.ts';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource } from '@boardsmith/contents';
 import { createTestEngine } from './helpers.ts';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 import { resourceAmountParams } from './helpers/resourceParams.ts';
 
 const attackLogKey = 'attack:perform';

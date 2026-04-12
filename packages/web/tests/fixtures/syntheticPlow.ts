@@ -4,7 +4,7 @@ import {
 	resourceDefinition,
 	resourceGroupDefinition,
 	type ContentFactory,
-} from '@kingdom-builder/testing';
+} from '@boardsmith/testing';
 import type {
 	PhaseDef,
 	RuleSet,
@@ -13,7 +13,7 @@ import type {
 	BuildingConfig,
 	EffectDef,
 	SessionResourceCatalog,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 // resource key constants
 export const SYNTHETIC_RESOURCE_KEYS = {

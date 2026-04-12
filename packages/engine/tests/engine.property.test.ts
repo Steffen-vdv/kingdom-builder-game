@@ -4,9 +4,9 @@ import {
 	Resource as CResource,
 	PhaseId,
 	buildResourceCatalog,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import { createTestEngine } from './helpers';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 import { advance, performAction, getActionCosts, snapshotPlayer } from '../src';
 import {
 	getCatalogIndexes,

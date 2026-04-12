@@ -1,7 +1,7 @@
 import type { PlayerId, PlayerState } from '../state';
 import type { EngineContext } from '../context';
-import type { DevelopmentConfig, Registry } from '@kingdom-builder/protocol';
-import { applyParamsToEffects } from '@kingdom-builder/protocol';
+import type { DevelopmentConfig, Registry } from '@boardsmith/protocol';
+import { applyParamsToEffects } from '@boardsmith/protocol';
 import { runEffects } from '../effects';
 import { withResourceSourceFrames } from '../resource_sources';
 import { resolveResourceDefinition } from '../resource/state-helpers';

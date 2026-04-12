@@ -4,7 +4,7 @@
  * Helpers for finding system actions by their role.
  */
 
-import type { Registry } from '@kingdom-builder/protocol';
+import type { Registry } from '@boardsmith/protocol';
 import type { ActionDef } from './content/actions';
 import { SystemRole, type SystemRoleValue } from './content/constants';
 

@@ -120,10 +120,10 @@ importers:
 
   packages/contents:
     dependencies:
-      '@kingdom-builder/contents-sdk':
+      '@boardsmith/contents-sdk':
         specifier: workspace:*
         version: link:../contents-sdk
-      '@kingdom-builder/protocol':
+      '@boardsmith/protocol':
         specifier: workspace:*
         version: link:../protocol
     devDependencies:
@@ -136,7 +136,7 @@ importers:
 
   packages/contents-sdk:
     dependencies:
-      '@kingdom-builder/protocol':
+      '@boardsmith/protocol':
         specifier: workspace:*
         version: link:../protocol
     devDependencies:
@@ -149,17 +149,17 @@ importers:
 
   packages/engine:
     dependencies:
-      '@kingdom-builder/contents-sdk':
+      '@boardsmith/contents-sdk':
         specifier: workspace:*
         version: link:../contents-sdk
-      '@kingdom-builder/protocol':
+      '@boardsmith/protocol':
         specifier: workspace:*
         version: link:../protocol
       zod:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
-      '@kingdom-builder/contents':
+      '@boardsmith/contents':
         specifier: workspace:*
         version: link:../contents
       typescript:
@@ -184,13 +184,13 @@ importers:
 
   packages/server:
     dependencies:
-      '@kingdom-builder/contents':
+      '@boardsmith/contents':
         specifier: workspace:*
         version: link:../contents
-      '@kingdom-builder/engine':
+      '@boardsmith/engine':
         specifier: workspace:*
         version: link:../engine
-      '@kingdom-builder/protocol':
+      '@boardsmith/protocol':
         specifier: workspace:*
         version: link:../protocol
       better-sqlite3:
@@ -200,7 +200,7 @@ importers:
         specifier: ^5.8.4
         version: 5.8.4
     devDependencies:
-      '@kingdom-builder/contents-sdk':
+      '@boardsmith/contents-sdk':
         specifier: workspace:*
         version: link:../contents-sdk
       '@types/better-sqlite3':
@@ -215,10 +215,10 @@ importers:
 
   packages/testing:
     dependencies:
-      '@kingdom-builder/contents':
+      '@boardsmith/contents':
         specifier: workspace:*
         version: link:../contents
-      '@kingdom-builder/protocol':
+      '@boardsmith/protocol':
         specifier: workspace:*
         version: link:../protocol
     devDependencies:
@@ -241,13 +241,13 @@ importers:
         specifier: ^19.2.5
         version: 19.2.5(react@19.2.5)
     devDependencies:
-      '@kingdom-builder/contents':
+      '@boardsmith/contents':
         specifier: workspace:*
         version: link:../contents
-      '@kingdom-builder/engine':
+      '@boardsmith/engine':
         specifier: workspace:*
         version: link:../engine
-      '@kingdom-builder/server':
+      '@boardsmith/server':
         specifier: workspace:*
         version: link:../server
       '@types/react':

@@ -1,4 +1,4 @@
-import { applyParamsToEffects } from '@kingdom-builder/protocol';
+import { applyParamsToEffects } from '@boardsmith/protocol';
 import type { EffectHandler } from '.';
 
 export const developmentAdd: EffectHandler = (

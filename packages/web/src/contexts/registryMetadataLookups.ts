@@ -1,4 +1,4 @@
-import type { Registry, ResourceDefinition } from '@kingdom-builder/protocol';
+import type { Registry, ResourceDefinition } from '@boardsmith/protocol';
 
 export interface DefinitionLookup<TDefinition> {
 	readonly record: Readonly<Record<string, TDefinition>>;

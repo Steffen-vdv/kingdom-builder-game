@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
+import type { SessionPlayerStateSnapshot } from '@boardsmith/protocol';
 import type { TierDefinition } from './buildTierEntries';
 
 interface ActiveTierResult {

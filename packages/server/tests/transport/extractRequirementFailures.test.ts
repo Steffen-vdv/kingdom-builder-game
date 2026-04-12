@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type {
 	SessionActionRequirementList,
 	SessionRequirementFailure,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { extractRequirementFailures } from '../../src/transport/extractRequirementFailures.js';
 
 describe('extractRequirementFailures', () => {

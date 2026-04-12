@@ -1,7 +1,4 @@
-import type {
-	PlayerStartConfig,
-	StartModeConfig,
-} from '@kingdom-builder/protocol';
+import type { PlayerStartConfig, StartModeConfig } from '@boardsmith/protocol';
 import { PlayerStartBuilder } from './playerStartBuilder';
 
 export class StartModeBuilder {

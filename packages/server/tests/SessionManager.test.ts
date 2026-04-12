@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import type {
 	SessionMetadataDescriptor,
 	SessionTriggerMetadata,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
 import * as metadataModule from '../src/session/buildSessionMetadata.js';
 import { mergeSessionMetadata } from '../src/session/mergeSessionMetadata.js';

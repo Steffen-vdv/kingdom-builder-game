@@ -8,7 +8,7 @@ import {
 
 export const TIME_SCALE_OPTIONS = [1, 2, 5, 100] as const;
 export type TimeScale = (typeof TIME_SCALE_OPTIONS)[number];
-const TIME_SCALE_STORAGE_KEY = 'kingdom-builder:time-scale';
+const TIME_SCALE_STORAGE_KEY = 'boardsmith:time-scale';
 
 function readStoredTimeScale(): TimeScale | null {
 	if (typeof window === 'undefined') {

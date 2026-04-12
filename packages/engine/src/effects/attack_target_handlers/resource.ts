@@ -1,4 +1,4 @@
-import type { ResourceAttackTarget } from '@kingdom-builder/protocol';
+import type { ResourceAttackTarget } from '@boardsmith/protocol';
 import type { AttackTargetHandler, AttackTargetMutationResult } from './index';
 
 const resourceHandler: AttackTargetHandler<

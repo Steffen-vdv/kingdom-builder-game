@@ -40,6 +40,7 @@ export type { GameProviderInnerProps } from './GameProviderInner.types';
 export function GameProviderInner({
 	children,
 	onExit,
+	contentId = null,
 	darkMode,
 	onToggleDark,
 	musicEnabled,
@@ -289,6 +290,7 @@ export function GameProviderInner({
 		return <GameSessionLoadingScreen />;
 	}
 	const value: GameEngineContextValue = {
+		contentId,
 		sessionId,
 		sessionSnapshot: liveSessionSnapshot,
 		cachedSessionSnapshot: liveSessionSnapshot,

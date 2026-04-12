@@ -6,4 +6,4 @@ export type {
 	ResourceAttackEvaluationTargetLog,
 	BuildingAttackEvaluationTargetLog,
 	AttackEvaluationTargetLog,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';

@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import type {
 	ActionEffectGroup,
 	ActionEffectGroupOption,
-} from '@kingdom-builder/protocol';
-import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
+} from '@boardsmith/protocol';
+import type { ActionParametersPayload } from '@boardsmith/protocol/actions';
 import {
 	describeContent,
 	splitSummary,
@@ -11,7 +11,7 @@ import {
 	translateRequirementFailure,
 	type TranslationContext,
 } from '../../translation';
-import type { SessionPlayerId } from '@kingdom-builder/protocol/session';
+import type { SessionPlayerId } from '@boardsmith/protocol/session';
 import { type ActionCardOption } from './ActionCard';
 import type { HoverCardData } from './types';
 import { deriveActionOptionLabel } from '../../translation/effects/optionLabel';

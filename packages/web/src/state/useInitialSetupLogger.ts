@@ -3,7 +3,7 @@ import type {
 	ActionTrace,
 	SessionPlayerId,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import {
 	diffStepSnapshots,
 	snapshotPlayer,

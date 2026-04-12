@@ -3,7 +3,7 @@ import type {
 	ActionEffectGroup,
 	ActionEffectGroupChoiceMap,
 	ActionEffectGroupOption,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { toPerformableAction, type Action, type DisplayPlayer } from './types';

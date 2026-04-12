@@ -19,14 +19,14 @@
 		"noPropertyAccessFromIndexSignature": false,
 		"types": ["vitest", "node"],
 		"paths": {
-			"@kingdom-builder/engine/*": ["./packages/engine/src/*"],
-			"@kingdom-builder/protocol": ["./packages/protocol/src/index"],
-			"@kingdom-builder/protocol/*": ["./packages/protocol/src/*"],
-			"@kingdom-builder/contents/*": ["./packages/contents/src/*"],
-			"@kingdom-builder/testing": ["./packages/testing/src/index"],
-			"@kingdom-builder/testing/*": ["./packages/testing/src/*"],
-			"@kingdom-builder/*": ["./packages/*/src"],
-			"@kingdom-builder/server/*": ["./packages/server/src/*"]
+			"@boardsmith/engine/*": ["./packages/engine/src/*"],
+			"@boardsmith/protocol": ["./packages/protocol/src/index"],
+			"@boardsmith/protocol/*": ["./packages/protocol/src/*"],
+			"@boardsmith/contents/*": ["./packages/contents/src/*"],
+			"@boardsmith/testing": ["./packages/testing/src/index"],
+			"@boardsmith/testing/*": ["./packages/testing/src/*"],
+			"@boardsmith/*": ["./packages/*/src"],
+			"@boardsmith/server/*": ["./packages/server/src/*"]
 		}
 	}
 }

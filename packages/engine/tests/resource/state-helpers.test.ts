@@ -16,7 +16,7 @@ import {
 	resourceDefinition,
 	resourceGroupDefinition,
 	createResourceRegistries,
-} from '@kingdom-builder/testing';
+} from '@boardsmith/testing';
 
 const tierTrack = {
 	metadata: {

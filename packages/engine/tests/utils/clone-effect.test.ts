@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 import { cloneEffectDef, cloneEffectList } from '../../src/utils';
 
 describe('clone effect helpers', () => {

@@ -10,7 +10,7 @@ import type {
 	ActionMetaCategoryConfig,
 	PhaseConfig,
 	RuleSet,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { ActionDef, BuildingDef, DevelopmentDef } from './defs';
 import type { ActionCategoryConfig } from '../builders/builders';
 

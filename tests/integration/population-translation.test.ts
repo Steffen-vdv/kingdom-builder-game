@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { PopulationTranslator } from '@kingdom-builder/web/translation/content/population';
+import { PopulationTranslator } from '@boardsmith/web/translation/content/population';
 import { buildSyntheticTranslationContext } from '../../packages/web/tests/helpers/createSyntheticTranslationContext';
 
 describe('PopulationTranslator metadata usage', () => {

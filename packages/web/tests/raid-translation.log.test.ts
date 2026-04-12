@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 
 import './helpers/raidSyntheticRegistries';
 import { logContent } from '../src/translation/content';
-import { performAction } from '@kingdom-builder/engine';
+import { performAction } from '@boardsmith/engine';
 import { formatActionTitle } from '../src/translation/formatActionTitle';
 import {
 	createSyntheticEngineContext,
@@ -21,7 +21,7 @@ import {
 	selectAttackResourceDescriptor,
 } from '../src/translation/effects/formatters/attack/registrySelectors';
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('@boardsmith/engine', async () => {
 	return await import('../../engine/src');
 });
 

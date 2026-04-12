@@ -2,7 +2,7 @@ import { vi } from 'vitest';
 import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { createTranslationContext } from '../../src/translation/context';
 import type { GameEngineContextValue } from '../../src/state/GameContext.types';
 import { selectSessionView } from '../../src/state/sessionSelectors';

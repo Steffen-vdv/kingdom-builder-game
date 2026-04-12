@@ -1,6 +1,6 @@
 # Database Setup Guide
 
-Kingdom Builder uses SQLite for lightweight data persistence. SQLite is embedded
+BoardSmith uses SQLite for lightweight data persistence. SQLite is embedded
 and requires no separate database server process.
 
 ## Prerequisites
@@ -44,7 +44,7 @@ Then restart your terminal and run `pnpm install`.
 ### Verify Installation
 
 ```powershell
-pnpm run build --filter=@kingdom-builder/server
+pnpm run build --filter=@boardsmith/server
 ```
 
 ### Troubleshooting Windows Build Issues
@@ -107,22 +107,22 @@ pnpm install
 By default, the database file is created at:
 
 ```
-./data/kingdom-builder.db
+./data/boardsmith.db
 ```
 
 ### Custom Location
 
-Set the `KB_DATABASE_PATH` environment variable to use a different path:
+Set the `BS_DATABASE_PATH` environment variable to use a different path:
 
 ```bash
 # Linux/macOS
-export KB_DATABASE_PATH=/var/lib/kingdom-builder/data.db
+export BS_DATABASE_PATH=/var/lib/boardsmith/data.db
 
 # Windows PowerShell
-$env:KB_DATABASE_PATH = "C:\ProgramData\KingdomBuilder\data.db"
+$env:BS_DATABASE_PATH = "C:\ProgramData\BoardSmith\data.db"
 
 # Windows CMD
-set KB_DATABASE_PATH=C:\ProgramData\KingdomBuilder\data.db
+set BS_DATABASE_PATH=C:\ProgramData\BoardSmith\data.db
 ```
 
 ---
@@ -134,9 +134,9 @@ set KB_DATABASE_PATH=C:\ProgramData\KingdomBuilder\data.db
 The database file and WAL (Write-Ahead Log) files will be at:
 
 ```
-./data/kingdom-builder.db       # Main database
-./data/kingdom-builder.db-wal   # Write-ahead log
-./data/kingdom-builder.db-shm   # Shared memory file
+./data/boardsmith.db       # Main database
+./data/boardsmith.db-wal   # Write-ahead log
+./data/boardsmith.db-shm   # Shared memory file
 ```
 
 ### Backup
@@ -145,7 +145,7 @@ To backup the database, copy all three files while the server is stopped:
 
 ```bash
 # Stop server first, then:
-cp ./data/kingdom-builder.db* /path/to/backup/
+cp ./data/boardsmith.db* /path/to/backup/
 ```
 
 ### Reset Database
@@ -153,8 +153,8 @@ cp ./data/kingdom-builder.db* /path/to/backup/
 To reset the database, delete the files and restart the server:
 
 ```bash
-rm -f ./data/kingdom-builder.db*
-pnpm dev --filter=@kingdom-builder/server
+rm -f ./data/boardsmith.db*
+pnpm dev --filter=@boardsmith/server
 ```
 
 Migrations will automatically run on next server start.
@@ -225,7 +225,7 @@ This occurs when multiple processes try to write simultaneously. SQLite handles
 this gracefully with WAL mode, but if issues persist:
 
 1. Ensure only one server instance is running
-2. Check for zombie processes: `ps aux | grep kingdom`
+2. Check for zombie processes: `ps aux | grep boardsmith`
 3. Delete the `.db-shm` and `.db-wal` files (data is safe in main `.db`)
 
 ### Database locked after crash
@@ -233,7 +233,7 @@ this gracefully with WAL mode, but if issues persist:
 If the server crashes, WAL files may need cleanup:
 
 ```bash
-sqlite3 ./data/kingdom-builder.db "PRAGMA wal_checkpoint(TRUNCATE);"
+sqlite3 ./data/boardsmith.db "PRAGMA wal_checkpoint(TRUNCATE);"
 ```
 
 Or simply delete the WAL files and restart.

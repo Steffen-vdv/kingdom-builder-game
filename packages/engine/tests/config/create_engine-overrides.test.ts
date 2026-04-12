@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { createEngine } from '../../src/index.ts';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 import {
 	Resource as CResource,
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents';
-import type { GameConfig, RuleSet } from '@kingdom-builder/protocol';
+} from '@boardsmith/contents';
+import type { GameConfig, RuleSet } from '@boardsmith/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 
 const resourceCatalog = {

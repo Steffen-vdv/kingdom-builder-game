@@ -1,7 +1,7 @@
 import { splitActionCostMap } from './utils';
 import type { Summary } from '../../translation';
 import type { UseActionMetadataResult } from '../../state/useActionMetadata';
-import type { SessionActionRequirementList } from '@kingdom-builder/protocol/session';
+import type { SessionActionRequirementList } from '@boardsmith/protocol/session';
 import type { DisplayPlayer } from './types';
 
 export interface ActionAvailabilityResult {

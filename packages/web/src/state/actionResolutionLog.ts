@@ -1,4 +1,4 @@
-import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol/session';
+import type { SessionPlayerStateSnapshot } from '@boardsmith/protocol/session';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import type { TranslationContext } from '../translation/context';
 import type { ActionTitleDefinition } from '../translation/formatActionTitle';

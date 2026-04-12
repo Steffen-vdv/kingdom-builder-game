@@ -1,5 +1,5 @@
-import type { SessionRequirementFailure } from '@kingdom-builder/protocol';
-import type { createContentFactory } from '@kingdom-builder/testing';
+import type { SessionRequirementFailure } from '@boardsmith/protocol';
+import type { createContentFactory } from '@boardsmith/testing';
 import { compareRequirement, resourceEvaluator } from '../evaluators';
 import type { ActionsPanelGameOptions } from '../actionsPanel.types';
 

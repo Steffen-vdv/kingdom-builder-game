@@ -3,7 +3,7 @@ import type { MutableRefObject } from 'react';
 import type {
 	SessionPlayerId,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { getSessionSnapshot } from './sessionStateStore';
 import { enqueueSessionTask, hasAiController, runAiTurn } from './sessionAi';
 import type {

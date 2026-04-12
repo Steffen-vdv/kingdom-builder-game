@@ -9,7 +9,7 @@ import type {
 	SessionRunAiResponse,
 	SessionSimulateRequest,
 	SessionSimulateResponse,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 export type FetchInput = Parameters<typeof fetch>[0];
 export type FetchInit = Parameters<typeof fetch>[1];

@@ -1,5 +1,5 @@
 {
-	"name": "@kingdom-builder/server",
+	"name": "@boardsmith/server",
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",
@@ -11,14 +11,14 @@
 		"test": "vitest --run --config vitest.config.ts"
 	},
 	"dependencies": {
-		"@kingdom-builder/contents": "workspace:*",
-		"@kingdom-builder/engine": "workspace:*",
-		"@kingdom-builder/protocol": "workspace:*",
+		"@boardsmith/contents": "workspace:*",
+		"@boardsmith/engine": "workspace:*",
+		"@boardsmith/protocol": "workspace:*",
 		"better-sqlite3": "^12.8.0",
 		"fastify": "^5.8.4"
 	},
 	"devDependencies": {
-		"@kingdom-builder/contents-sdk": "workspace:*",
+		"@boardsmith/contents-sdk": "workspace:*",
 		"@types/better-sqlite3": "^7.6.13",
 		"tsx": "^4.21.0",
 		"typescript": "6.0.2"

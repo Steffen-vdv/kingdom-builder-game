@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { actionUpgrade, type EffectDef } from '../../src/effects';
 import type { EngineContext } from '../../src/context';
-import type { ActionConfig } from '@kingdom-builder/protocol';
+import type { ActionConfig } from '@boardsmith/protocol';
 import { RngService } from '../../src/services/rng_service';
 
 function createMockContext(

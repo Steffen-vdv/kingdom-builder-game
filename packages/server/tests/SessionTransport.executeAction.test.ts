@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import type {
 	SessionRequirementFailure,
 	SessionActionRequirementList,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';

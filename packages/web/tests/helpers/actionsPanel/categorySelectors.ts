@@ -1,4 +1,4 @@
-import type { ActionCategoryConfig, Registry } from '@kingdom-builder/protocol';
+import type { ActionCategoryConfig, Registry } from '@boardsmith/protocol';
 
 interface CategoryOverrides {
 	readonly population?: string;

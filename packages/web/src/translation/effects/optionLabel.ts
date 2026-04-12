@@ -1,4 +1,4 @@
-import type { ActionEffectGroupOption } from '@kingdom-builder/protocol';
+import type { ActionEffectGroupOption } from '@boardsmith/protocol';
 import type { SummaryEntry } from '../content';
 import type { TranslationContext } from '../context';
 import { formatActionTitle } from '../formatActionTitle';

@@ -1,7 +1,7 @@
 # Domain Boundaries
 
 This document clarifies how the Content layer, shared Protocol package, Engine
-runtime, Server transport, and Web client collaborate inside Kingdom Builder.
+runtime, Server transport, and Web client collaborate inside BoardSmith.
 It focuses on responsibilities, sanctioned data exchange, and the invariants
 that the engine relies on when executing the game loop. The system is split
 between a backend (content, engine, protocol, and server) and a frontend (web),
@@ -9,7 +9,7 @@ and every boundary below reinforces that separation.
 
 ## Responsibilities
 
-### Content (`@kingdom-builder/contents`)
+### Content (`@boardsmith/contents`)
 
 - Owns all player-facing data: actions, buildings, resources, phases, and
   balance numbers.
@@ -19,7 +19,7 @@ and every boundary below reinforces that separation.
 - Maintains backward-compatible structures when evolving content so that the
   engine and web client can load new data without code changes.
 
-### Protocol (`@kingdom-builder/protocol`)
+### Protocol (`@boardsmith/protocol`)
 
 - Publishes the canonical TypeScript types and zod schemas that describe
   session state, transport payloads, and DTOs shared across packages.
@@ -28,7 +28,7 @@ and every boundary below reinforces that separation.
 - Maintains semver discipline; any breaking change requires synchronous
   updates across engine, server, and web packages.
 
-### Engine (`@kingdom-builder/engine`)
+### Engine (`@boardsmith/engine`)
 
 - Interprets content definitions to advance the game state, enforce rules, and
   emit derived data (e.g., log entries, prompts, computed modifiers).
@@ -39,7 +39,7 @@ and every boundary below reinforces that separation.
 - Guarantees that player-facing strings, icons, and lookup keys are surfaced
   exactly as supplied by the content package.
 
-### Server (`@kingdom-builder/server`)
+### Server (`@boardsmith/server`)
 
 - Hosts backend session management, authentication, and HTTP transport around
   the engine runtime.
@@ -50,7 +50,7 @@ and every boundary below reinforces that separation.
 - Enforces authentication/authorization and request validation before invoking
   engine operations.
 
-### Web (`@kingdom-builder/web`)
+### Web (`@boardsmith/web`)
 
 - Presents the current game state and affordances by consuming the engine API
   alongside content metadata.
@@ -95,7 +95,7 @@ and every boundary below reinforces that separation.
 ## Transport & API Surface
 
 The Fastify transport exposes REST endpoints under `/sessions` for the web
-client and tooling. All requests and responses use `@kingdom-builder/protocol`
+client and tooling. All requests and responses use `@boardsmith/protocol`
 types, and callers must provide authentication headers recognized by the server
 middleware.
 
@@ -179,7 +179,7 @@ reads metadata from the runtime config and the server loads packages by ID.
 
 ### How content metadata reaches the web client
 
-The web package **cannot** import from `@kingdom-builder/contents` directly.
+The web package **cannot** import from `@boardsmith/contents` directly.
 Content metadata flows through the server:
 
 ```

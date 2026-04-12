@@ -3,10 +3,10 @@ import type {
 	AttackLogOwner,
 	AttackOnDamageLogEntry,
 	AttackTarget,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { EffectDef, EffectHandler } from '.';
 import type { ResourceGain } from '../services';
-import { Resource } from '@kingdom-builder/contents';
+import { Resource } from '@boardsmith/contents';
 import { runEffects } from '.';
 import { snapshotPlayer } from '../log';
 import { attackTargetHandlers } from './attack_target_handlers';
@@ -23,7 +23,7 @@ export type {
 	AttackPowerLog,
 	AttackTarget,
 	AttackEvaluationTargetLog,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 export { resolveAttack } from './attack/resolve';
 export const attackPerform: EffectHandler = (effectDefinition, context) => {
 	const attacker = context.activePlayer;

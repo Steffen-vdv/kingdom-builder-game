@@ -1,4 +1,4 @@
-import type { PlayerStartConfig } from '@kingdom-builder/protocol';
+import type { PlayerStartConfig } from '@boardsmith/protocol';
 import { ParamsBuilder } from '../../builderShared';
 import {
 	PlayerStartLandBuilder,

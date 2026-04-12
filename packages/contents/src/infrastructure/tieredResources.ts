@@ -1,5 +1,5 @@
-import type { RuleSet } from '@kingdom-builder/protocol';
-import type { ResourceTierTrackMetadata } from '@kingdom-builder/contents-sdk';
+import type { RuleSet } from '@boardsmith/protocol';
+import type { ResourceTierTrackMetadata } from '@boardsmith/contents-sdk';
 import { RULES } from '../kingdom-builder/content/rules';
 
 export type TierSummaryGroup = Map<string, string>;

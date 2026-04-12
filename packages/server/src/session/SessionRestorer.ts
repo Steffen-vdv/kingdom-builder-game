@@ -2,12 +2,9 @@ import {
 	createEngineSession,
 	type EngineSession,
 	type RuntimeResourceContent,
-} from '@kingdom-builder/engine';
-import type { SessionPlayerId } from '@kingdom-builder/protocol';
-import {
-	loadContentPackage,
-	DEFAULT_CONTENT_ID,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/engine';
+import type { SessionPlayerId } from '@boardsmith/protocol';
+import { loadContentPackage, DEFAULT_CONTENT_ID } from '@boardsmith/contents';
 import type {
 	ActionLogEntry,
 	PersistedSessionData,

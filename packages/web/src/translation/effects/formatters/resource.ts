@@ -3,7 +3,7 @@ import {
 	summarizeEffects,
 	describeEffects,
 } from '../factory';
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 import type { SummaryEntry } from '../../content';
 import type { TranslationContext } from '../../context';
 import type { TranslationResourceMetadata } from '../../context/types';

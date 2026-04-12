@@ -1,5 +1,5 @@
 /**
- * @kingdom-builder/contents-sdk
+ * @boardsmith/contents-sdk
  *
  * Game-agnostic infrastructure for defining content packages.
  * Games import these builders, types, and utilities to define their content.

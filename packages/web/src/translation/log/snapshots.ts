@@ -6,7 +6,7 @@ import type {
 	SessionPlayerId,
 	SessionPlayerStateSnapshot,
 	SessionResourceBounds,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import {
 	appendResourceChanges,
 	appendPercentBreakdownChanges,

@@ -1,4 +1,4 @@
-import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
+import type { SessionSnapshot } from '@boardsmith/protocol/session';
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import type { TranslationContext } from '../../src/translation/context';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';

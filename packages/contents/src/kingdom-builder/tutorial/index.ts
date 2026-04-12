@@ -9,8 +9,8 @@
  * and advanced content to reduce cognitive load for new players.
  */
 
-import type { ContentPackage, ActionDef } from '@kingdom-builder/contents-sdk';
-import { SystemRole, Types, ResourceMethods, LandMethods, DevelopmentMethods } from '@kingdom-builder/contents-sdk';
+import type { ContentPackage, ActionDef } from '@boardsmith/contents-sdk';
+import { SystemRole, Types, ResourceMethods, LandMethods, DevelopmentMethods } from '@boardsmith/contents-sdk';
 import { createBasePackage } from '../base';
 import { ActionId, SystemActions, BasicActions, DevelopActions, BuildActions, MetaCategory } from '../content/actions';
 import { DevelopmentId } from '../content/developments';

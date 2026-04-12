@@ -2,7 +2,7 @@ import type {
 	EffectDef,
 	PhaseConfig,
 	PhaseStepConfig,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { TriggerKey, PhaseId, PhaseStepId } from '../../../types';
 
 type PhaseIdentifier = PhaseId;

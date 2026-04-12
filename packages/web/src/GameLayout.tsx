@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Button from './components/common/Button';
 import ConfirmDialog from './components/common/ConfirmDialog';
 import TimeControl from './components/common/TimeControl';
@@ -17,6 +17,7 @@ import {
 } from './state/keybindings';
 import { useSoundEffectsContext } from './state/SoundEffectsContext';
 import { useAdvanceKeybind } from './state/useAdvanceKeybind';
+import { useContentPackages } from './state/useContentPackages';
 import { useVisitorCount } from './state/useVisitorCount';
 
 export const QUIT_CONFIRMATION_DESCRIPTION = [
@@ -40,6 +41,7 @@ function VisitorCountSubtitle() {
 
 export default function GameLayout() {
 	const {
+		contentId,
 		sessionSnapshot,
 		ruleSnapshot,
 		onExit,
@@ -61,6 +63,20 @@ export default function GameLayout() {
 		setControlKeybind,
 		resetControlKeybind,
 	} = useGameEngine();
+	const { packages: contentPackages } = useContentPackages();
+	const gameTitle = useMemo(() => {
+		if (!contentId) {
+			return 'BoardSmith';
+		}
+		const meta = contentPackages.find((pkg) => pkg.id === contentId);
+		if (!meta?.space) {
+			return 'BoardSmith';
+		}
+		if (meta.space === meta.name) {
+			return `BoardSmith \u2014 ${meta.space}`;
+		}
+		return `BoardSmith \u2014 ${meta.space} \u2014 ${meta.name}`;
+	}, [contentId, contentPackages]);
 	const [isQuitDialogOpen, setQuitDialogOpen] = useState(false);
 	const [isSettingsOpen, setSettingsOpen] = useState(false);
 	const [isLogOpen, setLogOpen] = useState(false);
@@ -240,7 +256,7 @@ export default function GameLayout() {
 								disabled={!onExit}
 								className="cursor-pointer rounded-md border-none bg-transparent p-0 text-left text-2xl font-bold tracking-tight text-slate-900 transition hover:text-slate-900/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:cursor-default disabled:opacity-100 sm:text-3xl dark:text-slate-100 dark:hover:text-slate-100/80"
 							>
-								Kingdom Builder
+								{gameTitle}
 							</button>
 						</h1>
 						<VisitorCountSubtitle />

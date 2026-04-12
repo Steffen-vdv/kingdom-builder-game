@@ -1,7 +1,7 @@
 import type {
 	ForecastBreakdownMap,
 	ForecastContribution,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { cloneEngineContext } from '../actions/context_clone';
 import type { EngineContext } from '../context';
 import { advance } from '../phases/advance';

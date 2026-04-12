@@ -1,4 +1,4 @@
-import { createEngine } from '@kingdom-builder/engine';
+import { createEngine } from '@boardsmith/engine';
 import {
 	Registry,
 	actionSchema,
@@ -12,18 +12,18 @@ import {
 	type StartConfig,
 	type PhaseConfig,
 	type RuleSet,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import {
 	happinessTier,
 	effect,
 	passiveParams,
 	Types,
 	PassiveMethods,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import {
 	createResourceRegistries,
 	resourceDefinition,
-} from '@kingdom-builder/testing';
+} from '@boardsmith/testing';
 
 export function createSyntheticContext() {
 	const costResourceId = 'resource:synthetic:r0';

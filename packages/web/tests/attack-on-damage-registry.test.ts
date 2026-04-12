@@ -3,10 +3,7 @@ import {
 	registerAttackOnDamageFormatter,
 	buildOnDamageEntry,
 } from '../src/translation/effects/formatters/attack';
-import type {
-	AttackOnDamageLogEntry,
-	EffectDef,
-} from '@kingdom-builder/engine';
+import type { AttackOnDamageLogEntry, EffectDef } from '@boardsmith/engine';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
 	createEmptySnapshotMetadata,
@@ -17,7 +14,7 @@ import { createTranslationContext } from '../src/translation/context/createTrans
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
 // selectResourceDisplay removed - use metadata instead
 import { selectAttackResourceDescriptor } from '../src/translation/effects/formatters/attack/registrySelectors';
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
+import type { SessionSnapshotMetadata } from '@boardsmith/protocol/session';
 import { ownerLabel } from '../src/translation/effects/formatters/attackFormatterUtils';
 
 vi.mock('../src/translation/effects/factory', () => ({

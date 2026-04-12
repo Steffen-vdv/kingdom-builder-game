@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type {
 	ActionMetaCategoryConfig,
 	SessionRegistriesPayload,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { deserializeSessionRegistries } from '../../src/state/sessionRegistries';
 
 const createPayload = (

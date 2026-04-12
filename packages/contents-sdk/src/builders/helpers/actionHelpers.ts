@@ -3,7 +3,7 @@
  * These functions are infrastructure - they handle lookups, validations,
  * and parameter construction that content authors shouldn't need to touch.
  */
-import type { Registry } from '@kingdom-builder/protocol';
+import type { Registry } from '@boardsmith/protocol';
 import { getResourceId, type ResourceKey } from '../../types';
 import { resourceChange, type ResourceChangeEffectParams } from '../resource';
 import type { ActionCategoryConfig } from '../builders';

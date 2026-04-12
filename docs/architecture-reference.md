@@ -1,6 +1,6 @@
 # Architecture Reference
 
-This document provides detailed documentation of Kingdom Builder's core systems.
+This document provides detailed documentation of BoardSmith's core systems.
 Read this when working on features that touch these systems. **Update this
 document when you implement changes to core mechanics.**
 
@@ -404,7 +404,7 @@ via passives.
 ### Data Flow
 
 ```
-@kingdom-builder/contents
+@boardsmith/contents
         ↓ (definitions, registries)
 packages/server/src/session/SessionManager.ts
         ↓ (registry payload)

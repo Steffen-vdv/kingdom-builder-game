@@ -1,5 +1,5 @@
 {
-	"name": "@kingdom-builder/protocol",
+	"name": "@boardsmith/protocol",
 	"version": "0.1.0",
 	"private": false,
 	"type": "module",

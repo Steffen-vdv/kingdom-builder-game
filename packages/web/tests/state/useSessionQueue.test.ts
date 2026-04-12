@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
+import type { SessionSnapshot } from '@boardsmith/protocol/session';
 import { useSessionQueue } from '../../src/state/useSessionQueue';
 import type { SessionQueueHelpers } from '../../src/state/sessionTypes';
 import {

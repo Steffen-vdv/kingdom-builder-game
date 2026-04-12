@@ -5,7 +5,7 @@ import type {
 	SessionPassiveSummary as PassiveSummary,
 	SessionPlayerId as PlayerId,
 	SessionPlayerStateSnapshot as PlayerStateSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { describeEffects, splitSummary } from '../../translation';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import {

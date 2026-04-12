@@ -22,7 +22,7 @@ import type {
 	SessionAdvanceResult,
 	SessionRuleSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { EvaluationModifier } from '../services/passive_types';
 import {
 	simulateUpcomingPhases as runSimulation,

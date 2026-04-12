@@ -1,5 +1,5 @@
 import { describe, it, beforeEach, expect } from 'vitest';
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 import type { EngineContext } from '../../src/context.ts';
 import { PlayerState } from '../../src/state/index.ts';
 import {
@@ -20,7 +20,7 @@ import {
 	resourceDefinition,
 	resourceGroupDefinition,
 	createResourceRegistries,
-} from '@kingdom-builder/testing';
+} from '@boardsmith/testing';
 
 interface TestContext {
 	context: EngineContext;

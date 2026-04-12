@@ -12,7 +12,7 @@ import type {
 	SessionRecentResourceGain,
 	SessionRuleSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 export type LandSnapshot = SessionLandSnapshot;
 export type PlayerStateSnapshot = SessionPlayerStateSnapshot;

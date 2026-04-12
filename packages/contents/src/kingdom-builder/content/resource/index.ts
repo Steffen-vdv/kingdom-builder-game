@@ -35,7 +35,7 @@ export type {
 	ResourceUpperBoundIncreaseParams,
 	ResourceValueWriteOptions,
 	ResourcePlayerScope,
-} from '@kingdom-builder/contents-sdk';
+} from '@boardsmith/contents-sdk';
 
 export {
 	boundTo,
@@ -53,7 +53,7 @@ export {
 	RoundingMode,
 	VALID_RECONCILIATION_MODES,
 	VALID_ROUNDING_MODES,
-} from '@kingdom-builder/contents-sdk';
+} from '@boardsmith/contents-sdk';
 
 // Game-specific catalog
 export { RESOURCE_REGISTRY, RESOURCE_GROUP_REGISTRY, RESOURCE_CATEGORY_REGISTRY, buildResourceCatalog } from '../../../infrastructure/resource/catalog';

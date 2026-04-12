@@ -4,8 +4,8 @@
  * Each T1 tech costs 3-5 Knowledge, has a single tier,
  * and increments Res.t1Done on completion.
  */
-import type { ActionConfig, EffectConfig } from '@kingdom-builder/protocol';
-import { Types, ResourceMethods, PassiveMethods, ActionMethods, CostModMethods, ResultModMethods, resourceAmountChange } from '@kingdom-builder/contents-sdk';
+import type { ActionConfig, EffectConfig } from '@boardsmith/protocol';
+import { Types, ResourceMethods, PassiveMethods, ActionMethods, CostModMethods, ResultModMethods, resourceAmountChange } from '@boardsmith/contents-sdk';
 import { action, effect, passiveParams, costModParams, resultModParams, developmentTarget, actionParams } from '../infrastructure/builders';
 import { Res, MetaCat, Dev, Act } from './ids';
 import { ResearchT1 } from './researchIds';

@@ -5,7 +5,7 @@ import type {
 	WinConditionTrigger,
 	WinConditionResourceTrigger,
 	WinConditionOutcome,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { ResourceKey } from '../types';
 import { CompareRequirementBuilder } from './builders/evaluators';
 import {

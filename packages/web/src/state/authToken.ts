@@ -1,4 +1,4 @@
-const AUTH_TOKEN_STORAGE_KEY = 'kingdom-builder.auth.token';
+const AUTH_TOKEN_STORAGE_KEY = 'boardsmith.auth.token';
 const DEFAULT_DEV_TOKEN = 'local-dev';
 
 type AuthTokenValue = string | null | undefined;

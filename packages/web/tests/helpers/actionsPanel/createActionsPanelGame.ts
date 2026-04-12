@@ -1,9 +1,9 @@
 import { vi } from 'vitest';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 import type {
 	ActionEffectGroup,
 	PlayerStartConfig,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { GameApi } from '../../../src/services/gameApi';
 import { RemoteSessionAdapter } from '../../../src/state/remoteSessionAdapter';
 import { selectSessionView } from '../../../src/state/sessionSelectors';

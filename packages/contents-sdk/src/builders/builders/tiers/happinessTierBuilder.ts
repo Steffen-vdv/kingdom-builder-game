@@ -6,7 +6,7 @@ import type {
 	TierPassivePreview,
 	TierPassiveTextTokens,
 	TierRange,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { PassiveMethods, Types } from '../../builderShared';
 import { TierDisplayBuilder, tierDisplay } from './tierDisplayBuilder';
 import {

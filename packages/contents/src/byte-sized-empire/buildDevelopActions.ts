@@ -5,8 +5,8 @@
  * Build actions unlock buildings; develop actions place
  * developments on land slots.
  */
-import type { ActionConfig, RequirementConfig } from '@kingdom-builder/protocol';
-import { Types, BuildingMethods, DevelopmentMethods, action } from '@kingdom-builder/contents-sdk';
+import type { ActionConfig, RequirementConfig } from '@boardsmith/protocol';
+import { Types, BuildingMethods, DevelopmentMethods, action } from '@boardsmith/contents-sdk';
 import { effect, buildingParams, developmentParams, compareRequirement, landEvaluator } from '../infrastructure/builders';
 import { Act, Res, Building, Dev, MetaCat, ActionCat } from './ids';
 

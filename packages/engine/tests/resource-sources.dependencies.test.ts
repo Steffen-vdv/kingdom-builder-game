@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 import { collectEvaluatorDependencies } from '../src/resource_sources.ts';
 
 describe('resource source evaluator dependencies', () => {

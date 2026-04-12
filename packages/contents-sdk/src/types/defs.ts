@@ -10,7 +10,7 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	EffectDef,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { FocusValue } from './focus';
 
 /**

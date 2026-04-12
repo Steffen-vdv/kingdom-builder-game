@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { ContentPackageMeta } from '@kingdom-builder/protocol';
+import type { ContentPackageMeta } from '@boardsmith/protocol';
 import { useSoundEffectsContext } from '../state/SoundEffectsContext';
 
 const CARD_BASE_CLASS = [

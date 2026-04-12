@@ -1,4 +1,4 @@
-import type { AttackPlayerDiff } from '@kingdom-builder/protocol';
+import type { AttackPlayerDiff } from '@boardsmith/protocol';
 import type { PlayerSnapshot } from '../../log';
 
 export function diffPlayerSnapshots(

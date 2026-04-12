@@ -1,7 +1,7 @@
 import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import type { TranslationContext } from '../translation/context';
 import type { SessionView } from './sessionSelectors';
 import type { Action } from './actionTypes';
@@ -83,6 +83,7 @@ export interface SessionDerivedSelectors {
 }
 
 export interface GameEngineContextValue {
+	contentId: string | null;
 	sessionId: string;
 	sessionSnapshot: SessionSnapshot;
 	cachedSessionSnapshot: SessionSnapshot;

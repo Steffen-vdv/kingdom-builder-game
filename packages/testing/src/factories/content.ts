@@ -6,7 +6,7 @@ import {
 	createDevelopmentRegistry,
 	type ActionCategoryConfig as ContentActionCategoryConfig,
 	MetaCategory,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import {
 	Registry,
 	type ActionCategoryConfig as SessionActionCategoryConfig,
@@ -14,7 +14,7 @@ import {
 	type ActionMetaCategoryConfig,
 	type BuildingConfig,
 	type DevelopmentConfig,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 export interface ContentFactoryOptions {
 	/**

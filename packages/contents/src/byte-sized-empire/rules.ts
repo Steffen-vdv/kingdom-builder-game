@@ -4,7 +4,7 @@
  * Game rules, win conditions, and the nine happiness tiers
  * for the score-based engine-builder game mode.
  */
-import type { EffectConfig, HappinessTierDefinition, RuleSet, WinConditionDefinition } from '@kingdom-builder/protocol';
+import type { EffectConfig, HappinessTierDefinition, RuleSet, WinConditionDefinition } from '@boardsmith/protocol';
 import {
 	effect,
 	happinessTier,
@@ -18,7 +18,7 @@ import {
 	ResultModMethods,
 	PassiveMethods,
 	formatPassiveRemoval,
-} from '@kingdom-builder/contents-sdk';
+} from '@boardsmith/contents-sdk';
 import { Res, Phase } from './ids';
 
 // ═══════════════════════════════════════════════════════════════════

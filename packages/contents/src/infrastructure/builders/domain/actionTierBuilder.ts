@@ -1,5 +1,5 @@
-import type { ActionEffect, EffectConfig, RequirementConfig } from '@kingdom-builder/protocol';
-import { ActionEffectGroupBuilder, RequirementBuilder, type ActionEffectGroupDef } from '@kingdom-builder/contents-sdk';
+import type { ActionEffect, EffectConfig, RequirementConfig } from '@boardsmith/protocol';
+import { ActionEffectGroupBuilder, RequirementBuilder, type ActionEffectGroupDef } from '@boardsmith/contents-sdk';
 // Builders accept any string resource key so that multiple
 // content spaces (kingdom-builder, byte-sized-empire, etc.)
 // can use the same infrastructure.

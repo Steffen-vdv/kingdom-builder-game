@@ -2,7 +2,7 @@ import type {
 	SessionRunAiRequest,
 	SessionRunAiResponse,
 	SessionSimulateResponse,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { cloneValue } from './cloneValue';
 import type { SessionStateRecord } from './sessionStateStore';
 import type { SessionAiTurnResult } from './sessionTypes';

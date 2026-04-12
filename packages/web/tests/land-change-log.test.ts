@@ -5,7 +5,7 @@ import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { logContent } from '../src/translation/content';
 import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 import {

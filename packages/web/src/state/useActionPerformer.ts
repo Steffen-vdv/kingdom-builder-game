@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
-import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
-import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
+import type { ActionParametersPayload } from '@boardsmith/protocol/actions';
+import type { SessionSnapshot } from '@boardsmith/protocol/session';
 import { snapshotPlayer } from '../translation';
 import { buildActionResolution } from './buildActionResolution';
 import {

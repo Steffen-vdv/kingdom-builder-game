@@ -11,7 +11,7 @@ import type {
 	TranslationResourceMetadataSelectors,
 	TranslationSignedResourceGainSelectors,
 } from '../../src/translation/context';
-import type { SessionRuleSnapshot } from '@kingdom-builder/protocol';
+import type { SessionRuleSnapshot } from '@boardsmith/protocol';
 
 const EMPTY_MODIFIERS = new Map<string, ReadonlyMap<string, unknown>>();
 

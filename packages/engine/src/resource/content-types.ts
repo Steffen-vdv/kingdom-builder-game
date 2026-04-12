@@ -1,4 +1,4 @@
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 
 export interface ContentOrderedRegistry<T extends { id: string }> {
 	readonly byId: Readonly<Record<string, T>>;

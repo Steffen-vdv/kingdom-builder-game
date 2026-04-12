@@ -14,7 +14,7 @@ import {
 import type {
 	SessionSnapshot,
 	SessionRegistriesPayload,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { SessionStaticMetadataPayload } from '../../src/session/buildSessionMetadata.js';
 
 function createMinimalSnapshot(): SessionSnapshot {

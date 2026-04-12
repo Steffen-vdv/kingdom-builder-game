@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 import { describeContent, summarizeContent } from '../src/translation/content';
 import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
 

@@ -1,8 +1,8 @@
-import { Registry, developmentSchema } from '@kingdom-builder/protocol';
+import { Registry, developmentSchema } from '@boardsmith/protocol';
 import { Resource, getResourceId } from './constants';
 import type { ResourceKey } from './constants';
 import { development, effect, developmentParams } from '../../infrastructure/builders';
-import { Types, DevelopmentMethods, ResourceMethods } from '@kingdom-builder/contents-sdk';
+import { Types, DevelopmentMethods, ResourceMethods } from '@boardsmith/contents-sdk';
 import { Focus } from '../../infrastructure/defs';
 import type { DevelopmentDef } from '../../infrastructure/defs';
 import { resourceChange } from './resource';

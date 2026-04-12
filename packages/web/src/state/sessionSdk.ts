@@ -1,4 +1,4 @@
-import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
+import type { ActionParametersPayload } from '@boardsmith/protocol/actions';
 import type {
 	SessionActionCostMap,
 	SessionActionRequirementList,
@@ -12,8 +12,8 @@ import type {
 	SessionSimulateResponse,
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
-} from '@kingdom-builder/protocol/session';
-import type { ActionEffectGroup } from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol/session';
+import type { ActionEffectGroup } from '@boardsmith/protocol';
 import {
 	applySessionState,
 	deleteSessionRecord,

@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { createEngine, advance } from '@kingdom-builder/engine';
-import type { PhaseConfig, RuleSet } from '@kingdom-builder/protocol';
+import { createEngine, advance } from '@boardsmith/engine';
+import type { PhaseConfig, RuleSet } from '@boardsmith/protocol';
 import {
 	createContentFactory,
 	createResourceRegistries,
 	resourceDefinition,
-} from '@kingdom-builder/testing';
+} from '@boardsmith/testing';
 
 const resources = {
 	ap: 'resource:turn:turn-resource-ap',

@@ -11,11 +11,8 @@
  */
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { advance } from '@kingdom-builder/engine';
-import {
-	resolveActionEffects,
-	type EffectConfig,
-} from '@kingdom-builder/protocol';
+import { advance } from '@boardsmith/engine';
+import { resolveActionEffects, type EffectConfig } from '@boardsmith/protocol';
 import {
 	PHASES,
 	Resource,
@@ -25,7 +22,7 @@ import {
 	DEVELOPMENTS,
 	RESOURCE_REGISTRY,
 	getResourceId,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import { createTestContext } from './fixtures';
 
 // ============================================================================

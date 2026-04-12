@@ -1,4 +1,4 @@
-import { applyParamsToEffects } from '@kingdom-builder/protocol';
+import { applyParamsToEffects } from '@boardsmith/protocol';
 import type { EngineContext } from './context';
 import type { EffectDef } from './effects';
 import type { PlayerState } from './state';

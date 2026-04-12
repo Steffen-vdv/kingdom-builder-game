@@ -5,4 +5,4 @@ export type {
 	AttackEvaluationLog,
 	AttackOnDamageLogEntry,
 	AttackLog,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';

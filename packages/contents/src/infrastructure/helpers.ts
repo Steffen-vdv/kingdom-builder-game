@@ -1,6 +1,6 @@
-import type { EffectConfig } from '@kingdom-builder/protocol';
-import { resourceChange, effect, ResourceMethods, Types } from '@kingdom-builder/contents-sdk';
-import type { Params } from '@kingdom-builder/contents-sdk';
+import type { EffectConfig } from '@boardsmith/protocol';
+import { resourceChange, effect, ResourceMethods, Types } from '@boardsmith/contents-sdk';
+import type { Params } from '@boardsmith/contents-sdk';
 
 export function resourceAddEffect(resourceId: string, amount: number): EffectConfig {
 	const params = resourceChange(resourceId).amount(amount).build();

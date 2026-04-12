@@ -36,7 +36,7 @@ describe('web package avoids engine internals', () => {
 			const requirePattern = /\brequire\s*\(\s*['"]([^'"\n]+)['"]\s*\)/g;
 			const engineViolations: Array<{ file: string; specifier: string }> = [];
 			const contentViolations: Array<{ file: string; specifier: string }> = [];
-			// Files in src/ that legitimately need @kingdom-builder/contents imports
+			// Files in src/ that legitimately need @boardsmith/contents imports
 			const allowedContentImports = new Set<string>([]);
 			for (const rootName of roots) {
 				const rootPath = path.join(packageRoot, rootName);
@@ -60,7 +60,7 @@ describe('web package avoids engine internals', () => {
 					for (const match of matches) {
 						const specifier = match[1];
 						const relativeFile = path.relative(packageRoot, file);
-						if (specifier.startsWith('@kingdom-builder/engine/')) {
+						if (specifier.startsWith('@boardsmith/engine/')) {
 							engineViolations.push({
 								file: relativeFile,
 								specifier,
@@ -68,7 +68,7 @@ describe('web package avoids engine internals', () => {
 						}
 						if (
 							rootName === 'src' &&
-							specifier.startsWith('@kingdom-builder/contents') &&
+							specifier.startsWith('@boardsmith/contents') &&
 							!allowedContentImports.has(relativeFile)
 						) {
 							contentViolations.push({

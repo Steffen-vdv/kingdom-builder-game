@@ -1,11 +1,11 @@
 import { vi } from 'vitest';
-import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
-import type { ActionEffectGroup } from '@kingdom-builder/protocol';
+import type { ActionParametersPayload } from '@boardsmith/protocol/actions';
+import type { ActionEffectGroup } from '@boardsmith/protocol';
 import type {
 	SessionActionCostMap,
 	SessionActionRequirementList,
 	SessionPlayerId,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import type { SessionActionMetadataSnapshot } from '../../src/state/sessionTypes';
 import { createMetadataKey } from '../../src/state/actionMetadataKey';
 

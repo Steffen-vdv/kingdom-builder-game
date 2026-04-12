@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { runEffects } from '../src/index.ts';
 import { attackTargetHandlers } from '../src/effects/attack_handlers.ts';
-import { Resource } from '@kingdom-builder/contents';
+import { Resource } from '@boardsmith/contents';
 import { createTestEngine } from './helpers.ts';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 
 describe('attack:perform evaluation handlers', () => {
 	it('delegates modifier keys for resource targets to handler', () => {

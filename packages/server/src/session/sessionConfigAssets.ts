@@ -14,15 +14,15 @@ import {
 	type SessionRegistriesPayload,
 	type ResourceDefinition,
 	type SerializedRegistry,
-} from '@kingdom-builder/protocol';
-import { type ActionCategoryConfig } from '@kingdom-builder/contents';
+} from '@boardsmith/protocol';
+import { type ActionCategoryConfig } from '@boardsmith/contents';
 import type { ZodType } from 'zod';
 import {
 	buildSessionMetadata,
 	type SessionStaticMetadataPayload,
 } from './buildSessionMetadata.js';
 import { cloneRegistry, freezeSerializedRegistry } from './registryUtils.js';
-import type { RuntimeResourceContent } from '@kingdom-builder/engine';
+import type { RuntimeResourceContent } from '@boardsmith/engine';
 
 export type SessionResourceRegistry = SerializedRegistry<ResourceDefinition>;
 

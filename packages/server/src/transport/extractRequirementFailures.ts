@@ -1,7 +1,7 @@
 import type {
 	SessionActionRequirementList,
 	SessionRequirementFailure,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 export function extractRequirementFailures(error: unknown): {
 	requirementFailure?: SessionRequirementFailure;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol';
+import type { SessionSnapshotMetadata } from '@boardsmith/protocol';
 import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';

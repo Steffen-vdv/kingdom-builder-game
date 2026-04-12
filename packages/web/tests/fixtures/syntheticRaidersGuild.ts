@@ -1,11 +1,11 @@
-import { createContentFactory } from '@kingdom-builder/testing';
-import type { EffectDef } from '@kingdom-builder/protocol';
+import { createContentFactory } from '@boardsmith/testing';
+import type { EffectDef } from '@boardsmith/protocol';
 import type {
 	SessionPlayerId,
 	SessionRuleSnapshot,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
 import {
 	createEmptySnapshotMetadata,

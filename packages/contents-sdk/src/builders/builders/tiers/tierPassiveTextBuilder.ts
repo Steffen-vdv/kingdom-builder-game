@@ -1,4 +1,4 @@
-import type { TierPassiveTextTokens } from '@kingdom-builder/protocol';
+import type { TierPassiveTextTokens } from '@boardsmith/protocol';
 
 class TierPassiveTextBuilder {
 	private tokens: TierPassiveTextTokens = {};

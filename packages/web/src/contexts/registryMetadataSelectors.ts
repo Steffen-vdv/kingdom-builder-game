@@ -1,5 +1,5 @@
-import type { SessionMetadataDescriptor } from '@kingdom-builder/protocol';
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
+import type { SessionMetadataDescriptor } from '@boardsmith/protocol';
+import type { SessionSnapshotMetadata } from '@boardsmith/protocol/session';
 import type {
 	AssetMetadata,
 	MetadataLookup,

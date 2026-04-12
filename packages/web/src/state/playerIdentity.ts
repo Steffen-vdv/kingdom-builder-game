@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-export const PLAYER_NAME_STORAGE_KEY = 'kingdom-builder.profile.playerName';
+export const PLAYER_NAME_STORAGE_KEY = 'boardsmith.profile.playerName';
 export const DEFAULT_PLAYER_NAME = 'Player';
 
 type StoredName = string | null;

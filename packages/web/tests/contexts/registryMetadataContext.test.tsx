@@ -1,15 +1,15 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 import {
 	Registry,
 	actionCategorySchema,
 	type ActionCategoryConfig,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import {
 	RegistryMetadataProvider,

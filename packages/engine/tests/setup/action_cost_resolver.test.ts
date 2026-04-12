@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { determineCommonActionCostResource } from '../../src/setup/action_cost_resolver';
-import type { ActionMetaCategoryConfig } from '@kingdom-builder/protocol';
-import { Registry } from '@kingdom-builder/protocol';
+import type { ActionMetaCategoryConfig } from '@boardsmith/protocol';
+import { Registry } from '@boardsmith/protocol';
 
 describe('determineCommonActionCostResource', () => {
 	it('returns empty resourceId when no meta-categories exist', () => {

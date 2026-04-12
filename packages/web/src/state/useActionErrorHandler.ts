@@ -1,7 +1,7 @@
 import type {
 	SessionRequirementFailure,
 	SessionPlayerStateSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { translateRequirementFailure } from '../translation';
 import type { TranslationContext } from '../translation/context';
 import type { Action } from './actionTypes';

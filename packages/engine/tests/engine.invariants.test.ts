@@ -17,7 +17,7 @@ import {
 	PhaseId,
 	createActionRegistry,
 	ActionId,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import { createTestEngine } from './helpers.ts';
 import {
 	advance,

@@ -15,7 +15,7 @@ export {
 	RoundingMode,
 	VALID_RECONCILIATION_MODES,
 	VALID_ROUNDING_MODES,
-} from '@kingdom-builder/contents-sdk';
+} from '@boardsmith/contents-sdk';
 
 export type {
 	ResourceBoundReference,
@@ -53,7 +53,7 @@ export type {
 	ResourceUpperBoundIncreaseParams,
 	ResourceValueWriteOptions,
 	ResourcePlayerScope,
-} from '@kingdom-builder/contents-sdk';
+} from '@boardsmith/contents-sdk';
 
 // Game-specific catalog builder
 export * from './catalog';

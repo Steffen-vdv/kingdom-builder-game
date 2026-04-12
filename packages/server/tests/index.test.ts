@@ -84,14 +84,12 @@ describe.sequential('server entrypoint', { timeout: 20000 }, () => {
 		});
 		expect(response.status).toBe(201);
 		expect(
-			messages.some(
-				(entry) => entry.msg === 'Starting Kingdom Builder server...',
-			),
+			messages.some((entry) => entry.msg === 'Starting BoardSmith server...'),
 		).toBe(true);
 		expect(
 			messages.some(
 				(entry) =>
-					entry.msg === `Kingdom Builder server listening on ${result.address}`,
+					entry.msg === `BoardSmith server listening on ${result.address}`,
 			),
 		).toBe(true);
 		await result.app.close();
@@ -152,7 +150,7 @@ describe.sequential('server entrypoint', { timeout: 20000 }, () => {
 			default: fastifyMock,
 		}));
 		await import('../src/index.js');
-		expect(log.info).toHaveBeenCalledWith('Starting Kingdom Builder server...');
+		expect(log.info).toHaveBeenCalledWith('Starting BoardSmith server...');
 		expect(register).toHaveBeenCalled();
 		expect(listen).toHaveBeenCalled();
 		expect(fastifyMock).toHaveBeenCalledWith(
@@ -263,7 +261,7 @@ describe.sequential('server entrypoint', { timeout: 20000 }, () => {
 		});
 		expect(log.error).toHaveBeenCalledWith(
 			error,
-			'Failed to start Kingdom Builder server.',
+			'Failed to start BoardSmith server.',
 		);
 		expect(process.exitCode).toBe(1);
 		process.exitCode = undefined;

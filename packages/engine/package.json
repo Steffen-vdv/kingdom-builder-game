@@ -1,5 +1,5 @@
 {
-	"name": "@kingdom-builder/engine",
+	"name": "@boardsmith/engine",
 	"version": "0.1.0",
 	"private": false,
 	"type": "module",
@@ -10,13 +10,13 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@kingdom-builder/contents-sdk": "workspace:*",
-		"@kingdom-builder/protocol": "workspace:*",
+		"@boardsmith/contents-sdk": "workspace:*",
+		"@boardsmith/protocol": "workspace:*",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
 		"typescript": "6.0.2",
 		"vitest": "4.1.4",
-		"@kingdom-builder/contents": "workspace:*"
+		"@boardsmith/contents": "workspace:*"
 	}
 }

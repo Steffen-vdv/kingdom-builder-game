@@ -1,7 +1,7 @@
 /**
  * Boot smoke tests for translation layer.
  *
- * These tests use REAL content from @kingdom-builder/contents and REAL metadata
+ * These tests use REAL content from @boardsmith/contents and REAL metadata
  * building from the server to ensure the translation layer doesn't crash on
  * boot. This catches mismatches where the web layer expects fields that the
  * server doesn't provide.
@@ -16,7 +16,7 @@ import {
 	RESOURCE_REGISTRY,
 	createBuildingRegistry,
 	createDevelopmentRegistry,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import { buildSessionMetadata } from '../../packages/server/src/session/buildSessionMetadata';
 import { createTranslationAssets } from '../../packages/web/src/translation/context/assets';
 import {
@@ -27,11 +27,11 @@ import {
 	selectPassiveDescriptor,
 	selectTransferDescriptor,
 } from '../../packages/web/src/translation/effects/registrySelectors';
-import type { SessionRuleSnapshot } from '@kingdom-builder/protocol';
+import type { SessionRuleSnapshot } from '@boardsmith/protocol';
 
 /**
  * Build real session metadata using the actual server function with real
- * content from @kingdom-builder/contents. This is what the client receives.
+ * content from @boardsmith/contents. This is what the client receives.
  */
 function buildRealMetadata() {
 	const buildings = createBuildingRegistry(BUILDINGS);

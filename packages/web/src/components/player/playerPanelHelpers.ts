@@ -3,7 +3,7 @@ import type {
 	SessionResourceDefinition,
 	SessionResourceGroupDefinition,
 	SessionResourceSection,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 /** Result type for grouped resources - guaranteed to have both sections */
 export interface ResourcesBySection {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createTestEngine } from '../helpers';
 import { runEffects } from '../../src/effects';
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 
 describe('passive turn countdown', () => {
 	it('decrements turnsRemaining each tick', () => {

@@ -11,6 +11,7 @@ import type {
 export interface GameProviderInnerProps {
 	children: ReactNode;
 	onExit?: () => void;
+	contentId?: string | null;
 	darkMode: boolean;
 	onToggleDark: () => void;
 	musicEnabled: boolean;

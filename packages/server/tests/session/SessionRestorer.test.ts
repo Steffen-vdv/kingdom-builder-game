@@ -13,9 +13,9 @@ import {
 	createContentFactory,
 	createResourceRegistries,
 	resourceDefinition,
-} from '@kingdom-builder/testing';
-import type { PhaseConfig, RuleSet } from '@kingdom-builder/protocol';
-import { SystemRole } from '@kingdom-builder/contents-sdk';
+} from '@boardsmith/testing';
+import type { PhaseConfig, RuleSet } from '@boardsmith/protocol';
+import { SystemRole } from '@boardsmith/contents-sdk';
 
 function createTestSetup() {
 	// Use isolated mode to avoid inheriting real actions that reference

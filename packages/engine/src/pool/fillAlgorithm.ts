@@ -1,7 +1,7 @@
 import type {
 	ActionConfig,
 	ActionMetaCategoryConfig,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { PlayerState, ActionState } from '../state';
 import type { RngService } from '../services';
 

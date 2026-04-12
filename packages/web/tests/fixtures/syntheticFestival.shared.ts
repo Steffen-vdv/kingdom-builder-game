@@ -1,11 +1,11 @@
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 import type {
 	SessionPassiveRecordSnapshot,
 	SessionPlayerId,
 	SessionRuleSnapshot,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import {
 	createEmptySnapshotMetadata,
 	createSnapshotPlayer,

@@ -3,14 +3,14 @@ import {
 	formatPhaseResolution,
 	type PhaseResolutionFormatResult,
 } from '../../src/state/formatPhaseResolution';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 import { createTranslationDiffContext } from '../../src/translation/log/resourceSources/context';
 import type { PlayerSnapshot } from '../../src/translation';
 import type {
 	SessionAdvanceResult,
 	SessionPhaseDefinition,
 	SessionPhaseStepDefinition,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { createDefaultTranslationAssets } from '../helpers/translationAssets';
 import {
 	createSessionRegistries,

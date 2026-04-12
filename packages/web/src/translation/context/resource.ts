@@ -3,7 +3,7 @@ import type {
 	SessionRecentResourceGain,
 	SessionResourceBounds,
 	SessionResourceCatalog,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type {
 	TranslationResourceCatalog,
 	TranslationResourceMetadata,

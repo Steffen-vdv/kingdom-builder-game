@@ -2,11 +2,11 @@ import type {
 	ActionTrace as EngineActionTrace,
 	PlayerSnapshot as EnginePlayerSnapshot,
 	PassiveSummary as EnginePassiveSummary,
-} from '@kingdom-builder/engine';
+} from '@boardsmith/engine';
 import type {
 	ActionExecuteSuccessResponse,
 	SessionPassiveSummary,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 export function normalizeActionTraces(
 	traces: EngineActionTrace[],

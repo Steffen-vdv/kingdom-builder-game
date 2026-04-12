@@ -1,7 +1,7 @@
 # CLAUDE.md – AI Agent Operating Manual
 
-This document is the single source of truth for AI agents working on Kingdom
-Builder. Read it completely before starting any task. Compliance is mandatory
+This document is the single source of truth for AI agents working on
+BoardSmith. Read it completely before starting any task. Compliance is mandatory
 and verified by automated quality gates.
 
 ---
@@ -88,7 +88,7 @@ state (resource values not yet set) or tier ranges (where `undefined` min means
 **Never hardcode game data.**
 
 All resource keys, values, icons, labels, and behaviors must come from the
-Content domain (`@kingdom-builder/contents`). The Engine and Web layers consume
+Content domain (`@boardsmith/contents`). The Engine and Web layers consume
 content at runtime—they never define it.
 
 ```typescript
@@ -368,7 +368,7 @@ directly.
 
 ### 4.1 Package Structure
 
-Kingdom Builder uses pnpm workspaces with five packages:
+BoardSmith uses pnpm workspaces with five packages:
 
 | Package    | Purpose                                                 |
 | ---------- | ------------------------------------------------------- |
@@ -441,7 +441,7 @@ This project uses **pnpm** (not npm).
 
 ```bash
 # Add dependency to specific package
-pnpm add <package> --filter @kingdom-builder/<package-name>
+pnpm add <package> --filter @boardsmith/<package-name>
 
 # Add dev dependency to root
 pnpm add -D <package> -w

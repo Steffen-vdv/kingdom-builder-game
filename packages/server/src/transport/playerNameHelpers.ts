@@ -1,8 +1,8 @@
 import type {
 	SessionPlayerId,
 	SessionPlayerNameMap,
-} from '@kingdom-builder/protocol';
-import type { EngineSession } from '@kingdom-builder/engine';
+} from '@boardsmith/protocol';
+import type { EngineSession } from '@boardsmith/engine';
 import { TransportError } from './TransportTypes.js';
 
 export const PLAYER_NAME_MAX_LENGTH = 40;

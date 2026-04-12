@@ -1,5 +1,5 @@
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
+import type { SessionSnapshotMetadata } from '@boardsmith/protocol/session';
 import {
 	buildPhaseMetadata,
 	buildRegistryMetadata,

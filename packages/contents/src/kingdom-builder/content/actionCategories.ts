@@ -1,4 +1,4 @@
-import { Registry } from '@kingdom-builder/protocol';
+import { Registry } from '@boardsmith/protocol';
 import { actionCategory, type ActionCategoryConfig } from '../../infrastructure/builders';
 
 const ACTION_CATEGORY_ID_MAP = {

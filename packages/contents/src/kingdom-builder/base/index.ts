@@ -5,7 +5,7 @@
  * Other modes (dev-mode, tutorial) can import and extend this.
  */
 
-import type { ContentPackage } from '@kingdom-builder/contents-sdk';
+import type { ContentPackage } from '@boardsmith/contents-sdk';
 import { createActionRegistry, ACTIONS, ACTION_INFO } from '../content/actions';
 import { createBuildingRegistry, BUILDINGS, BUILDING_INFO } from '../content/buildings';
 import { createDevelopmentRegistry, DEVELOPMENT_INFO } from '../content/developments';

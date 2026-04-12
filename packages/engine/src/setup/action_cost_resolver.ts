@@ -1,7 +1,4 @@
-import type {
-	ActionMetaCategoryConfig,
-	Registry,
-} from '@kingdom-builder/protocol';
+import type { ActionMetaCategoryConfig, Registry } from '@boardsmith/protocol';
 
 export interface ActionCostConfiguration {
 	readonly resourceId: string;

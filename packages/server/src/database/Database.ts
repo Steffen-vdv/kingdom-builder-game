@@ -4,7 +4,7 @@ import type { Database as BetterSqlite3Database } from 'better-sqlite3';
 export interface DatabaseOptions {
 	/**
 	 * Path to the SQLite database file.
-	 * Defaults to KB_DATABASE_PATH env var, or './data/kingdom-builder.db'.
+	 * Defaults to BS_DATABASE_PATH env var, or './data/boardsmith.db'.
 	 */
 	path?: string;
 	/**
@@ -14,7 +14,7 @@ export interface DatabaseOptions {
 }
 
 /**
- * Manages the SQLite database connection for Kingdom Builder.
+ * Manages the SQLite database connection for BoardSmith.
  *
  * This class provides a thin wrapper around better-sqlite3 with:
  * - Configurable database path via options or environment variable
@@ -113,14 +113,14 @@ export class Database {
 	}
 }
 
-const DEFAULT_DATABASE_PATH = './data/kingdom-builder.db';
+const DEFAULT_DATABASE_PATH = './data/boardsmith.db';
 
 function resolveDatabasePath(options: DatabaseOptions): string {
 	if (options.path) {
 		return options.path;
 	}
 	const env = options.env ?? process.env;
-	const envPath = env.KB_DATABASE_PATH;
+	const envPath = env.BS_DATABASE_PATH;
 	if (envPath && envPath.trim().length > 0) {
 		return envPath.trim();
 	}

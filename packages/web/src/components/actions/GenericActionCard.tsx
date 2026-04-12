@@ -2,7 +2,7 @@ import React, { useMemo, type Dispatch, type SetStateAction } from 'react';
 import type {
 	ActionEffectGroup,
 	ActionEffectGroupOption,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import {
 	splitSummary,
 	translateRequirementFailure,

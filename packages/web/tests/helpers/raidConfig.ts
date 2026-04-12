@@ -1,9 +1,9 @@
-import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
+import type { PhaseDef, RuleSet, StartConfig } from '@boardsmith/protocol';
 import {
 	createResourceRegistries,
 	resourceDefinition,
 	resourceGroupDefinition,
-} from '@kingdom-builder/testing';
+} from '@boardsmith/testing';
 
 export type SyntheticAction = {
 	id: string;

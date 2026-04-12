@@ -3,7 +3,7 @@ import type {
 	ActionExecuteErrorResponse,
 	ActionExecuteRequest,
 	ActionExecuteSuccessResponse,
-} from '@kingdom-builder/protocol/actions';
+} from '@boardsmith/protocol/actions';
 import type {
 	SessionAdvanceResponse,
 	SessionCreateRequest,
@@ -20,7 +20,7 @@ import type {
 	SessionSimulateResponse,
 	SessionSimulateRequest,
 	SessionUpdatePlayerNameRequest,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import {
 	GameApiError,
 	GameApiFake,

@@ -1,4 +1,4 @@
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 import type { EngineContext } from '../../context';
 import type { PlayerState } from '../../state';
 import { recordEffectResourceDelta } from '../../resource_sources';

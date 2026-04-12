@@ -1,10 +1,10 @@
-import type { ActionEffectGroup } from '@kingdom-builder/protocol';
-import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
+import type { ActionEffectGroup } from '@boardsmith/protocol';
+import type { ActionParametersPayload } from '@boardsmith/protocol/actions';
 import type {
 	SessionActionCostMap,
 	SessionActionRequirementList,
 	SessionPlayerId,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { createMetadataKey } from './actionMetadataKey';
 import { cloneValue } from './cloneValue';
 import type { SessionActionMetadataSnapshot } from './sessionTypes';

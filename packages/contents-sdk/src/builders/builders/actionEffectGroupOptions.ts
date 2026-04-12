@@ -1,4 +1,4 @@
-import type { ActionEffectGroupOption } from '@kingdom-builder/protocol';
+import type { ActionEffectGroupOption } from '@boardsmith/protocol';
 import { ParamsBuilder } from '../builderShared';
 import type { Params } from '../builderShared';
 

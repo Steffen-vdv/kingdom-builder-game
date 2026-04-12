@@ -6,7 +6,7 @@ import {
 	getActionCosts,
 	runEffects,
 	type ActionTrace,
-} from '@kingdom-builder/engine';
+} from '@boardsmith/engine';
 import {
 	createSyntheticTaxScenario,
 	SYNTHETIC_IDS,
@@ -42,7 +42,7 @@ import type { ActionDiffChange } from '../src/translation/log/diff';
 
 const RESOURCE_KEYS = Object.values(SYNTHETIC_RESOURCE_KEYS);
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('@boardsmith/engine', async () => {
 	return await import('../../engine/src');
 });
 

@@ -14,7 +14,7 @@ import {
 	summarizeEffects,
 	describeEffects,
 } from '../factory';
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 import type { Summary } from '../../content/types';
 import type { TranslationContext } from '../../context';
 import {

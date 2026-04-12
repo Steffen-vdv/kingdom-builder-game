@@ -4,7 +4,7 @@ import type {
 	PlayerSnapshotDeltaBucket,
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { useGameEngine } from './GameContext';
 import { enqueueSimulateUpcomingPhases } from './sessionSdk';
 

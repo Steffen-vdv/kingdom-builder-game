@@ -1,13 +1,13 @@
 import {
 	sessionAdvanceRequestSchema,
 	sessionAdvanceResponseSchema,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type {
 	SessionAdvanceResponse,
 	SessionSnapshot,
 	SessionStateResponse,
-} from '@kingdom-builder/protocol';
-import type { EngineSession } from '@kingdom-builder/engine';
+} from '@boardsmith/protocol';
+import type { EngineSession } from '@boardsmith/engine';
 import type { TransportRequest } from '../TransportTypes.js';
 import { TransportError } from '../TransportTypes.js';
 import type { AuthContext, AuthRole } from '../../auth/AuthContext.js';

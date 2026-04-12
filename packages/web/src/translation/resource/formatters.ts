@@ -1,5 +1,5 @@
-import type { SessionRecentResourceGain } from '@kingdom-builder/protocol';
-import type { SessionMetadataFormat } from '@kingdom-builder/protocol/session';
+import type { SessionRecentResourceGain } from '@boardsmith/protocol';
+import type { SessionMetadataFormat } from '@boardsmith/protocol/session';
 import type { Summary, SummaryGroup } from '../content/types';
 
 export interface ResourceMetadataSnapshot {

@@ -1,6 +1,6 @@
 import { Resource } from './constants';
 import { effect, phase, step, compareEvaluator, resourceEvaluator, type PhaseDef } from '../../infrastructure/builders';
-import { Types, ResourceMethods, resourcePercentFromResourceChange } from '@kingdom-builder/contents-sdk';
+import { Types, ResourceMethods, resourcePercentFromResourceChange } from '@boardsmith/contents-sdk';
 import { resourceChange } from './resource';
 import { Trigger } from './triggers';
 import { PhaseId, PhaseStepId } from './phaseTypes';

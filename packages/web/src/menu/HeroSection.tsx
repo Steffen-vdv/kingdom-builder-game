@@ -22,18 +22,18 @@ export function HeroSection() {
 	return (
 		<header className="flex flex-col items-center text-center">
 			<span className={SHOWCASE_BADGE_CLASS}>
-				<span className="text-lg">🏰</span>
-				<span>Rule Your Realm</span>
+				<span className="text-lg">🎲</span>
+				<span>Forge Your Game</span>
 			</span>
 			<h1 className="mt-6 text-4xl font-black tracking-tight sm:text-5xl md:text-6xl">
-				Kingdom Builder
+				BoardSmith
 			</h1>
 			<VisitorCountSubtitle />
 			<p className={SHOWCASE_INTRO_CLASS}>
 				{[
-					'Craft a flourishing dynasty with tactical choices,',
-					'evolving lands, and a thriving population.',
-					'Each turn is a new chapter in your royal saga.',
+					'A digital board game engine for strategic minds.',
+					'Choose your game, shape your strategy,',
+					'and craft victory one turn at a time.',
 				].join(' ')}
 			</p>
 		</header>

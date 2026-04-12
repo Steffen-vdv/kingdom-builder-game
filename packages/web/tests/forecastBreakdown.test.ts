@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ResourceForecastBreakdown } from '@kingdom-builder/protocol';
+import type { ResourceForecastBreakdown } from '@boardsmith/protocol';
 import type { TranslationContext } from '../src/translation/context';
 import { getForecastBreakdownSummary } from '../src/utils/forecastBreakdown';
 

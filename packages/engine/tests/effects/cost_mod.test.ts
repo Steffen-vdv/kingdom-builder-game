@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { performAction, getActionCosts, advance } from '../../src';
 import { createTestEngine } from '../helpers';
-import { createContentFactory } from '@kingdom-builder/testing';
-import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
+import { createContentFactory } from '@boardsmith/testing';
+import { Resource as CResource, PhaseId } from '@boardsmith/contents';
 
 describe('cost_mod effects', () => {
 	it('adds and removes cost modifiers', () => {

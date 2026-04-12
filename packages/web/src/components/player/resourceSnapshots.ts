@@ -4,7 +4,7 @@ import type {
 	SessionPlayerStateSnapshot,
 	SessionResourceBounds,
 	SessionResourceBoundValue,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type {
 	ResourceMetadataSnapshot,
 	ResourceValueSnapshot,

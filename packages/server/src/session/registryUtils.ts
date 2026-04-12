@@ -2,8 +2,8 @@ import type {
 	Registry,
 	SerializedRegistry,
 	SessionActionCategoryRegistry,
-} from '@kingdom-builder/protocol';
-import type { ActionCategoryConfig as ContentActionCategoryConfig } from '@kingdom-builder/contents';
+} from '@boardsmith/protocol';
+import type { ActionCategoryConfig as ContentActionCategoryConfig } from '@boardsmith/contents';
 
 export const cloneRegistry = <DefinitionType>(
 	registry: Registry<DefinitionType>,

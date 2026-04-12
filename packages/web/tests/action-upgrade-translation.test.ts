@@ -4,7 +4,7 @@ import type {
 	ActionMetaCategoryConfig,
 	EffectDef,
 	SessionPlayerId,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import {
 	summarizeEffects,
 	describeEffects,

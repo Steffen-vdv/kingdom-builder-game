@@ -1,4 +1,4 @@
-import type { AttackLog, EffectDef } from '@kingdom-builder/protocol';
+import type { AttackLog, EffectDef } from '@boardsmith/protocol';
 import type { TranslationContext } from '../../../context';
 import resourceFormatter from './resource';
 import buildingFormatter from './building';

@@ -2,7 +2,7 @@ import type {
 	ActionExecuteRequest,
 	ActionExecuteResponse,
 	ActionExecuteSuccessResponse,
-} from '@kingdom-builder/protocol/actions';
+} from '@boardsmith/protocol/actions';
 import type {
 	SessionActionCostRequest,
 	SessionActionCostResponse,
@@ -23,8 +23,8 @@ import type {
 	SessionStateResponse,
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
-} from '@kingdom-builder/protocol/session';
-import type { VisitorStatsResponse } from '@kingdom-builder/protocol/visitors';
+} from '@boardsmith/protocol/session';
+import type { VisitorStatsResponse } from '@boardsmith/protocol/visitors';
 import { clone, clonePlayerResponseMap } from './gameApi.clone';
 import type { RunAiMap, SimulationMap } from './gameApi.clone';
 import { EMPTY_REGISTRIES, toStateResponse } from './gameApi.fake.helpers';

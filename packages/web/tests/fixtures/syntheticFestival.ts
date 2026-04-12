@@ -1,6 +1,6 @@
-import { createContentFactory } from '@kingdom-builder/testing';
-import type { EffectDef } from '@kingdom-builder/protocol';
-import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
+import { createContentFactory } from '@boardsmith/testing';
+import type { EffectDef } from '@boardsmith/protocol';
+import type { SessionSnapshot } from '@boardsmith/protocol/session';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
 import { createSessionSnapshot } from '../helpers/sessionFixtures';
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';

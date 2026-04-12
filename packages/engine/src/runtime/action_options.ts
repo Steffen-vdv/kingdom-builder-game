@@ -1,7 +1,7 @@
 import type {
 	ActionEffectGroup,
 	ActionEffectGroupOption,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { deepClone } from './player_snapshot';
 
 function cloneOption(option: ActionEffectGroupOption): ActionEffectGroupOption {

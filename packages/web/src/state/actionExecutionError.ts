@@ -1,5 +1,5 @@
-import type { ActionExecuteErrorResponse } from '@kingdom-builder/protocol/actions';
-import type { SessionRequirementFailure } from '@kingdom-builder/protocol/session';
+import type { ActionExecuteErrorResponse } from '@boardsmith/protocol/actions';
+import type { SessionRequirementFailure } from '@boardsmith/protocol/session';
 import {
 	getActionErrorMetadata,
 	setActionErrorMetadata,

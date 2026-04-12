@@ -7,8 +7,8 @@ import {
 	type SummaryEntry,
 } from '../src/translation';
 import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
-import { resolveActionEffects } from '@kingdom-builder/protocol';
-import type { ActionConfig } from '@kingdom-builder/protocol';
+import { resolveActionEffects } from '@boardsmith/protocol';
+import type { ActionConfig } from '@boardsmith/protocol';
 import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
 import { formatActionTitle } from '../src/translation/formatActionTitle';
 

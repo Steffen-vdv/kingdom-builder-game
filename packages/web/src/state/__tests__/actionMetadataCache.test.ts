@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ActionMetadataCache } from '../actionMetadataCache';
-import type { SessionActionRequirementList } from '@kingdom-builder/protocol/session';
+import type { SessionActionRequirementList } from '@boardsmith/protocol/session';
 
 describe('ActionMetadataCache', () => {
 	it('keeps inactive player requirements after active player updates', () => {

@@ -10,12 +10,12 @@
  * - Use .onBuild() to add effects that trigger when the building is constructed
  * - Always end with .build() to finalize the building
  */
-import { Registry, TRANSFER_PCT_EVALUATION_ID, TRANSFER_PCT_EVALUATION_TYPE, buildingSchema } from '@kingdom-builder/protocol';
+import { Registry, TRANSFER_PCT_EVALUATION_ID, TRANSFER_PCT_EVALUATION_TYPE, buildingSchema } from '@boardsmith/protocol';
 import { ActionId, PopulationEvaluationId } from './actionIds';
 import { Resource } from './constants';
 import { DevelopmentId } from './developments';
 import { building, effect, actionParams, resultModParams, evaluationTarget, developmentTarget, populationTarget, costModParams, passiveParams } from '../../infrastructure/builders';
-import { Types, CostModMethods, ResultModMethods, ResourceMethods, ActionMethods, PassiveMethods } from '@kingdom-builder/contents-sdk';
+import { Types, CostModMethods, ResultModMethods, ResourceMethods, ActionMethods, PassiveMethods } from '@boardsmith/contents-sdk';
 import { Focus } from '../../infrastructure/defs';
 import { BuildingId as BuildingIdMap } from './buildingIds';
 import type { BuildingId as BuildingIdType } from './buildingIds';

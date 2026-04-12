@@ -2,7 +2,7 @@ import type {
 	EffectConfig,
 	PassiveMetadata,
 	PhaseSkipConfig,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { formatPassiveRemoval } from '../../text';
 import type { TriggerKey, PhaseId, PhaseStepId } from '../../../types';
 import { ParamsBuilder, PassiveMethods, Types } from '../../builderShared';

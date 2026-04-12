@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type {
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
-import { createContentFactory } from '@kingdom-builder/testing';
+} from '@boardsmith/protocol/session';
+import { createContentFactory } from '@boardsmith/testing';
 import {
 	selectSessionOptions,
 	selectSessionPlayers,

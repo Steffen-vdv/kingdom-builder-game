@@ -4,12 +4,9 @@ import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
 	SessionTriggerMetadata,
-} from '@kingdom-builder/protocol/session';
-import type {
-	Registry,
-	ActionMetaCategoryConfig,
-} from '@kingdom-builder/protocol';
-import { createContentFactory } from '@kingdom-builder/testing';
+} from '@boardsmith/protocol/session';
+import type { Registry, ActionMetaCategoryConfig } from '@boardsmith/protocol';
+import { createContentFactory } from '@boardsmith/testing';
 import {
 	createSessionRegistries,
 	createResourceCatalogContent,

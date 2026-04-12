@@ -15,7 +15,7 @@ export default mergeConfig(
 		},
 		resolve: {
 			alias: {
-				'@kingdom-builder/server': path.resolve(dirname, 'src'),
+				'@boardsmith/server': path.resolve(dirname, 'src'),
 			},
 		},
 	}),

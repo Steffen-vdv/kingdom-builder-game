@@ -1,10 +1,7 @@
-import { getActionTierConfig } from '@kingdom-builder/protocol';
+import { getActionTierConfig } from '@boardsmith/protocol';
 import { getStartingTier } from '../pool/fillAlgorithm';
 import type { EngineContext } from '../context';
-import type {
-	ActionEffect,
-	ActionEffectGroup,
-} from '@kingdom-builder/protocol';
+import type { ActionEffect, ActionEffectGroup } from '@boardsmith/protocol';
 
 function isActionEffectGroup(
 	effect: ActionEffect,
@@ -58,7 +55,7 @@ export function getActionEffectGroups(
 export {
 	coerceActionEffectGroupChoices,
 	resolveActionEffects,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 export type {
 	ActionEffectGroup,
@@ -70,4 +67,4 @@ export type {
 	ResolvedActionEffectGroupStep,
 	ResolvedActionEffectStep,
 	ResolvedActionEffects,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';

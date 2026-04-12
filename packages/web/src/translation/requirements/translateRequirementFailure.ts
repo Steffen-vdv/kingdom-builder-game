@@ -1,4 +1,4 @@
-import type { SessionRequirementFailure } from '@kingdom-builder/protocol';
+import type { SessionRequirementFailure } from '@boardsmith/protocol';
 import type { TranslationContext } from '../context';
 import { selectSlotDisplay } from '../context/assetSelectors';
 

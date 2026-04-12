@@ -17,10 +17,10 @@ import { ACTION_EFFECT_DELAY } from '../src/state/useGameLog';
 import { formatPhaseResolution } from '../src/state/formatPhaseResolution';
 import { createTranslationDiffContext } from '../src/translation/log/resourceSources/context';
 import type { PlayerSnapshot } from '../src/translation';
-import type { SessionPlayerId } from '@kingdom-builder/protocol';
+import type { SessionPlayerId } from '@boardsmith/protocol';
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
-import type { SessionAdvanceResult } from '@kingdom-builder/protocol/session';
-import { createContentFactory } from '@kingdom-builder/testing';
+import type { SessionAdvanceResult } from '@boardsmith/protocol/session';
+import { createContentFactory } from '@boardsmith/testing';
 
 const LEADING_EMOJI_PATTERN =
 	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;

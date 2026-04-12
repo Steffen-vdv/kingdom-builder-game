@@ -3,7 +3,7 @@ import {
 	createResourceRegistry,
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 
 export const resourceKeys = {
 	ap: 'synthetic:resource:ap',

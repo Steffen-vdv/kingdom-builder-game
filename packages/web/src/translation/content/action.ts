@@ -1,5 +1,5 @@
-import { resolveActionEffects } from '@kingdom-builder/protocol';
-import type { ActionParametersPayload } from '@kingdom-builder/protocol';
+import { resolveActionEffects } from '@boardsmith/protocol';
+import type { ActionParametersPayload } from '@boardsmith/protocol';
 import {
 	summarizeEffects,
 	describeEffects,

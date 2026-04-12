@@ -1,5 +1,5 @@
-import { Registry, developmentSchema } from '@kingdom-builder/protocol';
-import { Types, ResourceMethods, PassiveMethods, resourceAmountChange } from '@kingdom-builder/contents-sdk';
+import { Registry, developmentSchema } from '@boardsmith/protocol';
+import { Types, ResourceMethods, PassiveMethods, resourceAmountChange } from '@boardsmith/contents-sdk';
 import { development, effect, passiveParams } from '../infrastructure/builders';
 import type { DevelopmentDef } from '../infrastructure/defs';
 import { Res, Dev } from './ids';

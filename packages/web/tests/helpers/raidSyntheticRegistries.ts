@@ -80,8 +80,8 @@ const syntheticContent = vi.hoisted(() => {
 	};
 });
 
-vi.mock('@kingdom-builder/contents', async () => {
-	const actual = (await vi.importActual('@kingdom-builder/contents')) as Record<
+vi.mock('@boardsmith/contents', async () => {
+	const actual = (await vi.importActual('@boardsmith/contents')) as Record<
 		string,
 		unknown
 	>;

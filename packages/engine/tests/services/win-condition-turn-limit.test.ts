@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { WinConditionService } from '../../src/services/win_condition_service';
 import { createTestEngine } from '../helpers';
-import type { WinConditionDefinition } from '@kingdom-builder/protocol';
+import type { WinConditionDefinition } from '@boardsmith/protocol';
 
 describe('turn-limit win condition', () => {
 	function createTurnLimitCondition(maxTurns: number): WinConditionDefinition {

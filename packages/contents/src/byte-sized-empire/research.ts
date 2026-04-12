@@ -4,7 +4,7 @@
  * Aggregates all 36 research actions across three tiers.
  * Individual tier files keep each under the 400-line limit.
  */
-import type { ActionConfig } from '@kingdom-builder/protocol';
+import type { ActionConfig } from '@boardsmith/protocol';
 import { t1Research } from './research-t1';
 import { t2Research } from './research-t2';
 import { t3Research } from './research-t3';

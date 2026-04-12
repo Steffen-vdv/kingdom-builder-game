@@ -6,7 +6,7 @@ import {
 } from 'react';
 
 export const DARK_MODE_PREFERENCE_STORAGE_KEY =
-	'kingdom-builder.preferences.darkModeEnabled';
+	'boardsmith.preferences.darkModeEnabled';
 
 type PreferenceUpdater = boolean | ((previousValue: boolean) => boolean);
 

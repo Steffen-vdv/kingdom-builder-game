@@ -8,7 +8,7 @@ import type {
 	SessionActionRequirementList,
 	SessionSnapshot,
 	SessionPlayerId,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import {
 	clearSessionActionMetadataStore,
 	seedSessionActionMetadata,
@@ -31,8 +31,8 @@ import { createTranslationContext } from '../src/translation/context';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
 import { RemoteSessionAdapter } from '../src/state/remoteSessionAdapter';
 import { createMetadataKey } from '../src/state/actionMetadataKey';
-import type { ActionEffectGroup } from '@kingdom-builder/protocol';
-import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
+import type { ActionEffectGroup } from '@boardsmith/protocol';
+import type { ActionParametersPayload } from '@boardsmith/protocol/actions';
 import type { GameApi, GameApiRequestOptions } from '../src/services/gameApi';
 import {
 	loadActionCosts,

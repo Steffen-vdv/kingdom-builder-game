@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	PhaseId,
-	Resource as CResource,
-	RULES,
-} from '@kingdom-builder/contents';
+import { PhaseId, Resource as CResource, RULES } from '@boardsmith/contents';
 import { createTestEngine } from '../helpers.ts';
 import { simulateUpcomingPhases } from '../../src';
 import { resourceAmountParams } from '../helpers/resourceParams.ts';

@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { snapshotAdvance } from '../../src/runtime/engine_snapshot';
 import type { AdvanceResult, AdvanceSkip } from '../../src/phases/advance';
 import type { PassiveMetadata } from '../../src/services';
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 import { createTestEngine } from '../helpers';
 import { resourceAmountParams } from '../helpers/resourceParams.ts';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource } from '@boardsmith/contents';
 
 describe('snapshotAdvance', () => {
 	it('clones advance results with skip metadata and complex effects', () => {

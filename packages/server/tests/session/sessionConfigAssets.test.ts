@@ -5,12 +5,12 @@ import type {
 	SessionResourceDefinition,
 	SerializedRegistry,
 	GameConfig,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import {
 	createContentFactory,
 	createResourceRegistries,
 	resourceDefinition,
-} from '@kingdom-builder/testing';
+} from '@boardsmith/testing';
 import {
 	buildResourceRegistry,
 	buildSessionAssets,

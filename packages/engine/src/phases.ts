@@ -3,4 +3,4 @@ export type {
 	PhaseConfig,
 	PhaseStepConfig as StepDef,
 	PhaseConfig as PhaseDef,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';

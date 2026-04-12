@@ -1,4 +1,4 @@
-import type { BuildingConfig } from '@kingdom-builder/protocol';
+import type { BuildingConfig } from '@boardsmith/protocol';
 
 type BuildingLookupContext = {
 	buildings: {

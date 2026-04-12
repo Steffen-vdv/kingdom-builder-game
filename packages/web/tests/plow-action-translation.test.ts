@@ -13,12 +13,12 @@ import {
 	describeContent,
 	splitSummary,
 } from '../src/translation/content';
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 import type {
 	SessionMetadataDescriptor,
 	SessionPhaseDefinition,
 	SessionRuleSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { createTranslationContext } from '../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import {

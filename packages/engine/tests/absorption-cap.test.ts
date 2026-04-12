@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { resolveAttack } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
-import { Resource } from '@kingdom-builder/contents';
+import { Resource } from '@boardsmith/contents';
 
 describe('absorption cap', () => {
 	it('caps absorption at 100%', () => {

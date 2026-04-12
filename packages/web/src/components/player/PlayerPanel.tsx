@@ -2,7 +2,7 @@ import React, { useMemo, type FC } from 'react';
 import type {
 	SessionPlayerStateSnapshot,
 	SessionResourceDefinition,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import ResourceButton from './ResourceButton';
 import ResourceGroupDisplay from './ResourceGroupDisplay';
 import ResourceWithBoundButton from './ResourceWithBoundButton';

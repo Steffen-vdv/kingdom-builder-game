@@ -3,7 +3,7 @@ import { runRequirement } from '../requirements';
 import {
 	getActionTierConfig,
 	resolveActionEffects,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { getStartingTier } from '../pool/fillAlgorithm';
 import type { EngineContext } from '../context';
 import type { EffectDef } from '../effects';

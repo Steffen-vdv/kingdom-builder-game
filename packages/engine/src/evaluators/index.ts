@@ -1,4 +1,4 @@
-import { Registry } from '@kingdom-builder/protocol';
+import { Registry } from '@boardsmith/protocol';
 import type { EngineContext } from '../context';
 
 import { developmentEvaluator } from './development';
@@ -9,7 +9,7 @@ import { buildingEvaluator } from './building';
 import { actionExhaustedEvaluator } from './action_exhausted';
 import { developmentCountAllEvaluator } from './development_count_all';
 import { opponentResourceEvaluator } from './opponent_resource';
-import type { EvaluatorDef } from '@kingdom-builder/protocol';
+import type { EvaluatorDef } from '@boardsmith/protocol';
 
 export interface EvaluatorHandler<
 	R = unknown,
@@ -43,4 +43,4 @@ export { buildingEvaluator } from './building';
 export { actionExhaustedEvaluator } from './action_exhausted';
 export { developmentCountAllEvaluator } from './development_count_all';
 export { opponentResourceEvaluator } from './opponent_resource';
-export type { EvaluatorDef } from '@kingdom-builder/protocol';
+export type { EvaluatorDef } from '@boardsmith/protocol';
