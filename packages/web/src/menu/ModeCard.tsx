@@ -31,9 +31,7 @@ const NAME_CLASS = [
 	'dark:text-slate-100',
 ].join(' ');
 
-const TAGLINE_CLASS = [
-	'text-xs font-medium italic leading-snug',
-].join(' ');
+const TAGLINE_CLASS = ['text-xs font-medium italic leading-snug'].join(' ');
 
 const DESCRIPTION_CLASS = [
 	'text-xs leading-relaxed text-slate-500',

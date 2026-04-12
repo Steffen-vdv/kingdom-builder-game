@@ -19,9 +19,7 @@ const NAME_CLASS = [
 	'dark:text-slate-100',
 ].join(' ');
 
-const MODE_COUNT_CLASS = [
-	'text-xs font-medium',
-].join(' ');
+const MODE_COUNT_CLASS = ['text-xs font-medium'].join(' ');
 
 interface SpaceCardProps {
 	name: string;
@@ -45,8 +43,7 @@ export function SpaceCard({
 		onSelect();
 	}, [playUiClick, onSelect]);
 
-	const label =
-		modeCount === 1 ? '1 game mode' : `${modeCount} game modes`;
+	const label = modeCount === 1 ? '1 game mode' : `${modeCount} game modes`;
 
 	return (
 		<button
@@ -73,10 +70,7 @@ export function SpaceCard({
 				</span>
 				<div className="flex flex-col">
 					<span className={NAME_CLASS}>{name}</span>
-					<span
-						className={MODE_COUNT_CLASS}
-						style={{ color: accentColor }}
-					>
+					<span className={MODE_COUNT_CLASS} style={{ color: accentColor }}>
 						{label}
 					</span>
 				</div>
