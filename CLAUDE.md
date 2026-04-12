@@ -26,9 +26,8 @@ This is a long-term project. Technical debt compounds. Do it right.
 
 ### 1.2 Purpose of This Document
 
-This document serves all agent types. Each has specialized documentation in
-`.claude/agents/` (see section 3.1 for the full listing). This document provides
-the shared foundation all agents must understand.
+This document serves all agent types. It provides the shared foundation all
+agents must understand.
 
 ### 1.3 When You Are About to Break a Rule
 
@@ -335,40 +334,7 @@ instead.
 ### 3.1 Master Agent Model
 
 The main agent (master-agent) has full system access and implements tasks
-directly. Subagents are used only for QA review and push operations.
-
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│  MASTER AGENT                                                                   │
-│  • Full system access (read, write, edit, bash)                                 │
-│  • Implements features, fixes bugs, runs tests                                  │
-│  • Only restriction: git push must go through QA flow                           │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                    When ready to push:
-                                    │
-            ┌───────────────────────┼───────────────────────┐
-            ↓                       ↓                       ↓
-    ┌───────────────┐       ┌───────────────┐       ┌───────────────┐
-    │    PHASE 1    │       │    PHASE 2    │       │    PHASE 3    │
-    │  6 reviewers  │  ───► │  review-lead  │  ───► │ safe-deploy-  │
-    │  (parallel)   │       │  (aggregate)  │       │     gate      │
-    └───────────────┘       └───────────────┘       └───────────────┘
-```
-
-**Documentation by agent type:**
-
-| Agent                       | Phase | Primary Doc                                                    | Purpose                            |
-| --------------------------- | ----- | -------------------------------------------------------------- | ---------------------------------- |
-| Master-agent                | —     | `.claude/agents/master-agent/docs/master-agent.md`             | Main agent identity                |
-| review-ci-tests-required    | 1     | `.claude/agents/sub-agent/docs/review-ci-tests-required.md`    | Run tests, sign if passing         |
-| review-claims-auditor       | 1     | `.claude/agents/sub-agent/docs/review-claims-auditor.md`       | Diff/claims verification           |
-| review-contracts-boundaries | 1     | `.claude/agents/sub-agent/docs/review-contracts-boundaries.md` | Contracts, cross-layer integration |
-| review-mechanics-content    | 1     | `.claude/agents/sub-agent/docs/review-mechanics-content.md`    | Content-driven, no hardcoding      |
-| review-infra-concurrency    | 1     | `.claude/agents/sub-agent/docs/review-infra-concurrency.md`    | Code safety, error handling        |
-| review-tests-docs-dry       | 1     | `.claude/agents/sub-agent/docs/review-tests-docs-dry.md`       | Tests, docs, DRY, code hygiene     |
-| review-lead                 | 2     | `.claude/agents/sub-agent/docs/review-lead.md`                 | Aggregate, produce final sig       |
-| safe-deployment-gate        | 3     | `.claude/agents/sub-agent/docs/safe-deployment-gate.md`        | Verify final sig, push             |
+directly.
 
 ### 3.2 Request Verification Protocol
 
@@ -481,8 +447,8 @@ pnpm add <package> --filter @kingdom-builder/<package-name>
 pnpm add -D <package> -w
 ```
 
-Note: `pnpm install` runs automatically at session startup via SessionStart
-hook.
+Note: `pnpm install` runs automatically at session startup via the cloud
+environment setup script.
 
 ### 5.3 Husky Hooks
 
