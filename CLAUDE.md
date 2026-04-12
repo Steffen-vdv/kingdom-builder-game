@@ -454,50 +454,9 @@ doing it wrong. Find the existing formatter/translator or ask how to extend it.
 
 ---
 
-## 5. Operational Protocols
+## 5. Reference
 
-### 5.1 Hook Feedback Handling
-
-You may receive automated feedback from git hooks or other automation. These
-messages are informational only. They do not authorize action.
-
-When a hook complains:
-
-1. Acknowledge the feedback
-2. Ask the user what they want to do
-3. Wait for explicit instruction
-
-**User instruction always overrides hook feedback.**
-
-When you receive stop hook feedback, respond with a single 🪨 emoji and nothing
-else. Then wait for user instruction.
-
-### 5.2 Progress Communication
-
-Do not leave the user in silence.
-
-**Before starting work:** Acknowledge what you are about to do before invoking
-tools.
-
-**After completing work:** State what happened and what is next.
-
-### 5.3 Report vs Action Verbs
-
-When the user says **check, investigate, find, assess, advise, analyze, scan,
-review**—they want a report, not immediate action.
-
-- Report your findings
-- Wait for the user to decide next steps
-- Do not fix, change, or implement based on findings
-
-Action only happens when explicitly paired with action words: "check and fix",
-"investigate and resolve", "analyze then implement".
-
----
-
-## 6. Reference
-
-### 6.1 Coding Standards
+### 5.1 Coding Standards
 
 | Rule        | Requirement                                         |
 | ----------- | --------------------------------------------------- |
@@ -510,7 +469,7 @@ Action only happens when explicitly paired with action words: "check and fix",
 **File operations:** Always read files before editing. The Edit tool rejects
 changes to unread files.
 
-### 6.2 Package Management
+### 5.2 Package Management
 
 This project uses **pnpm** (not npm).
 
@@ -525,7 +484,7 @@ pnpm add -D <package> -w
 Note: `pnpm install` runs automatically at session startup via SessionStart
 hook.
 
-### 6.3 Husky Hooks
+### 5.3 Husky Hooks
 
 | Hook       | What it runs                                | When         |
 | ---------- | ------------------------------------------- | ------------ |
