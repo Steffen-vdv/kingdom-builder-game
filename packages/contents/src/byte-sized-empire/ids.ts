@@ -17,7 +17,6 @@ export const Res = {
 	happiness: 'resource:bse:happiness',
 	vp: 'resource:bse:vp',
 	ap: 'resource:bse:action-points',
-	turnsRemaining: 'resource:bse:turns-remaining',
 	t1Done: 'resource:bse:t1-research-done',
 	t2Done: 'resource:bse:t2-research-done',
 } as const;
@@ -117,7 +116,6 @@ export const Step = {
 	foodResolution: 'step:bse:food-resolution',
 	warRecovery: 'step:bse:war-recovery',
 	gainAP: 'step:bse:gain-ap',
-	decrementTurns: 'step:bse:decrement-turns',
 	main: 'step:bse:main',
 } as const;
 

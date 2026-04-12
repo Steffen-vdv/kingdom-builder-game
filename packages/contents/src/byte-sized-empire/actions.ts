@@ -120,7 +120,6 @@ export function createActionRegistry() {
 			.effect(resAdd(Res.defense, 0))
 			.effect(resAdd(Res.castleHP, 100))
 			.effect(resAdd(Res.ap, 2))
-			.effect(resAdd(Res.turnsRemaining, 30))
 			.effect(resAdd(Res.t1Done, 0))
 			.effect(resAdd(Res.t2Done, 0))
 			.effect(effect(Types.Land, LandMethods.ADD).param('count', 4).build())

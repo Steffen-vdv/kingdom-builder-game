@@ -62,11 +62,6 @@ export const PHASES: readonly PhaseConfig[] = [
 				.title('Gain Action Points')
 				.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Res.ap, 2)).build()),
 		)
-		.step(
-			step(Step.decrementTurns)
-				.title('Decrement Turns')
-				.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceAmountChange(Res.turnsRemaining, 1)).build()),
-		)
 		.build(),
 
 	// ═══════════════════════════════════════════════════════
