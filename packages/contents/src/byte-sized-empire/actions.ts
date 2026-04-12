@@ -14,6 +14,7 @@ import {
 	resourceEvaluator,
 	actionEffectGroup,
 	actionEffectGroupOption,
+	actionEffectGroupOptionParams,
 	actionCategory,
 	actionMetaCategory,
 	pool,
@@ -55,7 +56,15 @@ function gainSubAction(id: string, name: string, resId: string, amount: number):
 function pickGroup(prefix: string, ids: Record<string, string>) {
 	const group = actionEffectGroup(`${prefix}_pick`);
 	for (const { key, icon } of PICK_RESOURCES) {
-		group.option(actionEffectGroupOption(`${prefix}_${key.toLowerCase()}`).icon(icon).action(ids[key]!));
+		const actionId = ids[key]!;
+		group.option(
+			actionEffectGroupOption(`${prefix}_${key.toLowerCase()}`)
+				.icon(icon)
+				.action(actionId)
+				.params(
+					actionEffectGroupOptionParams().actionId(actionId),
+				),
+		);
 	}
 	return group;
 }
@@ -92,10 +101,30 @@ export function createActionRegistry() {
 		registry.add(TRADE_IDS[key]!, gainSubAction(TRADE_IDS[key]!, `Trade ${key}`, resId, 2));
 	}
 
-	registry.add(Act.decreeLevy, gainSubAction(Act.decreeLevy, 'Levy', Res.gold, 3));
-	registry.add(Act.decreeConscription, gainSubAction(Act.decreeConscription, 'Conscription', Res.defense, 2));
-	registry.add(Act.decreeFortify, gainSubAction(Act.decreeFortify, 'Fortify', Res.castleHP, 10));
-	registry.add(Act.decreeProclamation, gainSubAction(Act.decreeProclamation, 'Proclamation', Res.influence, 3));
+	registry.add(
+		Act.decreeLevy,
+		gainSubAction(
+			Act.decreeLevy, 'Emergency Levy', Res.gold, 5,
+		),
+	);
+	registry.add(
+		Act.decreeConscription,
+		gainSubAction(
+			Act.decreeConscription, 'Conscription', Res.population, 2,
+		),
+	);
+	registry.add(
+		Act.decreeFortify,
+		gainSubAction(
+			Act.decreeFortify, 'Fortify', Res.defense, 3,
+		),
+	);
+	registry.add(
+		Act.decreeProclamation,
+		gainSubAction(
+			Act.decreeProclamation, 'Proclamation', Res.happiness, 3,
+		),
+	);
 
 	// ── SYSTEM ────────────────────────────────────────────
 	registry.add(
@@ -178,10 +207,42 @@ export function createActionRegistry() {
 	);
 
 	const decreeGroup = actionEffectGroup('decree_options')
-		.option(actionEffectGroupOption('opt_levy').icon('💰').action(Act.decreeLevy))
-		.option(actionEffectGroupOption('opt_conscription').icon('⚔️').action(Act.decreeConscription))
-		.option(actionEffectGroupOption('opt_fortify').icon('🏰').action(Act.decreeFortify))
-		.option(actionEffectGroupOption('opt_proclamation').icon('📣').action(Act.decreeProclamation));
+		.option(
+			actionEffectGroupOption('opt_levy')
+				.icon('💰')
+				.action(Act.decreeLevy)
+				.params(
+					actionEffectGroupOptionParams()
+						.actionId(Act.decreeLevy),
+				),
+		)
+		.option(
+			actionEffectGroupOption('opt_conscription')
+				.icon('⚔️')
+				.action(Act.decreeConscription)
+				.params(
+					actionEffectGroupOptionParams()
+						.actionId(Act.decreeConscription),
+				),
+		)
+		.option(
+			actionEffectGroupOption('opt_fortify')
+				.icon('🏰')
+				.action(Act.decreeFortify)
+				.params(
+					actionEffectGroupOptionParams()
+						.actionId(Act.decreeFortify),
+				),
+		)
+		.option(
+			actionEffectGroupOption('opt_proclamation')
+				.icon('📣')
+				.action(Act.decreeProclamation)
+				.params(
+					actionEffectGroupOptionParams()
+						.actionId(Act.decreeProclamation),
+				),
+		);
 
 	registry.add(Act.decree, action().id(Act.decree).metaCategory(MetaCat.commands).name('Decree').icon('📜').locked().effectGroup(decreeGroup).category(ActionCat.basic).order(6).build());
 
