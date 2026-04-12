@@ -48,8 +48,11 @@ const BACK_BUTTON_CLASS = [
 interface SpaceGroup {
 	name: string;
 	icon: string;
+	accentColor: string;
 	packages: ContentPackageMeta[];
 }
+
+const DEFAULT_ACCENT = '#6366f1';
 
 function groupBySpace(packages: ContentPackageMeta[]): SpaceGroup[] {
 	const map = new Map<string, SpaceGroup>();
@@ -60,6 +63,7 @@ function groupBySpace(packages: ContentPackageMeta[]): SpaceGroup[] {
 			group = {
 				name: spaceName,
 				icon: pkg.icon ?? '🎮',
+				accentColor: pkg.accentColor ?? DEFAULT_ACCENT,
 				packages: [],
 			};
 			map.set(spaceName, group);
@@ -144,6 +148,7 @@ export function CallToActionSection({
 								key={space.name}
 								name={space.name}
 								icon={space.icon}
+								accentColor={space.accentColor}
 								modeCount={space.packages.length}
 								onSelect={() => setSelectedSpace(space.name)}
 							/>

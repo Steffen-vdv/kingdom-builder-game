@@ -1,41 +1,84 @@
+import { useCallback } from 'react';
+import { useSoundEffectsContext } from '../state/SoundEffectsContext';
+
 const CARD_CLASS = [
-	'group flex cursor-pointer flex-col gap-2',
-	'rounded-xl border border-slate-200/60 bg-white/60',
-	'p-5 text-left transition',
-	'hover:border-indigo-300 hover:bg-white/80',
-	'hover:shadow-md',
-	'dark:border-white/10 dark:bg-white/5',
-	'dark:hover:border-indigo-500/40',
+	'group relative flex cursor-pointer flex-col gap-2',
+	'overflow-hidden rounded-xl border',
+	'p-5 text-left transition-all duration-200',
+	'hover:shadow-lg',
 	'dark:hover:bg-white/10',
 ].join(' ');
 
-const ICON_CLASS = 'text-3xl';
+const ICON_CLASS = [
+	'flex h-11 w-11 shrink-0 items-center justify-center',
+	'rounded-lg text-2xl',
+].join(' ');
 
 const NAME_CLASS = [
-	'text-base font-semibold text-slate-800',
+	'text-base font-bold tracking-tight text-slate-800',
 	'dark:text-slate-100',
 ].join(' ');
 
-const MODE_COUNT_CLASS = ['text-xs text-slate-400', 'dark:text-slate-500'].join(
-	' ',
-);
+const MODE_COUNT_CLASS = [
+	'text-xs font-medium',
+].join(' ');
 
 interface SpaceCardProps {
 	name: string;
 	icon: string;
+	accentColor: string;
 	modeCount: number;
 	onSelect: () => void;
 }
 
-export function SpaceCard({ name, icon, modeCount, onSelect }: SpaceCardProps) {
-	const label = modeCount === 1 ? '1 game mode' : `${modeCount} game modes`;
+export function SpaceCard({
+	name,
+	icon,
+	accentColor,
+	modeCount,
+	onSelect,
+}: SpaceCardProps) {
+	const { playUiClick } = useSoundEffectsContext();
+
+	const handleClick = useCallback(() => {
+		playUiClick();
+		onSelect();
+	}, [playUiClick, onSelect]);
+
+	const label =
+		modeCount === 1 ? '1 game mode' : `${modeCount} game modes`;
+
 	return (
-		<button type="button" className={CARD_CLASS} onClick={onSelect}>
+		<button
+			type="button"
+			className={CARD_CLASS}
+			onClick={handleClick}
+			style={{
+				borderColor: `${accentColor}40`,
+				backgroundColor: `${accentColor}08`,
+			}}
+		>
+			{/* Accent stripe along the left edge */}
+			<span
+				aria-hidden
+				className="absolute inset-y-0 left-0 w-1 rounded-l-xl"
+				style={{ backgroundColor: accentColor }}
+			/>
 			<div className="flex items-center gap-3">
-				<span className={ICON_CLASS}>{icon}</span>
+				<span
+					className={ICON_CLASS}
+					style={{ backgroundColor: `${accentColor}18` }}
+				>
+					{icon}
+				</span>
 				<div className="flex flex-col">
 					<span className={NAME_CLASS}>{name}</span>
-					<span className={MODE_COUNT_CLASS}>{label}</span>
+					<span
+						className={MODE_COUNT_CLASS}
+						style={{ color: accentColor }}
+					>
+						{label}
+					</span>
 				</div>
 			</div>
 		</button>
