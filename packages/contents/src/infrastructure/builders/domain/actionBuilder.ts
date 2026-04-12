@@ -1,6 +1,6 @@
 import type { ActionTiersConfig } from '@kingdom-builder/protocol';
 import { BaseBuilder } from '@kingdom-builder/contents-sdk';
-import type { ActionDef } from '../../../actions';
+import type { ActionDef } from '@kingdom-builder/contents-sdk';
 import { ActionTierBuilder, type ActionTierConfig } from './actionTierBuilder';
 
 type ActionBuilderConfig = ActionDef;

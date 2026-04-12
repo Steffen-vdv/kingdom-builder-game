@@ -4,7 +4,9 @@
  * All game actions for the score-based engine-builder mode.
  * Build and develop actions live in buildDevelopActions.ts.
  */
-import { type ActionConfig, Registry, actionSchema } from '@kingdom-builder/protocol';
+import { Registry, actionSchema } from '@kingdom-builder/protocol';
+import type { ZodType } from 'zod';
+import type { ActionDef } from '@kingdom-builder/contents-sdk';
 import { Types, ResourceMethods, LandMethods, DevelopmentMethods, action, resourceAmountChange, resourceTransferAmount } from '@kingdom-builder/contents-sdk';
 import {
 	effect,
@@ -46,7 +48,7 @@ const PICK_RESOURCES: ReadonlyArray<{
 	{ key: 'Influence', icon: '👑', resId: Res.influence },
 ];
 
-function gainSubAction(id: string, name: string, resId: string, amount: number): ActionConfig {
+function gainSubAction(id: string, name: string, resId: string, amount: number): ActionDef {
 	return action().id(id).metaCategory(MetaCat.commands).name(name).icon('📦').system().free().effect(resAdd(resId, amount)).build();
 }
 
@@ -81,7 +83,8 @@ const popCapReq = compareRequirement().left(resourceEvaluator().resourceId(Res.p
 // ═══════════════════════════════════════════════════════════
 
 export function createActionRegistry() {
-	const registry = new Registry<ActionConfig>(actionSchema);
+	const schema = actionSchema.passthrough();
+	const registry = new Registry<ActionDef>(schema as unknown as ZodType<ActionDef>);
 
 	// ── Sub-actions for effect group options ───────────────
 	for (const { key, resId } of PICK_RESOURCES) {

@@ -103,6 +103,7 @@ export interface ContentPackageMeta {
 	readonly name: string;
 	readonly description?: string;
 	readonly icon?: string;
+	readonly space?: string;
 }
 
 export interface SessionRuntimeConfigResponse {

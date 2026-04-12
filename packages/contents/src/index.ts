@@ -81,7 +81,7 @@ export type { ContentPackageId, ContentPackageMetaEntry } from './kingdom-builde
 export { createBasePackage } from './kingdom-builder/base';
 export { createDevModePackage } from './kingdom-builder/dev-mode';
 export { createTutorialPackage } from './kingdom-builder/tutorial';
-export { createExperimentalPackage } from './kingdom-builder/experimental';
+export { createByteSizedEmpirePackage } from './byte-sized-empire';
 
 // System action utilities
 export { findActionByRole, findActionsByRole, extractSystemActionIds } from './kingdom-builder/systemActions';

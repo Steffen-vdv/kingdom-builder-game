@@ -10,7 +10,7 @@ import type { ContentPackage, ContentPackageLoader } from '@kingdom-builder/cont
 /**
  * Available content package IDs
  */
-export const CONTENT_PACKAGE_IDS = ['kingdom-builder:base', 'kingdom-builder:dev-mode', 'kingdom-builder:tutorial', 'kingdom-builder:experimental'] as const;
+export const CONTENT_PACKAGE_IDS = ['kingdom-builder:base', 'kingdom-builder:dev-mode', 'kingdom-builder:tutorial', 'byte-sized-empire:base'] as const;
 
 export type ContentPackageId = (typeof CONTENT_PACKAGE_IDS)[number];
 
@@ -25,6 +25,7 @@ export interface ContentPackageMetaEntry {
 	readonly name: string;
 	readonly description: string;
 	readonly icon: string;
+	readonly space: string;
 }
 
 export const CONTENT_PACKAGE_META: readonly ContentPackageMetaEntry[] = [
@@ -33,24 +34,28 @@ export const CONTENT_PACKAGE_META: readonly ContentPackageMetaEntry[] = [
 		name: 'Kingdom Builder',
 		description: 'The full Kingdom Builder experience.',
 		icon: '🏰',
+		space: 'Kingdom Builder',
 	},
 	{
 		id: 'kingdom-builder:dev-mode',
 		name: 'Dev Mode',
 		description: 'Abundant starting resources for testing.',
 		icon: '🧪',
+		space: 'Kingdom Builder',
 	},
 	{
 		id: 'kingdom-builder:tutorial',
 		name: 'Tutorial',
 		description: 'Learn the basics with simplified gameplay.',
 		icon: '📘',
+		space: 'Kingdom Builder',
 	},
 	{
-		id: 'kingdom-builder:experimental',
-		name: 'Experimental',
-		description: 'Preview upcoming balance changes and features.',
-		icon: '🔬',
+		id: 'byte-sized-empire:base',
+		name: 'Byte-Sized Empire',
+		description: 'Score-based engine-builder over 30 turns.',
+		icon: '⭐',
+		space: 'Byte-Sized Empire',
 	},
 ];
 
@@ -72,9 +77,9 @@ export async function loadContentPackage(contentId: string): Promise<ContentPack
 			const { createTutorialPackage } = await import('./tutorial');
 			return createTutorialPackage();
 		}
-		case 'kingdom-builder:experimental': {
-			const { createExperimentalPackage } = await import('./experimental');
-			return createExperimentalPackage();
+		case 'byte-sized-empire:base': {
+			const { createByteSizedEmpirePackage } = await import('../byte-sized-empire');
+			return createByteSizedEmpirePackage();
 		}
 		default:
 			throw new Error(`Unknown content package ID: ${contentId}`);
@@ -94,4 +99,4 @@ export function createContentLoader(): ContentPackageLoader {
 /**
  * Default content package ID for new games.
  */
-export const DEFAULT_CONTENT_ID: ContentPackageId = 'kingdom-builder:experimental';
+export const DEFAULT_CONTENT_ID: ContentPackageId = 'byte-sized-empire:base';
