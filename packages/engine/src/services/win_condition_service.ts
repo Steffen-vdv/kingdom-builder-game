@@ -3,11 +3,11 @@ import type { PlayerId, PlayerState } from '../state';
 import type {
 	WinConditionDefinition,
 	WinConditionResult,
-	WinConditionTrigger,
 } from './win_condition_types';
+import type { WinConditionResourceTrigger } from '@kingdom-builder/protocol';
 
 function compareThreshold(
-	comparison: WinConditionTrigger['comparison'],
+	comparison: WinConditionResourceTrigger['comparison'],
 	actual: number,
 	expected: number,
 ): boolean {
@@ -59,16 +59,11 @@ export class WinConditionService {
 			if (definition.trigger.type !== 'resource') {
 				continue;
 			}
-			if (
-				!this.triggerMatchesResource(
-					definition.trigger,
-					subject,
-					resourceIdentifier,
-				)
-			) {
+			const trigger = definition.trigger;
+			if (!this.triggerMatchesResource(trigger, subject, resourceIdentifier)) {
 				continue;
 			}
-			if (!this.matchesTrigger(definition.trigger, context, subject)) {
+			if (!this.matchesTrigger(trigger, context, subject)) {
 				continue;
 			}
 			this.applyResult(definition, context, subject);
@@ -78,12 +73,47 @@ export class WinConditionService {
 		}
 	}
 
+	/**
+	 * Evaluates turn-limit win conditions after a turn
+	 * increment. If any turn-limit trigger fires, the
+	 * player with the higher score wins.
+	 */
+	evaluateTurnAdvance(context: EngineContext): void {
+		if (context.game.conclusion) {
+			return;
+		}
+		for (const definition of this.definitions) {
+			if (definition.trigger.type !== 'turn-limit') {
+				continue;
+			}
+			const trigger = definition.trigger;
+			if (context.game.turn <= trigger.maxTurns) {
+				continue;
+			}
+			const [playerA, playerB] = context.game.players;
+			if (!playerA || !playerB) {
+				continue;
+			}
+			const scoreA = playerA.resourceValues[trigger.scoreResourceId] ?? 0;
+			const scoreB = playerB.resourceValues[trigger.scoreResourceId] ?? 0;
+			const winnerId = scoreA >= scoreB ? playerA.id : playerB.id;
+			const loserId = winnerId === playerA.id ? playerB.id : playerA.id;
+			context.game.conclusion = {
+				conditionId: definition.id,
+				winnerId,
+				loserId,
+				triggeredBy: winnerId,
+			};
+			break;
+		}
+	}
+
 	clone(): WinConditionService {
 		return new WinConditionService(structuredClone(this.definitions));
 	}
 
 	private matchesTrigger(
-		trigger: WinConditionTrigger,
+		trigger: WinConditionResourceTrigger,
 		context: EngineContext,
 		subject: PlayerState,
 	): boolean {
@@ -100,13 +130,10 @@ export class WinConditionService {
 	}
 
 	private triggerMatchesResource(
-		trigger: WinConditionTrigger,
+		trigger: WinConditionResourceTrigger,
 		subject: PlayerState,
 		identifier: string,
 	): boolean {
-		if (trigger.type !== 'resource') {
-			return false;
-		}
 		const resolvedId = this.resolveTriggerResourceId(trigger, subject);
 		if (identifier === resolvedId) {
 			return true;
@@ -115,21 +142,14 @@ export class WinConditionService {
 	}
 
 	private resolveTriggerResourceId(
-		trigger: WinConditionTrigger,
+		trigger: WinConditionResourceTrigger,
 		_player: PlayerState,
 	): string {
-		const resourceTrigger = trigger as WinConditionTrigger & {
-			resourceId?: string;
-		};
-		if (resourceTrigger.resourceId && resourceTrigger.resourceId.length > 0) {
-			return resourceTrigger.resourceId;
-		}
-		// key IS the Resource ID directly (no mapper needed)
-		return resourceTrigger.resourceId;
+		return trigger.resourceId;
 	}
 
 	private getTriggerResourceValue(
-		trigger: WinConditionTrigger,
+		trigger: WinConditionResourceTrigger,
 		player: PlayerState,
 	): number {
 		const resourceId = this.resolveTriggerResourceId(trigger, player);

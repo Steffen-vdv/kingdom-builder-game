@@ -65,6 +65,30 @@ export function runInitialPoolFills(
 			}
 		}
 
+		// Pre-randomize: exclude excess candidates when
+		// candidatePoolSize is set
+		const candidatePoolSize = metaCategory.pool.candidatePoolSize;
+		if (candidatePoolSize !== undefined) {
+			const candidates = Array.from(categoryActions.keys()).filter((id) => {
+				const state = playerState.actionStates[id];
+				return state && !state.locked && state.poolLocked && !state.exhausted;
+			});
+			if (candidates.length > candidatePoolSize) {
+				// Fisher-Yates shuffle using rng
+				for (let i = candidates.length - 1; i > 0; i--) {
+					const j = rng.randomInt(i + 1);
+					[candidates[i], candidates[j]] = [candidates[j]!, candidates[i]!];
+				}
+				const excluded = candidates.slice(candidatePoolSize);
+				for (const id of excluded) {
+					const state = playerState.actionStates[id];
+					if (state) {
+						state.exhausted = true;
+					}
+				}
+			}
+		}
+
 		// Run pool fill
 		const result = runPoolFill(playerState, metaCategory, categoryActions, rng);
 

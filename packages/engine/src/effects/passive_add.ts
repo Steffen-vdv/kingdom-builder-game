@@ -11,6 +11,7 @@ interface PassiveParams {
 	detail?: string;
 	meta?: PassiveMetadata;
 	skip?: PhaseSkipConfig;
+	turnsRemaining?: number;
 	onPayUpkeepStep?: EffectDef[];
 	onGainIncomeStep?: EffectDef[];
 	onGainAPStep?: EffectDef[];
@@ -32,6 +33,7 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
 		detail,
 		meta,
 		skip,
+		turnsRemaining,
 		onPayUpkeepStep,
 		onGainIncomeStep,
 		onGainAPStep,
@@ -72,6 +74,9 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
 	}
 	if (skip !== undefined) {
 		passive.skip = skip;
+	}
+	if (turnsRemaining !== undefined) {
+		(passive as Record<string, unknown>).turnsRemaining = turnsRemaining;
 	}
 	if (onPayUpkeepStep) {
 		passive.onPayUpkeepStep = onPayUpkeepStep;

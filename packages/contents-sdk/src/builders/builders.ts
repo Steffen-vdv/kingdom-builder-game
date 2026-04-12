@@ -3,6 +3,7 @@ import type {
 	WinConditionDisplay,
 	WinConditionResult,
 	WinConditionTrigger,
+	WinConditionResourceTrigger,
 	WinConditionOutcome,
 } from '@kingdom-builder/protocol';
 import type { ResourceKey } from '../types';
@@ -196,9 +197,9 @@ class WinConditionBuilder {
 
 	resourceThreshold(
 		resource: ResourceKey,
-		comparison: WinConditionTrigger['comparison'],
+		comparison: WinConditionResourceTrigger['comparison'],
 		value: number,
-		target: WinConditionTrigger['target'] = 'self',
+		target: WinConditionResourceTrigger['target'] = 'self',
 	) {
 		return this.setTrigger({
 			type: 'resource',
@@ -212,7 +213,7 @@ class WinConditionBuilder {
 	resourceAtMost(
 		resource: ResourceKey,
 		value: number,
-		target: WinConditionTrigger['target'] = 'self',
+		target: WinConditionResourceTrigger['target'] = 'self',
 	) {
 		return this.resourceThreshold(resource, 'lte', value, target);
 	}
@@ -220,7 +221,7 @@ class WinConditionBuilder {
 	resourceAtLeast(
 		resource: ResourceKey,
 		value: number,
-		target: WinConditionTrigger['target'] = 'self',
+		target: WinConditionResourceTrigger['target'] = 'self',
 	) {
 		return this.resourceThreshold(resource, 'gte', value, target);
 	}

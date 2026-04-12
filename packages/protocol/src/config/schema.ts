@@ -78,6 +78,12 @@ const actionMetaCategoryPoolSchema = z.object({
 	size: z.number().int().min(1),
 	/** How to select actions for the pool */
 	fillMode: poolFillModeSchema,
+	/**
+	 * When set, randomly select this many candidates per
+	 * game from all registered pool actions. The rest are
+	 * permanently excluded for that session.
+	 */
+	candidatePoolSize: z.number().int().min(1).optional(),
 });
 
 export type ActionMetaCategoryPool = z.infer<

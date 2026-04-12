@@ -29,6 +29,7 @@ import { actionUpgrade } from './action_upgrade';
 import { actionPoolAdd } from './action_pool_add';
 import { actionPoolRemove } from './action_pool_remove';
 import { attackPerform } from './attack';
+import { conditionalBranch } from './conditional_branch';
 
 export interface EffectHandler<
 	P extends Record<string, unknown> = Record<string, unknown>,
@@ -73,6 +74,7 @@ export function registerCoreEffects(
 	registry.add('action:pool-add', actionPoolAdd);
 	registry.add('action:pool-remove', actionPoolRemove);
 	registry.add('attack:perform', attackPerform);
+	registry.add('conditional:branch', conditionalBranch);
 
 	costRegistry.add('building:add', collectBuildingAddCosts);
 }

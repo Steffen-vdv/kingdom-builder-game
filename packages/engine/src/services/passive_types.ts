@@ -49,6 +49,8 @@ export type PassiveRecord = PassiveSummary & {
 	detail?: string;
 	meta?: PassiveMetadata;
 	skip?: PhaseSkipConfig;
+	/** Remaining turns before auto-removal. Undefined = permanent. */
+	turnsRemaining?: number;
 	[trigger: string]: unknown;
 };
 

@@ -169,10 +169,12 @@ function moveToNext(engineContext: EngineContext, skipPhase: boolean): void {
 			if (engineContext.game.currentPlayerIndex === lastPlayerIndex) {
 				engineContext.game.currentPlayerIndex = 0;
 				engineContext.game.turn += 1;
+				engineContext.services.winCondition.evaluateTurnAdvance(engineContext);
 			} else {
 				engineContext.game.currentPlayerIndex += 1;
 			}
 			resetPerTurnActionUses(engineContext.game.active);
+			engineContext.passives.tickPassiveDurations(engineContext);
 		}
 	}
 	const nextPhaseIndex = engineContext.game.phaseIndex;

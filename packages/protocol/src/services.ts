@@ -81,7 +81,15 @@ export type WinConditionResourceTrigger = {
 	target: 'self' | 'opponent';
 };
 
-export type WinConditionTrigger = WinConditionResourceTrigger;
+export type WinConditionTurnLimitTrigger = {
+	type: 'turn-limit';
+	maxTurns: number;
+	scoreResourceId: string;
+};
+
+export type WinConditionTrigger =
+	| WinConditionResourceTrigger
+	| WinConditionTurnLimitTrigger;
 
 export type WinConditionDefinition = {
 	id: string;
