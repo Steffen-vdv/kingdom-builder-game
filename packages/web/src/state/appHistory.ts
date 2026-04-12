@@ -1,14 +1,13 @@
 export enum Screen {
 	Menu = 'menu',
-	Tutorial = 'tutorial',
 	Game = 'game',
 }
 
 export interface HistoryState {
 	screen: Screen;
 	gameKey: number;
+	contentId: string | null;
 	isDarkModeEnabled: boolean;
-	isDevModeEnabled: boolean;
 	isMusicEnabled: boolean;
 	isSoundEnabled: boolean;
 	isBackgroundAudioMuted: boolean;

@@ -1,4 +1,5 @@
 import type {
+	ContentPackageMeta,
 	PhaseConfig,
 	ResourceDefinition,
 	ResourceGroupDefinition,
@@ -13,7 +14,9 @@ export interface RuntimeContentConfig {
 	rules: RuleSet;
 	resources: Record<string, ResourceDefinition>;
 	resourceGroups: Record<string, ResourceGroupDefinition>;
-	primaryIconId?: string | null;
+	primaryIconId?: string | null | undefined;
+	contentPackages?: ContentPackageMeta[] | undefined;
+	defaultContentId?: string | undefined;
 }
 
 type RuntimeConfigSource = Partial<RuntimeContentConfig>;
@@ -95,12 +98,16 @@ export async function getRuntimeContentConfig(): Promise<RuntimeContentConfig> {
 			);
 			const primaryIconId =
 				overrides?.primaryIconId ?? base.primaryIconId ?? null;
+			const contentPackages = base.contentPackages ?? undefined;
+			const defaultContentId = base.defaultContentId ?? undefined;
 			const config: RuntimeContentConfig = {
 				phases,
 				rules,
 				resources,
 				resourceGroups,
 				primaryIconId,
+				contentPackages,
+				defaultContentId,
 			};
 			Object.freeze(config);
 			return config;

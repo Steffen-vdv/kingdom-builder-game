@@ -85,7 +85,7 @@ describe('useAppNavigation', () => {
 		const { result, unmount } = await renderNavigationHook();
 
 		act(() => {
-			result.current.startStandardGame();
+			result.current.startGameWithContent('kingdom-builder:base');
 		});
 
 		expect(result.current.resumeSessionId).toBeNull();
@@ -105,7 +105,7 @@ describe('useAppNavigation', () => {
 		const { result, unmount } = await renderNavigationHook();
 
 		act(() => {
-			result.current.startDeveloperGame();
+			result.current.startGameWithContent('kingdom-builder:dev-mode');
 		});
 
 		expect(result.current.resumeSessionId).toBeNull();
@@ -183,7 +183,7 @@ describe('useAppNavigation', () => {
 		const { result, unmount } = await renderNavigationHook();
 
 		act(() => {
-			result.current.startDeveloperGame();
+			result.current.startGameWithContent('kingdom-builder:dev-mode');
 		});
 
 		expect(result.current.isAutoAdvanceEnabled).toBe(true);
@@ -193,7 +193,7 @@ describe('useAppNavigation', () => {
 		unmount();
 	});
 
-	it('continues a saved game and updates dev mode without touching browser history', async () => {
+	it('continues a saved game and restores content ID without touching browser history', async () => {
 		const resumeRecord: ResumeSessionRecord = {
 			sessionId: 'resume-dev',
 			turn: 9,
@@ -210,7 +210,7 @@ describe('useAppNavigation', () => {
 		});
 
 		expect(result.current.currentScreen).toBe(Screen.Game);
-		expect(result.current.isDevMode).toBe(true);
+		expect(result.current.contentId).toBe('kingdom-builder:dev-mode');
 		expect(result.current.currentGameKey).toBe(1);
 		expect(pushSpy).not.toHaveBeenCalled();
 		unmount();

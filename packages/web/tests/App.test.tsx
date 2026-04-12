@@ -22,6 +22,26 @@ vi.mock('../src/state/playerIdentity', () => ({
 	usePlayerIdentity: () => usePlayerIdentityMock(),
 }));
 
+vi.mock('../src/state/useContentPackages', () => ({
+	useContentPackages: () => ({
+		packages: [
+			{
+				id: 'kingdom-builder:base',
+				name: 'Kingdom Builder',
+				description: 'The full experience.',
+				icon: '🏰',
+			},
+			{
+				id: 'kingdom-builder:dev-mode',
+				name: 'Dev Mode',
+				description: 'For testing.',
+				icon: '🧪',
+			},
+		],
+		defaultContentId: 'kingdom-builder:base',
+	}),
+}));
+
 import App from '../src/App';
 
 function createNavigationState(
@@ -31,17 +51,15 @@ function createNavigationState(
 		currentScreen: Screen.Menu,
 		currentGameKey: 0,
 		isDarkMode: false,
-		isDevMode: false,
+		contentId: null,
 		isMusicEnabled: false,
 		isSoundEnabled: false,
 		isBackgroundAudioMuted: false,
 		isAutoAdvanceEnabled: false,
 		resumePoint: null,
 		resumeSessionId: null,
-		startStandardGame: vi.fn(),
-		startDeveloperGame: vi.fn(),
+		startGameWithContent: vi.fn(),
 		continueSavedGame: vi.fn(),
-		openTutorial: vi.fn(),
 		returnToMenu: vi.fn(),
 		toggleDarkMode: vi.fn(),
 		toggleMusic: vi.fn(),
@@ -73,18 +91,17 @@ beforeEach(() => {
 	useAppNavigationMock.mockReturnValue(createNavigationState());
 	usePlayerIdentityMock.mockReturnValue({
 		playerName: 'Player',
-		hasStoredName: false,
+		hasStoredName: true,
 		setPlayerName: vi.fn(),
 		clearStoredName: vi.fn(),
 	});
 });
 
 describe('<App />', () => {
-	it('renders main menu', () => {
+	it('renders main menu with game mode cards', () => {
 		render(<App />);
-		expect(screen.getByText('Kingdom Builder')).toBeInTheDocument();
-		expect(screen.getByText('Start New Game')).toBeInTheDocument();
-		expect(screen.getByText('Start Dev/Debug Game')).toBeInTheDocument();
+		expect(screen.getByText('Begin Your Reign')).toBeInTheDocument();
+		expect(screen.getByText('Dev Mode')).toBeInTheDocument();
 	});
 
 	it('surfaces continue button when resume point exists', () => {
@@ -110,11 +127,11 @@ describe('<CallToActionSection />', () => {
 		const onContinue = vi.fn();
 		render(
 			<CallToActionSection
-				onStart={vi.fn()}
-				onStartDev={vi.fn()}
-				resumePoint={createResumePoint({ turn: 0 })}
+				onStartGame={vi.fn()}
+				resumePoint={createResumePoint({
+					turn: 0,
+				})}
 				onContinue={onContinue}
-				onTutorial={vi.fn()}
 				onOpenSettings={vi.fn()}
 			/>,
 		);

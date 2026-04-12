@@ -175,6 +175,13 @@ export const sessionRegistriesSchema = z
 	})
 	.transform((value) => value as SessionRegistriesPayload);
 
+const contentPackageMetaSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	description: z.string().optional(),
+	icon: z.string().optional(),
+});
+
 export const runtimeConfigResponseSchema = z
 	.object({
 		phases: z.array(phaseSchema),
@@ -183,6 +190,8 @@ export const runtimeConfigResponseSchema = z
 		resources: resourceRegistrySchema,
 		resourceGroups: resourceGroupRegistrySchema,
 		resourceCategories: resourceCategoriesRegistrySchema,
+		contentPackages: z.array(contentPackageMetaSchema).optional(),
+		defaultContentId: z.string().optional(),
 	})
 	.transform((value) => value as SessionRuntimeConfigResponse);
 

@@ -95,6 +95,17 @@ export interface SessionMetadataSnapshotResponse {
 	metadata: SessionMetadataSnapshot;
 }
 
+/**
+ * Lightweight metadata for a content package.
+ * Used by the mode selection screen without loading full packages.
+ */
+export interface ContentPackageMeta {
+	readonly id: string;
+	readonly name: string;
+	readonly description?: string;
+	readonly icon?: string;
+}
+
 export interface SessionRuntimeConfigResponse {
 	phases: PhaseConfig[];
 	rules: RuleSet;
@@ -117,6 +128,15 @@ export interface SessionRuntimeConfigResponse {
 	 * for clients consuming runtime configuration data.
 	 */
 	resourceCategories: SerializedRegistry<ResourceCategoryDefinition>;
+	/**
+	 * Available content packages for the mode selection screen.
+	 * Lightweight metadata only — no full package data.
+	 */
+	contentPackages?: ContentPackageMeta[];
+	/**
+	 * The default content package ID for new games.
+	 */
+	defaultContentId?: string;
 }
 
 export interface SessionCreateResponse {

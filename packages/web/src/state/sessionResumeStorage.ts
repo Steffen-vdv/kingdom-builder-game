@@ -5,6 +5,7 @@ export interface ResumeSessionRecord {
 	readonly turn: number;
 	readonly devMode: boolean;
 	readonly updatedAt: number;
+	readonly contentId?: string;
 }
 
 const resolveStorage = (): Storage | undefined => {
@@ -46,11 +47,17 @@ const sanitizeParsedRecord = (
 		return undefined;
 	}
 
+	const resolvedContentId =
+		typeof candidate.contentId === 'string' ? candidate.contentId : undefined;
+
 	return {
 		sessionId,
 		turn: numericTurn,
 		devMode,
 		updatedAt: numericUpdatedAt,
+		...(resolvedContentId !== undefined
+			? { contentId: resolvedContentId }
+			: {}),
 	};
 };
 
@@ -96,6 +103,9 @@ export const writeStoredResumeSession = (record: ResumeSessionRecord): void => {
 			turn: Number(record.turn),
 			devMode: record.devMode,
 			updatedAt: Number(record.updatedAt),
+			...(record.contentId !== undefined
+				? { contentId: record.contentId }
+				: {}),
 		});
 		storage.setItem(RESUME_SESSION_STORAGE_KEY, payload);
 	} catch {

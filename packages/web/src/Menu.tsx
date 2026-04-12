@@ -15,11 +15,9 @@ import ConfirmDialog from './components/common/ConfirmDialog';
 const RESUME_TURN_FORMATTER = new Intl.NumberFormat('en-US');
 
 interface MenuProps {
-	onStart: () => void;
-	onStartDev: () => void;
+	onStartGame: (contentId: string) => void;
 	resumePoint: ResumeSessionRecord | null;
 	onContinue: () => void;
-	onTutorial: () => void;
 	darkModeEnabled: boolean;
 	onToggleDark: () => void;
 	musicEnabled: boolean;
@@ -36,11 +34,9 @@ interface MenuProps {
 }
 
 export default function Menu({
-	onStart,
-	onStartDev,
+	onStartGame,
 	resumePoint,
 	onContinue,
-	onTutorial,
 	darkModeEnabled,
 	onToggleDark,
 	musicEnabled,
@@ -56,9 +52,7 @@ export default function Menu({
 	hasStoredName,
 }: MenuProps) {
 	const [isSettingsOpen, setSettingsOpen] = useState(false);
-	const [pendingStart, setPendingStart] = useState<
-		'standard' | 'developer' | null
-	>(null);
+	const [pendingContentId, setPendingContentId] = useState<string | null>(null);
 	const showNamePrompt = !hasStoredName;
 	const {
 		keybinds: controlKeybinds,
@@ -73,61 +67,49 @@ export default function Menu({
 		const resumeTurn = Math.max(1, Math.round(resumePoint.turn));
 		return RESUME_TURN_FORMATTER.format(resumeTurn);
 	}, [resumePoint]);
-	const requestStandardStart = useCallback(() => {
-		if (hasResumePoint) {
-			setPendingStart('standard');
-			return;
-		}
-		onStart();
-	}, [hasResumePoint, onStart]);
-	const requestDeveloperStart = useCallback(() => {
-		if (hasResumePoint) {
-			setPendingStart('developer');
-			return;
-		}
-		onStartDev();
-	}, [hasResumePoint, onStartDev]);
+	const requestStart = useCallback(
+		(contentId: string) => {
+			if (hasResumePoint) {
+				setPendingContentId(contentId);
+				return;
+			}
+			onStartGame(contentId);
+		},
+		[hasResumePoint, onStartGame],
+	);
 	const handleCancelStart = useCallback(() => {
-		setPendingStart(null);
+		setPendingContentId(null);
 	}, []);
 	const handleConfirmStart = useCallback(() => {
-		if (!pendingStart) {
+		if (!pendingContentId) {
 			return;
 		}
-		const startMode = pendingStart;
-		setPendingStart(null);
-		if (startMode === 'developer') {
-			onStartDev();
-			return;
-		}
-		onStart();
-	}, [onStart, onStartDev, pendingStart]);
+		const id = pendingContentId;
+		setPendingContentId(null);
+		onStartGame(id);
+	}, [onStartGame, pendingContentId]);
 	const confirmDialog = useMemo(() => {
-		if (!pendingStart) {
+		if (!pendingContentId) {
 			return null;
 		}
-		const confirmTitle =
-			pendingStart === 'developer'
-				? 'Start a dev/debug game?'
-				: 'Start a new game?';
 		const descriptionSegments = formattedResumeTurn
 			? [
-					'Starting a new game will overwrite your saved session at turn ',
+					'Starting a new game will overwrite your',
+					' saved session at turn ',
 					formattedResumeTurn,
 					'. Are you sure you want to continue?',
 				]
 			: [
-					'Starting a new game will overwrite your saved session.',
+					'Starting a new game will overwrite your',
+					' saved session.',
 					' Are you sure you want to continue?',
 				];
-		const confirmLabel =
-			pendingStart === 'developer' ? 'Start dev/debug game' : 'Start new game';
 		return (
 			<ConfirmDialog
 				open
-				title={confirmTitle}
+				title="Start a new game?"
 				description={descriptionSegments.join('')}
-				confirmLabel={confirmLabel}
+				confirmLabel="Start new game"
 				cancelLabel="Go back"
 				onConfirm={handleConfirmStart}
 				onCancel={handleCancelStart}
@@ -137,7 +119,7 @@ export default function Menu({
 		formattedResumeTurn,
 		handleCancelStart,
 		handleConfirmStart,
-		pendingStart,
+		pendingContentId,
 	]);
 
 	return (
@@ -149,11 +131,9 @@ export default function Menu({
 						<PlayerNamePrompt onSubmitName={onChangePlayerName} />
 					) : null}
 					<CallToActionSection
-						onStart={requestStandardStart}
-						onStartDev={requestDeveloperStart}
+						onStartGame={requestStart}
 						resumePoint={resumePoint}
 						onContinue={onContinue}
-						onTutorial={onTutorial}
 						onOpenSettings={() => setSettingsOpen(true)}
 					/>
 					<HighlightsSection />

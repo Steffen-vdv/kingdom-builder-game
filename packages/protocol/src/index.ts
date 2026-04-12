@@ -221,6 +221,7 @@ export type {
 	SessionSimulateResponse,
 	SessionRuntimeConfigResponse,
 	SessionMetadataSnapshotResponse,
+	ContentPackageMeta,
 } from './session/contracts';
 export type { SessionGateway } from './session/gateway';
 export type {

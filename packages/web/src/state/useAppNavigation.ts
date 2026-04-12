@@ -19,12 +19,13 @@ import {
 	useDarkModePreference,
 } from './darkModePreference';
 
+const DEV_MODE_CONTENT_ID = 'kingdom-builder:dev-mode';
+
 export function useAppNavigation(): AppNavigationState {
 	const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Menu);
 	const [currentGameKey, setCurrentGameKey] = useState(0);
 	const [isDarkMode, setIsDarkMode] = useDarkModePreference();
-	const [isDevMode, setIsDevMode] = useState(false);
-	const [contentId, setContentId] = useState<string | undefined>(undefined);
+	const [contentId, setContentId] = useState<string | null>(null);
 	const [navigationState, setNavigationState] = useState<HistoryState | null>(
 		null,
 	);
@@ -64,8 +65,8 @@ export function useAppNavigation(): AppNavigationState {
 			const {
 				screen: nextScreen = currentScreen,
 				gameKey: nextGameKey = currentGameKey,
+				contentId: overrideContentId,
 				isDarkModeEnabled: overrideDark,
-				isDevModeEnabled: overrideDev,
 				isMusicEnabled: overrideMusic,
 				isSoundEnabled: overrideSound,
 				isBackgroundAudioMuted: overrideBackgroundMute,
@@ -73,7 +74,8 @@ export function useAppNavigation(): AppNavigationState {
 				resumeSessionId: overrideResumeSessionId,
 			} = overrides ?? {};
 			const nextDarkMode = overrideDark ?? isDarkMode;
-			const nextDevMode = overrideDev ?? isDevMode;
+			const nextContentId =
+				overrideContentId !== undefined ? overrideContentId : contentId;
 			const nextMusic = overrideMusic ?? isMusicEnabled;
 			const nextSound = overrideSound ?? isSoundEnabled;
 			const nextBackgroundMute =
@@ -87,8 +89,8 @@ export function useAppNavigation(): AppNavigationState {
 			return {
 				screen: nextScreen,
 				gameKey: nextGameKey,
+				contentId: nextContentId,
 				isDarkModeEnabled: nextDarkMode,
-				isDevModeEnabled: nextDevMode,
 				isMusicEnabled: nextMusic,
 				isSoundEnabled: nextSound,
 				isBackgroundAudioMuted: nextBackgroundMute,
@@ -99,8 +101,8 @@ export function useAppNavigation(): AppNavigationState {
 		[
 			currentScreen,
 			currentGameKey,
+			contentId,
 			isDarkMode,
-			isDevMode,
 			isMusicEnabled,
 			isSoundEnabled,
 			isBackgroundAudioMuted,
@@ -108,8 +110,32 @@ export function useAppNavigation(): AppNavigationState {
 			resumeSessionId,
 		],
 	);
+
+	/**
+	 * Migrate legacy history entries that stored
+	 * `isDevModeEnabled` instead of `contentId`.
+	 */
+	function migrateHistoryState(
+		state: HistoryState | null,
+	): HistoryState | null {
+		if (!state) {
+			return null;
+		}
+		const legacy = state as HistoryState & {
+			isDevModeEnabled?: boolean;
+		};
+		if (legacy.contentId === undefined && legacy.isDevModeEnabled != null) {
+			return {
+				...state,
+				contentId: legacy.isDevModeEnabled ? DEV_MODE_CONTENT_ID : null,
+			};
+		}
+		return state;
+	}
+
 	const applyHistoryState = useCallback(
-		(state: HistoryState | null, fallbackScreen: Screen): HistoryState => {
+		(rawState: HistoryState | null, fallbackScreen: Screen): HistoryState => {
+			const state = migrateHistoryState(rawState);
 			const { music, sound, backgroundMute } = getStoredAudioPreferences();
 			const { autoAdvance } = getStoredGameplayPreferences();
 			const darkMode = getStoredDarkModePreference();
@@ -120,8 +146,8 @@ export function useAppNavigation(): AppNavigationState {
 			const nextState: HistoryState = {
 				screen: state?.screen ?? fallbackScreen,
 				gameKey: state?.gameKey ?? 0,
+				contentId: state?.contentId ?? null,
 				isDarkModeEnabled: state?.isDarkModeEnabled ?? darkMode,
-				isDevModeEnabled: state?.isDevModeEnabled ?? false,
 				isMusicEnabled: state?.isMusicEnabled ?? music,
 				isSoundEnabled: state?.isSoundEnabled ?? sound,
 				isBackgroundAudioMuted: state?.isBackgroundAudioMuted ?? backgroundMute,
@@ -132,7 +158,7 @@ export function useAppNavigation(): AppNavigationState {
 			setCurrentScreen(nextState.screen);
 			setCurrentGameKey(nextState.gameKey);
 			setIsDarkMode(nextState.isDarkModeEnabled);
-			setIsDevMode(nextState.isDevModeEnabled);
+			setContentId(nextState.contentId);
 			setIsMusicEnabled(nextState.isMusicEnabled);
 			setIsSoundEnabled(nextState.isSoundEnabled);
 			setIsBackgroundAudioMuted(nextState.isBackgroundAudioMuted);
@@ -144,7 +170,7 @@ export function useAppNavigation(): AppNavigationState {
 			setCurrentScreen,
 			setCurrentGameKey,
 			setIsDarkMode,
-			setIsDevMode,
+			setContentId,
 			setIsMusicEnabled,
 			setIsSoundEnabled,
 			setIsBackgroundAudioMuted,
@@ -169,7 +195,9 @@ export function useAppNavigation(): AppNavigationState {
 		setIsInitialized(true);
 	}, [applyHistoryState, isInitialized, navigationState]);
 	const returnToMenu = useCallback(() => {
-		const nextState = buildHistoryState({ screen: Screen.Menu });
+		const nextState = buildHistoryState({
+			screen: Screen.Menu,
+		});
 		setCurrentScreen(Screen.Menu);
 		if (currentScreen === Screen.Menu) {
 			replaceHistoryState(nextState);
@@ -199,67 +227,43 @@ export function useAppNavigation(): AppNavigationState {
 		},
 		[buildHistoryState, replaceHistoryState],
 	);
-	const startStandardGame = useCallback(() => {
-		const nextGameKey = currentGameKey + 1;
-		clearResumeSessionState(updateResumeHistory);
-		setIsDevMode(false);
-		setContentId(undefined);
-		setCurrentGameKey(nextGameKey);
-		setCurrentScreen(Screen.Game);
-		pushHistoryState(
-			buildHistoryState({
-				screen: Screen.Game,
-				gameKey: nextGameKey,
-				isDevModeEnabled: false,
-				resumeSessionId: null,
-			}),
-		);
-	}, [
-		buildHistoryState,
-		clearResumeSessionState,
-		currentGameKey,
-		pushHistoryState,
-		updateResumeHistory,
-	]);
+	const startGameWithContent = useCallback(
+		(id: string) => {
+			const nextGameKey = currentGameKey + 1;
+			clearResumeSessionState(updateResumeHistory);
+			const isDevContent = id === DEV_MODE_CONTENT_ID;
+			setContentId(id);
+			setCurrentGameKey(nextGameKey);
+			setCurrentScreen(Screen.Game);
+			pushHistoryState(
+				buildHistoryState({
+					screen: Screen.Game,
+					gameKey: nextGameKey,
+					contentId: id,
+					isAutoAdvanceEnabled: isDevContent ? true : isAutoAdvanceEnabled,
+					resumeSessionId: null,
+				}),
+			);
+			if (isDevContent) {
+				setIsAutoAdvanceEnabled(true);
+			}
+		},
+		[
+			buildHistoryState,
+			clearResumeSessionState,
+			currentGameKey,
+			isAutoAdvanceEnabled,
+			pushHistoryState,
+			updateResumeHistory,
+		],
+	);
 
-	const startDeveloperGame = useCallback(() => {
-		const nextGameKey = currentGameKey + 1;
-		clearResumeSessionState(updateResumeHistory);
-		setIsDevMode(true);
-		setContentId('kingdom-builder:dev-mode');
-		setIsAutoAdvanceEnabled(true);
-		setCurrentGameKey(nextGameKey);
-		setCurrentScreen(Screen.Game);
-		pushHistoryState(
-			buildHistoryState({
-				screen: Screen.Game,
-				gameKey: nextGameKey,
-				isDevModeEnabled: true,
-				isAutoAdvanceEnabled: true,
-				resumeSessionId: null,
-			}),
-		);
-	}, [
-		buildHistoryState,
-		clearResumeSessionState,
-		currentGameKey,
-		pushHistoryState,
-		updateResumeHistory,
-	]);
-
-	const openTutorial = useCallback(() => {
-		setCurrentScreen(Screen.Tutorial);
-		const tutorialState = buildHistoryState({
-			screen: Screen.Tutorial,
-		});
-		pushHistoryState(tutorialState);
-	}, [buildHistoryState, pushHistoryState]);
 	const continueSavedGame = useContinueSavedGame({
 		resumePoint,
 		currentGameKey,
 		setCurrentGameKey,
 		setCurrentScreen,
-		setIsDevMode,
+		setContentId,
 		buildHistoryState,
 		pushHistoryState,
 	});
@@ -300,7 +304,6 @@ export function useAppNavigation(): AppNavigationState {
 		currentScreen,
 		currentGameKey,
 		isDarkMode,
-		isDevMode,
 		contentId,
 		isMusicEnabled,
 		isSoundEnabled,
@@ -308,10 +311,8 @@ export function useAppNavigation(): AppNavigationState {
 		isAutoAdvanceEnabled,
 		resumePoint,
 		resumeSessionId,
-		startStandardGame,
-		startDeveloperGame,
+		startGameWithContent,
 		continueSavedGame,
-		openTutorial,
 		returnToMenu,
 		toggleDarkMode,
 		toggleMusic,

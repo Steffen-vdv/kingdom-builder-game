@@ -1,19 +1,19 @@
 import type { ReactNode } from 'react';
 import Game from './Game';
 import Menu from './Menu';
-import Tutorial from './Tutorial';
 import BackgroundMusic from './components/audio/BackgroundMusic';
 import { useAppNavigation } from './state/useAppNavigation';
 import { usePlayerIdentity } from './state/playerIdentity';
 import { Screen } from './state/appHistory';
 import { SoundEffectsProvider } from './state/SoundEffectsContext';
 
+const DEV_MODE_CONTENT_ID = 'kingdom-builder:dev-mode';
+
 export default function App() {
 	const {
 		currentScreen,
 		currentGameKey,
 		isDarkMode,
-		isDevMode,
 		contentId,
 		isMusicEnabled,
 		isSoundEnabled,
@@ -21,10 +21,8 @@ export default function App() {
 		isAutoAdvanceEnabled,
 		resumePoint,
 		resumeSessionId,
-		startStandardGame,
-		startDeveloperGame,
+		startGameWithContent,
 		continueSavedGame,
-		openTutorial,
 		returnToMenu,
 		toggleDarkMode,
 		toggleMusic,
@@ -37,11 +35,10 @@ export default function App() {
 	} = useAppNavigation();
 	const { playerName, hasStoredName, setPlayerName } = usePlayerIdentity();
 
+	const isDevMode = contentId === DEV_MODE_CONTENT_ID;
+
 	let screen: ReactNode;
 	switch (currentScreen) {
-		case Screen.Tutorial:
-			screen = <Tutorial onBack={returnToMenu} />;
-			break;
 		case Screen.Game:
 			screen = (
 				<Game
@@ -50,7 +47,7 @@ export default function App() {
 					darkMode={isDarkMode}
 					onToggleDark={toggleDarkMode}
 					devMode={isDevMode}
-					contentId={contentId}
+					contentId={contentId ?? undefined}
 					musicEnabled={isMusicEnabled}
 					onToggleMusic={toggleMusic}
 					soundEnabled={isSoundEnabled}
@@ -72,11 +69,9 @@ export default function App() {
 		default:
 			screen = (
 				<Menu
-					onStart={startStandardGame}
-					onStartDev={startDeveloperGame}
+					onStartGame={startGameWithContent}
 					resumePoint={resumePoint}
 					onContinue={continueSavedGame}
-					onTutorial={openTutorial}
 					darkModeEnabled={isDarkMode}
 					onToggleDark={toggleDarkMode}
 					musicEnabled={isMusicEnabled}
