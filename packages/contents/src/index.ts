@@ -14,8 +14,6 @@ export type { ActionCategoryConfig, ActionCategoryLayout } from './infrastructur
 export { Resource, SystemRole, type ResourceKey, type ResourceId, getResourceId } from './kingdom-builder/content/constants';
 export type { SystemRoleValue } from './kingdom-builder/content/constants';
 export { Trigger, TRIGGER_META, type TriggerId, type TriggerMeta } from './kingdom-builder/content/triggers';
-// Legacy exports for backwards compatibility
-export { ON_GAIN_INCOME_STEP, ON_PAY_UPKEEP_STEP, ON_GAIN_AP_STEP } from './kingdom-builder/content/triggers';
 export { LAND_INFO, SLOT_INFO, DEVELOPMENTS_INFO } from './kingdom-builder/content/land';
 export { UPKEEP_INFO, TRANSFER_INFO, KEYWORD_LABELS, SECTION_INFO } from './kingdom-builder/content/assets';
 export { POPULATION_INFO, POPULATION_ARCHETYPE_INFO } from './kingdom-builder/content/population';

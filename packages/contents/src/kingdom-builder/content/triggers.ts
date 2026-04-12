@@ -125,15 +125,3 @@ for (const triggerId of allTriggerIds) {
 		throw new Error(`Trigger "${triggerId}" missing from TRIGGER_META. ` + `All triggers must have metadata defined.`);
 	}
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LEGACY EXPORTS
-// TODO: Remove after migrating all usages to Trigger enum
-// ═══════════════════════════════════════════════════════════════════════════
-
-/** @deprecated Use Trigger.GAIN_INCOME instead */
-export const ON_GAIN_INCOME_STEP = Trigger.GAIN_INCOME;
-/** @deprecated Use Trigger.PAY_UPKEEP instead */
-export const ON_PAY_UPKEEP_STEP = Trigger.PAY_UPKEEP;
-/** @deprecated Use Trigger.GAIN_AP instead */
-export const ON_GAIN_AP_STEP = Trigger.GAIN_AP;
