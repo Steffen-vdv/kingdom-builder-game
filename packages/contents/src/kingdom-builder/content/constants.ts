@@ -38,6 +38,14 @@ export const ResourceId = {
 
 export type ResourceIdValue = (typeof ResourceId)[keyof typeof ResourceId];
 
+/**
+ * Convenience alias for ResourceId.
+ * Content files can use `Resource.gold` instead of
+ * `ResourceId.gold`.
+ */
+export const Resource = ResourceId;
+export type ResourceKey = ResourceIdValue;
+
 // =============================================================================
 // ACTION IDs
 // =============================================================================
@@ -230,3 +238,13 @@ export const ActionCategory = {
 } as const;
 
 export type ActionCategoryValue = (typeof ActionCategory)[keyof typeof ActionCategory];
+
+// Re-export SystemRole from SDK (single source of truth)
+export { SystemRole, type SystemRoleValue } from '@kingdom-builder/contents-sdk';
+
+/**
+ * Identity helper for resource ID type narrowing.
+ */
+export function getResourceId(resource: ResourceKey): ResourceKey {
+	return resource;
+}

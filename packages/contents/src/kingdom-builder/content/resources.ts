@@ -11,12 +11,12 @@
  * - Use .lowerBound() and .upperBound() to set value constraints
  * - Always end with .build() to finalize the resource
  */
-import { resource, resourceCategory, resourceGroup, boundTo } from './infrastructure/resource';
-import type { ResourceDefinition, ResourceCategoryDefinition, ResourceGroupDefinition } from './infrastructure/resource';
+import { resource, resourceCategory, resourceGroup, boundTo } from '../../infrastructure/resource';
+import type { ResourceDefinition, ResourceCategoryDefinition, ResourceGroupDefinition } from '../../infrastructure/resource';
 import { resourceChange, resourceAmountChange, PassiveMethods, ResourceMethods, Types } from '@kingdom-builder/contents-sdk';
-import { effect, passiveParams, resourceAssignmentPassiveId } from './infrastructure/builders';
-import { Resource } from './internal';
-import { getHappinessResourceDefinition } from './infrastructure/happinessResource';
+import { effect, passiveParams, resourceAssignmentPassiveId } from '../../infrastructure/builders';
+import { Resource } from './constants';
+import { getHappinessResourceDefinition } from '../../infrastructure/happinessResource';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // RESOURCES

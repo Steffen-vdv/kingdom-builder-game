@@ -11,7 +11,7 @@
 import { PassiveMethods, Types, passiveParams, resource } from '@kingdom-builder/contents-sdk';
 import type { ResourceTierDefinition, ResourceDefinition } from '@kingdom-builder/contents-sdk';
 import { createTierPassiveEffect } from './happinessHelpers';
-import { HAPPINESS_TIER_ICONS, getTierConfigs } from '../rules.config';
+import { HAPPINESS_TIER_ICONS, getTierConfigs } from '../kingdom-builder/content/rules.config';
 
 type HappinessTierSlug = keyof typeof HAPPINESS_TIER_ICONS;
 

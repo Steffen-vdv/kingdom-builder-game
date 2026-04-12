@@ -4,9 +4,9 @@ import {
 	Resource,
 	getResourceId,
 	ActionId,
+	DevelopmentId,
 	createDevModePackage,
 } from '@kingdom-builder/contents';
-import { DevelopmentId } from '@kingdom-builder/contents/developments';
 import type { EffectConfig } from '@kingdom-builder/protocol';
 
 // ============================================================================

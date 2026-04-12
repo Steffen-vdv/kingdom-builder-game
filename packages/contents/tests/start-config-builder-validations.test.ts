@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { startConfig, playerStart } from '../src/infrastructure/builders';
-import { Resource, type ResourceKey } from '../src/internal';
+import { Resource, type ResourceKey } from '../src/kingdom-builder/content/internal';
 
 // Use Resource constants for both resource and stat keys (stats are now unified)
 const firstResourceKey = Object.values(Resource)[0] as ResourceKey;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDevelopmentRegistry, DevelopmentId } from '../src/developments';
+import { createDevelopmentRegistry, DevelopmentId } from '../src/kingdom-builder/content/developments';
 
 describe('developments registry', () => {
 	it('uses DevelopmentId constants as registry keys', () => {

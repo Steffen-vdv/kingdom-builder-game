@@ -1,6 +1,6 @@
 import type { BuildingConfig, DevelopmentConfig, EffectDef } from '@kingdom-builder/protocol';
-import { Focus } from '../constants';
-import type { FocusValue } from '../constants';
+import { Focus } from '../kingdom-builder/content/constants';
+import type { FocusValue } from '../kingdom-builder/content/constants';
 
 export const BROOM_ICON = '🧹';
 export const GENERAL_RESOURCE_ICON = '🧺';

@@ -1,4 +1,4 @@
-import { getResourceDefinitions, getResourceGroupDefinitions, getResourceCategoryDefinitions } from '../../resources';
+import { getResourceDefinitions, getResourceGroupDefinitions, getResourceCategoryDefinitions } from '../../kingdom-builder/content/resources';
 import { createResourceCategoryRegistry, createResourceGroupRegistry, createResourceRegistry } from '@kingdom-builder/contents-sdk';
 import type { ResourceCategoryRegistry, ResourceGroupRegistry, ResourceRegistry } from '@kingdom-builder/contents-sdk';
 

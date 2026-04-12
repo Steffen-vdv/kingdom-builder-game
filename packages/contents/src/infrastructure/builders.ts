@@ -111,8 +111,7 @@ export {
 // Game-specific: Effect params for action pool/upgrade
 export { actionPoolParams, actionUpgradeParams, type ActionPoolEffectParams, type ActionUpgradeEffectParams } from './builders/effectParams';
 
-// Game-specific: resourceAddEffect uses internal resource constants
-export { resourceAddEffect } from '../internal/resourceEffects';
+export { resourceAddEffect } from './helpers';
 
 // Factory functions for game-specific builders
 import { ActionBuilder, ActionMetaCategoryBuilder } from './builders/domain';

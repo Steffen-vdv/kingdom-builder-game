@@ -12,12 +12,12 @@
 import type { ContentPackage, ActionDef } from '@kingdom-builder/contents-sdk';
 import { SystemRole, Types, ResourceMethods, LandMethods, DevelopmentMethods } from '@kingdom-builder/contents-sdk';
 import { createBasePackage } from '../base';
-import { ActionId, SystemActions, BasicActions, DevelopActions, BuildActions, MetaCategory } from '../../actions';
-import { DevelopmentId } from '../../developments';
-import { BuildingId } from '../../buildings';
-import { Resource } from '../../internal';
+import { ActionId, SystemActions, BasicActions, DevelopActions, BuildActions, MetaCategory } from '../content/actions';
+import { DevelopmentId } from '../content/developments';
+import { BuildingId } from '../content/buildings';
+import { Resource } from '../content/constants';
 import { action, effect } from '../../infrastructure/builders';
-import { resourceChange } from '../../resource';
+import { resourceChange } from '../content/resource';
 
 /** Actions available in the tutorial (non-system). */
 const TUTORIAL_ACTION_IDS: ReadonlySet<string> = new Set([

@@ -1,9 +1,9 @@
 import { developmentTarget, effect, passiveParams, resultModParams, resourceAddEffect, EvaluationTargetTypes, TARGET_EFFECT_RESOURCE_ADD } from '../src/infrastructure/builders';
 import { PassiveMethods, ResourceMethods, ResultModMethods, Types } from '@kingdom-builder/contents-sdk';
-import { DevelopmentId } from '../src/developments';
+import { DevelopmentId } from '../src/kingdom-builder/content/developments';
 import { createTierPassiveEffect, growthBonusEffect, happinessTierId } from '../src/infrastructure/happinessHelpers';
-import { Resource } from '../src/internal';
-import { resourceChange } from '../src/resource';
+import { Resource } from '../src/kingdom-builder/content/internal';
+import { resourceChange } from '../src/kingdom-builder/content/resource';
 import { describe, expect, it } from 'vitest';
 
 describe('happiness helpers', () => {

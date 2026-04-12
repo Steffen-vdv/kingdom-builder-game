@@ -1,6 +1,6 @@
 import { DevelopmentId } from './developments';
 import { BuildingId } from './buildingIds';
-import { Resource, type ResourceKey } from './internal';
+import { Resource, type ResourceKey } from './constants';
 
 type ValueOf<T> = T[keyof T];
 
