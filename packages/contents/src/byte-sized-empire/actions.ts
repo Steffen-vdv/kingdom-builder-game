@@ -5,8 +5,19 @@
  * Build and develop actions live in buildDevelopActions.ts.
  */
 import { type ActionConfig, Registry, actionSchema } from '@kingdom-builder/protocol';
-import { Types, ResourceMethods, LandMethods, DevelopmentMethods, resourceAmountChange, resourceTransferAmount } from '@kingdom-builder/contents-sdk';
-import { action, effect, compareRequirement, resourceEvaluator, actionCategory, actionMetaCategory, pool, tierProgressionCurve, tierWeights } from '../infrastructure/builders';
+import { Types, ResourceMethods, LandMethods, DevelopmentMethods, action, resourceAmountChange, resourceTransferAmount } from '@kingdom-builder/contents-sdk';
+import {
+	effect,
+	compareRequirement,
+	resourceEvaluator,
+	actionEffectGroup,
+	actionEffectGroupOption,
+	actionCategory,
+	actionMetaCategory,
+	pool,
+	tierProgressionCurve,
+	tierWeights,
+} from '../infrastructure/builders';
 import type { ActionCategoryConfig, ActionMetaCategoryConfig } from '../infrastructure/builders';
 import { Act, Res, Dev, MetaCat, ActionCat, SysRole } from './ids';
 import { allBuildActions, allDevelopActions } from './buildDevelopActions';
@@ -23,8 +34,45 @@ function resTransfer(resId: string, amount: number) {
 	return effect(Types.Resource, ResourceMethods.TRANSFER).params(resourceTransferAmount(resId, amount)).build();
 }
 
-// Harvest gives a flat +2 Gold for now.
-// A full resource-choice UI is a future enhancement.
+const PICK_RESOURCES: ReadonlyArray<{
+	key: string;
+	icon: string;
+	resId: string;
+}> = [
+	{ key: 'Gold', icon: '🪙', resId: Res.gold },
+	{ key: 'Food', icon: '🌾', resId: Res.food },
+	{ key: 'Materials', icon: '🪵', resId: Res.materials },
+	{ key: 'Knowledge', icon: '📖', resId: Res.knowledge },
+	{ key: 'Influence', icon: '👑', resId: Res.influence },
+];
+
+function gainSubAction(id: string, name: string, resId: string, amount: number): ActionConfig {
+	return action().id(id).metaCategory(MetaCat.commands).name(name).icon('📦').system().free().effect(resAdd(resId, amount)).build();
+}
+
+function pickGroup(prefix: string, ids: Record<string, string>) {
+	const group = actionEffectGroup(`${prefix}_pick`);
+	for (const { key, icon } of PICK_RESOURCES) {
+		group.option(actionEffectGroupOption(`${prefix}_${key.toLowerCase()}`).icon(icon).action(ids[key]!));
+	}
+	return group;
+}
+
+const HARVEST_IDS: Record<string, string> = {
+	Gold: Act.harvestGold,
+	Food: Act.harvestFood,
+	Materials: Act.harvestMaterials,
+	Knowledge: Act.harvestKnowledge,
+	Influence: Act.harvestInfluence,
+};
+
+const TRADE_IDS: Record<string, string> = {
+	Gold: Act.tradeGold,
+	Food: Act.tradeFood,
+	Materials: Act.tradeMaterials,
+	Knowledge: Act.tradeKnowledge,
+	Influence: Act.tradeInfluence,
+};
 
 const popCapReq = compareRequirement().left(resourceEvaluator().resourceId(Res.population)).operator('lt').right(resourceEvaluator().resourceId(Res.populationCap)).build();
 
@@ -34,6 +82,17 @@ const popCapReq = compareRequirement().left(resourceEvaluator().resourceId(Res.p
 
 export function createActionRegistry() {
 	const registry = new Registry<ActionConfig>(actionSchema);
+
+	// ── Sub-actions for effect group options ───────────────
+	for (const { key, resId } of PICK_RESOURCES) {
+		registry.add(HARVEST_IDS[key]!, gainSubAction(HARVEST_IDS[key]!, `Harvest ${key}`, resId, 2));
+		registry.add(TRADE_IDS[key]!, gainSubAction(TRADE_IDS[key]!, `Trade ${key}`, resId, 2));
+	}
+
+	registry.add(Act.decreeLevy, gainSubAction(Act.decreeLevy, 'Levy', Res.gold, 3));
+	registry.add(Act.decreeConscription, gainSubAction(Act.decreeConscription, 'Conscription', Res.defense, 2));
+	registry.add(Act.decreeFortify, gainSubAction(Act.decreeFortify, 'Fortify', Res.castleHP, 10));
+	registry.add(Act.decreeProclamation, gainSubAction(Act.decreeProclamation, 'Proclamation', Res.influence, 3));
 
 	// ── SYSTEM ────────────────────────────────────────────
 	registry.add(
@@ -45,53 +104,31 @@ export function createActionRegistry() {
 			.icon('🎮')
 			.system(SysRole.initialSetup)
 			.free()
-			.tier(1, (t) =>
-				t
-					.effect(resAdd(Res.gold, 5))
-					.effect(resAdd(Res.food, 4))
-					.effect(resAdd(Res.materials, 4))
-					.effect(resAdd(Res.knowledge, 0))
-					.effect(resAdd(Res.influence, 0))
-					.effect(resAdd(Res.population, 2))
-					.effect(resAdd(Res.populationCap, 5))
-					.effect(resAdd(Res.happiness, 0))
-					.effect(resAdd(Res.defense, 0))
-					.effect(resAdd(Res.castleHP, 100))
-					.effect(resAdd(Res.ap, 2))
-					.effect(resAdd(Res.turnsRemaining, 30))
-					.effect(resAdd(Res.t1Done, 0))
-					.effect(resAdd(Res.t2Done, 0))
-					.effect(effect(Types.Land, LandMethods.ADD).param('count', 4).build())
-					.effect(effect(Types.Development, DevelopmentMethods.ADD).param('id', Dev.farm).build()),
-			)
+			.effect(resAdd(Res.gold, 5))
+			.effect(resAdd(Res.food, 4))
+			.effect(resAdd(Res.materials, 4))
+			.effect(resAdd(Res.knowledge, 0))
+			.effect(resAdd(Res.influence, 0))
+			.effect(resAdd(Res.population, 2))
+			.effect(resAdd(Res.populationCap, 5))
+			.effect(resAdd(Res.happiness, 0))
+			.effect(resAdd(Res.defense, 0))
+			.effect(resAdd(Res.castleHP, 100))
+			.effect(resAdd(Res.ap, 2))
+			.effect(resAdd(Res.turnsRemaining, 30))
+			.effect(resAdd(Res.t1Done, 0))
+			.effect(resAdd(Res.t2Done, 0))
+			.effect(effect(Types.Land, LandMethods.ADD).param('count', 4).build())
+			.effect(effect(Types.Development, DevelopmentMethods.ADD).param('id', Dev.farm).build())
 			.build(),
 	);
 
-	registry.add(
-		Act.compensation,
-		action()
-			.id(Act.compensation)
-			.metaCategory(MetaCat.commands)
-			.name('Compensation')
-			.icon('⚖️')
-			.system(SysRole.compensation)
-			.free()
-			.tier(1, (t) => t.effect(resAdd(Res.ap, 1)))
-			.build(),
-	);
+	registry.add(Act.compensation, action().id(Act.compensation).metaCategory(MetaCat.commands).name('Compensation').icon('⚖️').system(SysRole.compensation).free().effect(resAdd(Res.ap, 1)).build());
 
 	// ── ALWAYS AVAILABLE ──────────────────────────────────
 	registry.add(
 		Act.harvest,
-		action()
-			.id(Act.harvest)
-			.metaCategory(MetaCat.commands)
-			.name('Harvest')
-			.icon('🧺')
-			.tier(1, (t) => t.effect(resAdd(Res.gold, 2)))
-			.category(ActionCat.basic)
-			.order(1)
-			.build(),
+		action().id(Act.harvest).metaCategory(MetaCat.commands).name('Harvest').icon('🧺').effectGroup(pickGroup('harvest', HARVEST_IDS)).category(ActionCat.basic).order(1).build(),
 	);
 
 	registry.add(
@@ -101,7 +138,10 @@ export function createActionRegistry() {
 			.metaCategory(MetaCat.commands)
 			.name('Recruit')
 			.icon('🧑‍🤝‍🧑')
-			.tier(1, (t) => t.cost(Res.food, 2).cost(Res.gold, 1).requirement(popCapReq).effect(resAdd(Res.population, 1)))
+			.cost(Res.food, 2)
+			.cost(Res.gold, 1)
+			.requirement(popCapReq)
+			.effect(resAdd(Res.population, 1))
 			.category(ActionCat.basic)
 			.order(2)
 			.build(),
@@ -110,30 +150,12 @@ export function createActionRegistry() {
 	// ── UNLOCKABLE ────────────────────────────────────────
 	registry.add(
 		Act.trade,
-		action()
-			.id(Act.trade)
-			.metaCategory(MetaCat.commands)
-			.name('Trade')
-			.icon('🔁')
-			.locked()
-			.tier(1, (t) => t.effect(resAdd(Res.gold, 2)))
-			.category(ActionCat.basic)
-			.order(3)
-			.build(),
+		action().id(Act.trade).metaCategory(MetaCat.commands).name('Trade').icon('🔁').locked().effectGroup(pickGroup('trade', TRADE_IDS)).category(ActionCat.basic).order(3).build(),
 	);
 
 	registry.add(
 		Act.raid,
-		action()
-			.id(Act.raid)
-			.metaCategory(MetaCat.commands)
-			.name('Raid')
-			.icon('🗡️')
-			.locked()
-			.tier(1, (t) => t.cost(Res.gold, 2).effect(resTransfer(Res.gold, 4)))
-			.category(ActionCat.interference)
-			.order(4)
-			.build(),
+		action().id(Act.raid).metaCategory(MetaCat.commands).name('Raid').icon('🗡️').locked().cost(Res.gold, 2).effect(resTransfer(Res.gold, 4)).category(ActionCat.interference).order(4).build(),
 	);
 
 	registry.add(
@@ -144,25 +166,21 @@ export function createActionRegistry() {
 			.name('Festival')
 			.icon('🎉')
 			.locked()
-			.tier(1, (t) => t.cost(Res.gold, 3).effect(resAdd(Res.happiness, 2)).effect(resAdd(Res.influence, 2)))
+			.cost(Res.gold, 3)
+			.effect(resAdd(Res.happiness, 2))
+			.effect(resAdd(Res.influence, 2))
 			.category(ActionCat.basic)
 			.order(5)
 			.build(),
 	);
 
-	registry.add(
-		Act.decree,
-		action()
-			.id(Act.decree)
-			.metaCategory(MetaCat.commands)
-			.name('Decree')
-			.icon('📜')
-			.locked()
-			.tier(1, (t) => t.effect(resAdd(Res.gold, 5)).effect(resAdd(Res.happiness, 2)))
-			.category(ActionCat.basic)
-			.order(6)
-			.build(),
-	);
+	const decreeGroup = actionEffectGroup('decree_options')
+		.option(actionEffectGroupOption('opt_levy').icon('💰').action(Act.decreeLevy))
+		.option(actionEffectGroupOption('opt_conscription').icon('⚔️').action(Act.decreeConscription))
+		.option(actionEffectGroupOption('opt_fortify').icon('🏰').action(Act.decreeFortify))
+		.option(actionEffectGroupOption('opt_proclamation').icon('📣').action(Act.decreeProclamation));
+
+	registry.add(Act.decree, action().id(Act.decree).metaCategory(MetaCat.commands).name('Decree').icon('📜').locked().effectGroup(decreeGroup).category(ActionCat.basic).order(6).build());
 
 	// ── INTERFERENCE ──────────────────────────────────────
 	registry.add(
@@ -173,7 +191,8 @@ export function createActionRegistry() {
 			.name('Propaganda')
 			.icon('📢')
 			.locked()
-			.tier(1, (t) => t.cost(Res.influence, 3).effect(resTransfer(Res.happiness, 1)))
+			.cost(Res.influence, 3)
+			.effect(resTransfer(Res.happiness, 1))
 			.category(ActionCat.interference)
 			.order(7)
 			.build(),
@@ -181,16 +200,7 @@ export function createActionRegistry() {
 
 	registry.add(
 		Act.spy,
-		action()
-			.id(Act.spy)
-			.metaCategory(MetaCat.commands)
-			.name('Spy')
-			.icon('🕵️')
-			.locked()
-			.tier(1, (t) => t.cost(Res.gold, 2).effect(resAdd(Res.knowledge, 1)))
-			.category(ActionCat.interference)
-			.order(8)
-			.build(),
+		action().id(Act.spy).metaCategory(MetaCat.commands).name('Spy').icon('🕵️').locked().cost(Res.gold, 2).effect(resAdd(Res.knowledge, 1)).category(ActionCat.interference).order(8).build(),
 	);
 
 	registry.add(
@@ -201,7 +211,9 @@ export function createActionRegistry() {
 			.name('Sabotage')
 			.icon('💣')
 			.locked()
-			.tier(1, (t) => t.cost(Res.gold, 3).cost(Res.influence, 2).effect(resAdd(Res.influence, 1)))
+			.cost(Res.gold, 3)
+			.cost(Res.influence, 2)
+			.effect(resAdd(Res.influence, 1))
 			.category(ActionCat.interference)
 			.order(9)
 			.build(),
