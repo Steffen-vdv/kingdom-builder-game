@@ -20,7 +20,6 @@ export const PHASES: PhaseDef[] = [
 		.label('Growth')
 		.icon('🌳')
 		.step(step(PhaseStepId.GainIncome).title('Gain Income').icon('💰').triggers(Trigger.GAIN_INCOME))
-		.step(step(PhaseStepId.GainActionPoints).title('Gain Action Points').triggers(Trigger.GAIN_AP))
 		.step(
 			step(PhaseStepId.RaiseStrength)
 				.title('Raise Strength')
@@ -60,6 +59,7 @@ export const PHASES: PhaseDef[] = [
 						.build(),
 				),
 		)
+		.step(step(PhaseStepId.GainActionPoints).title('Gain Action Points').triggers(Trigger.GAIN_AP))
 		.build(),
 	phase(PhaseId.Main).label('Main').icon('🎯').action().step(step(PhaseStepId.Main).title('Main Phase')).build(),
 ];

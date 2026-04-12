@@ -20,7 +20,7 @@ const phaseIds = {
 const stepIds = {
 	raiseStrength: 'synthetic:step:growth:raise-strength',
 	gainIncome: 'synthetic:step:growth:gain-income',
-	gainAp: 'synthetic:step:growth:gain-ap',
+	gainAp: 'synthetic:step:upkeep:gain-ap',
 	payUpkeep: 'synthetic:step:upkeep:pay',
 	warRecovery: 'synthetic:step:upkeep:war-recovery',
 	main: 'synthetic:step:main',
@@ -58,28 +58,6 @@ export function createPhaseTestEnvironment() {
 			id: phaseIds.growth,
 			steps: [
 				{ id: stepIds.gainIncome, triggers: ['onGainIncomeStep'] },
-				{
-					id: stepIds.gainAp,
-					// Council members grant AP - use resource evaluator
-					effects: [
-						{
-							evaluator: {
-								type: 'resource',
-								params: { resourceId: populationKeys.council },
-							},
-							effects: [
-								{
-									type: 'resource',
-									method: 'add',
-									params: {
-										resourceId: resourceKeys.ap,
-										change: { type: 'amount', amount: AP_GAIN_PER_COUNCIL },
-									},
-								},
-							],
-						},
-					],
-				},
 				{
 					id: stepIds.raiseStrength,
 					// Legion raises army strength, Fortifier raises fortification
@@ -209,6 +187,30 @@ export function createPhaseTestEnvironment() {
 									params: {
 										resourceId: statKeys.war,
 										change: { type: 'amount', amount: 1 },
+									},
+								},
+							],
+						},
+					],
+				},
+				{
+					id: stepIds.gainAp,
+					effects: [
+						{
+							evaluator: {
+								type: 'resource',
+								params: { resourceId: populationKeys.council },
+							},
+							effects: [
+								{
+									type: 'resource',
+									method: 'add',
+									params: {
+										resourceId: resourceKeys.ap,
+										change: {
+											type: 'amount',
+											amount: AP_GAIN_PER_COUNCIL,
+										},
 									},
 								},
 							],

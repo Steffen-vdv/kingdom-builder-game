@@ -18,12 +18,6 @@ const upkeepPhase =
 const upkeepPhaseId = upkeepPhase?.id ?? '';
 const warRecoveryStepId =
 	upkeepPhase?.steps.find((step) => step.id.includes('war-recovery'))?.id ?? '';
-const mainPhase =
-	PHASES[
-		(PHASES.findIndex((phase) => phase.id === upkeepPhaseId) + 1) %
-			PHASES.length
-	];
-
 const phaseSummary = 'test.summary.phase';
 const stepSummary = 'test.summary.step';
 
@@ -125,9 +119,14 @@ describe('advance skip handling', () => {
 		expect(result.skipped?.stepId).toBe(warRecoveryStepId);
 		expect(result.skipped?.sources[0]?.detail).toBe(stepSummary);
 
-		expect(engineContext.game.currentPhase).toBe(mainPhase?.id ?? '');
-		const expectedStep = mainPhase?.steps[0]?.id ?? '';
-		expect(engineContext.game.currentStep).toBe(expectedStep);
+		// After skipping WarRecovery, engine advances to the next Upkeep
+		// step (GainActionPoints), not to Main.
+		expect(engineContext.game.currentPhase).toBe(upkeepPhaseId);
+		const warRecoveryIndex =
+			upkeepPhase?.steps.findIndex((step) => step.id === warRecoveryStepId) ??
+			0;
+		const nextStepId = upkeepPhase?.steps[warRecoveryIndex + 1]?.id ?? '';
+		expect(engineContext.game.currentStep).toBe(nextStepId);
 	});
 
 	it('collects metadata for every skip source to support logging', () => {

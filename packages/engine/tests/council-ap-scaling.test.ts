@@ -75,21 +75,18 @@ function createRealContentEngine() {
 }
 
 function positionAtGainApStep(engine: ReturnType<typeof createEngine>) {
-	// Find the growth phase and gain AP step indices
-	const growthPhaseIndex = PHASES.findIndex(
-		(phase) => phase.id === PhaseId.Growth,
+	const upkeepPhaseIndex = PHASES.findIndex(
+		(phase) => phase.id === PhaseId.Upkeep,
 	);
-	const growthPhase = PHASES[growthPhaseIndex]!;
-	const gainApStepIndex = growthPhase.steps.findIndex((step) =>
+	const upkeepPhase = PHASES[upkeepPhaseIndex]!;
+	const gainApStepIndex = upkeepPhase.steps.findIndex((step) =>
 		step.triggers?.includes('onGainAPStep'),
 	);
 
-	// Position directly at the gain AP step
-	// (without advancing through other phases)
-	engine.game.phaseIndex = growthPhaseIndex;
+	engine.game.phaseIndex = upkeepPhaseIndex;
 	engine.game.stepIndex = gainApStepIndex;
-	engine.game.currentPhase = PhaseId.Growth;
-	engine.game.currentStep = growthPhase.steps[gainApStepIndex]?.id ?? '';
+	engine.game.currentPhase = PhaseId.Upkeep;
+	engine.game.currentStep = upkeepPhase.steps[gainApStepIndex]?.id ?? '';
 }
 
 describe('council AP scaling', () => {

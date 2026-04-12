@@ -194,7 +194,7 @@ function buildPopulationResources(): readonly ResourceDefinition[] {
 		resource('resource:core:council')
 			.icon('⚖️')
 			.label('Council')
-			.description('The Council advises the crown and generates Action Points ' + 'during the Growth phase. Keeping them employed fuels your economy.')
+			.description('The Council advises the crown and generates Action Points ' + 'during the Upkeep phase. Keeping them employed fuels your economy.')
 			.group(POPULATION_GROUP_ID, { order: POPULATION_GROUP_ORDER })
 			.order(1)
 			.lowerBound(0)
