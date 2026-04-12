@@ -82,6 +82,7 @@ export interface CallToActionProps {
 	resumePoint: ResumeSessionRecord | null;
 	onContinue: () => void;
 	onOpenSettings: () => void;
+	onOpenPlayground?: () => void;
 }
 
 export function CallToActionSection({
@@ -89,6 +90,7 @@ export function CallToActionSection({
 	resumePoint,
 	onContinue,
 	onOpenSettings,
+	onOpenPlayground,
 }: CallToActionProps) {
 	const { packages } = useContentPackages();
 	const [selectedSpace, setSelectedSpace] = useState<string | null>(null);
@@ -191,7 +193,19 @@ export function CallToActionSection({
 				</div>
 			) : null}
 
-			<div className="flex justify-center">{settingsButton}</div>
+			<div className="flex items-center justify-center gap-3">
+				{settingsButton}
+				{onOpenPlayground ? (
+					<Button
+						variant="dev"
+						className={SETTINGS_BUTTON_CLASS}
+						onClick={onOpenPlayground}
+						icon="🔬"
+					>
+						Playground
+					</Button>
+				) : null}
+			</div>
 		</ShowcaseCard>
 	);
 }

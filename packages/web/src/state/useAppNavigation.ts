@@ -250,6 +250,14 @@ export function useAppNavigation(): AppNavigationState {
 		],
 	);
 
+	const navigateToPlayground = useCallback(() => {
+		const nextState = buildHistoryState({
+			screen: Screen.Playground,
+		});
+		setCurrentScreen(Screen.Playground);
+		pushHistoryState(nextState);
+	}, [buildHistoryState, pushHistoryState]);
+
 	const continueSavedGame = useContinueSavedGame({
 		resumePoint,
 		currentGameKey,
@@ -306,6 +314,7 @@ export function useAppNavigation(): AppNavigationState {
 		startGameWithContent,
 		continueSavedGame,
 		returnToMenu,
+		navigateToPlayground,
 		toggleDarkMode,
 		toggleMusic,
 		toggleSound,

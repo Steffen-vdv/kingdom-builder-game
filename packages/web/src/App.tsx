@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import Game from './Game';
 import Menu from './Menu';
 import BackgroundMusic from './components/audio/BackgroundMusic';
@@ -6,6 +6,8 @@ import { useAppNavigation } from './state/useAppNavigation';
 import { usePlayerIdentity } from './state/playerIdentity';
 import { Screen } from './state/appHistory';
 import { SoundEffectsProvider } from './state/SoundEffectsContext';
+
+const Playground = lazy(() => import('./playground/Playground'));
 
 export default function App() {
 	const {
@@ -22,6 +24,7 @@ export default function App() {
 		startGameWithContent,
 		continueSavedGame,
 		returnToMenu,
+		navigateToPlayground,
 		toggleDarkMode,
 		toggleMusic,
 		toggleSound,
@@ -60,11 +63,25 @@ export default function App() {
 				/>
 			);
 			break;
+		case Screen.Playground:
+			screen = (
+				<Suspense
+					fallback={
+						<div className="flex min-h-screen items-center justify-center">
+							Loading...
+						</div>
+					}
+				>
+					<Playground onBack={returnToMenu} />
+				</Suspense>
+			);
+			break;
 		case Screen.Menu:
 		default:
 			screen = (
 				<Menu
 					onStartGame={startGameWithContent}
+					onOpenPlayground={navigateToPlayground}
 					resumePoint={resumePoint}
 					onContinue={continueSavedGame}
 					darkModeEnabled={isDarkMode}

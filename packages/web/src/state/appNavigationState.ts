@@ -15,6 +15,7 @@ export interface AppNavigationState {
 	startGameWithContent: (contentId: string) => void;
 	continueSavedGame: () => void;
 	returnToMenu: () => void;
+	navigateToPlayground: () => void;
 	toggleDarkMode: () => void;
 	toggleMusic: () => void;
 	toggleSound: () => void;
