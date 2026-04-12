@@ -131,9 +131,34 @@
 		color: #f1f5f9;
 	}
 
+	/* Panel column grid and column backgrounds */
+	.panel-columns-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 1px;
+		background: rgba(0, 0, 0, 0.06);
+	}
+
+	html.dark .panel-columns-grid {
+		background: rgba(255, 255, 255, 0.06);
+	}
+
+	.panel-column {
+		@apply flex flex-col gap-1.5 p-2.5;
+		background: rgba(255, 255, 255, 0.92);
+	}
+
+	html.dark .panel-column {
+		background: rgba(15, 23, 42, 0.95);
+	}
+
 	/* Population group - expandable container */
 	.pop-group {
 		@apply rounded-lg overflow-hidden;
+		background: rgba(0, 0, 0, 0.03);
+	}
+
+	html.dark .pop-group {
 		background: rgba(255, 255, 255, 0.03);
 	}
 
@@ -142,6 +167,10 @@
 	}
 
 	.pop-header:hover {
+		background: rgba(0, 0, 0, 0.04);
+	}
+
+	html.dark .pop-header:hover {
 		background: rgba(255, 255, 255, 0.04);
 	}
 
@@ -178,16 +207,28 @@
 	/* Assets row at bottom */
 	.assets-row {
 		@apply flex gap-2 px-3 py-2.5 items-center justify-between;
+		border-top: 1px solid rgba(0, 0, 0, 0.06);
+	}
+
+	html.dark .assets-row {
 		border-top: 1px solid rgba(255, 255, 255, 0.06);
 	}
 
 	.asset-badge {
 		@apply inline-flex items-center gap-1.5 px-3 py-2 rounded-lg cursor-pointer transition-all;
 		font-size: 14px;
-		background: rgba(255, 255, 255, 0.04);
+		background: rgba(0, 0, 0, 0.04);
 	}
 
 	.asset-badge:hover {
+		background: rgba(0, 0, 0, 0.08);
+	}
+
+	html.dark .asset-badge {
+		background: rgba(255, 255, 255, 0.04);
+	}
+
+	html.dark .asset-badge:hover {
 		background: rgba(255, 255, 255, 0.1);
 	}
 

@@ -273,7 +273,6 @@ export default [
 			'packages/web/src/components/TimerCircle.tsx',
 			'packages/web/src/components/actions/ActionCard.tsx',
 			'packages/web/src/components/common/TimeControl.tsx',
-			'packages/web/src/components/phases/PhasePanel.tsx',
 			'packages/web/src/components/player/BuildingDisplay.tsx',
 			'packages/web/src/components/player/LandDisplay.tsx',
 			'packages/web/src/components/player/PassiveDisplay.tsx',

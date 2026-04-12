@@ -16,6 +16,7 @@ const RESUME_TURN_FORMATTER = new Intl.NumberFormat('en-US');
 
 interface MenuProps {
 	onStartGame: (contentId: string) => void;
+	onOpenPlayground: () => void;
 	resumePoint: ResumeSessionRecord | null;
 	onContinue: () => void;
 	darkModeEnabled: boolean;
@@ -35,6 +36,7 @@ interface MenuProps {
 
 export default function Menu({
 	onStartGame,
+	onOpenPlayground,
 	resumePoint,
 	onContinue,
 	darkModeEnabled,
@@ -135,6 +137,7 @@ export default function Menu({
 						resumePoint={resumePoint}
 						onContinue={onContinue}
 						onOpenSettings={() => setSettingsOpen(true)}
+						onOpenPlayground={onOpenPlayground}
 					/>
 					<HighlightsSection />
 				</ShowcaseLayout>

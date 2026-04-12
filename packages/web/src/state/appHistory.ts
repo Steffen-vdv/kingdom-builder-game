@@ -1,6 +1,7 @@
 export enum Screen {
 	Menu = 'menu',
 	Game = 'game',
+	Playground = 'playground',
 }
 
 export interface HistoryState {

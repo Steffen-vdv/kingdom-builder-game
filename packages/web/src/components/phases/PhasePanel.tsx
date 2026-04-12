@@ -3,6 +3,24 @@ import { useGameEngine } from '../../state/GameContext';
 import { useAdvanceAction } from '../../state/useAdvanceAction';
 import type { ActionResolution } from '../../state/useActionResolution';
 import Button from '../common/Button';
+import {
+	PANEL_CLASSES,
+	HEADER_CLASSES,
+	TURN_SUMMARY_CLASSES,
+	TURN_BADGE_CLASSES,
+	PLAYER_DETAILS_CLASSES,
+	PLAYER_LABEL_CLASSES,
+	PLAYER_NAME_CLASSES,
+	PHASE_SECTION_CLASSES,
+	PHASE_LIST_CLASSES,
+	PHASE_LIST_ITEM_CLASSES,
+	PHASE_LIST_ITEM_CONTENT_CLASSES,
+	PHASE_INDEX_WRAPPER_CLASSES,
+	PHASE_INDEX_HIGHLIGHT_CLASSES,
+	PHASE_INDEX_TEXT_CLASSES,
+	PHASE_ICON_CLASSES,
+	PHASE_LABEL_CLASSES,
+} from './phasePanelStyles';
 
 function normalizePhaseKey(id?: string, label?: string) {
 	const trimmedId = id?.trim();
@@ -23,101 +41,6 @@ interface PhaseSummary {
 	historyKey: string;
 	isActionPhase: boolean;
 }
-
-const panelClassName = [
-	'relative flex w-full flex-col gap-6 rounded-3xl border border-white/40',
-	'bg-gradient-to-br from-white/80 via-white/70 to-white/40 p-6 shadow-xl',
-	'backdrop-blur dark:border-white/10 dark:from-slate-900/80',
-	'dark:via-slate-900/70 dark:to-slate-900/60 dark:shadow-slate-900/40',
-].join(' ');
-
-const headerClassName = [
-	'flex flex-wrap items-center justify-between gap-4',
-].join(' ');
-
-const turnSummaryClassName = [
-	'flex flex-wrap items-center gap-4 rounded-2xl border border-white/60 px-4',
-	'py-3 text-sm text-slate-700 shadow-sm dark:border-white/10',
-	'dark:text-slate-100',
-].join(' ');
-
-const turnBadgeClassName = [
-	'flex items-center gap-2 rounded-xl bg-indigo-600/90 px-3 py-1',
-	'text-xs font-semibold uppercase tracking-[0.25em] text-white shadow',
-].join(' ');
-
-const playerDetailsClassName = ['flex flex-col gap-0.5 text-left'].join(' ');
-
-const playerLabelClassName = [
-	'uppercase tracking-[0.3em] text-[0.625rem] text-slate-500',
-	'dark:text-slate-300',
-].join(' ');
-
-const playerNameClassName = [
-	'text-base font-semibold text-slate-800 dark:text-white',
-].join(' ');
-
-const phaseSectionClassName = ['flex flex-col gap-3'].join(' ');
-
-const phaseListClassName = [
-	'grid gap-3',
-	'sm:grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] sm:gap-3',
-].join(' ');
-
-const phaseListItemClassName = [
-	'flex items-center rounded-2xl border border-white/40 px-3 py-2 text-left',
-	'text-sm font-medium tracking-[0.08em] text-slate-600 transition-all',
-	'duration-200 ease-out bg-white/70 shadow-sm dark:border-white/10',
-	'dark:bg-slate-900/60 dark:text-slate-100 hover:-translate-y-0.5',
-	'hover:bg-white/60 hover:shadow-lg hover:shadow-amber-500/10',
-	'dark:hover:bg-white/10 dark:hover:shadow-black/30',
-	'data-[active=true]:border-indigo-500 data-[active=true]:bg-indigo-50/80',
-	'data-[active=true]:text-indigo-800',
-	'data-[active=true]:hover:bg-indigo-50/80',
-	'data-[active=true]:hover:shadow-lg',
-	'dark:data-[active=true]:border-indigo-300/60',
-	'dark:data-[active=true]:bg-indigo-500/20',
-	'dark:data-[active=true]:text-white',
-	'dark:data-[active=true]:hover:bg-indigo-500/20',
-].join(' ');
-
-const phaseListItemContentClassName = ['flex w-full items-center gap-3'].join(
-	' ',
-);
-
-const phaseListItemIndexWrapperClassName = [
-	'relative grid h-10 w-10 place-items-center overflow-hidden rounded-2xl',
-	'bg-white/70 shadow-inner shadow-white/60 ring-1 ring-inset ring-white/70',
-	'backdrop-blur-[2px] transition-all duration-300 ease-out',
-	'dark:bg-white/10 dark:shadow-black/40 dark:ring-white/10',
-	'data-[active=true]:bg-gradient-to-br data-[active=true]:from-indigo-500/90',
-	'data-[active=true]:via-indigo-500/80 data-[active=true]:to-fuchsia-500/80',
-	'data-[active=true]:shadow-lg data-[active=true]:ring-indigo-200/80',
-	'dark:data-[active=true]:ring-indigo-300/60',
-].join(' ');
-
-const phaseListItemIndexHighlightClassName = [
-	'pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br',
-	'from-white/70 via-white/30 to-transparent opacity-0 transition-opacity',
-	'duration-300 ease-out data-[active=true]:opacity-60',
-	'dark:from-white/40 dark:via-white/5',
-].join(' ');
-
-const phaseListItemIndexTextClassName = [
-	'relative text-xs font-semibold uppercase tracking-[0.35em]',
-	'text-indigo-600 transition-colors duration-300 ease-out',
-	'data-[active=true]:text-white dark:text-indigo-200',
-	'dark:data-[active=true]:text-white font-mono tabular-nums',
-].join(' ');
-
-const phaseListItemIconClassName = [
-	'grid h-9 w-9 place-items-center rounded-xl bg-white/80 text-base',
-	'text-indigo-600 shadow-inner dark:bg-white/10 dark:text-indigo-200',
-].join(' ');
-
-const phaseListItemLabelClassName = [
-	'flex-1 text-xs uppercase tracking-[0.2em]',
-].join(' ');
 
 export default function PhasePanel() {
 	const {
@@ -246,10 +169,10 @@ export default function PhasePanel() {
 	const shouldShowManualStartButton =
 		advanceMode === 'start' && !shouldHideControls;
 	return (
-		<section className={panelClassName}>
-			<header className={headerClassName}>
-				<div className={turnSummaryClassName}>
-					<span className={turnBadgeClassName}>
+		<section className={PANEL_CLASSES}>
+			<header className={HEADER_CLASSES}>
+				<div className={TURN_SUMMARY_CLASSES}>
+					<span className={TURN_BADGE_CLASSES}>
 						<span className="text-[0.6rem] uppercase tracking-[0.45em]">
 							Turn
 						</span>
@@ -260,20 +183,20 @@ export default function PhasePanel() {
 						</span>
 					</span>
 					<span className="sr-only">Active player:</span>
-					<div className={playerDetailsClassName}>
-						<span className={playerLabelClassName}>Active Player</span>
-						<span className={playerNameClassName}>{activePlayerName}</span>
+					<div className={PLAYER_DETAILS_CLASSES}>
+						<span className={PLAYER_LABEL_CLASSES}>Active Player</span>
+						<span className={PLAYER_NAME_CLASSES}>{activePlayerName}</span>
 					</div>
 				</div>
 				<span className="sr-only" role="status" aria-live="polite">
 					Current phase: {currentPhaseLabel}
 				</span>
 			</header>
-			<div className={phaseSectionClassName}>
+			<div className={PHASE_SECTION_CLASSES}>
 				<p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-300">
 					Phases
 				</p>
-				<ul className={phaseListClassName}>
+				<ul className={PHASE_LIST_CLASSES}>
 					{phases.map((phaseDefinition, phaseIndex) => {
 						const historyKey = phaseDefinition.historyKey;
 						const playerKey = activePlayerId
@@ -289,7 +212,7 @@ export default function PhasePanel() {
 							!phaseDefinition.isActionPhase &&
 							!shouldSuppressHoverCards;
 						const resolvedPhaseListItemClassName = [
-							phaseListItemClassName,
+							PHASE_LIST_ITEM_CLASSES,
 							shouldShowHoverIndicator ? 'hoverable cursor-help' : '',
 						]
 							.filter(Boolean)
@@ -306,31 +229,28 @@ export default function PhasePanel() {
 								onMouseEnter={handlePhaseMouseEnter}
 								onMouseLeave={hidePhaseHistory}
 							>
-								<span className={phaseListItemContentClassName}>
+								<span className={PHASE_LIST_ITEM_CONTENT_CLASSES}>
 									<span
-										className={phaseListItemIndexWrapperClassName}
+										className={PHASE_INDEX_WRAPPER_CLASSES}
 										data-active={isActive ? 'true' : 'false'}
 										aria-hidden="true"
 									>
 										<span
-											className={phaseListItemIndexHighlightClassName}
+											className={PHASE_INDEX_HIGHLIGHT_CLASSES}
 											data-active={isActive ? 'true' : 'false'}
 											aria-hidden="true"
 										/>
 										<span
-											className={phaseListItemIndexTextClassName}
+											className={PHASE_INDEX_TEXT_CLASSES}
 											data-active={isActive ? 'true' : 'false'}
 										>
 											{String(phaseIndex + 1).padStart(2, '0')}
 										</span>
 									</span>
-									<span
-										className={phaseListItemIconClassName}
-										aria-hidden="true"
-									>
+									<span className={PHASE_ICON_CLASSES} aria-hidden="true">
 										{phaseDefinition.icon || '⚠️'}
 									</span>
-									<span className={phaseListItemLabelClassName}>
+									<span className={PHASE_LABEL_CLASSES}>
 										{phaseDefinition.label}
 									</span>
 								</span>
