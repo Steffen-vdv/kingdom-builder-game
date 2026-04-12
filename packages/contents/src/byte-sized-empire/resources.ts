@@ -104,14 +104,6 @@ const apResource = resource(Res.ap)
 	.section('economy')
 	.build();
 
-const turnsRemainingResource = resource(Res.turnsRemaining)
-	.icon('\u23F3')
-	.label('Turns Remaining')
-	.description('The number of turns left before the game ends and ' + 'scores are compared.')
-	.lowerBound(0)
-	.section('economy')
-	.build();
-
 const t1DoneResource = resource(Res.t1Done)
 	.icon('\u{1F4D6}')
 	.label('T1 Research Done')
@@ -191,7 +183,6 @@ const secondaryCategory = resourceCategory('resource-category:bse:secondary')
 	.resource(Res.defense)
 	.resource(Res.happiness)
 	.resource(Res.castleHP)
-	.resource(Res.turnsRemaining)
 	.build();
 
 // ═══════════════════════════════════════════════════════════════════
@@ -212,7 +203,6 @@ export function getResourceDefinitions(): readonly ResourceDefinition[] {
 		happinessResource,
 		vpResource,
 		apResource,
-		turnsRemainingResource,
 		t1DoneResource,
 		t2DoneResource,
 	];

@@ -123,6 +123,7 @@ export default function PhasePanel() {
 	const {
 		sessionSnapshot,
 		selectors,
+		ruleSnapshot,
 		phase,
 		resolution,
 		log,
@@ -152,6 +153,14 @@ export default function PhasePanel() {
 			}),
 		[sessionSnapshot.phases],
 	);
+	const turnLimit = useMemo(() => {
+		for (const condition of ruleSnapshot.winConditions) {
+			if (condition.trigger.type === 'turn-limit') {
+				return condition.trigger.maxTurns;
+			}
+		}
+		return null;
+	}, [ruleSnapshot.winConditions]);
 	const phaseHistory = useMemo(() => {
 		const byPhase = new Map<string, ActionResolution>();
 		const byPlayer = new Map<string, ActionResolution>();
@@ -245,7 +254,9 @@ export default function PhasePanel() {
 							Turn
 						</span>
 						<span className="text-base tracking-[0.15em]">
-							{phase.turnNumber}
+							{turnLimit !== null
+								? `${phase.turnNumber} / ${turnLimit}`
+								: phase.turnNumber}
 						</span>
 					</span>
 					<span className="sr-only">Active player:</span>
