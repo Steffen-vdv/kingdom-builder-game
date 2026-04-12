@@ -2,12 +2,14 @@ import { useCallback } from 'react';
 import { Screen, type HistoryState } from './appHistory';
 import type { ResumeSessionRecord } from './sessionResumeStorage';
 
+const DEV_MODE_CONTENT_ID = 'kingdom-builder:dev-mode';
+
 interface ContinueSavedGameOptions {
 	resumePoint: ResumeSessionRecord | null;
 	currentGameKey: number;
 	setCurrentGameKey: (value: number) => void;
 	setCurrentScreen: (value: Screen) => void;
-	setIsDevMode: (value: boolean) => void;
+	setContentId: (value: string | null) => void;
 	buildHistoryState: (overrides?: Partial<HistoryState>) => HistoryState;
 	pushHistoryState: (state: HistoryState) => void;
 }
@@ -17,7 +19,7 @@ export const useContinueSavedGame = ({
 	currentGameKey,
 	setCurrentGameKey,
 	setCurrentScreen,
-	setIsDevMode,
+	setContentId,
 	buildHistoryState,
 	pushHistoryState,
 }: ContinueSavedGameOptions) => {
@@ -26,15 +28,17 @@ export const useContinueSavedGame = ({
 			return;
 		}
 		const nextGameKey = currentGameKey + 1;
-		const nextDevMode = resumePoint.devMode;
-		setIsDevMode(nextDevMode);
+		const nextContentId =
+			resumePoint.contentId ??
+			(resumePoint.devMode ? DEV_MODE_CONTENT_ID : null);
+		setContentId(nextContentId);
 		setCurrentGameKey(nextGameKey);
 		setCurrentScreen(Screen.Game);
 		pushHistoryState(
 			buildHistoryState({
 				screen: Screen.Game,
 				gameKey: nextGameKey,
-				isDevModeEnabled: nextDevMode,
+				contentId: nextContentId,
 			}),
 		);
 	}, [
@@ -42,8 +46,8 @@ export const useContinueSavedGame = ({
 		currentGameKey,
 		pushHistoryState,
 		resumePoint,
+		setContentId,
 		setCurrentGameKey,
 		setCurrentScreen,
-		setIsDevMode,
 	]);
 };

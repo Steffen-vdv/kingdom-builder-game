@@ -10,6 +10,8 @@ import {
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
 	RESOURCE_CATEGORY_REGISTRY,
+	CONTENT_PACKAGE_META,
+	DEFAULT_CONTENT_ID,
 } from '@kingdom-builder/contents';
 import type {
 	SessionRegistriesPayload,
@@ -21,6 +23,7 @@ import type {
 	ResourceDefinition,
 	ResourceGroupDefinition,
 	ResourceCategoryDefinition,
+	ContentPackageMeta,
 } from '@kingdom-builder/protocol';
 import {
 	buildSessionMetadata,
@@ -43,6 +46,8 @@ export type SessionRuntimeConfig = {
 	resources: SerializedRegistry<ResourceDefinition>;
 	resourceGroups: SerializedRegistry<ResourceGroupDefinition>;
 	resourceCategories: SerializedRegistry<ResourceCategoryDefinition>;
+	contentPackages?: ContentPackageMeta[];
+	defaultContentId?: string;
 };
 
 export type EngineSessionOverrideOptions = Partial<SessionBaseOptions> & {
@@ -146,6 +151,8 @@ export function buildSessionManagerConfig(
 		resources,
 		resourceGroups,
 		resourceCategories,
+		contentPackages: CONTENT_PACKAGE_META as ContentPackageMeta[],
+		defaultContentId: DEFAULT_CONTENT_ID,
 	});
 
 	return {

@@ -74,13 +74,14 @@ export {
 export { Types, PassiveMethods, CostModMethods, RequirementTypes, ActionMethods, ResourceMethods, LandMethods } from '@kingdom-builder/contents-sdk';
 
 // Content Package System
-export { loadContentPackage, createContentLoader, CONTENT_PACKAGE_IDS, DEFAULT_CONTENT_ID } from './kingdom-builder/loader';
-export type { ContentPackageId } from './kingdom-builder/loader';
+export { loadContentPackage, createContentLoader, CONTENT_PACKAGE_IDS, CONTENT_PACKAGE_META, DEFAULT_CONTENT_ID } from './kingdom-builder/loader';
+export type { ContentPackageId, ContentPackageMetaEntry } from './kingdom-builder/loader';
 
 // Content package factories
 export { createBasePackage } from './kingdom-builder/base';
 export { createDevModePackage } from './kingdom-builder/dev-mode';
 export { createTutorialPackage } from './kingdom-builder/tutorial';
+export { createExperimentalPackage } from './kingdom-builder/experimental';
 
 // System action utilities
 export { findActionByRole, findActionsByRole, extractSystemActionIds } from './kingdom-builder/systemActions';
