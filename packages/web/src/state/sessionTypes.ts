@@ -59,7 +59,6 @@ export interface SessionAdapter {
 		options?: SimulateUpcomingPhasesOptions,
 	): SimulateUpcomingPhasesResult;
 	advancePhase(): SessionAdvanceResult;
-	setDevMode(enabled: boolean): void;
 	updatePlayerName(playerId: SessionPlayerId, name: string): void;
 }
 

@@ -15,7 +15,6 @@ const DEFAULT_HISTORY_STATE: HistoryState = {
 	screen: Screen.Menu,
 	gameKey: 17,
 	isDarkModeEnabled: false,
-	isDevModeEnabled: false,
 	isMusicEnabled: true,
 	isSoundEnabled: true,
 	isBackgroundAudioMuted: false,

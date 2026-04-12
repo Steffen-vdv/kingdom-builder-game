@@ -35,7 +35,6 @@ export interface GameProviderProps {
 	onExit?: () => void;
 	darkMode?: boolean;
 	onToggleDark?: () => void;
-	devMode?: boolean;
 	contentId?: string | undefined;
 	musicEnabled?: boolean;
 	onToggleMusic?: () => void;

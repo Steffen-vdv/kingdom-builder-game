@@ -7,8 +7,6 @@ import { usePlayerIdentity } from './state/playerIdentity';
 import { Screen } from './state/appHistory';
 import { SoundEffectsProvider } from './state/SoundEffectsContext';
 
-const DEV_MODE_CONTENT_ID = 'kingdom-builder:dev-mode';
-
 export default function App() {
 	const {
 		currentScreen,
@@ -35,8 +33,6 @@ export default function App() {
 	} = useAppNavigation();
 	const { playerName, hasStoredName, setPlayerName } = usePlayerIdentity();
 
-	const isDevMode = contentId === DEV_MODE_CONTENT_ID;
-
 	let screen: ReactNode;
 	switch (currentScreen) {
 		case Screen.Game:
@@ -46,7 +42,6 @@ export default function App() {
 					onExit={returnToMenu}
 					darkMode={isDarkMode}
 					onToggleDark={toggleDarkMode}
-					devMode={isDevMode}
 					contentId={contentId ?? undefined}
 					musicEnabled={isMusicEnabled}
 					onToggleMusic={toggleMusic}

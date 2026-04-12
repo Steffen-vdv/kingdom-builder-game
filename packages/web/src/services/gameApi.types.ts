@@ -16,8 +16,6 @@ import type {
 	SessionMetadataSnapshotResponse,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
-	SessionSetDevModeRequest,
-	SessionSetDevModeResponse,
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 	SessionStateResponse,
@@ -68,10 +66,6 @@ export interface GameApi {
 		request: SessionAdvanceRequest,
 		options?: GameApiRequestOptions,
 	): Promise<SessionAdvanceResponse>;
-	setDevMode(
-		request: SessionSetDevModeRequest,
-		options?: GameApiRequestOptions,
-	): Promise<SessionSetDevModeResponse>;
 	updatePlayerName(
 		request: SessionUpdatePlayerNameRequest,
 		options?: GameApiRequestOptions,

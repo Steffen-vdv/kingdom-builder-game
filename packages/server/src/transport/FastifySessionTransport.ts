@@ -243,22 +243,6 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 		},
 	);
 
-	fastify.post<SessionRequestParams>(
-		'/sessions/:id/dev-mode',
-		async (request, reply) => {
-			try {
-				const payload = mergeSessionPayload(request);
-				const response = await transport.setDevMode({
-					body: payload,
-					headers: extractHeaders(request),
-				});
-				return reply.send(response);
-			} catch (error) {
-				return handleTransportError(reply, error);
-			}
-		},
-	);
-
 	fastify.patch<SessionRequestParams>(
 		'/sessions/:id/player',
 		async (request, reply) => {

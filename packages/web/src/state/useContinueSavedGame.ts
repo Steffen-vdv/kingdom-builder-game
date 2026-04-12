@@ -2,8 +2,6 @@ import { useCallback } from 'react';
 import { Screen, type HistoryState } from './appHistory';
 import type { ResumeSessionRecord } from './sessionResumeStorage';
 
-const DEV_MODE_CONTENT_ID = 'kingdom-builder:dev-mode';
-
 interface ContinueSavedGameOptions {
 	resumePoint: ResumeSessionRecord | null;
 	currentGameKey: number;
@@ -28,9 +26,7 @@ export const useContinueSavedGame = ({
 			return;
 		}
 		const nextGameKey = currentGameKey + 1;
-		const nextContentId =
-			resumePoint.contentId ??
-			(resumePoint.devMode ? DEV_MODE_CONTENT_ID : null);
+		const nextContentId = resumePoint.contentId ?? null;
 		setContentId(nextContentId);
 		setCurrentGameKey(nextGameKey);
 		setCurrentScreen(Screen.Game);

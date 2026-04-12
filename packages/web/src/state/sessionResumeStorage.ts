@@ -3,7 +3,6 @@ export const RESUME_SESSION_STORAGE_KEY = 'kingdom-builder/resume-session';
 export interface ResumeSessionRecord {
 	readonly sessionId: string;
 	readonly turn: number;
-	readonly devMode: boolean;
 	readonly updatedAt: number;
 	readonly contentId?: string;
 }
@@ -26,16 +25,12 @@ const sanitizeParsedRecord = (
 	const candidate = value as Partial<
 		Record<keyof ResumeSessionRecord, unknown>
 	>;
-	const { sessionId, turn, devMode, updatedAt } = candidate;
+	const { sessionId, turn, updatedAt } = candidate;
 	const numericTurn = Number(turn);
 	const numericUpdatedAt =
 		typeof updatedAt === 'string' ? Date.parse(updatedAt) : Number(updatedAt);
 
 	if (typeof sessionId !== 'string') {
-		return undefined;
-	}
-
-	if (typeof devMode !== 'boolean') {
 		return undefined;
 	}
 
@@ -53,7 +48,6 @@ const sanitizeParsedRecord = (
 	return {
 		sessionId,
 		turn: numericTurn,
-		devMode,
 		updatedAt: numericUpdatedAt,
 		...(resolvedContentId !== undefined
 			? { contentId: resolvedContentId }
@@ -101,7 +95,6 @@ export const writeStoredResumeSession = (record: ResumeSessionRecord): void => {
 		const payload = JSON.stringify({
 			sessionId: record.sessionId,
 			turn: Number(record.turn),
-			devMode: record.devMode,
 			updatedAt: Number(record.updatedAt),
 			...(record.contentId !== undefined
 				? { contentId: record.contentId }

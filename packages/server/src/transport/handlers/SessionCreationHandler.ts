@@ -71,9 +71,6 @@ export class SessionCreationHandler {
 			if (data.contentId !== undefined) {
 				options.contentId = data.contentId;
 			}
-			if (data.devMode !== undefined) {
-				options.devMode = data.devMode;
-			}
 			if (data.config !== undefined) {
 				options.config = data.config;
 			}

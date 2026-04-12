@@ -27,12 +27,7 @@ import {
 	formatFailureDetails,
 	type SessionFailureDetails,
 } from './sessionFailures';
-import {
-	createSession,
-	fetchSnapshot,
-	releaseSession,
-	setSessionDevMode,
-} from './sessionSdk';
+import { createSession, fetchSnapshot, releaseSession } from './sessionSdk';
 import { enqueueSessionTask, getSessionRecord } from './sessionStateStore';
 
 const NOOP = () => {};
@@ -48,7 +43,6 @@ export function GameProvider(props: GameProviderProps) {
 		onExit,
 		darkMode = true,
 		onToggleDark = NOOP,
-		devMode = false,
 		contentId,
 		musicEnabled = true,
 		onToggleMusic = NOOP,
@@ -74,7 +68,6 @@ export function GameProvider(props: GameProviderProps) {
 	const lastPersistedSessionIdRef = useRef<string | null>(null);
 	const refreshAbortRef = useRef<AbortController | null>(null);
 	const lastPersistedSessionTurnRef = useRef<number | null>(null);
-	const lastPersistedSessionDevModeRef = useRef<boolean | null>(null);
 	const [sessionError, setSessionError] =
 		useState<SessionFailureDetails | null>(null);
 	const [bootAttempt, setBootAttempt] = useState(0);
@@ -100,7 +93,6 @@ export function GameProvider(props: GameProviderProps) {
 		lastBootSessionIdRef.current = null;
 		lastPersistedSessionIdRef.current = null;
 		lastPersistedSessionTurnRef.current = null;
-		lastPersistedSessionDevModeRef.current = null;
 		queueRef.current = Promise.resolve();
 	}, []);
 
@@ -178,23 +170,19 @@ export function GameProvider(props: GameProviderProps) {
 		}
 		const sessionId = sessionData.sessionId;
 		const turn = sessionData.snapshot.game.turn ?? 0;
-		const devModeState = sessionData.snapshot.game.devMode ?? false;
 		if (
 			sessionId === lastPersistedSessionIdRef.current &&
-			turn === lastPersistedSessionTurnRef.current &&
-			devModeState === lastPersistedSessionDevModeRef.current
+			turn === lastPersistedSessionTurnRef.current
 		) {
 			return;
 		}
 		onPersistResumeSession({
 			sessionId,
 			turn,
-			devMode: devModeState,
 			updatedAt: Date.now(),
 		});
 		lastPersistedSessionIdRef.current = sessionId;
 		lastPersistedSessionTurnRef.current = turn;
-		lastPersistedSessionDevModeRef.current = devModeState;
 	}, [sessionData, onPersistResumeSession]);
 
 	useEffect(() => {
@@ -241,7 +229,6 @@ export function GameProvider(props: GameProviderProps) {
 					}
 					const created = await createSession(
 						{
-							devMode,
 							playerName: playerNameRef.current,
 							contentId,
 						},
@@ -284,7 +271,6 @@ export function GameProvider(props: GameProviderProps) {
 			controller.abort();
 		};
 	}, [
-		devMode,
 		resumeSessionId,
 		releaseCurrentSession,
 		runExclusive,
@@ -293,6 +279,7 @@ export function GameProvider(props: GameProviderProps) {
 		applyFatalSessionError,
 		onResumeSessionFailure,
 		onClearResumeSession,
+		contentId,
 	]);
 
 	const refreshSession = useCallback(() => {
@@ -324,8 +311,6 @@ export function GameProvider(props: GameProviderProps) {
 				const latestTurn = currentSnapshot?.game.turn ?? 0;
 				const refreshedTurn = result.record.snapshot.game.turn ?? latestTurn;
 				if (refreshedTurn < latestTurn) {
-					// Ignore stale refresh responses that resolve after a more
-					// recent update (for example, toggling dev mode).
 					return;
 				}
 				const { queueSeed: _queue, ...record } = result.record;
@@ -353,38 +338,6 @@ export function GameProvider(props: GameProviderProps) {
 			}
 		});
 	}, [runExclusive, updateSessionData, applyFatalSessionError]);
-
-	useEffect(() => {
-		const current = sessionStateRef.current;
-		if (!current) {
-			return;
-		}
-		const currentDevMode = current.snapshot.game.devMode ?? false;
-		if (currentDevMode === devMode) {
-			return;
-		}
-		void runExclusive(async () => {
-			try {
-				const updated = await setSessionDevMode(current.sessionId, devMode);
-				if (
-					!mountedRef.current ||
-					sessionStateRef.current?.sessionId !== current.sessionId
-				) {
-					return;
-				}
-				const { queueSeed: _queue, ...record } = updated.record;
-				updateSessionData({
-					adapter: updated.adapter,
-					...record,
-				});
-			} catch (error) {
-				if (!mountedRef.current) {
-					return;
-				}
-				applyFatalSessionError(error);
-			}
-		});
-	}, [devMode, runExclusive, updateSessionData, applyFatalSessionError]);
 
 	const handleRelease = useCallback(() => {
 		teardownSession();
@@ -432,7 +385,6 @@ export function GameProvider(props: GameProviderProps) {
 		children,
 		darkMode,
 		onToggleDark,
-		devMode,
 		musicEnabled,
 		onToggleMusic,
 		soundEnabled,

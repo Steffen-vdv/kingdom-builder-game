@@ -198,7 +198,6 @@ describe('createTranslationContext', () => {
 				currentStep: firstStep,
 				phaseIndex: 0,
 				stepIndex: 0,
-				devMode: false,
 				players,
 				activePlayerId: 'A',
 				opponentId: 'B',

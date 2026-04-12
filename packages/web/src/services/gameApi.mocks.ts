@@ -16,8 +16,6 @@ import type {
 	SessionMetadataSnapshotResponse,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
-	SessionSetDevModeRequest,
-	SessionSetDevModeResponse,
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 	SessionStateResponse,
@@ -55,10 +53,6 @@ export type GameApiMockHandlers = {
 		request: SessionAdvanceRequest,
 		options?: GameApiRequestOptions,
 	) => Promise<SessionAdvanceResponse> | SessionAdvanceResponse;
-	setDevMode?: (
-		request: SessionSetDevModeRequest,
-		options?: GameApiRequestOptions,
-	) => Promise<SessionSetDevModeResponse> | SessionSetDevModeResponse;
 	updatePlayerName?: (
 		request: SessionUpdatePlayerNameRequest,
 		options?: GameApiRequestOptions,
@@ -129,10 +123,6 @@ export const createGameApiMock = (
 		request: SessionAdvanceRequest,
 		options: GameApiRequestOptions = {},
 	) => resolveHandler(handlers.advancePhase, 'advancePhase', request, options),
-	setDevMode: (
-		request: SessionSetDevModeRequest,
-		options: GameApiRequestOptions = {},
-	) => resolveHandler(handlers.setDevMode, 'setDevMode', request, options),
 	updatePlayerName: (
 		request: SessionUpdatePlayerNameRequest,
 		options: GameApiRequestOptions = {},

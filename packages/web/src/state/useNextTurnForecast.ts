@@ -108,7 +108,6 @@ function hashGameState(
 		stepIndex: game.stepIndex,
 		activePlayerId: game.activePlayerId,
 		opponentId: game.opponentId,
-		devMode: game.devMode,
 		phases,
 	});
 }
@@ -130,7 +129,6 @@ export function useNextTurnForecast(): NextTurnForecast {
 		game.currentPhase,
 		game.currentPlayerIndex,
 		game.currentStep,
-		game.devMode,
 		game.opponentId,
 		game.phaseIndex,
 		game.stepIndex,

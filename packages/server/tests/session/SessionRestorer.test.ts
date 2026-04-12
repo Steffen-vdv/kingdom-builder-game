@@ -196,7 +196,7 @@ describe('SessionRestorer', () => {
 		// Create a minimal persisted session
 		const data: PersistedSessionData = {
 			sessionId: 'session-1',
-			creationOptions: { devMode: false },
+			creationOptions: {},
 			actionLog: [],
 			lastSnapshot: {} as PersistedSessionData['lastSnapshot'],
 			registries: {} as PersistedSessionData['registries'],
@@ -213,35 +213,13 @@ describe('SessionRestorer', () => {
 		expect(restored?.session).toBeDefined();
 	});
 
-	it('restores a session with devMode enabled', async () => {
-		const { baseOptions } = createTestSetup();
-		const restorer = new SessionRestorer({ persistence, baseOptions });
-
-		const data: PersistedSessionData = {
-			sessionId: 'session-dev',
-			creationOptions: { devMode: true },
-			actionLog: [],
-			lastSnapshot: {} as PersistedSessionData['lastSnapshot'],
-			registries: {} as PersistedSessionData['registries'],
-			metadata: {} as PersistedSessionData['metadata'],
-			lastAccessedAt: Date.now(),
-			createdAt: Date.now(),
-		};
-		persistence.save(data);
-
-		const restored = await restorer.restore('session-dev');
-		expect(restored).toBeDefined();
-		const snapshot = restored?.session.getSnapshot();
-		expect(snapshot?.game.devMode).toBe(true);
-	});
-
 	it('replays action log entries', async () => {
 		const { baseOptions, actionId, gainResourceId } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
 
 		const data: PersistedSessionData = {
 			sessionId: 'session-replay',
-			creationOptions: { devMode: false },
+			creationOptions: {},
 			actionLog: [
 				{ type: 'action', actionId },
 				{ type: 'action', actionId },
@@ -269,7 +247,7 @@ describe('SessionRestorer', () => {
 
 		const data: PersistedSessionData = {
 			sessionId: 'session-names',
-			creationOptions: { devMode: false },
+			creationOptions: {},
 			actionLog: [{ type: 'player-name', playerId: 'A', name: 'Alice' }],
 			lastSnapshot: {} as PersistedSessionData['lastSnapshot'],
 			registries: {} as PersistedSessionData['registries'],
@@ -289,29 +267,6 @@ describe('SessionRestorer', () => {
 		expect(player?.name).toBe('Alice');
 	});
 
-	it('replays dev mode changes', async () => {
-		const { baseOptions } = createTestSetup();
-		const restorer = new SessionRestorer({ persistence, baseOptions });
-
-		const data: PersistedSessionData = {
-			sessionId: 'session-devmode',
-			creationOptions: { devMode: false },
-			actionLog: [{ type: 'dev-mode', enabled: true }],
-			lastSnapshot: {} as PersistedSessionData['lastSnapshot'],
-			registries: {} as PersistedSessionData['registries'],
-			metadata: {} as PersistedSessionData['metadata'],
-			lastAccessedAt: Date.now(),
-			createdAt: Date.now(),
-		};
-		persistence.save(data);
-
-		const restored = await restorer.restore('session-devmode');
-		expect(restored).toBeDefined();
-
-		const snapshot = restored?.session.getSnapshot();
-		expect(snapshot?.game.devMode).toBe(true);
-	});
-
 	it('applies player names from creation options', async () => {
 		const { baseOptions } = createTestSetup();
 		const restorer = new SessionRestorer({ persistence, baseOptions });
@@ -319,7 +274,6 @@ describe('SessionRestorer', () => {
 		const data: PersistedSessionData = {
 			sessionId: 'session-initial-names',
 			creationOptions: {
-				devMode: false,
 				playerNames: { A: 'Bob', B: 'Carol' },
 			},
 			actionLog: [],
@@ -356,7 +310,7 @@ describe('SessionRestorer', () => {
 
 		const data: PersistedSessionData = {
 			sessionId: 'session-log',
-			creationOptions: { devMode: false },
+			creationOptions: {},
 			actionLog: originalLog,
 			lastSnapshot: {} as PersistedSessionData['lastSnapshot'],
 			registries: {} as PersistedSessionData['registries'],

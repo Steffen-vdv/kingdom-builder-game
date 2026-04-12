@@ -68,7 +68,6 @@ export function createMockSessionAdapter(
 		advancePhase: vi.fn(() =>
 			createAdvanceResult(sessionState, referencePlayer),
 		),
-		setDevMode: vi.fn(),
 		updatePlayerName: vi.fn(),
 	};
 }

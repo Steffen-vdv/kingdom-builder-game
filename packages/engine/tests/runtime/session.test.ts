@@ -484,13 +484,6 @@ describe('EngineSession', () => {
 		expect(session.pullEffectLog('missing:log')).toBeUndefined();
 	});
 
-	it('allows toggling developer mode directly on the session', () => {
-		const session = createTestSession();
-		expect(session.getSnapshot().game.devMode).toBe(false);
-		session.setDevMode(true);
-		expect(session.getSnapshot().game.devMode).toBe(true);
-	});
-
 	it('runs AI turns with dependency overrides and reports success', async () => {
 		const session = createTestSession();
 		const snapshot = session.getSnapshot();
@@ -562,19 +555,6 @@ describe('EngineSession', () => {
 		session.pushEffectLog('test:primitive', 42);
 		expect(session.pullEffectLog<number>('test:primitive')).toBe(42);
 	});
-});
-
-it('toggles developer mode without leaking mutable snapshots', () => {
-	const session = createTestSession();
-	const initial = session.getSnapshot();
-	expect(initial.game.devMode).toBe(false);
-	session.setDevMode(true);
-	const enabled = session.getSnapshot();
-	expect(enabled.game.devMode).toBe(true);
-	enabled.game.devMode = false;
-	expect(session.getSnapshot().game.devMode).toBe(true);
-	session.setDevMode(false);
-	expect(session.getSnapshot().game.devMode).toBe(false);
 });
 
 it('updates player names only when ids match existing entries', () => {

@@ -6,8 +6,6 @@ import type {
 	SessionCreateRequest,
 	SessionCreateResponse,
 	SessionGateway,
-	SessionSetDevModeRequest,
-	SessionSetDevModeResponse,
 	SessionStateResponse,
 } from '@kingdom-builder/protocol';
 import {
@@ -25,8 +23,6 @@ import {
 	sessionCreateResponseSchema,
 	sessionRunAiRequestSchema,
 	sessionRunAiResponseSchema,
-	sessionSetDevModeRequestSchema,
-	sessionSetDevModeResponseSchema,
 	sessionSimulateRequestSchema,
 	sessionSimulateResponseSchema,
 	sessionStateResponseSchema,
@@ -174,20 +170,6 @@ export class HttpSessionGateway implements SessionGateway {
 			throw this.toTransportError(result);
 		}
 		return sessionAdvanceResponseSchema.parse(result.data);
-	}
-	public async setDevMode(
-		request: SessionSetDevModeRequest,
-	): Promise<SessionSetDevModeResponse> {
-		const payload = sessionSetDevModeRequestSchema.parse(request);
-		const result = await this.execute({
-			method: 'POST',
-			path: `sessions/${this.encodeSessionId(payload.sessionId)}/dev-mode`,
-			body: { enabled: payload.enabled },
-		});
-		if (!result.response.ok) {
-			throw this.toTransportError(result);
-		}
-		return sessionSetDevModeResponseSchema.parse(result.data);
 	}
 	private async postSessionRequest<ResponseType>(
 		path: string,

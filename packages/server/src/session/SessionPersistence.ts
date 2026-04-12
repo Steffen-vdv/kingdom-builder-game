@@ -25,10 +25,6 @@ export type ActionLogEntry =
 			type: 'player-name';
 			playerId: SessionPlayerId;
 			name: string;
-	  }
-	| {
-			type: 'dev-mode';
-			enabled: boolean;
 	  };
 
 /**
@@ -37,7 +33,6 @@ export type ActionLogEntry =
 export interface SessionCreationOptions {
 	/** Content package identifier used for this session */
 	contentId?: string;
-	devMode?: boolean;
 	config?: GameConfig;
 	playerNames?: Partial<Record<SessionPlayerId, string>>;
 }

@@ -3,8 +3,7 @@ import { useGameEngine, TIME_SCALE_OPTIONS } from '../../state/GameContext';
 import { useSoundEffectsContext } from '../../state/SoundEffectsContext';
 
 export default function TimeControl() {
-	const { sessionSnapshot, timeScale, setTimeScale } = useGameEngine();
-	const devMode = sessionSnapshot.game.devMode;
+	const { timeScale, setTimeScale } = useGameEngine();
 	const { playUiClick } = useSoundEffectsContext();
 
 	return (
@@ -12,14 +11,6 @@ export default function TimeControl() {
 			className="flex items-center gap-2 rounded-full border border-white/50 bg-white/60 px-3 py-1.5 text-sm font-medium shadow-inner dark:border-white/10 dark:bg-slate-900/60 frosted-surface"
 			aria-label="Time control"
 		>
-			{devMode && (
-				<span
-					className="rounded-full bg-gradient-to-r from-purple-600 to-fuchsia-500 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-white shadow-md"
-					title="Developer mode enabled"
-				>
-					Dev
-				</span>
-			)}
 			<span className="text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-slate-300">
 				Speed
 			</span>

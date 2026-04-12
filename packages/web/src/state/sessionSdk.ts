@@ -45,7 +45,6 @@ import {
 import { clone } from './clone';
 
 interface CreateSessionOptions {
-	devMode?: boolean;
 	playerName?: string;
 	contentId?: string | undefined;
 }
@@ -96,10 +95,8 @@ export async function createSession(
 	options: CreateSessionOptions = {},
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<CreateSessionResult> {
-	const devMode = options.devMode ?? false;
 	const playerName = options.playerName ?? DEFAULT_PLAYER_NAME;
 	const sessionRequest: SessionCreateRequest = {
-		devMode,
 		playerNames: { A: playerName },
 		...(options.contentId ? { contentId: options.contentId } : {}),
 	};
@@ -123,26 +120,6 @@ export async function fetchSnapshot(
 	const response = await api.fetchSnapshot(sessionId, requestOptions);
 	const stateRecord = applySessionState(response);
 	adapter.invalidateActionMetadata();
-	return {
-		sessionId,
-		adapter,
-		record: toRemoteRecord(stateRecord),
-	};
-}
-
-export async function setSessionDevMode(
-	sessionId: string,
-	enabled: boolean,
-	requestOptions: GameApiRequestOptions = {},
-): Promise<FetchSnapshotResult> {
-	const api = ensureGameApi();
-	const adapter = getAdapter(sessionId);
-	const response = await enqueueSessionTask(sessionId, async () =>
-		api.setDevMode({ sessionId, enabled }, requestOptions),
-	);
-	const stateRecord = applySessionState(response);
-	adapter.invalidateActionMetadata();
-	adapter.setDevMode(enabled);
 	return {
 		sessionId,
 		adapter,

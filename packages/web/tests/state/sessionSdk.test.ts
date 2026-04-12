@@ -15,7 +15,6 @@ import {
 	releaseSession,
 	runAiTurn,
 	setGameApi,
-	setSessionDevMode,
 	simulateUpcomingPhases,
 	updatePlayerName,
 } from '../../src/state/sessionSdk';
@@ -110,7 +109,6 @@ describe('sessionSdk', () => {
 
 	it('creates a session using the API response payload', async () => {
 		const created = await createSession({
-			devMode: true,
 			playerName: 'Commander',
 		});
 		expect(created.sessionId).toBe('session-1');
@@ -157,39 +155,6 @@ describe('sessionSdk', () => {
 		expect(fetched.record.snapshot).toEqual(initialSnapshot);
 		expect(fetched.record.ruleSnapshot).toEqual(initialSnapshot.rules);
 		expect(fetched.record.metadata).toEqual(initialSnapshot.metadata);
-	});
-
-	it('sets dev mode via the API and refreshes local state', async () => {
-		await createSession();
-		const updatedSnapshot = createSessionSnapshot({
-			players: [playerA, playerB],
-			activePlayerId: playerA.id,
-			opponentId: playerB.id,
-			phases,
-			actionCostResource: resourceKey,
-			ruleSnapshot: initialSnapshot.rules,
-			turn: 5,
-			currentPhase: phases[0]?.id ?? 'phase-main',
-			currentStep: mainStepId,
-			devMode: true,
-		});
-		const mutatedRegistries = createSessionRegistriesPayload();
-		mutatedRegistries.actions[taxActionId] = {
-			...mutatedRegistries.actions[taxActionId],
-			name: 'Tax (Developer)',
-		};
-		delete mutatedRegistries.resources[resourceKey];
-		api.setNextSetDevModeResponse({
-			sessionId: 'session-1',
-			snapshot: updatedSnapshot,
-			registries: mutatedRegistries,
-		});
-		const result = await setSessionDevMode('session-1', true);
-		expect(result.record.snapshot).toEqual(updatedSnapshot);
-		expect(result.record.registries.actions.get(taxActionId)?.name).toBe(
-			'Tax (Developer)',
-		);
-		expect(result.record.resourceKeys).not.toContain(resourceKey);
 	});
 
 	it('performs actions via the API', async () => {

@@ -42,7 +42,6 @@ export function GameProviderInner({
 	onExit,
 	darkMode,
 	onToggleDark,
-	devMode,
 	musicEnabled,
 	onToggleMusic,
 	soundEnabled,
@@ -97,7 +96,7 @@ export function GameProviderInner({
 		setTrackedTimeout,
 		isMountedRef: mountedRef,
 		timeScaleRef,
-	} = useTimeScale({ devMode });
+	} = useTimeScale();
 
 	const actionCostResource: SessionResourceKey =
 		liveSessionSnapshot.actionCostResource;

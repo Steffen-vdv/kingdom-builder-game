@@ -194,14 +194,6 @@ export class RemoteSessionAdapter implements SessionAdapter {
 		return this.#advanceManager.advancePhase();
 	}
 
-	setDevMode(enabled: boolean): void {
-		const record = getSessionRecord(this.#sessionId);
-		if (!record) {
-			return;
-		}
-		record.snapshot.game.devMode = enabled;
-	}
-
 	updatePlayerName(playerId: string, name: string): void {
 		const record = getSessionRecord(this.#sessionId);
 		if (!record) {

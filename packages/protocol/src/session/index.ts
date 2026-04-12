@@ -126,7 +126,6 @@ export interface SessionGameSnapshot {
 	currentStep: string;
 	phaseIndex: number;
 	stepIndex: number;
-	devMode: boolean;
 	players: SessionPlayerStateSnapshot[];
 	activePlayerId: SessionPlayerId;
 	opponentId: SessionPlayerId;
@@ -427,8 +426,6 @@ export type {
 	SessionStateResponse,
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
-	SessionSetDevModeRequest,
-	SessionSetDevModeResponse,
 	SessionRegistriesPayload,
 	SerializedRegistry,
 	SessionMetadataSnapshot,

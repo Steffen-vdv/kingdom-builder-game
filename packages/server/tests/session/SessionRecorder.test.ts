@@ -9,7 +9,6 @@ import {
 	recordAction,
 	recordAdvance,
 	recordPlayerNameChange,
-	recordDevModeChange,
 	type SessionRecordWithLog,
 } from '../../src/session/SessionRecorder.js';
 import type {
@@ -23,7 +22,6 @@ function createMinimalSnapshot(): SessionSnapshot {
 		game: {
 			players: [],
 			turn: 1,
-			devMode: false,
 		},
 		phase: {
 			index: 0,
@@ -124,13 +122,6 @@ describe('SessionRecorder', () => {
 			});
 		});
 
-		it('recordDevModeChange adds entry to action log', () => {
-			const record = createMockRecord();
-			recordDevModeChange('session-1', record, undefined, true);
-			expect(record.actionLog).toHaveLength(1);
-			expect(record.actionLog[0]).toEqual({ type: 'dev-mode', enabled: true });
-		});
-
 		it('does not call getSnapshot when persistence is undefined', () => {
 			const record = createMockRecord();
 			recordAction('session-1', record, undefined, 'test-action');
@@ -157,7 +148,7 @@ describe('SessionRecorder', () => {
 			// Create initial session in database
 			persistence.save({
 				sessionId: 'session-1',
-				creationOptions: { devMode: false },
+				creationOptions: {},
 				actionLog: [],
 				lastSnapshot: createMinimalSnapshot(),
 				registries: createMinimalRegistries(),
@@ -209,18 +200,6 @@ describe('SessionRecorder', () => {
 				type: 'player-name',
 				playerId: 'p2',
 				name: 'Bob',
-			});
-		});
-
-		it('recordDevModeChange persists to database', () => {
-			const record = createMockRecord();
-			recordDevModeChange('session-1', record, persistence, false);
-
-			const loaded = persistence.load('session-1');
-			expect(loaded?.actionLog).toHaveLength(1);
-			expect(loaded?.actionLog[0]).toEqual({
-				type: 'dev-mode',
-				enabled: false,
 			});
 		});
 

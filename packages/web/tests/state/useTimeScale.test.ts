@@ -40,7 +40,7 @@ describe('useTimeScale', () => {
 	});
 
 	it('falls back to defaults and keeps controls usable when storage throws', () => {
-		const { result } = renderHook(() => useTimeScale({ devMode: false }));
+		const { result } = renderHook(() => useTimeScale());
 
 		expect(result.current.timeScale).toBe(1);
 		expect(result.current.timeScaleRef.current).toBe(1);

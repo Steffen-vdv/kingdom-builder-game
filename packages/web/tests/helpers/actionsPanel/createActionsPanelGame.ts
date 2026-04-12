@@ -195,7 +195,6 @@ export function createActionsPanelGame({
 			currentStep: '',
 			phaseIndex: 0,
 			stepIndex: 0,
-			devMode: false,
 			players: [playerSnapshot, opponentSnapshot],
 			activePlayerId: player.id,
 			opponentId: opponent.id,

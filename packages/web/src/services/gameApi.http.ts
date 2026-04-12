@@ -16,8 +16,6 @@ import type {
 	SessionMetadataSnapshotResponse,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
-	SessionSetDevModeRequest,
-	SessionSetDevModeResponse,
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 	SessionStateResponse,
@@ -171,22 +169,6 @@ export class HttpGameApi implements GameApi {
 			{
 				method: 'POST',
 				body: request,
-			},
-			options,
-		);
-	}
-
-	async setDevMode(
-		request: SessionSetDevModeRequest,
-		options: GameApiRequestOptions = {},
-	): Promise<SessionSetDevModeResponse> {
-		const { sessionId, enabled } = request;
-
-		return this.#send(
-			`/sessions/${encodeURIComponent(sessionId)}/dev-mode`,
-			{
-				method: 'POST',
-				body: { enabled },
 			},
 			options,
 		);

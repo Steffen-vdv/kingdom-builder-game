@@ -236,7 +236,6 @@ interface SessionSnapshotOptions {
 	currentStep?: string;
 	phaseIndex?: number;
 	stepIndex?: number;
-	devMode?: boolean;
 	metadata?: SessionSnapshotMetadata;
 	resourceCatalog?: SessionResourceCatalog;
 	resourceMetadata?: SessionSnapshot['resourceMetadata'];
@@ -258,7 +257,6 @@ export function createSessionSnapshot({
 	currentStep,
 	phaseIndex = 0,
 	stepIndex = 0,
-	devMode = false,
 	metadata: metadataOverride,
 	resourceCatalog,
 	resourceMetadata,
@@ -312,7 +310,6 @@ export function createSessionSnapshot({
 			currentStep: resolvedCurrentStep,
 			phaseIndex,
 			stepIndex,
-			devMode,
 			players: players.map((player) => ({ ...player })),
 			activePlayerId,
 			opponentId,

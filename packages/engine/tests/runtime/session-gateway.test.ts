@@ -227,19 +227,6 @@ describe('createLocalSessionGateway', () => {
 		expect(refreshed.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(12);
 	});
 
-	it('sets developer mode without leaking snapshot references', async () => {
-		const { gateway } = createGateway();
-		const { sessionId } = await gateway.createSession();
-		const enabled = await gateway.setDevMode({
-			sessionId,
-			enabled: true,
-		});
-		expect(enabled.snapshot.game.devMode).toBe(true);
-		enabled.snapshot.game.devMode = false;
-		const refreshed = await gateway.fetchSnapshot({ sessionId });
-		expect(refreshed.snapshot.game.devMode).toBe(true);
-	});
-
 	it('clones provided action category registries when supplied', async () => {
 		const categoryFactory = createContentFactory();
 		const providedCategory = toSessionActionCategoryConfig(

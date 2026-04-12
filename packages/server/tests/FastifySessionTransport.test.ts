@@ -96,12 +96,11 @@ describe('FastifySessionTransport', () => {
 			method: 'POST',
 			url: '/sessions',
 			headers: authorizedHeaders,
-			payload: { devMode: true },
+			payload: {},
 		});
 		expect(response.statusCode).toBe(201);
 		const body = response.json() as SessionResponse;
 		expectSnapshotMetadata(body.snapshot.metadata);
-		expect(body.snapshot.game.devMode).toBe(true);
 		expectStaticMetadata(manager.getSessionMetadata(body.sessionId));
 		await app.close();
 	});
@@ -303,35 +302,6 @@ describe('FastifySessionTransport', () => {
 		expectSnapshotMetadata(advanceBody.snapshot.metadata);
 		expect(advanceBody.snapshot.game.currentPhase).toBe('end');
 		expectStaticMetadata(manager.getSessionMetadata(sessionId));
-		await app.close();
-	});
-
-	it('toggles developer mode through the API', async () => {
-		const { app, manager } = await createServer();
-		const createResponse = await app.inject({
-			method: 'POST',
-			url: '/sessions',
-			headers: authorizedHeaders,
-			payload: {},
-		});
-		const { sessionId, snapshot: createdSnapshot } =
-			createResponse.json() as SnapshotResponse & {
-				sessionId: string;
-			};
-		expectSnapshotMetadata(createdSnapshot.metadata);
-		expect(createdSnapshot.game.devMode).toBe(false);
-		expectStaticMetadata(manager.getMetadata());
-		const devModeResponse = await app.inject({
-			method: 'POST',
-			url: `/sessions/${sessionId}/dev-mode`,
-			headers: authorizedHeaders,
-			payload: { enabled: true },
-		});
-		expect(devModeResponse.statusCode).toBe(200);
-		const devModeBody = devModeResponse.json() as SnapshotResponse;
-		expectSnapshotMetadata(devModeBody.snapshot.metadata);
-		expect(devModeBody.snapshot.game.devMode).toBe(true);
-		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
 

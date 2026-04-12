@@ -73,7 +73,6 @@ export function createSessionHelpers(
 				currentStep: gameOverrides.currentStep ?? 'step-0',
 				phaseIndex,
 				stepIndex: gameOverrides.stepIndex ?? 0,
-				devMode: gameOverrides.devMode ?? false,
 				players,
 				activePlayerId: activeId,
 				opponentId,

@@ -41,7 +41,6 @@ const snapshot = createSessionSnapshot({
 	currentStep: 'phase-main:start',
 	phaseIndex: 0,
 	stepIndex: 0,
-	devMode: false,
 	ruleSnapshot: {
 		tieredResourceKey: resourceKey,
 		tierDefinitions: [],
@@ -78,7 +77,7 @@ describe('ensureGameApi', () => {
 			.spyOn(authTokenModule, 'resolveAuthToken')
 			.mockResolvedValue('header-token');
 		const api = ensureGameApi();
-		const result = await api.createSession({ devMode: false });
+		const result = await api.createSession({});
 		expect(result.sessionId).toBe('session-auth');
 		expect(tokenSpy).toHaveBeenCalled();
 		expect(fetchMock).toHaveBeenCalledTimes(1);

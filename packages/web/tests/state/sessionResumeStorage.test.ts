@@ -26,7 +26,6 @@ describe('sessionResumeStorage', () => {
 		const record = {
 			sessionId: 'session-123',
 			turn: 7,
-			devMode: true,
 			updatedAt: timestamp,
 		};
 
@@ -42,7 +41,6 @@ describe('sessionResumeStorage', () => {
 			JSON.stringify({
 				sessionId: 'session-123',
 				turn: 1,
-				devMode: false,
 				updatedAt: Date.UTC(2024, 0, 1),
 			}),
 		);
@@ -67,7 +65,6 @@ describe('sessionResumeStorage', () => {
 			JSON.stringify({
 				sessionId: 42,
 				turn: 3,
-				devMode: true,
 				updatedAt: '2024-01-01T00:00:00.000Z',
 			}),
 		);
@@ -84,7 +81,6 @@ describe('sessionResumeStorage', () => {
 			JSON.stringify({
 				sessionId: 'session-123',
 				turn: '12',
-				devMode: false,
 				updatedAt: '2024-01-01T00:00:00.000Z',
 			}),
 		);
@@ -94,7 +90,6 @@ describe('sessionResumeStorage', () => {
 		expect(record).toEqual({
 			sessionId: 'session-123',
 			turn: 12,
-			devMode: false,
 			updatedAt: Date.parse('2024-01-01T00:00:00.000Z'),
 		});
 	});
@@ -105,7 +100,6 @@ describe('sessionResumeStorage', () => {
 			JSON.stringify({
 				sessionId: 'session-123',
 				turn: 'NaN',
-				devMode: false,
 				updatedAt: '2024-01-01T00:00:00.000Z',
 			}),
 		);

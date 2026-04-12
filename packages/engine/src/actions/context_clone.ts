@@ -138,7 +138,6 @@ function cloneGameState(game: GameState): GameState {
 	cloned.currentStep = game.currentStep;
 	cloned.phaseIndex = game.phaseIndex;
 	cloned.stepIndex = game.stepIndex;
-	cloned.devMode = game.devMode;
 	cloned.players = game.players.map((player) => clonePlayerState(player));
 	cloned.resourceCatalog = catalog;
 	return cloned;

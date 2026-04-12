@@ -6,8 +6,6 @@ import type {
 	SessionAdvanceResponse,
 	SessionCreateRequest,
 	SessionCreateResponse,
-	SessionSetDevModeRequest,
-	SessionSetDevModeResponse,
 	SessionStateResponse,
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
@@ -22,7 +20,6 @@ import {
 
 export const sessionCreateRequestSchema = z.object({
 	contentId: z.string().optional(),
-	devMode: z.boolean().optional(),
 	config: gameConfigSchema.optional(),
 	playerNames: sessionPlayerNameMapSchema.optional(),
 });
@@ -52,13 +49,6 @@ export const sessionAdvanceResponseSchema = z.object({
 	registries: sessionRegistriesSchema,
 });
 
-export const sessionSetDevModeRequestSchema = z.object({
-	sessionId: sessionIdSchema,
-	enabled: z.boolean(),
-});
-
-export const sessionSetDevModeResponseSchema = sessionCreateResponseSchema;
-
 export const sessionUpdatePlayerNameRequestSchema = z.object({
 	sessionId: sessionIdSchema,
 	playerId: sessionPlayerIdSchema,
@@ -82,18 +72,6 @@ type _SessionAdvanceRequestMatches = Expect<
 >;
 type _SessionAdvanceResponseMatches = Expect<
 	Equal<z.infer<typeof sessionAdvanceResponseSchema>, SessionAdvanceResponse>
->;
-type _SessionSetDevModeRequestMatches = Expect<
-	Equal<
-		z.infer<typeof sessionSetDevModeRequestSchema>,
-		SessionSetDevModeRequest
-	>
->;
-type _SessionSetDevModeResponseMatches = Expect<
-	Equal<
-		z.infer<typeof sessionSetDevModeResponseSchema>,
-		SessionSetDevModeResponse
-	>
 >;
 type _SessionUpdatePlayerNameRequestMatches = Expect<
 	Equal<
