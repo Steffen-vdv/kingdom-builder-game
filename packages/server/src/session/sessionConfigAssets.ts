@@ -45,9 +45,6 @@ export interface SessionBaseOptions {
 
 interface OverrideContext {
 	baseOptions: SessionBaseOptions;
-	resourceOverrides: SessionResourceRegistry | undefined;
-	baseRegistries: SessionRegistriesPayload;
-	baseMetadata: SessionStaticMetadataPayload;
 }
 
 export function buildSessionAssets(
@@ -57,18 +54,15 @@ export function buildSessionAssets(
 	registries: SessionRegistriesPayload;
 	metadata: SessionStaticMetadataPayload;
 } {
-	if (!config) {
-		return {
-			registries: context.baseRegistries,
-			metadata: context.baseMetadata,
-		};
-	}
-	const validated = validateGameConfig(config);
-	const { actions, buildings, developments } = applyConfigRegistries(
-		validated,
-		context.baseOptions,
-	);
-	const phases = validated.phases ?? context.baseOptions.phases;
+	const validated = config ? validateGameConfig(config) : undefined;
+	const { actions, buildings, developments } = validated
+		? applyConfigRegistries(validated, context.baseOptions)
+		: {
+				actions: context.baseOptions.actions,
+				buildings: context.baseOptions.buildings,
+				developments: context.baseOptions.developments,
+			};
+	const phases = validated?.phases ?? context.baseOptions.phases;
 	const resourceCatalog = context.baseOptions.resourceCatalog;
 	const resources = freezeSerializedRegistry(
 		structuredClone(resourceCatalog.resources.byId),
@@ -87,12 +81,21 @@ export function buildSessionAssets(
 		resourceGroups,
 		resourceCategories,
 	};
-	if (context.baseRegistries.actionCategories) {
-		registries.actionCategories = context.baseRegistries.actionCategories;
+	const actionCats = cloneActionCategoryRegistry(
+		context.baseOptions.actionCategories,
+	);
+	if (Object.keys(actionCats).length > 0) {
+		registries.actionCategories = freezeSerializedRegistry(
+			actionCats,
+		) as SessionActionCategoryRegistry;
 	}
-	if (context.baseRegistries.actionMetaCategories) {
-		registries.actionMetaCategories =
-			context.baseRegistries.actionMetaCategories;
+	const actionMetaCats = cloneRegistry(
+		context.baseOptions.actionMetaCategories,
+	);
+	if (Object.keys(actionMetaCats).length > 0) {
+		registries.actionMetaCategories = freezeSerializedRegistry(
+			actionMetaCats,
+		) as SessionActionMetaCategoryRegistry;
 	}
 	const metadata = buildSessionMetadata({
 		buildings,
@@ -101,25 +104,6 @@ export function buildSessionAssets(
 		phases,
 	});
 	return { registries, metadata };
-}
-
-/**
- * @deprecated Use resourceCatalog.resources.byId directly.
- * Kept temporarily for test compatibility.
- */
-export function buildResourceRegistry(
-	overrides: SessionResourceRegistry | undefined,
-): SessionResourceRegistry {
-	const registry = new Map<string, ResourceDefinition>();
-
-	// Apply any overrides first
-	if (overrides) {
-		for (const [key, definition] of Object.entries(overrides)) {
-			registry.set(key, structuredClone(definition));
-		}
-	}
-
-	return Object.fromEntries(registry.entries());
 }
 
 function applyConfigRegistries(
@@ -155,51 +139,4 @@ function applyConfigRegistries(
 		developments,
 	);
 	return { actions, buildings, developments };
-}
-
-/**
- * Builds registries and metadata from a SessionBaseOptions.
- * Used when creating sessions with dynamically loaded content
- * packages so the client receives registries matching the
- * engine's content rather than the constructor's defaults.
- */
-export function buildRegistriesFromBaseOptions(
-	baseOptions: SessionBaseOptions,
-): {
-	registries: SessionRegistriesPayload;
-	metadata: SessionStaticMetadataPayload;
-} {
-	const resourceCatalog = baseOptions.resourceCatalog;
-	const resources = freezeSerializedRegistry(
-		structuredClone(resourceCatalog.resources.byId),
-	);
-	const resourceGroups = freezeSerializedRegistry(
-		structuredClone(resourceCatalog.groups.byId),
-	);
-	const resourceCategories = freezeSerializedRegistry(
-		structuredClone(resourceCatalog.categories?.byId ?? {}),
-	);
-	const actionCategories = freezeSerializedRegistry(
-		cloneActionCategoryRegistry(baseOptions.actionCategories),
-	) as SessionActionCategoryRegistry;
-	const actionMetaCategories = freezeSerializedRegistry(
-		cloneRegistry(baseOptions.actionMetaCategories),
-	) as SessionActionMetaCategoryRegistry;
-	const registries: SessionRegistriesPayload = {
-		actions: cloneRegistry(baseOptions.actions),
-		actionCategories,
-		actionMetaCategories,
-		buildings: cloneRegistry(baseOptions.buildings),
-		developments: cloneRegistry(baseOptions.developments),
-		resources,
-		resourceGroups,
-		resourceCategories,
-	};
-	const metadata = buildSessionMetadata({
-		buildings: baseOptions.buildings,
-		developments: baseOptions.developments,
-		resources,
-		phases: baseOptions.phases,
-	});
-	return { registries, metadata };
 }

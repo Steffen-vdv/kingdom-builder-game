@@ -34,10 +34,7 @@ import {
 	cloneRegistry,
 	freezeSerializedRegistry,
 } from './registryUtils.js';
-import type {
-	SessionBaseOptions,
-	SessionResourceRegistry,
-} from './sessionConfigAssets.js';
+import type { SessionBaseOptions } from './sessionConfigAssets.js';
 
 export type SessionRuntimeConfig = {
 	phases: PhaseConfig[];
@@ -51,7 +48,6 @@ export type SessionRuntimeConfig = {
 };
 
 export type EngineSessionOverrideOptions = Partial<SessionBaseOptions> & {
-	resourceRegistry?: SessionResourceRegistry;
 	actionCategoryRegistry?: SessionActionCategoryRegistry;
 	primaryIconId?: string | null;
 };
@@ -60,7 +56,6 @@ export interface SessionManagerConfigResult {
 	baseOptions: SessionBaseOptions;
 	registries: SessionRegistriesPayload;
 	metadata: SessionStaticMetadataPayload;
-	resourceOverrides: SessionResourceRegistry | undefined;
 	runtimeConfig: SessionRuntimeConfig;
 }
 
@@ -68,7 +63,6 @@ export function buildSessionManagerConfig(
 	engineOptions: EngineSessionOverrideOptions = {},
 ): SessionManagerConfigResult {
 	const {
-		resourceRegistry,
 		actionCategoryRegistry,
 		primaryIconId: primaryIconOverride,
 		...engineOverrides
@@ -93,9 +87,6 @@ export function buildSessionManagerConfig(
 	};
 
 	const primaryIconId = primaryIconOverride ?? PRIMARY_ICON_ID ?? null;
-	const resourceOverrides = resourceRegistry
-		? freezeSerializedRegistry(structuredClone(resourceRegistry))
-		: undefined;
 
 	const resourceCatalog = baseOptions.resourceCatalog;
 	const resources = freezeSerializedRegistry(
@@ -159,7 +150,6 @@ export function buildSessionManagerConfig(
 		baseOptions,
 		registries,
 		metadata,
-		resourceOverrides,
 		runtimeConfig,
 	};
 }

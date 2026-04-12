@@ -12,9 +12,7 @@ import { loadContentPackage, DEFAULT_CONTENT_ID } from '@boardsmith/contents';
 import type { SessionStaticMetadataPayload } from './buildSessionMetadata.js';
 import {
 	buildSessionAssets,
-	buildRegistriesFromBaseOptions,
 	type SessionBaseOptions,
-	type SessionResourceRegistry,
 } from './sessionConfigAssets.js';
 import type {
 	SessionPersistence,
@@ -64,7 +62,6 @@ export class SessionManager {
 	private readonly baseOptions: SessionBaseOptions;
 	private readonly registries: SessionRegistriesPayload;
 	private readonly metadata: SessionStaticMetadataPayload;
-	private readonly resourceOverrides: SessionResourceRegistry | undefined;
 	private readonly runtimeConfig: SessionRuntimeConfig;
 	private readonly persistence: SessionPersistence | undefined;
 	private readonly restorer: SessionRestorer | undefined;
@@ -92,7 +89,6 @@ export class SessionManager {
 		this.baseOptions = config.baseOptions;
 		this.registries = config.registries;
 		this.metadata = config.metadata;
-		this.resourceOverrides = config.resourceOverrides;
 		this.runtimeConfig = config.runtimeConfig;
 		if (persistence) {
 			const { actionCategories: _, ...restoreBaseOptions } = this.baseOptions;
@@ -166,16 +162,8 @@ export class SessionManager {
 		const session = createEngineSession(sessionOptions);
 		const timestamp = this.now();
 
-		const contentAssets = this.useStaticContent
-			? { registries: this.registries, metadata: this.metadata }
-			: buildRegistriesFromBaseOptions(contentBaseOptions);
 		const { registries, metadata } = buildSessionAssets(
-			{
-				baseOptions: contentBaseOptions,
-				resourceOverrides: this.resourceOverrides,
-				baseRegistries: contentAssets.registries,
-				baseMetadata: contentAssets.metadata,
-			},
+			{ baseOptions: contentBaseOptions },
 			config,
 		);
 		const creationOptions: SessionCreationOptions = { contentId };
@@ -393,16 +381,8 @@ export class SessionManager {
 		}
 
 		const timestamp = this.now();
-		const restoredAssets = this.useStaticContent
-			? { registries: this.registries, metadata: this.metadata }
-			: buildRegistriesFromBaseOptions(contentBaseOptions);
 		const { registries, metadata } = buildSessionAssets(
-			{
-				baseOptions: contentBaseOptions,
-				resourceOverrides: this.resourceOverrides,
-				baseRegistries: restoredAssets.registries,
-				baseMetadata: restoredAssets.metadata,
-			},
+			{ baseOptions: contentBaseOptions },
 			restored.creationOptions.config,
 		);
 		const record: SessionRecord = {
