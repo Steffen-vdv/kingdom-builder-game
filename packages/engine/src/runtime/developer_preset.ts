@@ -158,6 +158,7 @@ function ensureActionTier(
 			poolLocked: false,
 			currentTier: 1,
 			exhausted: false,
+			usesThisTurn: 0,
 		};
 	}
 	const state = player.actionStates[actionId];

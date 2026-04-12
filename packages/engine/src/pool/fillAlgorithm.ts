@@ -257,8 +257,9 @@ export function createInitialActionState(
 	const startingTier = getStartingTier(action);
 	return {
 		locked: action.locked ?? false,
-		poolLocked: hasPool, // Pool-locked if meta-category has pool
+		poolLocked: hasPool,
 		currentTier: startingTier,
 		exhausted: false,
+		usesThisTurn: 0,
 	};
 }

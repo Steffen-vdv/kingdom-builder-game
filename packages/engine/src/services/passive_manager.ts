@@ -229,6 +229,30 @@ export class PassiveManager {
 		return this.passives.get(this.makeKey(id, owner));
 	}
 
+	/**
+	 * Decrements `turnsRemaining` on all passives belonging to
+	 * the active player. Removes passives that reach zero.
+	 */
+	tickPassiveDurations(context: EngineContext): void {
+		const owner = context.activePlayer.id;
+		const toRemove: string[] = [];
+		for (const [_key, record] of this.passives.entries()) {
+			if (record.owner !== owner) {
+				continue;
+			}
+			if (record.turnsRemaining === undefined) {
+				continue;
+			}
+			record.turnsRemaining -= 1;
+			if (record.turnsRemaining <= 0) {
+				toRemove.push(record.id);
+			}
+		}
+		for (const id of toRemove) {
+			this.removePassive(id, context);
+		}
+	}
+
 	clone(): PassiveManager {
 		const cloned = new PassiveManager();
 		cloned.costModifiers = this.costModifiers.clone();

@@ -121,6 +121,8 @@ export type {
 	WinConditionDefinition,
 	WinConditionDisplay,
 	WinConditionTrigger,
+	WinConditionTurnLimitTrigger,
+	WinConditionResourceTrigger,
 	WinConditionResult,
 	CorePhaseIds,
 	RuleSet,

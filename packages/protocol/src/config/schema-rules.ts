@@ -57,13 +57,24 @@ const winConditionDisplaySchema = z.object({
 	defeat: z.string().optional(),
 });
 
-const winConditionTriggerSchema = z.object({
+const winConditionResourceTriggerSchema = z.object({
 	type: z.literal('resource'),
 	resourceId: z.string(),
 	comparison: z.enum(['lt', 'lte', 'gt', 'gte']),
 	value: z.number(),
 	target: z.enum(['self', 'opponent']),
 });
+
+const winConditionTurnLimitTriggerSchema = z.object({
+	type: z.literal('turn-limit'),
+	maxTurns: z.number().int().min(1),
+	scoreResourceId: z.string(),
+});
+
+const winConditionTriggerSchema = z.discriminatedUnion('type', [
+	winConditionResourceTriggerSchema,
+	winConditionTurnLimitTriggerSchema,
+]);
 
 const winConditionDefinitionSchema = z.object({
 	id: z.string(),

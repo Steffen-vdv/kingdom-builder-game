@@ -16,7 +16,7 @@ import {
 	verifyCostAffordability,
 } from './costs';
 import { cloneEngineContext } from './context_clone';
-import { getStartingTier } from '../pool/fillAlgorithm';
+import { getStartingTier, getMaxTier } from '../pool/fillAlgorithm';
 
 /**
  * Validates that an action can be performed by a player.
@@ -48,6 +48,12 @@ function assertActionAvailable(
 		}
 		if (actionState.exhausted) {
 			throw new Error(`Action ${actionId} is exhausted`);
+		}
+		if (
+			actionDefinition.maxUsesPerTurn !== undefined &&
+			actionState.usesThisTurn >= actionDefinition.maxUsesPerTurn
+		) {
+			throw new Error(`Action ${actionId} has reached its per-turn limit`);
 		}
 	} else if (actionDefinition.locked) {
 		// No state but definition says locked - treat as locked
@@ -221,6 +227,19 @@ function executeAction<T extends string>(
 			passiveManager.runResultMods(actionDefinition.id, engineContext);
 		},
 	);
+	if (actionDefinition.oneTime) {
+		const actionState = engineContext.activePlayer.actionStates[actionId];
+		if (actionState) {
+			const maxTier = getMaxTier(actionDefinition);
+			if (actionState.currentTier >= maxTier) {
+				actionState.exhausted = true;
+			}
+		}
+	}
+	const postActionState = engineContext.activePlayer.actionStates[actionId];
+	if (postActionState) {
+		postActionState.usesThisTurn += 1;
+	}
 	const actionTraces = engineContext.actionTraces;
 	engineContext.actionTraces = [];
 	return actionTraces;

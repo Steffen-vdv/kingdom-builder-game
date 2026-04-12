@@ -78,6 +78,12 @@ const actionMetaCategoryPoolSchema = z.object({
 	size: z.number().int().min(1),
 	/** How to select actions for the pool */
 	fillMode: poolFillModeSchema,
+	/**
+	 * When set, randomly select this many candidates per
+	 * game from all registered pool actions. The rest are
+	 * permanently excluded for that session.
+	 */
+	candidatePoolSize: z.number().int().min(1).optional(),
 });
 
 export type ActionMetaCategoryPool = z.infer<
@@ -224,6 +230,11 @@ export const actionSchema = z.object({
 	 * need to run before players have any resources.
 	 */
 	free: z.boolean().optional(),
+	/**
+	 * Maximum number of times this action can be performed
+	 * per turn. Omit for unlimited.
+	 */
+	maxUsesPerTurn: z.number().int().min(1).optional(),
 });
 
 export type ActionConfig = z.infer<typeof actionSchema>;

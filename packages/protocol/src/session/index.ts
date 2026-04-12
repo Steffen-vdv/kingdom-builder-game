@@ -73,6 +73,8 @@ export interface SessionActionState {
 	currentTier: number;
 	/** True if oneTime and completed at max tier (permanently unavailable) */
 	exhausted: boolean;
+	/** Number of times this action has been used this turn */
+	usesThisTurn: number;
 }
 
 export interface SessionPlayerStateSnapshot {
