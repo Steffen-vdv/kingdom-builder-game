@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Button from '../components/common/Button';
 import { ShowcaseCard } from '../components/layouts/ShowcasePage';
 import { ModeCard } from './ModeCard';
 import { SpaceCard } from './SpaceCard';
 import { useContentPackages } from '../state/useContentPackages';
+import { useSoundEffectsContext } from '../state/SoundEffectsContext';
 import type { ResumeSessionRecord } from '../state/sessionResumeStorage';
 import type { ContentPackageMeta } from '@kingdom-builder/protocol';
 
@@ -38,18 +39,24 @@ const SECTION_LABEL_CLASS = [
 ].join(' ');
 
 const BACK_BUTTON_CLASS = [
-	'text-xs font-medium text-indigo-500',
-	'hover:text-indigo-600',
-	'dark:text-indigo-400',
-	'dark:hover:text-indigo-300',
+	'rounded-full px-4 py-1.5 text-xs font-semibold',
+	'border border-slate-200/60 bg-white/55',
+	'text-slate-600 transition',
+	'hover:border-slate-300 hover:bg-white/75',
+	'dark:border-white/10 dark:bg-white/5',
+	'dark:text-slate-300',
+	'dark:hover:border-white/20 dark:hover:bg-white/10',
 	'cursor-pointer',
 ].join(' ');
 
 interface SpaceGroup {
 	name: string;
 	icon: string;
+	accentColor: string;
 	packages: ContentPackageMeta[];
 }
+
+const DEFAULT_ACCENT = '#6366f1';
 
 function groupBySpace(packages: ContentPackageMeta[]): SpaceGroup[] {
 	const map = new Map<string, SpaceGroup>();
@@ -60,6 +67,7 @@ function groupBySpace(packages: ContentPackageMeta[]): SpaceGroup[] {
 			group = {
 				name: spaceName,
 				icon: pkg.icon ?? '🎮',
+				accentColor: pkg.accentColor ?? DEFAULT_ACCENT,
 				packages: [],
 			};
 			map.set(spaceName, group);
@@ -82,8 +90,14 @@ export function CallToActionSection({
 	onContinue,
 	onOpenSettings,
 }: CallToActionProps) {
-	const { packages, defaultContentId } = useContentPackages();
+	const { packages } = useContentPackages();
 	const [selectedSpace, setSelectedSpace] = useState<string | null>(null);
+	const { playUiClick } = useSoundEffectsContext();
+
+	const handleBack = useCallback(() => {
+		playUiClick();
+		setSelectedSpace(null);
+	}, [playUiClick]);
 
 	const spaces = useMemo(() => groupBySpace(packages), [packages]);
 
@@ -144,6 +158,7 @@ export function CallToActionSection({
 								key={space.name}
 								name={space.name}
 								icon={space.icon}
+								accentColor={space.accentColor}
 								modeCount={space.packages.length}
 								onSelect={() => setSelectedSpace(space.name)}
 							/>
@@ -155,21 +170,20 @@ export function CallToActionSection({
 			{activeSpace ? (
 				<div className="flex flex-col gap-3">
 					<div className="flex items-center justify-between">
-						<span className={SECTION_LABEL_CLASS}>Game Modes</span>
 						<button
 							type="button"
 							className={BACK_BUTTON_CLASS}
-							onClick={() => setSelectedSpace(null)}
+							onClick={handleBack}
 						>
 							&larr; Back
 						</button>
+						<span className={SECTION_LABEL_CLASS}>Game Modes</span>
 					</div>
 					<div className={GRID_CLASS}>
 						{activeSpace.packages.map((pkg) => (
 							<ModeCard
 								key={pkg.id}
 								pkg={pkg}
-								isDefault={pkg.id === defaultContentId}
 								onSelect={() => onStartGame(pkg.id)}
 							/>
 						))}

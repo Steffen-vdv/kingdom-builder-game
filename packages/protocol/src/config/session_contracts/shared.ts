@@ -181,6 +181,9 @@ const contentPackageMetaSchema = z.object({
 	description: z.string().optional(),
 	icon: z.string().optional(),
 	space: z.string().optional(),
+	accentColor: z.string().optional(),
+	tagline: z.string().optional(),
+	badge: z.string().optional(),
 });
 
 export const runtimeConfigResponseSchema = z

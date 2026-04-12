@@ -26,6 +26,12 @@ export interface ContentPackageMetaEntry {
 	readonly description: string;
 	readonly icon: string;
 	readonly space: string;
+	/** CSS hex color used as the accent theme for this mode. */
+	readonly accentColor: string;
+	/** Short catchy phrase shown beneath the mode name. */
+	readonly tagline: string;
+	/** Compact badge label (e.g. "Classic", "Sandbox"). */
+	readonly badge: string;
 }
 
 export const CONTENT_PACKAGE_META: readonly ContentPackageMetaEntry[] = [
@@ -35,6 +41,9 @@ export const CONTENT_PACKAGE_META: readonly ContentPackageMetaEntry[] = [
 		description: 'The full Kingdom Builder experience.',
 		icon: '🏰',
 		space: 'Kingdom Builder',
+		accentColor: '#b45309',
+		tagline: 'Build. Expand. Conquer.',
+		badge: 'Classic',
 	},
 	{
 		id: 'kingdom-builder:dev-mode',
@@ -42,6 +51,9 @@ export const CONTENT_PACKAGE_META: readonly ContentPackageMetaEntry[] = [
 		description: 'Abundant starting resources for testing.',
 		icon: '🧪',
 		space: 'Kingdom Builder',
+		accentColor: '#7c3aed',
+		tagline: 'Unlimited resources, unlimited chaos.',
+		badge: 'Sandbox',
 	},
 	{
 		id: 'kingdom-builder:tutorial',
@@ -49,6 +61,9 @@ export const CONTENT_PACKAGE_META: readonly ContentPackageMetaEntry[] = [
 		description: 'Learn the basics with simplified gameplay.',
 		icon: '📘',
 		space: 'Kingdom Builder',
+		accentColor: '#0891b2',
+		tagline: 'Learn the ropes, claim the throne.',
+		badge: 'Learn',
 	},
 	{
 		id: 'byte-sized-empire:base',
@@ -56,6 +71,9 @@ export const CONTENT_PACKAGE_META: readonly ContentPackageMetaEntry[] = [
 		description: 'Score-based engine-builder over 30 turns.',
 		icon: '⭐',
 		space: 'Byte-Sized Empire',
+		accentColor: '#0284c7',
+		tagline: 'Think fast. Score big.',
+		badge: 'Quick Play',
 	},
 ];
 

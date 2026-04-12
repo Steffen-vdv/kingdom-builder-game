@@ -104,6 +104,9 @@ export interface ContentPackageMeta {
 	readonly description?: string;
 	readonly icon?: string;
 	readonly space?: string;
+	readonly accentColor?: string;
+	readonly tagline?: string;
+	readonly badge?: string;
 }
 
 export interface SessionRuntimeConfigResponse {
