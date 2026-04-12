@@ -6,6 +6,12 @@ import type { EffectDef } from '../effects';
 import type { PlayerState, ResourceKey } from '../state';
 import type { PassiveMetadata } from '../services';
 
+function resetPerTurnActionUses(player: PlayerState): void {
+	for (const state of Object.values(player.actionStates)) {
+		state.usesThisTurn = 0;
+	}
+}
+
 export interface AdvanceSkipSource {
 	id: string;
 	detail?: string;
@@ -166,6 +172,7 @@ function moveToNext(engineContext: EngineContext, skipPhase: boolean): void {
 			} else {
 				engineContext.game.currentPlayerIndex += 1;
 			}
+			resetPerTurnActionUses(engineContext.game.active);
 		}
 	}
 	const nextPhaseIndex = engineContext.game.phaseIndex;

@@ -224,6 +224,11 @@ export const actionSchema = z.object({
 	 * need to run before players have any resources.
 	 */
 	free: z.boolean().optional(),
+	/**
+	 * Maximum number of times this action can be performed
+	 * per turn. Omit for unlimited.
+	 */
+	maxUsesPerTurn: z.number().int().min(1).optional(),
 });
 
 export type ActionConfig = z.infer<typeof actionSchema>;
