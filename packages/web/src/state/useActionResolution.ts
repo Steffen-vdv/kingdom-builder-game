@@ -124,7 +124,18 @@ function useActionResolution({
 			}
 			const entries = filteredEntries;
 			if (!entries.length) {
-				setResolution(null);
+				const resolvedEmptySource: ResolutionSource =
+					source ?? (action ? 'action' : 'phase');
+				const preserveExisting =
+					isPhaseSourceDetail(resolvedEmptySource) &&
+					shouldAppendPhaseResolution(
+						resolutionRef.current,
+						resolvedEmptySource,
+						requireAcknowledgement,
+					);
+				if (!preserveExisting) {
+					setResolution(null);
+				}
 				return Promise.resolve();
 			}
 			const resolvedTimelineEntries =
