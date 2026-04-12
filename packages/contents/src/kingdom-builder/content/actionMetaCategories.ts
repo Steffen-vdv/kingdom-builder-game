@@ -10,8 +10,7 @@
  */
 import { Registry } from '@kingdom-builder/protocol';
 import { actionMetaCategory, type ActionMetaCategoryConfig, pool, tierProgressionCurve, tierWeights } from '../../infrastructure/builders';
-import { MetaCategory, ActionCategory } from './constants';
-import { Resource } from './constants';
+import { MetaCategory, ActionCategory, Resource } from './constants';
 
 export { MetaCategory } from './constants';
 export type { MetaCategoryValue } from './constants';
