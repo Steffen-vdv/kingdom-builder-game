@@ -3,27 +3,22 @@ import { advance } from '../../src/index.ts';
 import { createPhaseTestEnvironment } from './fixtures.ts';
 
 describe('Growth phase', () => {
-	it('triggers population and development effects', () => {
-		const { engineContext, ids, roles, resources, values } =
+	it('triggers income and strength effects (AP is granted in Upkeep)', () => {
+		const { engineContext, ids, resources, values } =
 			createPhaseTestEnvironment();
 		const player = engineContext.activePlayer;
-		// resources.ap IS the Resource ID directly
 		const apBefore = player.resourceValues[resources.ap] ?? 0;
 		const goldBefore = player.resourceValues[resources.gold] ?? 0;
 		while (engineContext.game.currentPhase === ids.phases.growth) {
 			advance(engineContext);
 		}
-		// roles.council IS the Resource ID directly
-		const councils = player.resourceValues[roles.council] ?? 0;
-		expect(player.resourceValues[resources.ap]).toBe(
-			apBefore + values.councilApGain * councils,
-		);
 		expect(player.resourceValues[resources.gold]).toBe(
 			goldBefore + values.farmIncome,
 		);
+		expect(player.resourceValues[resources.ap]).toBe(apBefore);
 	});
 
-	it('applies player B compensation at start and not during growth', () => {
+	it('applies player B compensation at start and not during AP gain', () => {
 		const { engineContext, phases, ids, roles, resources, values } =
 			createPhaseTestEnvironment();
 		const baseAp = values.baseAp;
@@ -33,17 +28,17 @@ describe('Growth phase', () => {
 		expect(playerA.resourceValues[resources.ap]).toBe(baseAp);
 		expect(playerB.resourceValues[resources.ap]).toBe(baseAp + comp);
 
-		const growthPhaseIndex = phases.findIndex(
-			(phase) => phase.id === ids.phases.growth,
+		const upkeepPhaseIndex = phases.findIndex(
+			(phase) => phase.id === ids.phases.upkeep,
 		);
-		const gainApIdx = phases[growthPhaseIndex]!.steps.findIndex(
+		const gainApIdx = phases[upkeepPhaseIndex]!.steps.findIndex(
 			(step) => step.id === ids.steps.gainAp,
 		);
 
 		engineContext.game.currentPlayerIndex = 0;
-		engineContext.game.phaseIndex = growthPhaseIndex;
+		engineContext.game.phaseIndex = upkeepPhaseIndex;
 		engineContext.game.stepIndex = gainApIdx;
-		engineContext.game.currentPhase = ids.phases.growth;
+		engineContext.game.currentPhase = ids.phases.upkeep;
 		engineContext.game.currentStep = ids.steps.gainAp;
 		playerA.resourceValues[resources.ap] = 0;
 		advance(engineContext);
@@ -53,9 +48,9 @@ describe('Growth phase', () => {
 		);
 
 		engineContext.game.currentPlayerIndex = 1;
-		engineContext.game.phaseIndex = growthPhaseIndex;
+		engineContext.game.phaseIndex = upkeepPhaseIndex;
 		engineContext.game.stepIndex = gainApIdx;
-		engineContext.game.currentPhase = ids.phases.growth;
+		engineContext.game.currentPhase = ids.phases.upkeep;
 		engineContext.game.currentStep = ids.steps.gainAp;
 		playerB.resourceValues[resources.ap] = 0;
 		advance(engineContext);
@@ -66,9 +61,9 @@ describe('Growth phase', () => {
 
 		for (let iterationIndex = 0; iterationIndex < 3; iterationIndex++) {
 			engineContext.game.currentPlayerIndex = 1;
-			engineContext.game.phaseIndex = growthPhaseIndex;
+			engineContext.game.phaseIndex = upkeepPhaseIndex;
 			engineContext.game.stepIndex = gainApIdx;
-			engineContext.game.currentPhase = ids.phases.growth;
+			engineContext.game.currentPhase = ids.phases.upkeep;
 			engineContext.game.currentStep = ids.steps.gainAp;
 			playerB.resourceValues[resources.ap] = 0;
 			advance(engineContext);

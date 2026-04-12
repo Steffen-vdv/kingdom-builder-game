@@ -116,7 +116,7 @@ describe('dev mode start configuration', () => {
 			DEV_MODE_RESOURCES.get(fortifierId),
 		);
 		expect(opponent.values[castleId]).toBe(DEV_MODE_RESOURCES.get(castleId));
-		// CP starts at 0; it is granted during the Growth phase by Council members
+		// CP starts at 0; it is granted during the Upkeep phase by Council members
 		expect(player.values[cpId]).toBe(0);
 		expect(player.resourceBounds[goldId]?.lowerBound).toBe(0);
 		expect(snapshot.game.resourceCatalog.resources.byId[goldId]).toBeDefined();

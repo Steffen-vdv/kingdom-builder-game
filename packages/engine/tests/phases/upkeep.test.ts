@@ -77,6 +77,29 @@ describe('Upkeep phase', () => {
 		expect(engineContext.activePlayer.resourceValues[stats.war]).toBe(1);
 	});
 
+	it('grants AP based on council count', () => {
+		const { engineContext, phases, ids, roles, resources, values } =
+			createPhaseTestEnvironment();
+		const upkeepIndex = phases.findIndex(
+			(phase) => phase.id === ids.phases.upkeep,
+		);
+		const gainApIndex = phases[upkeepIndex]!.steps.findIndex(
+			(step) => step.id === ids.steps.gainAp,
+		);
+		engineContext.game.phaseIndex = upkeepIndex;
+		engineContext.game.currentPhase = ids.phases.upkeep;
+		engineContext.game.stepIndex = gainApIndex;
+		engineContext.game.currentStep = ids.steps.gainAp;
+		const councils =
+			engineContext.activePlayer.resourceValues[roles.council] ?? 0;
+		engineContext.activePlayer.resourceValues[resources.ap] = 0;
+		advance(engineContext);
+		engineContext.game.currentPlayerIndex = 0;
+		expect(engineContext.activePlayer.resourceValues[resources.ap]).toBe(
+			values.councilApGain * councils,
+		);
+	});
+
 	it('does not drop war weariness below zero', () => {
 		const { engineContext, phases, ids, stats } = createPhaseTestEnvironment();
 		const upkeepIndex = phases.findIndex(

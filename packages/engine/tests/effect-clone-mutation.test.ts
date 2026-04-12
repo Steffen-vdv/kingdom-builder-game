@@ -197,19 +197,19 @@ describe('Cross-Execution Isolation', () => {
 		player.resourceValues[Resource.council] = 5;
 		player.resourceValues[Resource.cp] = 0;
 
-		// Position at gain AP step
-		const growthPhaseIndex = PHASES.findIndex(
-			(phase) => phase.id === PhaseId.Growth,
+		// Position at gain AP step (now in Upkeep phase)
+		const upkeepPhaseIndex = PHASES.findIndex(
+			(phase) => phase.id === PhaseId.Upkeep,
 		);
-		const growthPhase = PHASES[growthPhaseIndex]!;
-		const gainApStepIndex = growthPhase.steps.findIndex((step) =>
+		const upkeepPhase = PHASES[upkeepPhaseIndex]!;
+		const gainApStepIndex = upkeepPhase.steps.findIndex((step) =>
 			step.triggers?.includes('onGainAPStep'),
 		);
 
-		engine.game.phaseIndex = growthPhaseIndex;
+		engine.game.phaseIndex = upkeepPhaseIndex;
 		engine.game.stepIndex = gainApStepIndex;
-		engine.game.currentPhase = PhaseId.Growth;
-		engine.game.currentStep = growthPhase.steps[gainApStepIndex]?.id ?? '';
+		engine.game.currentPhase = PhaseId.Upkeep;
+		engine.game.currentStep = upkeepPhase.steps[gainApStepIndex]?.id ?? '';
 
 		advance(engine);
 
@@ -234,19 +234,19 @@ describe('Cross-Execution Isolation', () => {
 			player.resourceValues[Resource.council] = 3;
 			player.resourceValues[Resource.cp] = 0;
 
-			// Position at gain AP step
-			const growthPhaseIndex = PHASES.findIndex(
-				(phase) => phase.id === PhaseId.Growth,
+			// Position at gain AP step (now in Upkeep phase)
+			const upkeepPhaseIndex = PHASES.findIndex(
+				(phase) => phase.id === PhaseId.Upkeep,
 			);
-			const growthPhase = PHASES[growthPhaseIndex]!;
-			const gainApStepIndex = growthPhase.steps.findIndex((s) =>
+			const upkeepPhase = PHASES[upkeepPhaseIndex]!;
+			const gainApStepIndex = upkeepPhase.steps.findIndex((s) =>
 				s.triggers?.includes('onGainAPStep'),
 			);
 
-			engine.game.phaseIndex = growthPhaseIndex;
+			engine.game.phaseIndex = upkeepPhaseIndex;
 			engine.game.stepIndex = gainApStepIndex;
-			engine.game.currentPhase = PhaseId.Growth;
-			engine.game.currentStep = growthPhase.steps[gainApStepIndex]?.id ?? '';
+			engine.game.currentPhase = PhaseId.Upkeep;
+			engine.game.currentStep = upkeepPhase.steps[gainApStepIndex]?.id ?? '';
 
 			advance(engine);
 

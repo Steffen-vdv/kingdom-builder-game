@@ -149,7 +149,7 @@ describe('Trigger Effect Scaling', () => {
 					player.resourceValues[Resource.council] = councilCount;
 					player.resourceValues[Resource.cp] = 0;
 
-					positionAtStep(engine, PhaseId.Growth, 'onGainAPStep');
+					positionAtStep(engine, PhaseId.Upkeep, 'onGainAPStep');
 					advance(engine);
 
 					const apGained = player.resourceValues[Resource.cp];
@@ -172,14 +172,14 @@ describe('Trigger Effect Scaling', () => {
 			const engine5 = createMinimalEngine();
 			engine5.activePlayer.resourceValues[Resource.council] = 5;
 			engine5.activePlayer.resourceValues[Resource.cp] = 0;
-			positionAtStep(engine5, PhaseId.Growth, 'onGainAPStep');
+			positionAtStep(engine5, PhaseId.Upkeep, 'onGainAPStep');
 			advance(engine5);
 			const ap5 = engine5.activePlayer.resourceValues[Resource.cp];
 
 			const engine10 = createMinimalEngine();
 			engine10.activePlayer.resourceValues[Resource.council] = 10;
 			engine10.activePlayer.resourceValues[Resource.cp] = 0;
-			positionAtStep(engine10, PhaseId.Growth, 'onGainAPStep');
+			positionAtStep(engine10, PhaseId.Upkeep, 'onGainAPStep');
 			advance(engine10);
 			const ap10 = engine10.activePlayer.resourceValues[Resource.cp];
 
@@ -452,7 +452,7 @@ describe('Combinatorial Scaling', () => {
 					player.resourceValues[Resource.gold] = 100;
 
 					// Test AP gain (should only count councils)
-					positionAtStep(engine, PhaseId.Growth, 'onGainAPStep');
+					positionAtStep(engine, PhaseId.Upkeep, 'onGainAPStep');
 					advance(engine);
 
 					const apGained = player.resourceValues[Resource.cp];

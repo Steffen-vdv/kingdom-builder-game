@@ -226,23 +226,23 @@ describe('Linear Scaling Through Stack', () => {
 				ctx.activePlayer.resourceValues[Resource.council] = councilCount;
 				ctx.activePlayer.resourceValues[Resource.cp] = 0;
 
-				// Position at AP gain step
-				const growthIndex = PHASES.findIndex(
-					(phase) => phase.id === PhaseId.Growth,
+				// Position at AP gain step (in Upkeep phase)
+				const upkeepIndex = PHASES.findIndex(
+					(phase) => phase.id === PhaseId.Upkeep,
 				);
-				const growthPhase = PHASES[growthIndex];
-				if (!growthPhase) {
-					throw new Error('Growth phase not found');
+				const upkeepPhase = PHASES[upkeepIndex];
+				if (!upkeepPhase) {
+					throw new Error('Upkeep phase not found');
 				}
 
-				const apStepIndex = growthPhase.steps.findIndex((step) =>
+				const apStepIndex = upkeepPhase.steps.findIndex((step) =>
 					step.triggers?.includes('onGainAPStep'),
 				);
 
-				ctx.game.phaseIndex = growthIndex;
+				ctx.game.phaseIndex = upkeepIndex;
 				ctx.game.stepIndex = apStepIndex;
-				ctx.game.currentPhase = PhaseId.Growth;
-				ctx.game.currentStep = growthPhase.steps[apStepIndex]?.id ?? '';
+				ctx.game.currentPhase = PhaseId.Upkeep;
+				ctx.game.currentStep = upkeepPhase.steps[apStepIndex]?.id ?? '';
 
 				// Advance through the step
 				advance(ctx);
