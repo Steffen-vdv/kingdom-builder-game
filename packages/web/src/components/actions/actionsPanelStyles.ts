@@ -136,6 +136,38 @@ export const POOL_STATUS_CLASS_NAMES = [
 	'dark:text-slate-400',
 ] as const;
 
+// Exhausted badge for one-time actions that are spent
+export const EXHAUSTED_BADGE_CLASS_NAMES = [
+	'inline-flex',
+	'items-center',
+	'gap-0.5',
+	'rounded',
+	'bg-rose-100',
+	'px-1.5',
+	'py-0.5',
+	'text-xs',
+	'font-medium',
+	'text-rose-700',
+	'dark:bg-rose-900/40',
+	'dark:text-rose-300',
+] as const;
+
+// Per-turn usage counter badge
+export const USES_BADGE_CLASS_NAMES = [
+	'inline-flex',
+	'items-center',
+	'gap-0.5',
+	'rounded',
+	'bg-sky-100',
+	'px-1.5',
+	'py-0.5',
+	'text-xs',
+	'font-medium',
+	'text-sky-700',
+	'dark:bg-sky-900/40',
+	'dark:text-sky-300',
+] as const;
+
 // Tier indicator badge for multi-tier actions
 export const TIER_BADGE_CLASS_NAMES = [
 	'inline-flex',
@@ -170,3 +202,7 @@ export const POOL_SLOT_EMPTY_CLASSES = joinClassNames(
 );
 export const POOL_STATUS_CLASSES = joinClassNames(POOL_STATUS_CLASS_NAMES);
 export const TIER_BADGE_CLASSES = joinClassNames(TIER_BADGE_CLASS_NAMES);
+export const EXHAUSTED_BADGE_CLASSES = joinClassNames(
+	EXHAUSTED_BADGE_CLASS_NAMES,
+);
+export const USES_BADGE_CLASSES = joinClassNames(USES_BADGE_CLASS_NAMES);

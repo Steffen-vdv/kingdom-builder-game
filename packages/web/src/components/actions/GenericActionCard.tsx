@@ -89,6 +89,18 @@ function GenericActionCard({
 		() => isBuildingAlreadyOwned(actionConfig, player.buildings),
 		[actionConfig, player.buildings],
 	);
+	const actionState = player.actionStates[action.id];
+	const isExhausted = actionState?.exhausted ?? false;
+	const maxUsesPerTurn = actionConfig?.maxUsesPerTurn;
+	const usesInfo = useMemo(() => {
+		if (maxUsesPerTurn === undefined || !actionState) {
+			return undefined;
+		}
+		return {
+			used: actionState.usesThisTurn,
+			max: maxUsesPerTurn,
+		};
+	}, [maxUsesPerTurn, actionState]);
 	const { costs, cleanup: cleanupCosts } = availability;
 	const costsLoading = metadata.loading.costs;
 	const requirementsLoading = metadata.loading.requirements;
@@ -108,7 +120,12 @@ function GenericActionCard({
 	const requirementIcons = getRequirementIcons(action.id, translationContext);
 	const groups = metadata.groups ?? [];
 	const groupsReady = !groupsLoading;
-	const baseEnabled = availability.performable && !buildingAlreadyOwned;
+	const atUsageLimit = usesInfo !== undefined && usesInfo.used >= usesInfo.max;
+	const baseEnabled =
+		availability.performable &&
+		!buildingAlreadyOwned &&
+		!isExhausted &&
+		!atUsageLimit;
 	const isPending = pending?.action.id === action.id;
 	let cardEnabled = baseEnabled && !pending;
 	if (isPending) {
@@ -120,6 +137,12 @@ function GenericActionCard({
 	const requirementText = requirements.join(', ');
 
 	const resolveTooltip = (): string | undefined => {
+		if (isExhausted) {
+			return 'This action is exhausted';
+		}
+		if (atUsageLimit) {
+			return 'Per-turn usage limit reached';
+		}
 		if (!availability.implemented) {
 			return 'Not implemented yet';
 		}
@@ -239,6 +262,8 @@ function GenericActionCard({
 			onCancel={isPending ? cancelPending : undefined}
 			currentTier={action.currentTier}
 			maxTier={action.maxTier}
+			exhausted={isExhausted}
+			usesInfo={usesInfo}
 			onClick={() => {
 				if (!canInteract || !baseEnabled) {
 					return;
