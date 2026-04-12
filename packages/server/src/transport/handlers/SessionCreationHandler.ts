@@ -4,6 +4,7 @@ import {
 } from '@boardsmith/protocol';
 import type {
 	SessionCreateResponse,
+	SessionPlayerId,
 	SessionSnapshot,
 	SessionStateResponse,
 } from '@boardsmith/protocol';
@@ -74,13 +75,20 @@ export class SessionCreationHandler {
 			if (data.config !== undefined) {
 				options.config = data.config;
 			}
+			const playerNames: Partial<Record<SessionPlayerId, string>> | undefined =
+				sanitizedEntries?.length
+					? (Object.fromEntries(sanitizedEntries) as Partial<
+							Record<SessionPlayerId, string>
+						>)
+					: undefined;
 			const session = await this.sessionManager.createSession(
 				sessionId,
 				options,
+				playerNames,
 			);
-			if (sanitizedEntries && sanitizedEntries.length > 0) {
-				for (const [playerId, sanitizedName] of sanitizedEntries) {
-					session.updatePlayerName(playerId, sanitizedName);
+			if (sanitizedEntries) {
+				for (const [playerId, name] of sanitizedEntries) {
+					session.updatePlayerName(playerId, name);
 				}
 			}
 		} catch (error) {
