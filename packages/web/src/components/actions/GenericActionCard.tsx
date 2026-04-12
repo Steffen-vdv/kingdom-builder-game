@@ -89,7 +89,7 @@ function GenericActionCard({
 		() => isBuildingAlreadyOwned(actionConfig, player.buildings),
 		[actionConfig, player.buildings],
 	);
-	const actionState = player.actionStates[action.id];
+	const actionState = player.actionStates?.[action.id];
 	const isExhausted = actionState?.exhausted ?? false;
 	const maxUsesPerTurn = actionConfig?.maxUsesPerTurn;
 	const usesInfo = useMemo(() => {
