@@ -12,6 +12,7 @@ import { loadContentPackage, DEFAULT_CONTENT_ID } from '@boardsmith/contents';
 import type { SessionStaticMetadataPayload } from './buildSessionMetadata.js';
 import {
 	buildSessionAssets,
+	buildRegistriesFromBaseOptions,
 	type SessionBaseOptions,
 	type SessionResourceRegistry,
 } from './sessionConfigAssets.js';
@@ -165,12 +166,15 @@ export class SessionManager {
 		const session = createEngineSession(sessionOptions);
 		const timestamp = this.now();
 
+		const contentAssets = this.useStaticContent
+			? { registries: this.registries, metadata: this.metadata }
+			: buildRegistriesFromBaseOptions(contentBaseOptions);
 		const { registries, metadata } = buildSessionAssets(
 			{
 				baseOptions: contentBaseOptions,
 				resourceOverrides: this.resourceOverrides,
-				baseRegistries: this.registries,
-				baseMetadata: this.metadata,
+				baseRegistries: contentAssets.registries,
+				baseMetadata: contentAssets.metadata,
 			},
 			config,
 		);
@@ -389,12 +393,15 @@ export class SessionManager {
 		}
 
 		const timestamp = this.now();
+		const restoredAssets = this.useStaticContent
+			? { registries: this.registries, metadata: this.metadata }
+			: buildRegistriesFromBaseOptions(contentBaseOptions);
 		const { registries, metadata } = buildSessionAssets(
 			{
 				baseOptions: contentBaseOptions,
 				resourceOverrides: this.resourceOverrides,
-				baseRegistries: this.registries,
-				baseMetadata: this.metadata,
+				baseRegistries: restoredAssets.registries,
+				baseMetadata: restoredAssets.metadata,
 			},
 			restored.creationOptions.config,
 		);
