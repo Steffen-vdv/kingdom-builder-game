@@ -49,7 +49,6 @@ describe('SessionTransport createSession', () => {
 		});
 		const response = await transport.createSession({
 			body: {
-				devMode: true,
 				playerNames: { A: 'Alpha', B: 'Beta' },
 			},
 			headers: authorizedHeaders,
@@ -57,7 +56,6 @@ describe('SessionTransport createSession', () => {
 		expect(response.sessionId).toBe('transport-session');
 		expectSnapshotMetadata(response.snapshot.metadata);
 		expectDescriptorMetadata(response.snapshot.metadata);
-		expect(response.snapshot.game.devMode).toBe(true);
 		expectStaticMetadata(manager.getMetadata());
 		const [playerA, playerB] = response.snapshot.game.players;
 		expect(playerA?.name).toBe('Alpha');
@@ -243,7 +241,7 @@ describe('SessionTransport createSession', () => {
 		// Invalid body type
 		await expect(
 			transport.createSession({
-				body: { devMode: 'not-a-boolean' },
+				body: { playerNames: 123 },
 				headers: authorizedHeaders,
 			}),
 		).rejects.toThrow(TransportError);

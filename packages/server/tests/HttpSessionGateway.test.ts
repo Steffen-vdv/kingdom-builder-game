@@ -48,27 +48,23 @@ describe('HttpSessionGateway', () => {
 	}
 
 	it('creates sessions through the REST transport', async () => {
-		const fetch = vi.fn(
-			async (input: RequestInfo | URL, init?: RequestInit) => {
-				const request =
-					input instanceof Request ? input : new Request(input, init);
-				expect(request.method).toBe('POST');
-				expect(new URL(request.url).pathname).toBe('/api/sessions');
-				const payload = await request.clone().json();
-				expect(payload).toEqual({ devMode: true });
-				expect(request.headers.get('authorization')).toBe('Bearer token');
-				return jsonResponse(
-					{
-						sessionId: 'rest-session',
-						snapshot: { game: { devMode: true } },
-						registries: createRegistries(),
-					},
-					{ status: 201 },
-				);
-			},
-		);
+		const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+			const request =
+				input instanceof Request ? input : new Request(input, init);
+			expect(request.method).toBe('POST');
+			expect(new URL(request.url).pathname).toBe('/api/sessions');
+			expect(request.headers.get('authorization')).toBe('Bearer token');
+			return jsonResponse(
+				{
+					sessionId: 'rest-session',
+					snapshot: { game: {} },
+					registries: createRegistries(),
+				},
+				{ status: 201 },
+			);
+		});
 		const gateway = createGateway({ fetch });
-		const response = await gateway.createSession({ devMode: true });
+		const response = await gateway.createSession();
 		expect(response.sessionId).toBe('rest-session');
 		expect(response.registries.actionCategories).toEqual(
 			createRegistries().actionCategories,
@@ -196,35 +192,6 @@ describe('HttpSessionGateway', () => {
 		});
 		expect(result.status).toBe('error');
 		expect(fetch).toHaveBeenCalledTimes(1);
-	});
-
-	it('updates developer mode using the REST endpoint', async () => {
-		const fetch = vi.fn(
-			async (input: RequestInfo | URL, init?: RequestInit) => {
-				const request =
-					input instanceof Request ? input : new Request(input, init);
-				expect(request.method).toBe('POST');
-				expect(new URL(request.url).pathname).toBe(
-					'/api/sessions/test/dev-mode',
-				);
-				const payload = await request.clone().json();
-				expect(payload).toEqual({ enabled: true });
-				return jsonResponse({
-					sessionId: 'test',
-					snapshot: { game: { devMode: true } },
-					registries: createRegistries(),
-				});
-			},
-		);
-		const gateway = createGateway({ fetch });
-		const response = await gateway.setDevMode({
-			sessionId: 'test',
-			enabled: true,
-		});
-		expect(response.snapshot.game.devMode).toBe(true);
-		expect(response.registries.actionCategories).toEqual(
-			createRegistries().actionCategories,
-		);
 	});
 
 	it('fetches action costs through the REST endpoint', async () => {

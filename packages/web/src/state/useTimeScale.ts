@@ -29,10 +29,6 @@ function readStoredTimeScale(): TimeScale | null {
 	}
 }
 
-interface UseTimeScaleOptions {
-	devMode: boolean;
-}
-
 export interface TimeScaleControls {
 	timeScale: TimeScale;
 	setTimeScale: (value: TimeScale) => void;
@@ -44,32 +40,14 @@ export interface TimeScaleControls {
 	timeScaleRef: MutableRefObject<TimeScale>;
 }
 
-export function useTimeScale({
-	devMode,
-}: UseTimeScaleOptions): TimeScaleControls {
+export function useTimeScale(): TimeScaleControls {
 	const timeScaleRef = useRef<TimeScale>(1);
 	const [timeScale, setTimeScaleState] = useState<TimeScale>(() => {
-		if (devMode) {
-			timeScaleRef.current = 100;
-			return 100;
-		}
 		const stored = readStoredTimeScale();
 		const next = stored ?? 1;
 		timeScaleRef.current = next;
 		return next;
 	});
-
-	useEffect(() => {
-		if (devMode) {
-			timeScaleRef.current = 100;
-			setTimeScaleState(100);
-			return;
-		}
-		const stored = readStoredTimeScale();
-		const next = stored ?? 1;
-		timeScaleRef.current = next;
-		setTimeScaleState(next);
-	}, [devMode]);
 
 	const updateTimeScale = useCallback(
 		(value: TimeScale) => {

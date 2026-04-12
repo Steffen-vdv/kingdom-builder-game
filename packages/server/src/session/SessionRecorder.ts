@@ -60,17 +60,6 @@ export function recordPlayerNameChange(
 	persistUpdate(sessionId, record, persistence, entry);
 }
 
-export function recordDevModeChange(
-	sessionId: string,
-	record: SessionRecordWithLog,
-	persistence: SessionPersistence | undefined,
-	enabled: boolean,
-): void {
-	const entry: ActionLogEntry = { type: 'dev-mode', enabled };
-	record.actionLog.push(entry);
-	persistUpdate(sessionId, record, persistence, entry);
-}
-
 function persistUpdate(
 	sessionId: string,
 	record: SessionRecordWithLog,

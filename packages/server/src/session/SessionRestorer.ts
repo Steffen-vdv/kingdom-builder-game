@@ -77,7 +77,6 @@ export class SessionRestorer {
 	private async recreateSession(
 		persisted: PersistedSessionData,
 	): Promise<EngineSession> {
-		const devMode = persisted.creationOptions.devMode ?? false;
 		const { config, playerNames, contentId } = persisted.creationOptions;
 
 		let sessionOptions: EngineSessionOptions;
@@ -112,7 +111,6 @@ export class SessionRestorer {
 			sessionOptions.config = config;
 		}
 		const session = createEngineSession(sessionOptions);
-		session.setDevMode(devMode);
 		// Apply player names if they were set during creation
 		if (playerNames) {
 			for (const [playerId, name] of Object.entries(playerNames)) {
@@ -143,9 +141,6 @@ export class SessionRestorer {
 				break;
 			case 'player-name':
 				session.updatePlayerName(entry.playerId, entry.name);
-				break;
-			case 'dev-mode':
-				session.setDevMode(entry.enabled);
 				break;
 		}
 	}

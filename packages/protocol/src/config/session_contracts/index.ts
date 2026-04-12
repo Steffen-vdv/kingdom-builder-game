@@ -13,8 +13,6 @@ export {
 	sessionStateResponseSchema,
 	sessionAdvanceRequestSchema,
 	sessionAdvanceResponseSchema,
-	sessionSetDevModeRequestSchema,
-	sessionSetDevModeResponseSchema,
 	sessionUpdatePlayerNameRequestSchema,
 	sessionUpdatePlayerNameResponseSchema,
 } from './lifecycle';

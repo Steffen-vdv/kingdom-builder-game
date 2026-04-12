@@ -53,7 +53,6 @@ export interface SessionManagerOptions {
 export interface CreateSessionOptions {
 	/** Content package identifier (e.g., "kingdom-builder:base") */
 	contentId?: string;
-	devMode?: boolean;
 	config?: EngineSessionOptions['config'];
 }
 
@@ -122,7 +121,6 @@ export class SessionManager {
 			throw new Error('Maximum session count reached.');
 		}
 		const contentId = options.contentId ?? DEFAULT_CONTENT_ID;
-		const devMode = options.devMode ?? false;
 		const { config } = options;
 
 		let sessionOptions: EngineSessionOptions;
@@ -168,7 +166,6 @@ export class SessionManager {
 			sessionOptions.config = config;
 		}
 		const session = createEngineSession(sessionOptions);
-		session.setDevMode(devMode);
 		const timestamp = this.now();
 
 		const { registries, metadata } = buildSessionAssets(
@@ -180,7 +177,7 @@ export class SessionManager {
 			},
 			config,
 		);
-		const creationOptions: SessionCreationOptions = { devMode, contentId };
+		const creationOptions: SessionCreationOptions = { contentId };
 		if (config !== undefined) {
 			creationOptions.config = config;
 		}
@@ -286,16 +283,6 @@ export class SessionManager {
 			playerId,
 			name,
 		);
-	}
-
-	/** Records a dev mode change for persistence. */
-	public recordDevModeChange(sessionId: string, enabled: boolean): void {
-		const record = this.sessions.get(sessionId);
-		if (!record) {
-			return;
-		}
-		const recObj = this.makeRecorderObject(record);
-		recorder.recordDevModeChange(sessionId, recObj, this.persistence, enabled);
 	}
 
 	private makeRecorderObject(

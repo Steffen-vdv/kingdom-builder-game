@@ -166,7 +166,6 @@ export class GameState {
 	currentStep = '';
 	phaseIndex = 0;
 	stepIndex = 0;
-	devMode = false;
 	conclusion?: GameConclusion;
 	players: PlayerState[];
 	private _resourceCatalog!: RuntimeResourceCatalog;

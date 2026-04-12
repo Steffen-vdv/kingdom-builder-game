@@ -13,7 +13,6 @@ export interface GameProviderInnerProps {
 	onExit?: () => void;
 	darkMode: boolean;
 	onToggleDark: () => void;
-	devMode: boolean;
 	musicEnabled: boolean;
 	onToggleMusic: () => void;
 	soundEnabled: boolean;

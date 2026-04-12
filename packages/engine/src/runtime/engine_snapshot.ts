@@ -260,7 +260,6 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 			currentStep: context.game.currentStep,
 			phaseIndex: context.game.phaseIndex,
 			stepIndex: context.game.stepIndex,
-			devMode: context.game.devMode,
 			players: context.game.players.map((player) =>
 				snapshotPlayer(context, player),
 			),

@@ -1,7 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import {
-	sessionSetDevModeRequestSchema,
-	sessionSetDevModeResponseSchema,
 	sessionIdSchema,
 	sessionStateResponseSchema,
 	runtimeConfigResponseSchema,
@@ -11,7 +9,6 @@ import type {
 	ActionExecuteSuccessResponse,
 	SessionAdvanceResponse,
 	SessionCreateResponse,
-	SessionSetDevModeResponse,
 	SessionStateResponse,
 	SessionSnapshot,
 	SessionUpdatePlayerNameResponse,
@@ -127,35 +124,6 @@ export class SessionTransportBase {
 			request,
 			requireAuthorization: (role) => this.requireAuthorization(request, role),
 		});
-	}
-
-	public async setDevMode(
-		request: TransportRequest,
-	): Promise<SessionSetDevModeResponse> {
-		this.requireAuthorization(request, 'session:advance');
-		const parsed = sessionSetDevModeRequestSchema.safeParse(request.body);
-		if (!parsed.success) {
-			throw new TransportError(
-				'INVALID_REQUEST',
-				'Invalid session dev mode request.',
-				{ issues: parsed.error.issues },
-			);
-		}
-		const { sessionId, enabled } = parsed.data;
-		const session = await this.requireSession(sessionId);
-		session.setDevMode(enabled);
-		// Record the dev mode change for persistence
-		this.sessionManager.recordDevModeChange(sessionId, enabled);
-		const snapshot = await this.sessionManager.getSnapshot(sessionId);
-		if (!snapshot) {
-			throw new TransportError(
-				'NOT_FOUND',
-				`Session "${sessionId}" was not found.`,
-			);
-		}
-		return sessionSetDevModeResponseSchema.parse(
-			this.buildStateResponse(sessionId, snapshot),
-		);
 	}
 
 	public async updatePlayerName(

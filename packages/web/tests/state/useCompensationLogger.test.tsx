@@ -85,7 +85,6 @@ function createSessionState(
 			currentStep: 'step',
 			phaseIndex: 0,
 			stepIndex: 0,
-			devMode: false,
 			players: [playerA, playerB],
 			activePlayerId: 'A',
 			opponentId: 'B',

@@ -21,8 +21,6 @@ import type {
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 	SessionStateResponse,
-	SessionSetDevModeRequest,
-	SessionSetDevModeResponse,
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol/session';
@@ -37,7 +35,6 @@ type NextResponses = {
 	create?: SessionCreateResponse;
 	advance?: SessionAdvanceResponse;
 	action?: ActionExecuteResponse;
-	devMode?: SessionSetDevModeResponse;
 	updatePlayerName?: SessionUpdatePlayerNameResponse;
 	actionCost?: SessionActionCostResponse;
 	actionRequirements?: SessionActionRequirementResponse;
@@ -83,9 +80,6 @@ export class GameApiFake implements GameApi {
 	}
 	setNextMetadataSnapshotResponse(response: SessionMetadataSnapshotResponse) {
 		this.#primeNext('metadataSnapshot', response);
-	}
-	setNextSetDevModeResponse(response: SessionSetDevModeResponse) {
-		this.#primeNext('devMode', response);
 	}
 	setNextUpdatePlayerNameResponse(response: SessionUpdatePlayerNameResponse) {
 		this.#primeNext('updatePlayerName', response);
@@ -186,17 +180,6 @@ export class GameApiFake implements GameApi {
 			snapshot: clone(response.snapshot),
 			registries: clone(response.registries),
 		});
-		return Promise.resolve(clone(response));
-	}
-	setDevMode(
-		_request: SessionSetDevModeRequest,
-		_options: GameApiRequestOptions = {},
-	): Promise<SessionSetDevModeResponse> {
-		const response = this.#consumeNext(
-			'devMode',
-			'No set dev mode response primed.',
-		);
-		this.#sessions.set(response.sessionId, clone(response));
 		return Promise.resolve(clone(response));
 	}
 	updatePlayerName(

@@ -18,8 +18,6 @@ import type {
 	SessionRunAiResponse,
 	SessionSimulateRequest,
 	SessionSimulateResponse,
-	SessionSetDevModeRequest,
-	SessionSetDevModeResponse,
 	SessionStateResponse,
 } from './contracts';
 
@@ -41,7 +39,4 @@ export interface SessionGateway {
 	simulateUpcomingPhases(
 		request: SessionSimulateRequest,
 	): Promise<SessionSimulateResponse>;
-	setDevMode(
-		request: SessionSetDevModeRequest,
-	): Promise<SessionSetDevModeResponse>;
 }

@@ -63,7 +63,6 @@ describe('useAppNavigation', () => {
 		const resumeRecord: ResumeSessionRecord = {
 			sessionId: 'resume-session',
 			turn: 5,
-			devMode: true,
 			updatedAt: Date.UTC(2024, 0, 1),
 		};
 		writeStoredResumeSession(resumeRecord);
@@ -78,7 +77,6 @@ describe('useAppNavigation', () => {
 		const resumeRecord: ResumeSessionRecord = {
 			sessionId: 'resume-session-new',
 			turn: 7,
-			devMode: false,
 			updatedAt: Date.UTC(2024, 0, 2),
 		};
 		writeStoredResumeSession(resumeRecord);
@@ -98,7 +96,6 @@ describe('useAppNavigation', () => {
 		const resumeRecord: ResumeSessionRecord = {
 			sessionId: 'resume-session-dev',
 			turn: 11,
-			devMode: true,
 			updatedAt: Date.UTC(2024, 0, 3),
 		};
 		writeStoredResumeSession(resumeRecord);
@@ -179,26 +176,12 @@ describe('useAppNavigation', () => {
 		secondRender.unmount();
 	});
 
-	it('enables gameplay preferences when starting a developer game', async () => {
-		const { result, unmount } = await renderNavigationHook();
-
-		act(() => {
-			result.current.startGameWithContent('kingdom-builder:dev-mode');
-		});
-
-		expect(result.current.isAutoAdvanceEnabled).toBe(true);
-		expect(
-			window.localStorage.getItem(AUTO_ADVANCE_PREFERENCE_STORAGE_KEY),
-		).toBe('true');
-		unmount();
-	});
-
 	it('continues a saved game and restores content ID without touching browser history', async () => {
 		const resumeRecord: ResumeSessionRecord = {
 			sessionId: 'resume-dev',
 			turn: 9,
-			devMode: true,
 			updatedAt: Date.UTC(2024, 0, 1),
+			contentId: 'kingdom-builder:dev-mode',
 		};
 		writeStoredResumeSession(resumeRecord);
 		const pushSpy = vi.spyOn(window.history, 'pushState');
@@ -221,7 +204,6 @@ describe('useAppNavigation', () => {
 		const resumeRecord: ResumeSessionRecord = {
 			sessionId: 'resume-save',
 			turn: 3,
-			devMode: false,
 			updatedAt: Date.UTC(2024, 0, 1),
 		};
 
@@ -240,7 +222,6 @@ describe('useAppNavigation', () => {
 		const resumeRecord: ResumeSessionRecord = {
 			sessionId: 'resume-clear',
 			turn: 12,
-			devMode: false,
 			updatedAt: Date.UTC(2024, 0, 1),
 		};
 
@@ -263,7 +244,6 @@ describe('useAppNavigation', () => {
 		const resumeRecord: ResumeSessionRecord = {
 			sessionId: 'resume-failure',
 			turn: 4,
-			devMode: true,
 			updatedAt: Date.UTC(2024, 0, 1),
 		};
 

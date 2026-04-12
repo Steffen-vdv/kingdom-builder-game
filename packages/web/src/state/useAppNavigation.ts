@@ -19,8 +19,6 @@ import {
 	useDarkModePreference,
 } from './darkModePreference';
 
-const DEV_MODE_CONTENT_ID = 'kingdom-builder:dev-mode';
-
 export function useAppNavigation(): AppNavigationState {
 	const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Menu);
 	const [currentGameKey, setCurrentGameKey] = useState(0);
@@ -127,7 +125,7 @@ export function useAppNavigation(): AppNavigationState {
 		if (legacy.contentId === undefined && legacy.isDevModeEnabled != null) {
 			return {
 				...state,
-				contentId: legacy.isDevModeEnabled ? DEV_MODE_CONTENT_ID : null,
+				contentId: legacy.isDevModeEnabled ? 'kingdom-builder:dev-mode' : null,
 			};
 		}
 		return state;
@@ -231,7 +229,6 @@ export function useAppNavigation(): AppNavigationState {
 		(id: string) => {
 			const nextGameKey = currentGameKey + 1;
 			clearResumeSessionState(updateResumeHistory);
-			const isDevContent = id === DEV_MODE_CONTENT_ID;
 			setContentId(id);
 			setCurrentGameKey(nextGameKey);
 			setCurrentScreen(Screen.Game);
@@ -240,19 +237,14 @@ export function useAppNavigation(): AppNavigationState {
 					screen: Screen.Game,
 					gameKey: nextGameKey,
 					contentId: id,
-					isAutoAdvanceEnabled: isDevContent ? true : isAutoAdvanceEnabled,
 					resumeSessionId: null,
 				}),
 			);
-			if (isDevContent) {
-				setIsAutoAdvanceEnabled(true);
-			}
 		},
 		[
 			buildHistoryState,
 			clearResumeSessionState,
 			currentGameKey,
-			isAutoAdvanceEnabled,
 			pushHistoryState,
 			updateResumeHistory,
 		],

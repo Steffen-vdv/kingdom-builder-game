@@ -5,8 +5,6 @@ import type {
 	SessionStateResponse,
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
-	SessionSetDevModeRequest,
-	SessionSetDevModeResponse,
 	SessionRequirementFailure,
 	SessionActionRequirementList,
 	SessionRegistriesPayload,
@@ -146,8 +144,6 @@ export function createLocalSessionGateway(
 		createSession(
 			request?: SessionCreateRequest,
 		): Promise<SessionCreateResponse> {
-			const devMode = request?.devMode ?? false;
-			session.setDevMode(devMode);
 			normalizePlayerNames(session, request?.playerNames);
 			return Promise.resolve({
 				sessionId,
@@ -267,17 +263,6 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				result,
-			});
-		},
-		setDevMode(
-			request: SessionSetDevModeRequest,
-		): Promise<SessionSetDevModeResponse> {
-			assertSessionId(request, sessionId);
-			session.setDevMode(request.enabled);
-			return Promise.resolve({
-				sessionId,
-				snapshot: session.getSnapshot(),
-				registries: getRegistries(),
 			});
 		},
 	};

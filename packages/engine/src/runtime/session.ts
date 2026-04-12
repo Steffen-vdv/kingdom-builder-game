@@ -84,7 +84,6 @@ export interface EngineSession {
 	pullEffectLog<T>(key: string): T | undefined;
 	getPassiveEvaluationMods(): Map<string, Map<string, EvaluationModifier>>;
 	enqueue<T>(taskFactory: () => Promise<T> | T): Promise<T>;
-	setDevMode(enabled: boolean): void;
 	runAiTurn(
 		playerId: PlayerId,
 		overrides?: Partial<AIDependencies>,
@@ -174,9 +173,6 @@ export function createEngineSession(
 		},
 		enqueue(taskFactory) {
 			return context.enqueue(taskFactory);
-		},
-		setDevMode(enabled) {
-			context.game.devMode = enabled;
 		},
 		async runAiTurn(playerId, overrides) {
 			if (!context.aiSystem) {

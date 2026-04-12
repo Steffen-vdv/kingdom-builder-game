@@ -249,7 +249,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -346,7 +345,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -423,7 +421,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -571,7 +568,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -652,7 +648,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -709,7 +704,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -774,7 +768,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -835,7 +828,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -872,7 +864,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -905,7 +896,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -937,7 +927,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -970,7 +959,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -1031,7 +1019,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -1064,7 +1051,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -1127,7 +1113,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -1160,7 +1145,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -1195,7 +1179,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled
@@ -1230,7 +1213,6 @@ describe('GameProviderInner', () => {
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
-				devMode={false}
 				musicEnabled
 				onToggleMusic={() => {}}
 				soundEnabled

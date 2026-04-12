@@ -89,9 +89,6 @@ describe('dev mode start configuration', () => {
 			resourceCatalog: devModeContent.resourceCatalog,
 		});
 
-		// Set the devMode flag (this is separate from the content package)
-		session.setDevMode(true);
-
 		const snapshot = session.getSnapshot();
 		const [player, opponent] = snapshot.game.players;
 		if (!player || !opponent) {
@@ -104,7 +101,6 @@ describe('dev mode start configuration', () => {
 		const councilId = getResourceId(Resource.council);
 		const legionId = getResourceId(Resource.legion);
 		const fortifierId = getResourceId(Resource.fortifier);
-		expect(snapshot.game.devMode).toBe(true);
 		// Verify resource values match the dev mode action configuration
 		expect(player.values[goldId]).toBe(DEV_MODE_RESOURCES.get(goldId));
 		expect(player.values[happinessId]).toBe(

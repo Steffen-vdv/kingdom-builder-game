@@ -19,7 +19,6 @@ function createMinimalSnapshot(): SessionSnapshot {
 		game: {
 			players: [],
 			turn: 1,
-			devMode: false,
 		},
 		phase: {
 			index: 0,
@@ -71,7 +70,7 @@ function createTestSessionData(
 ): PersistedSessionData {
 	return {
 		sessionId,
-		creationOptions: { devMode: false },
+		creationOptions: {},
 		actionLog: [],
 		lastSnapshot: createMinimalSnapshot(),
 		registries: createMinimalRegistries(),
@@ -130,14 +129,11 @@ describe('SessionPersistence', () => {
 		});
 
 		it('loads a previously saved session', () => {
-			const data = createTestSessionData('session-1', {
-				creationOptions: { devMode: true },
-			});
+			const data = createTestSessionData('session-1');
 			persistence.save(data);
 			const loaded = persistence.load('session-1');
 			expect(loaded).toBeDefined();
 			expect(loaded?.sessionId).toBe('session-1');
-			expect(loaded?.creationOptions.devMode).toBe(true);
 		});
 
 		it('returns undefined and deletes expired sessions', () => {
@@ -163,7 +159,6 @@ describe('SessionPersistence', () => {
 					{ type: 'action', actionId: 'test-action', params: { value: 1 } },
 					{ type: 'advance' },
 					{ type: 'player-name', playerId: 'p1', name: 'Alice' },
-					{ type: 'dev-mode', enabled: true },
 				],
 			});
 			persistence.save(data);

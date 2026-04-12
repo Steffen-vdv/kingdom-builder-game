@@ -156,13 +156,11 @@ export function useActionPerformer({
 						action,
 						player: playerAfter,
 						snapshot: snapshotAfter,
-						actionCostResource,
 						showResolution,
 						addResolutionLog,
 						syncPhaseState,
 						refresh,
 						mountedRef,
-						endTurn,
 					});
 					return;
 				}
@@ -198,21 +196,9 @@ export function useActionPerformer({
 					showResolution,
 					addResolutionLog,
 					timeline,
-				})
-					.then(() => {
-						if (
-							!mountedRef.current ||
-							snapshotAfter.game.conclusion ||
-							!snapshotAfter.game.devMode ||
-							(playerAfter.values[actionCostResource] ?? 0) > 0
-						) {
-							return;
-						}
-						return endTurn();
-					})
-					.catch((error) => {
-						void handleError(error);
-					});
+				}).catch((error) => {
+					void handleError(error);
+				});
 			} catch (error) {
 				if (handleError(error)) {
 					throw error;

@@ -16,9 +16,7 @@ describe('SessionManager', () => {
 		const { manager, costResourceId, gainResourceId } =
 			createSyntheticSessionManager();
 		const sessionId = 'session-1';
-		const session = await manager.createSession(sessionId, {
-			devMode: true,
-		});
+		const session = await manager.createSession(sessionId);
 		expect(await manager.getSession(sessionId)).toBe(session);
 		expect(manager.getSessionCount()).toBe(1);
 		const snapshot = await manager.getSnapshot(sessionId);
@@ -32,7 +30,6 @@ describe('SessionManager', () => {
 		const [activePlayer] = snapshot.game.players;
 		expect(activePlayer?.values[costResourceId]).toBeDefined();
 		expect(snapshot.rules.tieredResourceKey).toBe(gainResourceId);
-		expect(snapshot.game.devMode).toBe(true);
 	});
 
 	it('destroys sessions and releases resources', async () => {

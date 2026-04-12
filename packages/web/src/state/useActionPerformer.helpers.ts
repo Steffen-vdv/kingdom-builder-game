@@ -26,13 +26,11 @@ export type {
 	BuildActionResolutionOptions,
 	BuildActionResolutionResult,
 } from './buildActionResolution';
-import type { SessionResourceKey } from './sessionTypes';
 
 interface HandleMissingActionDefinitionOptions {
 	action: Action;
 	player: Pick<SessionPlayerStateSnapshot, 'id' | 'name' | 'values'>;
 	snapshot: SessionSnapshot;
-	actionCostResource: SessionResourceKey;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	addResolutionLog: (resolution: ActionResolution) => void;
 	syncPhaseState: (
@@ -41,20 +39,17 @@ interface HandleMissingActionDefinitionOptions {
 	) => void;
 	refresh: () => void;
 	mountedRef: { current: boolean };
-	endTurn: () => Promise<void>;
 }
 
 export async function handleMissingActionDefinition({
 	action,
 	player,
 	snapshot,
-	actionCostResource,
 	showResolution,
 	addResolutionLog,
 	syncPhaseState,
 	refresh,
 	mountedRef,
-	endTurn,
 }: HandleMissingActionDefinitionOptions) {
 	console.warn(
 		`Missing action definition for ${action.id}; using fallback resolution logs.`,
@@ -118,9 +113,6 @@ export async function handleMissingActionDefinition({
 	}
 	if (snapshot.game.conclusion) {
 		return;
-	}
-	if (snapshot.game.devMode && (player.values[actionCostResource] ?? 0) <= 0) {
-		await endTurn();
 	}
 }
 

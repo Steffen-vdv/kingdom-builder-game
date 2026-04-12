@@ -79,7 +79,6 @@ function createResumePoint(
 	return {
 		sessionId: 'session-id',
 		turn: 3,
-		devMode: false,
 		updatedAt: Date.now(),
 		...overrides,
 	};
