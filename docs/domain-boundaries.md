@@ -143,3 +143,84 @@ The engine assumes the following guarantees from other domains:
 Violating these expectations can surface as runtime assertion failures, invalid
 state transitions, or UI desynchronization. Each domain should validate inputs
 against the contracts above before releasing new features.
+
+## Content Package System
+
+The game supports multiple **content packages** (game modes) selectable at
+session creation. Each package is a `ContentPackage` object containing all
+registries, rules, phases, and metadata needed to run a game variant.
+
+### Key concepts
+
+- **ContentPackage**: interface defined in `contents-sdk`. Fields: `id`, `name`,
+  `description`, `actions`, `buildings`, `developments`, `resourceCatalog`,
+  `rules`, `phases`, `actionMetaCategories`, `actionCategories`,
+  `primaryIconId`.
+- **Factory functions**: each variant exports a `createXxxPackage()` factory.
+  Variants compose by importing the base factory and mutating the result.
+- **Loader**: `packages/contents/src/kingdom-builder/loader.ts` provides
+  `loadContentPackage(contentId)` using dynamic imports for lazy loading. The
+  `CONTENT_PACKAGE_IDS` array lists all registered packages.
+- **DEFAULT_CONTENT_ID**: determines which package new games use when the client
+  sends no explicit `contentId`.
+- **Metadata**: `CONTENT_PACKAGE_META` provides lightweight display info (id,
+  name, description, icon) without loading full packages.
+
+### Adding a new content package
+
+1. Create `packages/contents/src/kingdom-builder/<name>/index.ts` with a
+   `create<Name>Package()` factory that imports and extends the base.
+2. Add the ID to `CONTENT_PACKAGE_IDS` and a `case` in `loadContentPackage()`.
+3. Add an entry to `CONTENT_PACKAGE_META`.
+4. Export the factory from `packages/contents/src/index.ts`.
+
+No server, engine, or web changes are needed — the mode selection screen
+reads metadata from the runtime config and the server loads packages by ID.
+
+### How content metadata reaches the web client
+
+The web package **cannot** import from `@kingdom-builder/contents` directly.
+Content metadata flows through the server:
+
+```
+contents → CONTENT_PACKAGE_META (build-time)
+         → server/SessionManagerConfig → runtimeConfig object
+         → GET /runtime-config → web/runtimeConfig.ts
+         → useContentPackages() hook → UI
+```
+
+The web client fetches `/runtime-config` at startup. The response includes
+`contentPackages` and `defaultContentId` alongside phases, rules, and resource
+registries.
+
+### Content ID flow during session creation
+
+```
+Web (user clicks mode card)
+  → startGameWithContent(contentId)
+  → sessionSdk.createSession({ contentId })
+  → POST /sessions { contentId }
+  → SessionManager.createSession()
+  → loadContentPackage(contentId)
+  → engine receives registries, rules, phases from loaded package
+```
+
+The `contentId` is persisted in `SessionCreationOptions` (SQLite) so restored
+sessions reload the correct package.
+
+## DevMode Flag (Current State)
+
+The `devMode` boolean currently threads through multiple layers:
+
+- **Web**: derived from `contentId === 'kingdom-builder:dev-mode'` in App.tsx.
+  Passed to `Game` component, which enables debug UI panels and auto-advance.
+- **Server**: `SessionCreateRequest.devMode` toggles engine debug features.
+- **Engine**: `GameState.devMode` controls diagnostic logging and dev shortcuts.
+- **Content**: the dev-mode package overrides `initial_setup` with abundant
+  resources; this is a content concern handled correctly.
+
+**Known issue**: some `devMode` behaviors (auto-advance, debug panels) are
+hardcoded in the web layer rather than being driven by the content package.
+Ideally, packages would declare their own preferences (e.g., `autoAdvance:
+true`) and the web layer would read these, eliminating the need for a separate
+`devMode` flag. This is planned but not yet implemented.

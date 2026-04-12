@@ -412,8 +412,16 @@ Kingdom Builder uses pnpm workspaces with five packages:
 | `server`   | Fastify HTTP transport, session management, auth        |
 | `web`      | Vite + React client                                     |
 
-**Content Domain**: The `contents` package has strict structure rules. Before
-adding or modifying game data, read [`docs/content-domain-guide.md`](docs/content-domain-guide.md).
+**Essential reading before cross-package work:**
+
+- [`docs/domain-boundaries.md`](docs/domain-boundaries.md) — package
+  responsibilities, sanctioned data exchange, the content package system,
+  and how content metadata reaches the web client via runtime config.
+- [`docs/architecture-reference.md`](docs/architecture-reference.md) — core
+  engine systems: resources, evaluators, effects, passives, actions, phases,
+  combat, and win conditions.
+- [`docs/content-domain-guide.md`](docs/content-domain-guide.md) — structure
+  rules for the `contents` package and the builder pattern API.
 
 ### 4.2 Import Boundaries
 
