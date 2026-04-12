@@ -330,18 +330,9 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 					<span className="font-semibold text-[14px]">{player.name}</span>
 				</div>
 				{/* Grid for Economy | Military columns */}
-				<div
-					className="grid grid-cols-2"
-					style={{
-						gap: '1px',
-						background: 'rgba(255, 255, 255, 0.06)',
-					}}
-				>
+				<div className="panel-columns-grid">
 					{/* Economy Column */}
-					<div
-						className="flex flex-col gap-1.5 p-2.5"
-						style={{ background: 'rgba(15, 23, 42, 0.95)' }}
-					>
+					<div className="panel-column">
 						<div className="text-[9px] font-medium uppercase tracking-widest text-slate-500">
 							{translationContext.assets.sections.economy.label}
 						</div>
@@ -359,10 +350,7 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 					</div>
 
 					{/* Military Column */}
-					<div
-						className="flex flex-col gap-1.5 p-2.5"
-						style={{ background: 'rgba(15, 23, 42, 0.95)' }}
-					>
+					<div className="panel-column">
 						<div className="text-[9px] font-medium uppercase tracking-widest text-slate-500">
 							{translationContext.assets.sections.combat.label}
 						</div>

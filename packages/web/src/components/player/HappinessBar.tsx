@@ -50,7 +50,7 @@ const HappinessBar: React.FC<HappinessBarProps> = ({
 				/>
 				{/* Mask overlay that hides the unfilled portion */}
 				<div
-					className="absolute inset-y-0 right-0 rounded-r-lg bg-slate-800/90"
+					className="absolute inset-y-0 right-0 rounded-r-lg bg-slate-200/90 dark:bg-slate-800/90"
 					style={{
 						width: `${100 - percent}%`,
 					}}
