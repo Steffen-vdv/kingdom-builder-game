@@ -226,7 +226,7 @@ describe('advanceToActionPhase', () => {
 			showResolution: showResolution as never,
 			registries: createSessionRegistries(),
 		});
-		expect(showResolution).toHaveBeenCalledTimes(2);
+		expect(showResolution).toHaveBeenCalledTimes(3);
 		const firstFormatCall = formatPhaseResolution.mock.calls[0]?.[0];
 		expect(firstFormatCall?.phaseDefinition).toEqual(
 			expect.objectContaining({ id: phases[0]?.id ?? 'phase-growth' }),
@@ -255,6 +255,14 @@ describe('advanceToActionPhase', () => {
 			expect.objectContaining({
 				lines: ['    ⚡ Action Points +1'],
 				actorLabel: '🌱 Growth Phase',
+			}),
+		);
+		expect(showResolution).toHaveBeenNthCalledWith(
+			3,
+			expect.objectContaining({
+				lines: [],
+				summaries: [],
+				requireAcknowledgement: false,
 			}),
 		);
 	});

@@ -197,6 +197,11 @@ export async function advanceToActionPhase({
 		if (!mountedRef.current) {
 			return;
 		}
+		await showResolution({
+			lines: [],
+			summaries: [],
+			requireAcknowledgement: false,
+		});
 		const refreshedRecord = getSessionRecord(sessionId);
 		const refreshed = refreshedRecord?.snapshot ?? snapshot;
 		if (!mountedRef.current) {
