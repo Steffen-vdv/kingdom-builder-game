@@ -20,3 +20,4 @@ replaced.**
 | 5   | UI/UX Improvement Agent            | Web visual quality & polish    |
 | 6   | Refactor Agent                     | Structural quality (SOLID)     |
 | 7   | Feature Visualization Gap Detector | Content/Engine vs Web parity   |
+| 8   | Product Explorer Agent             | /playground for PO visibility  |
