@@ -6,7 +6,12 @@ const CARD_CLASS = [
 	'overflow-hidden rounded-xl border',
 	'p-5 text-left transition-all duration-200',
 	'hover:shadow-lg',
-	'dark:hover:bg-white/10',
+].join(' ');
+
+const HOVER_OVERLAY_CLASS = [
+	'pointer-events-none absolute inset-0',
+	'opacity-0 transition-opacity duration-200',
+	'group-hover:opacity-100',
 ].join(' ');
 
 const ICON_CLASS = [
@@ -55,11 +60,15 @@ export function SpaceCard({
 				backgroundColor: `${accentColor}08`,
 			}}
 		>
-			{/* Accent stripe along the left edge */}
 			<span
 				aria-hidden
 				className="absolute inset-y-0 left-0 w-1 rounded-l-xl"
 				style={{ backgroundColor: accentColor }}
+			/>
+			<span
+				aria-hidden
+				className={HOVER_OVERLAY_CLASS}
+				style={{ backgroundColor: `${accentColor}12` }}
 			/>
 			<div className="flex items-center gap-3">
 				<span

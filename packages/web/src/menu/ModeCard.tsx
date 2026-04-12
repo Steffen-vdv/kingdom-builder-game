@@ -7,18 +7,18 @@ const CARD_BASE_CLASS = [
 	'overflow-hidden rounded-xl border',
 	'p-4 text-left transition-all duration-200',
 	'hover:shadow-lg',
-	'dark:hover:bg-white/10',
 ].join(' ');
 
-const DEFAULT_BADGE_CLASS = [
-	'rounded-full px-2 py-0.5',
-	'text-[10px] font-semibold uppercase tracking-wider',
-	'text-white',
+const HOVER_OVERLAY_CLASS = [
+	'pointer-events-none absolute inset-0',
+	'opacity-0 transition-opacity duration-200',
+	'group-hover:opacity-100',
 ].join(' ');
 
 const BADGE_CLASS = [
-	'rounded-full border px-2 py-0.5',
-	'text-[10px] font-semibold uppercase tracking-wider',
+	'shrink-0 whitespace-nowrap rounded-full',
+	'border px-1.5 py-0.5',
+	'text-[10px] font-semibold uppercase',
 ].join(' ');
 
 const ICON_CLASS = [
@@ -42,11 +42,10 @@ const DEFAULT_ACCENT = '#6366f1';
 
 interface ModeCardProps {
 	pkg: ContentPackageMeta;
-	isDefault: boolean;
 	onSelect: () => void;
 }
 
-export function ModeCard({ pkg, isDefault, onSelect }: ModeCardProps) {
+export function ModeCard({ pkg, onSelect }: ModeCardProps) {
 	const { playUiClick } = useSoundEffectsContext();
 	const accent = pkg.accentColor ?? DEFAULT_ACCENT;
 
@@ -65,11 +64,15 @@ export function ModeCard({ pkg, isDefault, onSelect }: ModeCardProps) {
 				backgroundColor: `${accent}08`,
 			}}
 		>
-			{/* Top accent bar */}
 			<span
 				aria-hidden
 				className="absolute inset-x-0 top-0 h-0.5"
 				style={{ backgroundColor: accent }}
+			/>
+			<span
+				aria-hidden
+				className={HOVER_OVERLAY_CLASS}
+				style={{ backgroundColor: `${accent}12` }}
 			/>
 
 			<div className="flex items-center gap-2">
@@ -82,14 +85,6 @@ export function ModeCard({ pkg, isDefault, onSelect }: ModeCardProps) {
 					</span>
 				) : null}
 				<span className={NAME_CLASS}>{pkg.name}</span>
-				{isDefault ? (
-					<span
-						className={DEFAULT_BADGE_CLASS}
-						style={{ backgroundColor: accent }}
-					>
-						Default
-					</span>
-				) : null}
 				{pkg.badge ? (
 					<span
 						className={BADGE_CLASS}
