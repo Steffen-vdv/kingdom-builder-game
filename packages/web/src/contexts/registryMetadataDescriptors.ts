@@ -206,9 +206,9 @@ const mergeResourceEntries = (
 	const processed = new Set<string>();
 	for (const [key, definition] of Object.entries(resources)) {
 		const descriptor = createRegistryDescriptor(key, metadata?.[key], {
-			label: definition.label ?? definition.id ?? key,
+			label: definition.label,
 			icon: definition.icon,
-			description: definition.description ?? undefined,
+			description: definition.description,
 		});
 		entries.push([key, descriptor]);
 		processed.add(key);
