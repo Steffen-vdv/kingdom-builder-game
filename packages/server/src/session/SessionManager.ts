@@ -2,16 +2,13 @@ import {
 	createEngineSession,
 	type EngineSession,
 	type RuntimeResourceContent,
-} from '@kingdom-builder/engine';
+} from '@boardsmith/engine';
 import type {
 	SessionRegistriesPayload,
 	ActionParametersPayload,
 	SessionPlayerId,
-} from '@kingdom-builder/protocol';
-import {
-	loadContentPackage,
-	DEFAULT_CONTENT_ID,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/protocol';
+import { loadContentPackage, DEFAULT_CONTENT_ID } from '@boardsmith/contents';
 import type { SessionStaticMetadataPayload } from './buildSessionMetadata.js';
 import {
 	buildSessionAssets,

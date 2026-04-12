@@ -6,8 +6,8 @@ import type {
 	SessionSnapshotMetadata,
 	SessionStateResponse,
 	SessionRegistriesPayload,
-} from '@kingdom-builder/protocol/session';
-import type { Registry, ResourceDefinition } from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol/session';
+import type { Registry, ResourceDefinition } from '@boardsmith/protocol';
 import {
 	deserializeSessionRegistries,
 	extractResourceKeys,

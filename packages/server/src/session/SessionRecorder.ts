@@ -3,7 +3,7 @@ import type {
 	SessionPlayerId,
 	SessionRegistriesPayload,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type {
 	ActionLogEntry,
 	SessionPersistence,

@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import type {
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import type { ActionResolution, ResolutionSource } from './useActionResolution';
 
 const ACTION_EFFECT_DELAY = 600;

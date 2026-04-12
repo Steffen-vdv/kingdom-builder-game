@@ -1,6 +1,6 @@
-import { createEngine } from '@kingdom-builder/engine';
-import type { EffectDef } from '@kingdom-builder/protocol';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createEngine } from '@boardsmith/engine';
+import type { EffectDef } from '@boardsmith/protocol';
+import { createContentFactory } from '@boardsmith/testing';
 
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import { createTranslationContextForEngine } from '../helpers/createTranslationContextForEngine';

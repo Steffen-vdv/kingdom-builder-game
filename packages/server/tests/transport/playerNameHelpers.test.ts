@@ -6,8 +6,8 @@ import {
 	PLAYER_NAME_MAX_LENGTH,
 } from '../../src/transport/playerNameHelpers.js';
 import { TransportError } from '../../src/transport/TransportTypes.js';
-import type { SessionPlayerNameMap } from '@kingdom-builder/protocol';
-import type { EngineSession } from '@kingdom-builder/engine';
+import type { SessionPlayerNameMap } from '@boardsmith/protocol';
+import type { EngineSession } from '@boardsmith/engine';
 
 describe('player name helpers', () => {
 	describe('sanitizePlayerName', () => {

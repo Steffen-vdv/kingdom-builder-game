@@ -8,7 +8,7 @@ import {
 	ACTION_CATEGORIES,
 	RESOURCE_REGISTRY,
 	Resource,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import { buildSessionMetadata } from '../../src/session/sessionMetadataBuilder.js';
 
 describe('buildSessionMetadata', () => {

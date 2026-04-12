@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { createEngineSession } from '@kingdom-builder/engine';
+import { createEngineSession } from '@boardsmith/engine';
 import {
 	Resource,
 	getResourceId,
 	ActionId,
 	DevelopmentId,
 	createDevModePackage,
-} from '@kingdom-builder/contents';
-import type { EffectConfig } from '@kingdom-builder/protocol';
+} from '@boardsmith/contents';
+import type { EffectConfig } from '@boardsmith/protocol';
 
 // ============================================================================
 // CONTENT-DERIVED VALUES

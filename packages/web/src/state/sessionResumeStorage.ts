@@ -1,4 +1,4 @@
-export const RESUME_SESSION_STORAGE_KEY = 'kingdom-builder/resume-session';
+export const RESUME_SESSION_STORAGE_KEY = 'boardsmith/resume-session';
 
 export interface ResumeSessionRecord {
 	readonly sessionId: string;

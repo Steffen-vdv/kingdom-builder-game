@@ -6,7 +6,7 @@ import {
 	applyPlayerNames,
 } from '../src/transport/playerNameHelpers.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
-import type { EngineSession } from '@kingdom-builder/engine';
+import type { EngineSession } from '@boardsmith/engine';
 
 function createSessionSpy() {
 	const updatePlayerName = vi.fn();

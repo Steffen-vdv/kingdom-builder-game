@@ -4,7 +4,7 @@ import { renderHook, act } from '@testing-library/react';
 import type {
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { createEmptySnapshotMetadata } from '../helpers/sessionFixtures';
 import { MAX_LOG_ENTRIES, useGameLog } from '../../src/state/useGameLog';
 import type { ActionResolution } from '../../src/state/useActionResolution';

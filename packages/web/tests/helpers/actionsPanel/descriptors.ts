@@ -1,5 +1,5 @@
 import type { SessionRegistries } from '../../../src/state/sessionRegistries';
-import type { SessionMetadataDescriptor } from '@kingdom-builder/protocol/session';
+import type { SessionMetadataDescriptor } from '@boardsmith/protocol/session';
 import { humanizeId } from './statMetadata';
 import type { ActionsPanelContent } from './contentBuilders';
 

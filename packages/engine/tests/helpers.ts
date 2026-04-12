@@ -9,7 +9,7 @@ import {
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
 	RESOURCE_CATEGORY_REGISTRY,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import {
 	Registry,
 	actionSchema,
@@ -17,7 +17,7 @@ import {
 	type BuildingConfig as BuildingDef,
 	type DevelopmentConfig as DevelopmentDef,
 	type RuleSet,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { PhaseDef } from '../src/phases.ts';
 
 const BASE: {

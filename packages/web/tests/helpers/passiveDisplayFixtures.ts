@@ -2,7 +2,7 @@ import type {
 	SessionPlayerId,
 	SessionPlayerStateSnapshot,
 	SessionRuleSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import {
 	createPassiveRecord,
 	createSessionSnapshot,

@@ -1,7 +1,7 @@
 import type {
 	SessionLandSnapshot,
 	SessionPlayerStateSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 
 export const clone = <T>(value: T): T => {
 	if (typeof structuredClone === 'function') {

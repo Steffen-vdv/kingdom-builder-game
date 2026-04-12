@@ -1,4 +1,4 @@
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 
 import {
 	SYNTH_ATTACK,

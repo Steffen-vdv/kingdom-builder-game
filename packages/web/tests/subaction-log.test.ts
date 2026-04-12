@@ -5,8 +5,8 @@ import {
 	getActionCosts,
 	runEffects,
 	type ActionTrace,
-} from '@kingdom-builder/engine';
-import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
+} from '@boardsmith/engine';
+import type { SessionResourceDefinition } from '@boardsmith/protocol/session';
 import {
 	createSyntheticPlowContent,
 	SYNTHETIC_RESOURCES,
@@ -70,7 +70,7 @@ function asTimelineLines(
 
 const RESOURCE_KEYS = Object.values(SYNTHETIC_RESOURCE_KEYS);
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('@boardsmith/engine', async () => {
 	return await import('../../engine/src');
 });
 

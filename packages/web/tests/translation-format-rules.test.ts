@@ -41,7 +41,7 @@
  * ═══════════════════════════════════════════════════════════════════
  */
 import { describe, it, expect } from 'vitest';
-import type { EffectDef, SessionPlayerId } from '@kingdom-builder/protocol';
+import type { EffectDef, SessionPlayerId } from '@boardsmith/protocol';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
 import { createTranslationContext } from '../src/translation/context';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';

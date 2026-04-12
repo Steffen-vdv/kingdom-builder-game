@@ -14,7 +14,7 @@ import type {
 	PassiveRecordSnapshot,
 	PlayerStateSnapshot,
 	RuleSnapshot,
-} from '@kingdom-builder/engine';
+} from '@boardsmith/engine';
 import type {
 	SessionActionCostMap,
 	SessionActionDefinitionSummary,
@@ -29,7 +29,7 @@ import type {
 	SessionPlayerStateSnapshot,
 	SessionRuleSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 function expectMatchBoth<Left, Right>() {
 	expectTypeOf<Left>().toMatchTypeOf<Right>();

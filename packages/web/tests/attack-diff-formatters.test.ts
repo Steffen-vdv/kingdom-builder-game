@@ -1,4 +1,4 @@
-import type { AttackPlayerDiff } from '@kingdom-builder/engine';
+import type { AttackPlayerDiff } from '@boardsmith/engine';
 import { describe, expect, it } from 'vitest';
 
 import { formatDiffCommon } from '../src/translation/effects/formatters/attack/shared';

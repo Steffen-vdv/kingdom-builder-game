@@ -29,7 +29,7 @@ import {
 } from '../src/translation/effects/formatters/attack/registrySelectors';
 import { humanizeIdentifier } from '../src/translation/effects/stringUtils';
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('@boardsmith/engine', async () => {
 	return await import('../../engine/src');
 });
 

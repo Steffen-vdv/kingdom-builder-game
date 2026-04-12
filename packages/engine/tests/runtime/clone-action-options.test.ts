@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ActionEffectGroup } from '@kingdom-builder/protocol';
+import type { ActionEffectGroup } from '@boardsmith/protocol';
 import { cloneActionOptions } from '../../src/runtime/action_options';
 
 describe('cloneActionOptions', () => {

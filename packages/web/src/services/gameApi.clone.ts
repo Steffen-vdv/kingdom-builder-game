@@ -2,7 +2,7 @@ import type {
 	SessionPlayerId,
 	SessionRunAiResponse,
 	SessionSimulateResponse,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 
 type CloneFn = <T>(value: T) => T;
 

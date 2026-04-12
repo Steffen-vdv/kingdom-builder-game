@@ -8,7 +8,7 @@
  * - Commands: Standard commands that cost CP (global cost model)
  * - Research: Research options that cost variable RP (per-item cost model)
  */
-import { Registry } from '@kingdom-builder/protocol';
+import { Registry } from '@boardsmith/protocol';
 import { actionMetaCategory, type ActionMetaCategoryConfig, pool, tierProgressionCurve, tierWeights } from '../../infrastructure/builders';
 import { MetaCategory, ActionCategory, Resource } from './constants';
 

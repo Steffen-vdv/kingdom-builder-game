@@ -3,7 +3,7 @@ import type {
 	SessionRuleSnapshot,
 	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,

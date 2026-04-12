@@ -7,7 +7,7 @@ import {
 	passiveParams,
 	Types,
 	PassiveMethods,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import { advance } from '../src';
 import { createTestEngine } from './helpers';
 import type { RuleSet } from '../src/services';

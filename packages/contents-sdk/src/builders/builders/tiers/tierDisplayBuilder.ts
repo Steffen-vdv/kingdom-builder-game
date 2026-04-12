@@ -1,4 +1,4 @@
-import type { TierDisplayMetadata } from '@kingdom-builder/protocol';
+import type { TierDisplayMetadata } from '@boardsmith/protocol';
 
 export type TierDisplayBuilderConfig = TierDisplayMetadata;
 

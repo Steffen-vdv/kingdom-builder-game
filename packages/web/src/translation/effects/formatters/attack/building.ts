@@ -1,4 +1,4 @@
-import type { AttackLog } from '@kingdom-builder/protocol';
+import type { AttackLog } from '@boardsmith/protocol';
 import {
 	attackResourceLabel,
 	attackResourceValue,

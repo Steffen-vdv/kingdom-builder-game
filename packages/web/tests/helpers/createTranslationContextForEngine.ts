@@ -2,7 +2,7 @@ import type {
 	SessionMetadataDescriptor,
 	SessionResourceCatalog,
 	SessionSnapshotMetadata,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { snapshotEngine } from '../../../engine/src/runtime/engine_snapshot';
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from './sessionRegistries';

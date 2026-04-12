@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
-import type { PlayerStartConfig } from '@kingdom-builder/protocol';
+import type { PlayerStartConfig } from '@boardsmith/protocol';
 import type {
 	SessionPlayerId,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { useCompensationLogger } from '../../src/state/useCompensationLogger';
 import * as TranslationModule from '../../src/translation';
 import type * as TranslationTypes from '../../src/translation';

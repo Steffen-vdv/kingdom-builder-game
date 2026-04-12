@@ -8,8 +8,8 @@ import type {
 	SessionRunAiResponse,
 	SessionSimulateResponse,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
-import type { ActionEffectGroup, actions } from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol/session';
+import type { ActionEffectGroup, actions } from '@boardsmith/protocol';
 import type { GameApi, GameApiRequestOptions } from '../services/gameApi';
 import {
 	assertSessionRecord,

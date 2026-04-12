@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ActionConfig } from '@kingdom-builder/protocol';
+import type { ActionConfig } from '@boardsmith/protocol';
 import {
 	extractBuildingIdFromAction,
 	isBuildingAlreadyOwned,

@@ -1,4 +1,4 @@
-import type { SessionResourceBoundValue } from '@kingdom-builder/protocol';
+import type { SessionResourceBoundValue } from '@boardsmith/protocol';
 import { resourceDisplaysAsPercent } from '../../utils/resourceSources';
 import {
 	findResourcePctBreakdown,

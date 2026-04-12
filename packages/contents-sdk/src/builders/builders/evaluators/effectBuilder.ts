@@ -1,4 +1,4 @@
-import type { EffectConfig, EvaluatorDef } from '@kingdom-builder/protocol';
+import type { EffectConfig, EvaluatorDef } from '@boardsmith/protocol';
 import { ParamsBuilder } from '../../builderShared';
 import type { Params } from '../../builderShared';
 import { EvaluatorBuilder } from './evaluatorBuilder';

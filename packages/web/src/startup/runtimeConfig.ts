@@ -5,8 +5,8 @@ import type {
 	ResourceGroupDefinition,
 	RuleSet,
 	SessionRuntimeConfigResponse,
-} from '@kingdom-builder/protocol';
-import { runtimeConfigResponseSchema } from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
+import { runtimeConfigResponseSchema } from '@boardsmith/protocol';
 import { clone } from '../state/clone';
 
 export interface RuntimeContentConfig {

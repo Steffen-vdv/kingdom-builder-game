@@ -1,5 +1,5 @@
-import { Registry, buildingSchema } from '@kingdom-builder/protocol';
-import { Types, ResourceMethods, ActionMethods, CostModMethods, ResultModMethods, resourceAmountChange } from '@kingdom-builder/contents-sdk';
+import { Registry, buildingSchema } from '@boardsmith/protocol';
+import { Types, ResourceMethods, ActionMethods, CostModMethods, ResultModMethods, resourceAmountChange } from '@boardsmith/contents-sdk';
 import { building, effect, actionParams, resultModParams, costModParams, developmentTarget } from '../infrastructure/builders';
 import type { BuildingDef } from '../infrastructure/defs';
 import { Res, Building, Dev, Act } from './ids';

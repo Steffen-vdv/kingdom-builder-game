@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { ActionTrace } from '@kingdom-builder/protocol';
+import type { ActionTrace } from '@boardsmith/protocol';
 import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import {

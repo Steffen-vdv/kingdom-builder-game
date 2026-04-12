@@ -10,7 +10,7 @@ import {
 	sessionSimulateRequestSchema,
 	sessionSimulateResponseSchema,
 	sessionMetadataSnapshotResponseSchema,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type {
 	ActionParametersPayload,
 	SessionActionCostResponse,
@@ -20,8 +20,8 @@ import type {
 	SessionRunAiResponse,
 	SessionSimulateResponse,
 	SessionMetadataSnapshotResponse,
-} from '@kingdom-builder/protocol';
-import type { EngineSession } from '@kingdom-builder/engine';
+} from '@boardsmith/protocol';
+import type { EngineSession } from '@boardsmith/engine';
 import {
 	parseActionParameters,
 	type EngineActionParameters,

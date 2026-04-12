@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol';
+import type { SessionSnapshotMetadata } from '@boardsmith/protocol';
 import { mergeSessionMetadata } from '../../src/session/mergeSessionMetadata.js';
 import type { SessionStaticMetadataPayload } from '../../src/session/buildSessionMetadata.js';
 

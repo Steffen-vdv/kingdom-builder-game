@@ -1,4 +1,4 @@
-import type { BuildingConfig, DevelopmentConfig, EffectDef } from '@kingdom-builder/protocol';
+import type { BuildingConfig, DevelopmentConfig, EffectDef } from '@boardsmith/protocol';
 import { Focus } from '../kingdom-builder/content/constants';
 import type { FocusValue } from '../kingdom-builder/content/constants';
 

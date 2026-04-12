@@ -7,7 +7,7 @@ import {
 	passiveParams,
 	Types,
 	PassiveMethods,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import type { RuleSet } from '../../src/services';
 
 interface TierSwapConfiguration {

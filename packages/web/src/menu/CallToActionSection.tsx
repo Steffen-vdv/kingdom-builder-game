@@ -6,7 +6,7 @@ import { SpaceCard } from './SpaceCard';
 import { useContentPackages } from '../state/useContentPackages';
 import { useSoundEffectsContext } from '../state/SoundEffectsContext';
 import type { ResumeSessionRecord } from '../state/sessionResumeStorage';
-import type { ContentPackageMeta } from '@kingdom-builder/protocol';
+import type { ContentPackageMeta } from '@boardsmith/protocol';
 
 const CTA_BUTTON_BASE_CLASS = [
 	'w-full rounded-full px-6 py-3 text-base',

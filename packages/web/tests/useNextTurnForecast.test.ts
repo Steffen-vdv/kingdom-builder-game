@@ -7,7 +7,7 @@ import type {
 	SessionPlayerStateSnapshot,
 	SessionRuleSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import {
 	resetNextTurnForecastCacheForTests,
 	useNextTurnForecast,

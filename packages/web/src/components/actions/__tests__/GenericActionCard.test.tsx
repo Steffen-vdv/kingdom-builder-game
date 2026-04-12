@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import GenericActionCard from '../GenericActionCard';
 import type { ActionCardProps } from '../ActionCard';
 import type { UseActionMetadataResult } from '../../../state/useActionMetadata';
-import type { SessionRequirementFailure } from '@kingdom-builder/protocol';
+import type { SessionRequirementFailure } from '@boardsmith/protocol';
 import * as translationModule from '../../../translation';
 import type { Action, DisplayPlayer } from '../types';
 import type { Summary, TranslationContext } from '../../../translation';

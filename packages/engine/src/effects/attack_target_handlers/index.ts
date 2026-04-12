@@ -1,7 +1,7 @@
 import type {
 	AttackEvaluationTargetLog,
 	AttackTarget,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { EngineContext } from '../../context';
 import type { PlayerState } from '../../state';
 

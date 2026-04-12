@@ -13,7 +13,7 @@ import {
 import type {
 	SessionCreateResponse,
 	SessionStateResponse,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import {
 	createResourceKeys,
 	createSessionRegistriesPayload,

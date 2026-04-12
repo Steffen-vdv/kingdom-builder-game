@@ -3,7 +3,7 @@ import type {
 	ActionExecuteRequest,
 	ActionExecuteResponse,
 	ActionExecuteSuccessResponse,
-} from '@kingdom-builder/protocol/actions';
+} from '@boardsmith/protocol/actions';
 import { ensureGameApi } from './gameApiInstance';
 import { enqueueSessionTask, updateSessionSnapshot } from './sessionStateStore';
 import { getRemoteAdapter } from './remoteSessionAdapter';

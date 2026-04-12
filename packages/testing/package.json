@@ -1,5 +1,5 @@
 {
-	"name": "@kingdom-builder/testing",
+	"name": "@boardsmith/testing",
 	"version": "0.1.0",
 	"private": false,
 	"type": "module",
@@ -9,8 +9,8 @@
 		"build": "tsc -p tsconfig.json"
 	},
 	"dependencies": {
-		"@kingdom-builder/contents": "workspace:*",
-		"@kingdom-builder/protocol": "workspace:*"
+		"@boardsmith/contents": "workspace:*",
+		"@boardsmith/protocol": "workspace:*"
 	},
 	"devDependencies": {
 		"typescript": "6.0.2"

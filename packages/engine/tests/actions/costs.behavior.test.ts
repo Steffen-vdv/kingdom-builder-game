@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createContentFactory } from '@kingdom-builder/testing';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { createContentFactory } from '@boardsmith/testing';
+import { Resource as CResource } from '@boardsmith/contents';
 import {
 	applyCostsWithPassives,
 	getActionCosts,

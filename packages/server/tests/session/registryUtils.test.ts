@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { Resource, type ResourceKey } from '@kingdom-builder/contents';
-import { createContentFactory } from '@kingdom-builder/testing';
-import type { ActionConfig } from '@kingdom-builder/protocol';
+import { Resource, type ResourceKey } from '@boardsmith/contents';
+import { createContentFactory } from '@boardsmith/testing';
+import type { ActionConfig } from '@boardsmith/protocol';
 import {
 	cloneRegistry,
 	cloneActionCategoryRegistry,

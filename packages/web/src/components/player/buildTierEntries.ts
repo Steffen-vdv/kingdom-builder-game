@@ -1,4 +1,4 @@
-import type { SessionRuleSnapshot as RuleSnapshot } from '@kingdom-builder/protocol';
+import type { SessionRuleSnapshot as RuleSnapshot } from '@boardsmith/protocol';
 import {
 	describeEffects,
 	splitSummary,

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { performAction, getActionCosts, advance } from '../../src';
-import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
+import { Resource as CResource, PhaseId } from '@boardsmith/contents';
 import { createTestEngine } from '../helpers';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 import { buildingAdd, type EffectDef } from '../../src/effects/index.ts';
 import { collectBuildingAddCosts } from '../../src/effects/building_add.ts';
 import type { EngineContext } from '../../src/context';

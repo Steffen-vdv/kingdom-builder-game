@@ -1,4 +1,4 @@
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 import type {
 	PlayerStartConfig,
 	SessionOverviewMetadata,
@@ -11,7 +11,7 @@ import type {
 	SessionSnapshot,
 	SessionSnapshotMetadata,
 	SessionResourceCatalog,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import {
 	clone,
 	cloneLands,

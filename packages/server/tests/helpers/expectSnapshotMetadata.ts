@@ -1,4 +1,4 @@
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol';
+import type { SessionSnapshotMetadata } from '@boardsmith/protocol';
 import type { SessionStaticMetadataPayload } from '../../src/session/SessionManager.js';
 import { expect } from 'vitest';
 

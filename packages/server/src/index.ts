@@ -53,7 +53,7 @@ export type {
 	SessionRunAiResponse,
 	SessionSimulateRequest,
 	SessionSimulateResponse,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 export { TransportError } from './transport/TransportTypes.js';
 export type {
 	TransportErrorCode,
@@ -186,10 +186,10 @@ export async function startServer(
 		transportOptions.idFactory = options.idFactory;
 	}
 	await app.register(createSessionTransportPlugin, transportOptions);
-	logger?.info('Starting Kingdom Builder server...');
+	logger?.info('Starting BoardSmith server...');
 	try {
 		const address = await app.listen({ host, port });
-		logger?.info(`Kingdom Builder server listening on ${address}`);
+		logger?.info(`BoardSmith server listening on ${address}`);
 		const url = new URL(address);
 		return {
 			app,
@@ -201,7 +201,7 @@ export async function startServer(
 			sessionManager,
 		};
 	} catch (error) {
-		logger?.error(error, 'Failed to start Kingdom Builder server.');
+		logger?.error(error, 'Failed to start BoardSmith server.');
 		hourlyScheduler.stop();
 		database.close();
 		await app.close();

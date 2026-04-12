@@ -1,4 +1,4 @@
-import type { EffectConfig } from '@kingdom-builder/protocol';
+import type { EffectConfig } from '@boardsmith/protocol';
 import { effect, type EffectBuilder } from '../evaluators';
 import { resolveEffectConfig } from '../effectParams';
 

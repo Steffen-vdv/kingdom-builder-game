@@ -22,7 +22,7 @@ import type {
 	ActionExecuteResponse,
 	ActionExecuteSuccessResponse,
 	ActionExecuteErrorResponse,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { EngineSession } from './session';
 import type { PlayerId } from '../state';
 import type { ActionParameters } from '../actions/action_parameters';

@@ -383,6 +383,7 @@ export function GameProvider(props: GameProviderProps) {
 
 	const innerProps: GameProviderInnerProps = {
 		children,
+		contentId: contentId ?? null,
 		darkMode,
 		onToggleDark,
 		musicEnabled,

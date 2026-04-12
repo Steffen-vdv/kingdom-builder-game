@@ -5,8 +5,8 @@
  * requires Res.t1Done >= 2, and increments Res.t2Done on
  * completion.
  */
-import type { ActionConfig, RequirementConfig } from '@kingdom-builder/protocol';
-import { Types, ResourceMethods, PassiveMethods, CostModMethods, resourceAmountChange } from '@kingdom-builder/contents-sdk';
+import type { ActionConfig, RequirementConfig } from '@boardsmith/protocol';
+import { Types, ResourceMethods, PassiveMethods, CostModMethods, resourceAmountChange } from '@boardsmith/contents-sdk';
 import { action, effect, passiveParams, costModParams, compareRequirement, resourceEvaluator } from '../infrastructure/builders';
 import { Res, MetaCat } from './ids';
 import { ResearchT2 } from './researchIds';

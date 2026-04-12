@@ -3,9 +3,9 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
-import { summarizeContent } from '@kingdom-builder/web/translation/content';
-import type { TranslationContext } from '@kingdom-builder/web/translation/context';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { summarizeContent } from '@boardsmith/web/translation/content';
+import type { TranslationContext } from '@boardsmith/web/translation/context';
+import { createContentFactory } from '@boardsmith/testing';
 import { RegistryMetadataProvider } from '../../packages/web/src/contexts/RegistryMetadataContext';
 import { buildSyntheticTranslationContext } from '../../packages/web/tests/helpers/createSyntheticTranslationContext';
 

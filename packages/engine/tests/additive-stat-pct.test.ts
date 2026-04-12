@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { runEffects, type EffectDef } from '../src/index.ts';
-import { Resource } from '@kingdom-builder/contents';
+import { Resource } from '@boardsmith/contents';
 import { createTestEngine } from './helpers.ts';
 import { resourcePercentParams } from './helpers/resourceParams.ts';
 

@@ -12,16 +12,16 @@ import {
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
 	LandMethods,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
 	DevelopmentConfig as DevelopmentDef,
 	Registry,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 import type { RuleSet } from '../../src/services';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import { TAX_ACTION_ID, type PerformActionFn } from '../../src/ai/index.ts';
 import type { RuntimeResourceContent } from '../../src/resource/index.ts';

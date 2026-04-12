@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { performAction, advance, getActionCosts } from '../../src/index.ts';
-import { Resource as CResource } from '@kingdom-builder/contents';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { Resource as CResource } from '@boardsmith/contents';
+import { createContentFactory } from '@boardsmith/testing';
 import { createTestEngine } from '../helpers.ts';
 import { resourceAmountParams } from '../helpers/resourceParams.ts';
 

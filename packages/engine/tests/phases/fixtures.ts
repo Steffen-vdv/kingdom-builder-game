@@ -1,8 +1,8 @@
 import { createEngine } from '../../src/index.ts';
 import type { PhaseDef } from '../../src/phases.ts';
 import type { RuleSet } from '../../src/services/index.ts';
-import { RULES } from '@kingdom-builder/contents';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { RULES } from '@boardsmith/contents';
+import { createContentFactory } from '@boardsmith/testing';
 import {
 	resourceKeys,
 	statKeys,

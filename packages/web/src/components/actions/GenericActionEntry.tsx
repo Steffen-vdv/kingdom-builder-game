@@ -8,7 +8,7 @@ import type {
 	ActionEffectGroup,
 	ActionEffectGroupChoiceMap,
 	ActionEffectGroupOption,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { Summary, TranslationContext } from '../../translation';
 import { useActionMetadata } from '../../state/useActionMetadata';
 import GenericActionCard from './GenericActionCard';

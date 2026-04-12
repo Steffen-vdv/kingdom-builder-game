@@ -3,7 +3,7 @@ import type {
 	SessionAdvanceResult,
 	SessionAdvanceSkipSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { snapshotPlayer } from '../translation';
 import { createSessionTranslationContext } from './createSessionTranslationContext';
 import { advanceSessionPhase } from './sessionSdk';

@@ -55,7 +55,7 @@ const SPEED_CONTROL_DEFINITIONS: readonly SpeedControlDefinition[] =
 		(control): control is SpeedControlDefinition => 'timeScale' in control,
 	);
 
-const KEYBIND_STORAGE_KEY = 'kingdom-builder.controls.keybinds';
+const KEYBIND_STORAGE_KEY = 'boardsmith.controls.keybinds';
 
 type ControlId = ControlDefinition['id'];
 

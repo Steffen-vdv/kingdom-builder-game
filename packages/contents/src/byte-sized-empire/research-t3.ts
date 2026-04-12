@@ -4,8 +4,8 @@
  * Each T3 tech costs 10-14 Knowledge, has a single tier (tier 3),
  * and requires Res.t2Done >= 2.
  */
-import type { ActionConfig, RequirementConfig } from '@kingdom-builder/protocol';
-import { Types, ResourceMethods, PassiveMethods, LandMethods, resourceAmountChange } from '@kingdom-builder/contents-sdk';
+import type { ActionConfig, RequirementConfig } from '@boardsmith/protocol';
+import { Types, ResourceMethods, PassiveMethods, LandMethods, resourceAmountChange } from '@boardsmith/contents-sdk';
 import { action, effect, passiveParams, compareRequirement, resourceEvaluator } from '../infrastructure/builders';
 import { Res, MetaCat } from './ids';
 import { ResearchT3 } from './researchIds';

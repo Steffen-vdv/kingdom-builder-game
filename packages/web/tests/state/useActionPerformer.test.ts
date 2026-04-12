@@ -12,7 +12,7 @@ import type {
 	SessionRequirementFailure,
 	SessionResourceDefinition,
 	SessionRuleSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import {
 	createResourceKeys,
 	createSessionRegistries,

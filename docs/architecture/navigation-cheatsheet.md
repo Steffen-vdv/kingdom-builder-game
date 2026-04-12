@@ -8,7 +8,7 @@ Use this as a jumping-off point when you need to track how combat, passives, and
 - **`packages/engine/src/effects/attack/resolve.ts`** – Core calculator for absorption, fortification, and post-trigger sweeps; expects `RULES` values (cap, rounding) to be preloaded before running fights.【F:packages/engine/src/effects/attack/resolve.ts†L1-L120】
 - **`packages/engine/src/effects/attack_target_handlers/index.ts`** – Dispatch table for resource/building targets; use this when adding new attack surfaces or evaluation keys.【F:packages/engine/src/effects/attack_target_handlers/index.ts†L1-L51】
 - **`packages/engine/src/effects/attack/snapshot_diff.ts`** – Utility diffing attacker/defender snapshots so logs surface resource shifts during combat.【F:packages/engine/src/effects/attack/snapshot_diff.ts†L1-L48】
-- **Registries to preload** – `RULES`, `PHASES`, and any attack-target metadata from `@kingdom-builder/contents` must be loaded before invoking `attack:perform` so evaluation hooks resolve correctly.
+- **Registries to preload** – `RULES`, `PHASES`, and any attack-target metadata from `@boardsmith/contents` must be loaded before invoking `attack:perform` so evaluation hooks resolve correctly.
 
 ## Passive Stacking & Modifiers
 
@@ -16,7 +16,7 @@ Use this as a jumping-off point when you need to track how combat, passives, and
 - **`packages/engine/src/services/passive_helpers.ts`** – Clone/reverse utilities that keep passive metadata, teardown effects, and skip scaffolding consistent when adding/removing stacks.【F:packages/engine/src/services/passive_helpers.ts†L1-L116】
 - **`packages/engine/src/effects/passive_add.ts`** – Effect surface for injecting passives (incl. growth/upkeep triggers); call this from buildings, developments, or tier scripts when you need a new stack.【F:packages/engine/src/effects/passive_add.ts†L21-L87】
 - **`packages/engine/src/effects/result_mod.ts`** – Registers result/evaluation modifiers tied to passives; pair with the manager when adding custom stacking math.【F:packages/engine/src/effects/result_mod.ts†L1-L55】
-- **Preload helpers** – Pull passive templates from `@kingdom-builder/contents` (e.g., tier definitions, passive registries) or seed them via `createContentFactory()` before tests so modifiers have ids and icons ready.
+- **Preload helpers** – Pull passive templates from `@boardsmith/contents` (e.g., tier definitions, passive registries) or seed them via `createContentFactory()` before tests so modifiers have ids and icons ready.
 
 ## Happiness Thresholds
 

@@ -4,10 +4,10 @@
  * All game actions for the score-based engine-builder mode.
  * Build and develop actions live in buildDevelopActions.ts.
  */
-import { Registry, actionSchema } from '@kingdom-builder/protocol';
+import { Registry, actionSchema } from '@boardsmith/protocol';
 import type { ZodType } from 'zod';
-import type { ActionDef } from '@kingdom-builder/contents-sdk';
-import { Types, ResourceMethods, LandMethods, DevelopmentMethods, action, resourceAmountChange, resourceTransferAmount } from '@kingdom-builder/contents-sdk';
+import type { ActionDef } from '@boardsmith/contents-sdk';
+import { Types, ResourceMethods, LandMethods, DevelopmentMethods, action, resourceAmountChange, resourceTransferAmount } from '@boardsmith/contents-sdk';
 import {
 	effect,
 	compareRequirement,

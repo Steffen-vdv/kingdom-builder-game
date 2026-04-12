@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { requirement, Resource } from '@kingdom-builder/contents';
+import { requirement, Resource } from '@boardsmith/contents';
 
 describe('RequirementBuilder', () => {
 	it('builds requirement configs with params', () => {

@@ -9,7 +9,7 @@ import type {
 	DevelopmentConfig as DevelopmentDef,
 	PlayerStartConfig,
 	Registry,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { PhaseDef } from './phases';
 import type { ActionTrace } from './log';
 import type { RuntimeResourceCatalog } from './resource';

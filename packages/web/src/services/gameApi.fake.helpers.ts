@@ -1,7 +1,7 @@
 import type {
 	SessionCreateResponse,
 	SessionStateResponse,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { clone } from './gameApi.clone';
 
 export type SessionLikeResponse = Pick<

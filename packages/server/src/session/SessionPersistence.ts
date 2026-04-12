@@ -5,7 +5,7 @@ import type {
 	SessionPlayerId,
 	ActionParametersPayload,
 	GameConfig,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { SessionStaticMetadataPayload } from './buildSessionMetadata.js';
 
 /**

@@ -7,7 +7,7 @@ import type {
 	SessionCreateResponse,
 	SessionGateway,
 	SessionStateResponse,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import {
 	actionExecuteRequestSchema,
 	actionExecuteResponseSchema,
@@ -26,7 +26,7 @@ import {
 	sessionSimulateRequestSchema,
 	sessionSimulateResponseSchema,
 	sessionStateResponseSchema,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { TransportError } from '../transport/TransportTypes.js';
 import type { TransportErrorCode } from '../transport/TransportTypes.js';
 import type {

@@ -5,7 +5,7 @@ import {
 	getActionRequirements,
 } from '../../src/actions/costs.ts';
 import { createTestEngine } from '../helpers.ts';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 
 function expectMissingActionError(actionId: string) {
 	return `Action ${actionId} is not registered in the engine context`;

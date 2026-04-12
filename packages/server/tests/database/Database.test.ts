@@ -25,14 +25,14 @@ describe('Database', () => {
 		});
 
 		it('uses environment variable when no path provided', () => {
-			const env = { KB_DATABASE_PATH: '/custom/path.db' };
+			const env = { BS_DATABASE_PATH: '/custom/path.db' };
 			const db = new Database({ env });
 			expect(db.getPath()).toBe('/custom/path.db');
 		});
 
 		it('uses default path when nothing provided', () => {
 			const db = new Database();
-			expect(db.getPath()).toBe('./data/kingdom-builder.db');
+			expect(db.getPath()).toBe('./data/boardsmith.db');
 		});
 	});
 

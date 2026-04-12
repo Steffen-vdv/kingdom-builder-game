@@ -11,9 +11,9 @@
 import { describe, it, expect } from 'vitest';
 import { runEffects } from '../src/effects';
 import { createTestEngine } from './helpers';
-import { createContentFactory } from '@kingdom-builder/testing';
-import type { EffectDef } from '@kingdom-builder/protocol';
-import { Resource } from '@kingdom-builder/contents';
+import { createContentFactory } from '@boardsmith/testing';
+import type { EffectDef } from '@boardsmith/protocol';
+import { Resource } from '@boardsmith/contents';
 
 interface TransferEffectParams {
 	donor: {

@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { resolveAttack, runEffects } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
-import { Resource } from '@kingdom-builder/contents';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { Resource } from '@boardsmith/contents';
+import { createContentFactory } from '@boardsmith/testing';
 
 describe('resolveAttack buildings', () => {
 	it('keeps buildings intact when damage is fully mitigated', () => {

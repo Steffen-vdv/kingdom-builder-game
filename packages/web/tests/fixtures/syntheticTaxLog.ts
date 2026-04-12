@@ -4,7 +4,7 @@ import {
 	resourceDefinition,
 	resourceGroupDefinition,
 	type ContentFactory,
-} from '@kingdom-builder/testing';
+} from '@boardsmith/testing';
 import type { PhaseDef, StartConfig } from './syntheticTaxData';
 import {
 	SYNTHETIC_RESOURCE_KEYS,

@@ -7,9 +7,9 @@ import {
 	type EffectDef,
 } from '../../src';
 import { createTestEngine } from '../helpers';
-import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
+import { Resource as CResource, PhaseId } from '@boardsmith/contents';
 import { type ResourceAmountParamsResult } from '../helpers/resourceParams.ts';
-import type { EffectConfig } from '@kingdom-builder/protocol';
+import type { EffectConfig } from '@boardsmith/protocol';
 
 interface EffectGroupOption {
 	id: string;

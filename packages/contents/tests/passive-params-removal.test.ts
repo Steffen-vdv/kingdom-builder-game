@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { passiveParams, effect } from '../src/infrastructure/builders';
-import { Types, PassiveMethods } from '@kingdom-builder/contents-sdk';
+import { Types, PassiveMethods } from '@boardsmith/contents-sdk';
 
 const REMOVE_ON_UPKEEP_STEP_MESSAGE = 'Passive removeOnUpkeepStep() requires id(). ' + 'Call id("your-passive-id") before removeOnUpkeepStep().';
 

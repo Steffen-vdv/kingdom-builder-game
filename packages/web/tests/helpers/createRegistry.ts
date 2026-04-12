@@ -1,4 +1,4 @@
-import { Registry } from '@kingdom-builder/protocol';
+import { Registry } from '@boardsmith/protocol';
 
 export function createRegistry<T extends { id: string }>(items: T[]) {
 	const registry = new Registry<T>();

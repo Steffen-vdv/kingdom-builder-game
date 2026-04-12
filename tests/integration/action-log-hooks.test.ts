@@ -1,23 +1,23 @@
 import { describe, it, expect } from 'vitest';
-import { createEngineSession } from '@kingdom-builder/engine';
+import { createEngineSession } from '@boardsmith/engine';
 import {
 	PHASES,
 	RULES,
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents';
-import { logContent } from '@kingdom-builder/web/translation/content';
-import { createTranslationContext } from '@kingdom-builder/web/translation/context';
-import { createContentFactory } from '@kingdom-builder/testing';
+} from '@boardsmith/contents';
+import { logContent } from '@boardsmith/web/translation/content';
+import { createTranslationContext } from '@boardsmith/web/translation/context';
+import { createContentFactory } from '@boardsmith/testing';
 import type {
 	SessionMetadataDescriptor,
 	SessionRegistriesPayload,
 	SessionSnapshotMetadata,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import {
 	deserializeSessionRegistries,
 	type SessionRegistries,
-} from '@kingdom-builder/web/state/sessionRegistries';
+} from '@boardsmith/web/state/sessionRegistries';
 import { createSessionRegistriesPayload } from '../../packages/web/tests/helpers/sessionRegistries';
 
 type TimelineEntry = string | { text: string };

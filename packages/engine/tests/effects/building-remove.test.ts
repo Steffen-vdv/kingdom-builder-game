@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { buildingRemove } from '../../src/effects/building_remove.ts';
 import { createTestEngine } from '../helpers.ts';
-import { createContentFactory } from '@kingdom-builder/testing';
-import type { EffectDef } from '@kingdom-builder/protocol';
+import { createContentFactory } from '@boardsmith/testing';
+import type { EffectDef } from '@boardsmith/protocol';
 
 describe('building:remove effect', () => {
 	it('requires an id parameter', () => {

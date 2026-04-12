@@ -5,11 +5,11 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	ResourceDefinition,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type {
 	SessionMetadataDescriptor,
 	SessionSnapshotMetadata,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,

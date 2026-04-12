@@ -4,7 +4,7 @@ import type {
 	SessionStateResponse,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import {
 	applySessionState,
 	assertSessionRecord,

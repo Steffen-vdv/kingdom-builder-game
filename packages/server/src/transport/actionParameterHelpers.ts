@@ -1,5 +1,5 @@
-import { actionParametersSchema } from '@kingdom-builder/protocol';
-import type { EngineSession } from '@kingdom-builder/engine';
+import { actionParametersSchema } from '@boardsmith/protocol';
+import type { EngineSession } from '@boardsmith/engine';
 import type { z } from 'zod';
 import { TransportError } from './TransportTypes.js';
 

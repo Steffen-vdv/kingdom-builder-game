@@ -1,7 +1,7 @@
 import type {
 	SessionActionRequirementList,
 	SessionRequirementFailure,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { GameApiError } from '../services/gameApi';
 import { getActionErrorMetadata } from './actionErrorMetadata';
 import { SessionMirroringError, isSessionExpiredError } from './sessionErrors';

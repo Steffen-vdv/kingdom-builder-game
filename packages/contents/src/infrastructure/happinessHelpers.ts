@@ -1,6 +1,6 @@
-import type { EffectConfig, PassiveMetadata } from '@kingdom-builder/protocol';
-import type { ResourceTierTrackMetadata, passiveParams } from '@kingdom-builder/contents-sdk';
-import { costModParams, globalTarget, resultModParams, effect, Types, CostModMethods, ResultModMethods, PassiveMethods, formatPassiveRemoval } from '@kingdom-builder/contents-sdk';
+import type { EffectConfig, PassiveMetadata } from '@boardsmith/protocol';
+import type { ResourceTierTrackMetadata, passiveParams } from '@boardsmith/contents-sdk';
+import { costModParams, globalTarget, resultModParams, effect, Types, CostModMethods, ResultModMethods, PassiveMethods, formatPassiveRemoval } from '@boardsmith/contents-sdk';
 import { resourceAddEffect } from './helpers';
 import { ResourceId } from '../kingdom-builder/content/constants';
 

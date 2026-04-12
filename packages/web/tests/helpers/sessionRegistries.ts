@@ -1,8 +1,8 @@
 import {
 	createContentFactory,
 	toSessionActionCategoryConfig,
-} from '@kingdom-builder/testing';
-import type { SessionRegistriesPayload } from '@kingdom-builder/protocol/session';
+} from '@boardsmith/testing';
+import type { SessionRegistriesPayload } from '@boardsmith/protocol/session';
 import {
 	deserializeSessionRegistries,
 	type SessionRegistries,

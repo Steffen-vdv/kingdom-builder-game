@@ -1,8 +1,8 @@
 import { effect, phase, step, resourceEvaluator } from '../infrastructure/builders';
-import { Types, ResourceMethods, resourceAmountChange } from '@kingdom-builder/contents-sdk';
-import type { TriggerKey } from '@kingdom-builder/contents-sdk';
+import { Types, ResourceMethods, resourceAmountChange } from '@boardsmith/contents-sdk';
+import type { TriggerKey } from '@boardsmith/contents-sdk';
 import { Phase, Step, Trigger, Res } from './ids';
-import type { PhaseConfig } from '@kingdom-builder/protocol';
+import type { PhaseConfig } from '@boardsmith/protocol';
 
 // BSE defines its own trigger key namespace; the protocol
 // schema accepts any string, but the builder type is narrow.

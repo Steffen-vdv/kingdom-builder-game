@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
 import { formatResourceValue } from '../src/utils/resourceSources';
-import type { EffectDef, SessionPlayerId } from '@kingdom-builder/protocol';
+import type { EffectDef, SessionPlayerId } from '@boardsmith/protocol';
 import { createTranslationContext } from '../src/translation/context';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import {

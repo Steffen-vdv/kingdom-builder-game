@@ -1,4 +1,4 @@
-import type { ActionConfig } from '@kingdom-builder/protocol';
+import type { ActionConfig } from '@boardsmith/protocol';
 import type { TranslationContext } from './context';
 
 type ActionTitleDefinition = Pick<ActionConfig, 'id' | 'name' | 'icon'> & {

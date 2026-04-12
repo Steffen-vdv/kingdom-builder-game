@@ -10,9 +10,9 @@ import type {
 	SessionSnapshotMetadata,
 	SimulateUpcomingPhasesOptions,
 	SimulateUpcomingPhasesResult,
-} from '@kingdom-builder/protocol/session';
-import type { ActionEffectGroup } from '@kingdom-builder/protocol';
-import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
+} from '@boardsmith/protocol/session';
+import type { ActionEffectGroup } from '@boardsmith/protocol';
+import type { ActionParametersPayload } from '@boardsmith/protocol/actions';
 import type { SessionStateRecord } from './sessionStateStore';
 import type { SessionRegistries } from './sessionRegistries';
 

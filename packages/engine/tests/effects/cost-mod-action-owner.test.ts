@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { getActionCosts, advance } from '../../src';
 import { runEffects } from '../../src/effects/index.ts';
 import { createTestEngine } from '../helpers.ts';
-import { createContentFactory } from '@kingdom-builder/testing';
-import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
+import { createContentFactory } from '@boardsmith/testing';
+import { Resource as CResource, PhaseId } from '@boardsmith/contents';
 
 describe('cost_mod owner scope', () => {
 	it('applies only to the player who added the modifier', () => {

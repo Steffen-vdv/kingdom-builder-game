@@ -2,7 +2,7 @@ import type {
 	SessionResourceBoundReference,
 	SessionResourceDefinition,
 	SessionResourceGroupDefinition,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 /**
  * Entry describing a bound reference and its type.

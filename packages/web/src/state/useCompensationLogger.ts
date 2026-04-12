@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { SessionSnapshot } from '@kingdom-builder/protocol';
+import type { SessionSnapshot } from '@boardsmith/protocol';
 import {
 	diffStepSnapshots,
 	snapshotPlayer,

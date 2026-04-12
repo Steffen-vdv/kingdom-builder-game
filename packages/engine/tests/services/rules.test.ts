@@ -7,8 +7,8 @@ import {
 	passiveParams,
 	Types,
 	PassiveMethods,
-} from '@kingdom-builder/contents';
-import { createContentFactory } from '@kingdom-builder/testing';
+} from '@boardsmith/contents';
+import { createContentFactory } from '@boardsmith/testing';
 
 describe('Services', () => {
 	it('evaluates resource tiers correctly', () => {

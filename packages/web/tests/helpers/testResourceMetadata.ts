@@ -1,4 +1,4 @@
-import type { SessionMetadataDescriptor } from '@kingdom-builder/protocol/session';
+import type { SessionMetadataDescriptor } from '@boardsmith/protocol/session';
 
 export const buildResourceMetadata = (): Record<
 	string,

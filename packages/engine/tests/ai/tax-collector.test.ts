@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource } from '@boardsmith/contents';
 import { performAction, advance } from '../../src';
 import {
 	createTaxCollectorController,
 	TAX_ACTION_ID,
 } from '../../src/ai/index';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 import { createTestEngine } from '../helpers';
 import { resourceAmountParams } from '../helpers/resourceParams.ts';
 

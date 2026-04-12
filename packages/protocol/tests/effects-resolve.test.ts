@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 
 import {
 	applyParamsToEffects,

@@ -32,7 +32,7 @@ export type { TriggerKey } from './infrastructure/defs';
 export { Focus as FocusEnum, FocusDefinitions, type FocusValue, type FocusDefinition } from './kingdom-builder/content/constants';
 export type { ActionEffectGroupDef, ActionEffectGroupOptionDef } from './infrastructure/builders';
 export { BROOM_ICON, GENERAL_RESOURCE_ICON, RESOURCE_TRANSFER_ICON } from './infrastructure/defs';
-export { formatPassiveRemoval } from '@kingdom-builder/contents-sdk';
+export { formatPassiveRemoval } from '@boardsmith/contents-sdk';
 export {
 	resource,
 	resourceGroup,
@@ -71,7 +71,7 @@ export {
 	compareRequirement,
 	requirement,
 } from './infrastructure/builders';
-export { Types, PassiveMethods, CostModMethods, RequirementTypes, ActionMethods, ResourceMethods, LandMethods } from '@kingdom-builder/contents-sdk';
+export { Types, PassiveMethods, CostModMethods, RequirementTypes, ActionMethods, ResourceMethods, LandMethods } from '@boardsmith/contents-sdk';
 
 // Content Package System
 export { loadContentPackage, createContentLoader, CONTENT_PACKAGE_IDS, CONTENT_PACKAGE_META, DEFAULT_CONTENT_ID } from './kingdom-builder/loader';
@@ -88,4 +88,4 @@ export { findActionByRole, findActionsByRole, extractSystemActionIds } from './k
 export type { SystemActionIds } from './kingdom-builder/systemActions';
 
 // Re-export SDK types for convenience
-export type { ContentPackage, ContentPackageFactory, ContentPackageLoader } from '@kingdom-builder/contents-sdk';
+export type { ContentPackage, ContentPackageFactory, ContentPackageLoader } from '@boardsmith/contents-sdk';

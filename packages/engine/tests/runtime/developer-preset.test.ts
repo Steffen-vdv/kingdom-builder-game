@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { createTestEngine } from '../helpers.ts';
 import { applyDeveloperPreset } from '../../src/runtime/developer_preset.ts';
-import { createContentFactory } from '@kingdom-builder/testing';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { createContentFactory } from '@boardsmith/testing';
+import { Resource as CResource } from '@boardsmith/contents';
 import type { PlayerId } from '../../src/state';
 
 describe('applyDeveloperPreset', () => {

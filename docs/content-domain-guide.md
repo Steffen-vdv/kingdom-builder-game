@@ -1,6 +1,6 @@
 # Content Domain Guide
 
-This guide explains the structure of `@kingdom-builder/contents` and how to
+This guide explains the structure of `@boardsmith/contents` and how to
 maintain it properly. **Read this before making any changes to the content
 domain.**
 
@@ -41,7 +41,7 @@ packages/contents/src/
 ├── registries/          # Registry exports
 │
 └── infrastructure/      # TECHNICAL CODE - DO NOT ADD GAME DATA HERE
-    ├── builders.ts      # Builder function exports (re-exports from @kingdom-builder/contents-sdk)
+    ├── builders.ts      # Builder function exports (re-exports from @boardsmith/contents-sdk)
     ├── builders/        # Game-specific builder implementations
     └── resource/        # Resource system infrastructure (re-exports from contents-sdk)
 ```
@@ -66,7 +66,7 @@ These define **game data** using builder patterns:
 2. **Inline all values** - Don't extract into variables (except shared requirements)
 3. **Accept duplication** - Copy-paste is better than abstraction
 4. **No imports from `./infrastructure/` subdirectories** - Only import from
-   `./infrastructure/builders` (which re-exports from `@kingdom-builder/contents-sdk`)
+   `./infrastructure/builders` (which re-exports from `@boardsmith/contents-sdk`)
 
 ### Infrastructure Files (`infrastructure/` directory)
 

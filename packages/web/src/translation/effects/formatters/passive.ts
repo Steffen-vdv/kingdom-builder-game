@@ -3,7 +3,7 @@ import {
 	summarizeEffects,
 	describeEffects,
 } from '../factory';
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 import type { TranslationContext, TranslationPhase } from '../../context';
 
 type PassiveDurationMeta = {

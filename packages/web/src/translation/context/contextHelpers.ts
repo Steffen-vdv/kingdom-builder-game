@@ -7,7 +7,7 @@ import type {
 	SessionPassiveSummary,
 	SessionPlayerId,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type {
 	TranslationActionCategoryDefinition,
 	TranslationActionCategoryRegistry,

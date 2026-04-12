@@ -1,7 +1,7 @@
 import type {
 	SessionSnapshot,
 	SessionRegistriesPayload,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { GameApiFake } from '../../src/services/gameApi';
 import {
 	getOrCreateRemoteAdapter,

@@ -6,7 +6,7 @@ import {
 import {
 	createContentFactory,
 	toSessionActionCategoryConfig,
-} from '@kingdom-builder/testing';
+} from '@boardsmith/testing';
 import { resourceAmountParams } from '../helpers/resourceParams.ts';
 import {
 	RESOURCE_REGISTRY,
@@ -19,8 +19,8 @@ import {
 	ACTION_META_CATEGORIES as REAL_ACTION_META_CATEGORIES,
 	BUILDINGS as REAL_BUILDINGS,
 	DEVELOPMENTS as REAL_DEVELOPMENTS,
-} from '@kingdom-builder/contents';
-import type { SessionRegistriesPayload } from '@kingdom-builder/protocol';
+} from '@boardsmith/contents';
+import type { SessionRegistriesPayload } from '@boardsmith/protocol';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import type { RuntimeResourceContent } from '../../src/resource/index.ts';
 

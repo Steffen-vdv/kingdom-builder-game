@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { randomUUID } from 'node:crypto';
-import { Resource as CResource, RULES } from '@kingdom-builder/contents';
-import type { WinConditionDefinition } from '@kingdom-builder/protocol';
+import { Resource as CResource, RULES } from '@boardsmith/contents';
+import type { WinConditionDefinition } from '@boardsmith/protocol';
 import { createTestEngine } from '../helpers';
 
 function createRulesWithWinConditions(winConditions: WinConditionDefinition[]) {

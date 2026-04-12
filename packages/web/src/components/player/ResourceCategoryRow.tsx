@@ -3,7 +3,7 @@ import type {
 	SessionPlayerStateSnapshot,
 	SessionResourceCategoryDefinition,
 	SessionResourceCategoryItem,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
 import ResourceButton from './ResourceButton';

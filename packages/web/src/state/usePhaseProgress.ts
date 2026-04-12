@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
+import type { SessionSnapshot } from '@boardsmith/protocol/session';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
 import { advanceSessionPhase } from './sessionSdk';
 import { getSessionRecord } from './sessionStateStore';

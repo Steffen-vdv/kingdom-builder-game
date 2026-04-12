@@ -15,7 +15,7 @@ import type {
 	SessionResourceBounds,
 	SessionResourceCatalog,
 	SessionRuleSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 /**
  * Lightweight registry surface exposed to translators. Only lookup helpers that

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
+import type { SessionSnapshot } from '@boardsmith/protocol/session';
 import { hasAiController } from './sessionAi';
 import { updatePlayerName as updateRemotePlayerName } from './sessionSdk';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';

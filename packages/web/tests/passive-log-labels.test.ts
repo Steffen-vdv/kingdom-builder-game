@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createEngine, runEffects } from '@kingdom-builder/engine';
+import { createEngine, runEffects } from '@boardsmith/engine';
 import {
 	snapshotPlayer,
 	diffStepSnapshots,
@@ -20,7 +20,7 @@ import {
 	selectResourceDescriptor,
 } from '../src/translation/effects/registrySelectors';
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('@boardsmith/engine', async () => {
 	return await import('../../engine/src');
 });
 

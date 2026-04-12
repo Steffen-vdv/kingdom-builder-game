@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { evaluatorCompare } from '../../src/requirements/evaluator_compare';
 import { createTestEngine } from '../helpers';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 import { advance } from '../../src';
-import { Resource, PhaseId } from '@kingdom-builder/contents';
+import { Resource, PhaseId } from '@boardsmith/contents';
 
 describe('evaluator:compare requirement', () => {
 	it('compares stat values', () => {

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 import {
 	summarizeContent,
 	summarizeEffects,
 	type SummaryEntry,
 	type SummaryGroup,
 } from '../src/translation';
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
 import { selectTriggerDisplay } from '../src/translation/context/assetSelectors';
 

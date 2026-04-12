@@ -1,4 +1,4 @@
-import type { EffectConfig } from '@kingdom-builder/protocol';
+import type { EffectConfig } from '@boardsmith/protocol';
 import { PhaseId, PhaseStepId } from './phaseTypes';
 import { actionDiscountModifier, growthBonusEffect, happinessModifierId, happinessPassiveId, happinessTierId, resourceGainModifier } from '../../infrastructure/happinessHelpers';
 

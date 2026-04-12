@@ -4,7 +4,7 @@ import { runRequirement } from '../requirements';
 import {
 	getActionTierConfig,
 	resolveActionEffects,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { EngineContext } from '../context';
 import type { EffectDef } from '../effects';
 import type { RequirementDef, RequirementFailure } from '../requirements';

@@ -1,6 +1,6 @@
 import type { EffectHandler } from './index';
 import { runEffects } from './index';
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 import type { EvaluatorDef } from '../evaluators';
 import { EVALUATORS } from '../evaluators';
 

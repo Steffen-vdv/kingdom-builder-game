@@ -1,4 +1,4 @@
-import type { SessionPlayerId } from '@kingdom-builder/protocol/session';
+import type { SessionPlayerId } from '@boardsmith/protocol/session';
 import {
 	enqueueSessionTask as enqueueSessionTaskInternal,
 	getSessionRecord,

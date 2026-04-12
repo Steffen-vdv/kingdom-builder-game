@@ -3,7 +3,7 @@ import { landEvaluator } from '../../src/evaluators/land.ts';
 import { resourceEvaluator } from '../../src/evaluators/resource.ts';
 import { createTestEngine } from '../helpers.ts';
 import { Land } from '../../src/state';
-import { Resource } from '@kingdom-builder/contents';
+import { Resource } from '@boardsmith/contents';
 import { setResourceValue } from '../../src/resource';
 
 describe('evaluators', () => {

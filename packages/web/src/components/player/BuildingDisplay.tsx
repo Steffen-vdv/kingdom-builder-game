@@ -1,5 +1,5 @@
 import React from 'react';
-import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
+import type { SessionPlayerStateSnapshot } from '@boardsmith/protocol';
 import { describeContent, splitSummary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';

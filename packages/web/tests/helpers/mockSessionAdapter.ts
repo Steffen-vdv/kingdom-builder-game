@@ -4,7 +4,7 @@ import type {
 	SessionAdvanceResult,
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 
 const createFallbackPlayer = (
 	sessionState: SessionSnapshot,

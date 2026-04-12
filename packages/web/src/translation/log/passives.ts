@@ -1,7 +1,7 @@
 import {
 	type EffectDef,
 	type SessionPassiveSummary,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import {
 	hasTierSummaryTranslation,
 	translateTierSummary,

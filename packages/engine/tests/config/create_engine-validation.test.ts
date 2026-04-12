@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PHASES } from '@kingdom-builder/contents';
+import { PHASES } from '@boardsmith/contents';
 import type { PhaseDef } from '../../src/phases.ts';
 import { createTestEngine } from '../helpers.ts';
 

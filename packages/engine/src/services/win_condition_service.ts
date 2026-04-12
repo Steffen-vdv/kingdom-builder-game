@@ -4,7 +4,7 @@ import type {
 	WinConditionDefinition,
 	WinConditionResult,
 } from './win_condition_types';
-import type { WinConditionResourceTrigger } from '@kingdom-builder/protocol';
+import type { WinConditionResourceTrigger } from '@boardsmith/protocol';
 
 function compareThreshold(
 	comparison: WinConditionResourceTrigger['comparison'],

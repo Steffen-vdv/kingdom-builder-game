@@ -2,7 +2,7 @@ import type { EffectHandler } from '.';
 import { runEffects } from '.';
 import { snapshotPlayer } from '../log';
 import { withResourceSourceFrames } from '../resource_sources';
-import { resolveActionEffects } from '@kingdom-builder/protocol';
+import { resolveActionEffects } from '@boardsmith/protocol';
 import type { ActionParameters } from '../actions/action_parameters';
 
 type ActionPerformParams = ActionParameters<string> & {

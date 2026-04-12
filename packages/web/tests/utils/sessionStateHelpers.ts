@@ -2,7 +2,7 @@ import type {
 	SessionPassiveRecordSnapshot,
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { SessionResourceKey } from '../../src/state/sessionTypes';
 import { createEmptySnapshotMetadata } from '../helpers/sessionFixtures';
 

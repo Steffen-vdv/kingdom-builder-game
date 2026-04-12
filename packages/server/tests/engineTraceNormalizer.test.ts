@@ -4,7 +4,7 @@ import type {
 	ActionTrace as EngineActionTrace,
 	PlayerSnapshot as EnginePlayerSnapshot,
 	PassiveSummary as EnginePassiveSummary,
-} from '@kingdom-builder/engine';
+} from '@boardsmith/engine';
 
 describe('engineTraceNormalizer', () => {
 	it('deeply clones player snapshots when normalizing traces', () => {

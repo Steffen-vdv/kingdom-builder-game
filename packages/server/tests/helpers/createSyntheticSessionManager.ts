@@ -4,18 +4,18 @@ import {
 	createContentFactory,
 	createResourceRegistries,
 	resourceDefinition,
-} from '@kingdom-builder/testing';
-import type { EngineSession } from '@kingdom-builder/engine';
+} from '@boardsmith/testing';
+import type { EngineSession } from '@boardsmith/engine';
 import {
 	happinessTier,
 	effect,
 	passiveParams,
 	Types,
 	PassiveMethods,
-} from '@kingdom-builder/contents';
-import { SystemRole } from '@kingdom-builder/contents-sdk';
-import type { PhaseConfig, RuleSet } from '@kingdom-builder/protocol';
-import type { ContentFactory } from '@kingdom-builder/testing';
+} from '@boardsmith/contents';
+import { SystemRole } from '@boardsmith/contents-sdk';
+import type { PhaseConfig, RuleSet } from '@boardsmith/protocol';
+import type { ContentFactory } from '@boardsmith/testing';
 
 export type SyntheticSessionManagerOptions = Omit<
 	SessionManagerOptions,

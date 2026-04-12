@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { advance, performAction } from '../../src';
 import { createTestEngine } from '../helpers';
-import { Resource as CResource } from '@kingdom-builder/contents';
-import type { EffectConfig } from '@kingdom-builder/protocol';
+import { Resource as CResource } from '@boardsmith/contents';
+import type { EffectConfig } from '@boardsmith/protocol';
 
 interface EffectGroup {
 	id: string;

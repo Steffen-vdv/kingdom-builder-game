@@ -3,7 +3,7 @@ import type {
 	SessionPlayerId,
 	SessionRuleSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { TranslationPassiveDefinition } from './types';
 
 export const EMPTY_PASSIVE_DEFINITIONS = Object.freeze(

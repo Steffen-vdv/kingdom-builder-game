@@ -13,7 +13,7 @@
  */
 import { resource, resourceCategory, resourceGroup, boundTo } from '../../infrastructure/resource';
 import type { ResourceDefinition, ResourceCategoryDefinition, ResourceGroupDefinition } from '../../infrastructure/resource';
-import { resourceChange, resourceAmountChange, PassiveMethods, ResourceMethods, Types } from '@kingdom-builder/contents-sdk';
+import { resourceChange, resourceAmountChange, PassiveMethods, ResourceMethods, Types } from '@boardsmith/contents-sdk';
 import { effect, passiveParams, resourceAssignmentPassiveId } from '../../infrastructure/builders';
 import { Resource } from './constants';
 import { getHappinessResourceDefinition } from '../../infrastructure/happinessResource';

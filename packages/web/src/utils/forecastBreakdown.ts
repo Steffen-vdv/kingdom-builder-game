@@ -1,7 +1,7 @@
 import type {
 	ForecastContribution,
 	ResourceForecastBreakdown,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { Summary, SummaryGroup } from '../translation/content/types';
 import type { TranslationContext } from '../translation/context';
 import { formatResourceValue } from './resourceSources/descriptors';

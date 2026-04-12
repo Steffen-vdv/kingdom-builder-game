@@ -1,4 +1,4 @@
-import type { BuildingAttackTarget } from '@kingdom-builder/protocol';
+import type { BuildingAttackTarget } from '@boardsmith/protocol';
 import { runEffects } from '..';
 import type { AttackTargetHandler, AttackTargetMutationResult } from './index';
 

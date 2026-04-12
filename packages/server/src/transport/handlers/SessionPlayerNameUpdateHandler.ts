@@ -1,14 +1,14 @@
 import {
 	sessionUpdatePlayerNameRequestSchema,
 	sessionUpdatePlayerNameResponseSchema,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type {
 	SessionPlayerId,
 	SessionSnapshot,
 	SessionStateResponse,
 	SessionUpdatePlayerNameResponse,
-} from '@kingdom-builder/protocol';
-import type { EngineSession } from '@kingdom-builder/engine';
+} from '@boardsmith/protocol';
+import type { EngineSession } from '@boardsmith/engine';
 import type { TransportRequest } from '../TransportTypes.js';
 import { TransportError } from '../TransportTypes.js';
 import type { AuthContext, AuthRole } from '../../auth/AuthContext.js';

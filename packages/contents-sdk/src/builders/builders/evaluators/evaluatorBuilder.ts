@@ -1,4 +1,4 @@
-import type { EvaluatorDef } from '@kingdom-builder/protocol';
+import type { EvaluatorDef } from '@boardsmith/protocol';
 import type { DevelopmentIdParam } from '../actionEffectGroups';
 import { ParamsBuilder } from '../../builderShared';
 import type { Params } from '../../builderShared';

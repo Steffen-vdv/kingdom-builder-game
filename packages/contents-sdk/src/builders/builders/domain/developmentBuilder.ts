@@ -1,4 +1,4 @@
-import type { EffectConfig } from '@kingdom-builder/protocol';
+import type { EffectConfig } from '@boardsmith/protocol';
 import type { DevelopmentDef, FocusValue, ResourceKey } from '../../../types';
 import { BaseBuilder } from './baseBuilder';
 

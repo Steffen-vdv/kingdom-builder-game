@@ -17,7 +17,7 @@ import {
 	createDevelopmentRegistry,
 	buildResourceCatalog,
 	Resource as CResource,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 
 // Collect all valid IDs from registries
 function getValidResourceIds(): Set<string> {

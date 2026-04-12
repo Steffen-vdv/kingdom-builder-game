@@ -6,8 +6,8 @@ import type {
 import {
 	sessionIdSchema,
 	visitorStatsResponseSchema,
-} from '@kingdom-builder/protocol';
-import type { VisitorStatsResponse } from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
+import type { VisitorStatsResponse } from '@boardsmith/protocol';
 import { SessionTransport } from './SessionTransport.js';
 import type { SessionTransportOptions } from './SessionTransport.js';
 import { TransportError } from './TransportTypes.js';

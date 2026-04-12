@@ -16,13 +16,13 @@ import {
 	RESOURCE_CATEGORY_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
 	RESOURCE_REGISTRY,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import type {
 	Registry,
 	SerializedRegistry,
 	SessionRegistriesPayload,
 	SessionActionCategoryRegistry,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type {
 	SessionOverviewMetadata,
 	SessionSnapshotMetadata,
@@ -30,7 +30,7 @@ import type {
 	SessionPhaseMetadata,
 	SessionPhaseStepMetadata,
 	SessionTriggerMetadata,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 
 type RegistryDefinition<T> = SerializedRegistry<T>;
 

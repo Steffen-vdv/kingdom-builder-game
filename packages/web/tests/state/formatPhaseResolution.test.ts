@@ -3,7 +3,7 @@ import type {
 	SessionAdvanceResult,
 	SessionPhaseDefinition,
 	SessionPhaseStepDefinition,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import type {
 	PlayerSnapshot,
 	TranslationDiffContext,

@@ -1,4 +1,4 @@
-import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
+import type { PhaseDef, RuleSet, StartConfig } from '@boardsmith/protocol';
 
 type SyntheticContent = {
 	resourceKeys: {

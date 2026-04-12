@@ -1,15 +1,15 @@
-import type { PlayerStartConfig } from '@kingdom-builder/protocol';
+import type { PlayerStartConfig } from '@boardsmith/protocol';
 import type {
 	SessionPlayerId,
 	SessionResourceCatalog,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import { describe, expect, it } from 'vitest';
 import {
 	createResourceRegistries,
 	resourceDefinition,
 	resourceGroupDefinition,
-} from '@kingdom-builder/testing';
+} from '@boardsmith/testing';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from '../helpers/sessionRegistries';

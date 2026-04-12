@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-	performAction,
-	runEffects,
-	getActionCosts,
-} from '@kingdom-builder/engine';
+import { performAction, runEffects, getActionCosts } from '@boardsmith/engine';
 import {
 	createTestContext,
 	getBuildingWithResourceBonuses,

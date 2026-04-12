@@ -1,9 +1,9 @@
-import { resolveActionEffects } from '@kingdom-builder/protocol';
+import { resolveActionEffects } from '@boardsmith/protocol';
 import type {
 	ActionParametersPayload,
 	ActionTrace,
-} from '@kingdom-builder/protocol/actions';
-import type { ActionConfig } from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol/actions';
+import type { ActionConfig } from '@boardsmith/protocol';
 import {
 	diffStepSnapshots,
 	logContent,

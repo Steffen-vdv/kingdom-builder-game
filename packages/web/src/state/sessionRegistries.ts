@@ -11,8 +11,8 @@ import {
 	type BuildingConfig,
 	type DevelopmentConfig,
 	type ResourceDefinition,
-} from '@kingdom-builder/protocol';
-import type { SessionRegistriesPayload } from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol';
+import type { SessionRegistriesPayload } from '@boardsmith/protocol/session';
 import type { ZodType } from 'zod';
 import { clone } from './clone';
 

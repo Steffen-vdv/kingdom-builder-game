@@ -240,7 +240,7 @@ export const ActionCategory = {
 export type ActionCategoryValue = (typeof ActionCategory)[keyof typeof ActionCategory];
 
 // Re-export SystemRole from SDK (single source of truth)
-export { SystemRole, type SystemRoleValue } from '@kingdom-builder/contents-sdk';
+export { SystemRole, type SystemRoleValue } from '@boardsmith/contents-sdk';
 
 /**
  * Identity helper for resource ID type narrowing.

@@ -1,4 +1,4 @@
-# 👑 Kingdom Builder v5.11
+# 🎲 BoardSmith v5.11
 
 ## 0) Preface
 

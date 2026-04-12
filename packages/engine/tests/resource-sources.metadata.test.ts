@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Resource } from '@kingdom-builder/contents';
+import { Resource } from '@boardsmith/contents';
 import { createTestEngine } from './helpers.ts';
 import {
 	resolveResourceSourceMeta,

@@ -1,7 +1,7 @@
 import type { EngineContext } from './context';
 import type { PlayerState } from './state';
 import type { PassiveSummary } from './services';
-import type { SessionResourceBounds } from '@kingdom-builder/protocol';
+import type { SessionResourceBounds } from '@boardsmith/protocol';
 import type { RuntimeResourceCatalog } from './resource';
 import {
 	isBoundReference,

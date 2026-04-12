@@ -3,8 +3,8 @@ import {
 	Resource,
 	happinessPassiveId,
 	type HappinessTierSlug,
-} from '@kingdom-builder/contents';
-import { setResourceValue } from '@kingdom-builder/engine';
+} from '@boardsmith/contents';
+import { setResourceValue } from '@boardsmith/engine';
 import { createTestContext } from './fixtures';
 import { translateTierSummary } from '../../packages/web/src/translation/content/tierSummaries';
 import { createTranslationContextForEngine } from '../../packages/web/tests/helpers/createTranslationContextForEngine';

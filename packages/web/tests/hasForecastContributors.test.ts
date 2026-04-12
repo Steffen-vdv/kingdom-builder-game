@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ForecastBreakdownMap } from '@kingdom-builder/protocol';
+import type { ForecastBreakdownMap } from '@boardsmith/protocol';
 import { hasForecastContributors } from '../src/components/player/resourceSnapshots';
 
 describe('hasForecastContributors', () => {

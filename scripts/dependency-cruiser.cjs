@@ -3,7 +3,7 @@ module.exports = {
 		{
 			name: 'web-to-engine-internals',
 			comment:
-				'packages/web must only consume the public exports from @kingdom-builder/engine.',
+				'packages/web must only consume the public exports from @boardsmith/engine.',
 			severity: 'error',
 			from: {
 				path: '^packages/web/src',

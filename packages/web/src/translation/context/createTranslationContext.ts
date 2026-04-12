@@ -4,7 +4,7 @@ import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import { createTranslationAssets } from './assets';
 import type { TranslationContext, TranslationPassives } from './types';

@@ -1,23 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import {
-	advance,
-	getActionCosts,
-	performAction,
-} from '@kingdom-builder/engine';
-import { resolveActionEffects } from '@kingdom-builder/protocol';
-import { logContent } from '@kingdom-builder/web/translation/content';
+import { advance, getActionCosts, performAction } from '@boardsmith/engine';
+import { resolveActionEffects } from '@boardsmith/protocol';
+import { logContent } from '@boardsmith/web/translation/content';
 import {
 	Resource,
 	RULES,
 	actionEffectGroup,
 	actionEffectGroupOption,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import { createTestEngine } from '../../packages/engine/tests/helpers';
 import {
 	Registry,
 	type ActionConfig,
 	type ActionEffectGroup,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 describe('action effect groups integration', () => {
 	function setup() {

@@ -2,7 +2,7 @@ import type {
 	AttackLog,
 	AttackOnDamageLogEntry,
 	EffectDef,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { SummaryEntry } from '../../content';
 import { registerEffectFormatter } from '../factory';
 import {

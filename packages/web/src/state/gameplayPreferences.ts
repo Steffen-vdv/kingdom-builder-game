@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
 export const AUTO_ADVANCE_PREFERENCE_STORAGE_KEY =
-	'kingdom-builder.preferences.autoAdvance';
+	'boardsmith.preferences.autoAdvance';
 
 type PreferenceUpdater = boolean | ((previousValue: boolean) => boolean);
 

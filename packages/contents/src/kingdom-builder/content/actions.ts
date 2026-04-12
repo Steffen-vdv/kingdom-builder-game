@@ -10,7 +10,7 @@
  * - Use .tier(n, t => t...) to define tier-specific costs/effects/requirements
  * - Always end with .build() to finalize the action
  */
-import { actionSchema, type ActionConfig, Registry } from '@kingdom-builder/protocol';
+import { actionSchema, type ActionConfig, Registry } from '@boardsmith/protocol';
 import { z, type ZodType } from 'zod';
 import { Resource, SystemRole } from './constants';
 import { DevelopmentId } from './developments';
@@ -49,7 +49,7 @@ import {
 	resourceAmountChange,
 	resourceTransferAmount,
 	resourceTransferPercent,
-} from '@kingdom-builder/contents-sdk';
+} from '@boardsmith/contents-sdk';
 import { Focus, type FocusValue } from '../../infrastructure/defs';
 import { PhaseId } from './phaseTypes';
 import {

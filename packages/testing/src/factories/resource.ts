@@ -10,7 +10,7 @@ import {
 	type ResourceReconciliationMode,
 	type ResourceBuilder,
 	type ResourceRegistry,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 
 /**
  * Helper to apply reconciliation mode to a bound value.

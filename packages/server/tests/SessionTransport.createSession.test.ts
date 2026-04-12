@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol';
+import type { SessionSnapshotMetadata } from '@boardsmith/protocol';
 import {
 	SessionTransport,
 	PLAYER_NAME_MAX_LENGTH,

@@ -4,7 +4,7 @@ import type {
 	DevelopmentConfig,
 	SessionActionState,
 	SessionPlayerStateSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 type RegistryLike<T> = { entries(): [string, T][]; get(id: string): T };
 type ActionDefinition = ActionConfig &

@@ -5,8 +5,8 @@
  * that provides abundant starting resources for testing.
  */
 
-import type { ContentPackage } from '@kingdom-builder/contents-sdk';
-import { SystemRole } from '@kingdom-builder/contents-sdk';
+import type { ContentPackage } from '@boardsmith/contents-sdk';
+import { SystemRole } from '@boardsmith/contents-sdk';
 import { createBasePackage } from '../base';
 import { ActionId, type ActionDef } from '../content/actions';
 

@@ -25,12 +25,12 @@ import {
 	buildResourceCatalog,
 	DEVELOPMENTS,
 	getResourceId,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import {
 	Registry,
 	type ActionConfig,
 	type EffectConfig,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 // ============================================================================
 // CONTENT-DERIVED VALUES

@@ -1,7 +1,7 @@
 /**
  * Infrastructure builders for Kingdom Builder content.
  *
- * Re-exports from @kingdom-builder/contents-sdk (canonical source),
+ * Re-exports from @boardsmith/contents-sdk (canonical source),
  * plus game-specific extensions like ActionMetaCategoryBuilder and pool builders.
  */
 
@@ -70,7 +70,7 @@ export {
 	actionCategory,
 	building,
 	development,
-} from '@kingdom-builder/contents-sdk';
+} from '@boardsmith/contents-sdk';
 
 // Re-export types from contents-sdk
 export type {
@@ -86,7 +86,7 @@ export type {
 	PhaseDef,
 	StepDef,
 	WinConditionDef,
-} from '@kingdom-builder/contents-sdk';
+} from '@boardsmith/contents-sdk';
 
 // Game-specific: ActionBuilder with tier support (overrides SDK version)
 export { ActionBuilder, ActionTierBuilder, actionTier, type ActionTierConfig } from './builders/domain';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Resource } from '@kingdom-builder/contents';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { Resource } from '@boardsmith/contents';
+import { createContentFactory } from '@boardsmith/testing';
 import { PlayerState } from '../../src/state';
 import {
 	clearSkipFlags,

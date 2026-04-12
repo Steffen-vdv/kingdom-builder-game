@@ -2,11 +2,11 @@ import {
 	actionExecuteRequestSchema,
 	actionExecuteResponseSchema,
 	actionExecuteErrorResponseSchema,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type {
 	ActionExecuteErrorResponse,
 	ActionExecuteSuccessResponse,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type {
 	TransportHttpResponse,
 	TransportRequest,

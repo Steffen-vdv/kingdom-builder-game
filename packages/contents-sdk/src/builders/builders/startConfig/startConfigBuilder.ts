@@ -2,7 +2,7 @@ import type {
 	PlayerStartConfig,
 	StartConfig,
 	StartModeConfig,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { PlayerStartBuilder } from './playerStartBuilder';
 import { StartModeBuilder } from './startModeBuilder';
 

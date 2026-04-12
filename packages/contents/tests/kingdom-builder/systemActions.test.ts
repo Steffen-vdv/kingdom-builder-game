@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import type { Registry } from '@kingdom-builder/protocol';
-import { SystemRole } from '@kingdom-builder/contents-sdk';
+import type { Registry } from '@boardsmith/protocol';
+import { SystemRole } from '@boardsmith/contents-sdk';
 import { findActionByRole, findActionsByRole, extractSystemActionIds } from '../../src/kingdom-builder/systemActions';
 
 // Minimal mock type that matches what systemActions.ts expects

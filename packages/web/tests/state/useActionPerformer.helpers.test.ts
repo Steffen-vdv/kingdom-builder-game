@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ActionTrace } from '@kingdom-builder/protocol/actions';
+import type { ActionTrace } from '@boardsmith/protocol/actions';
 import { appendSubActionChanges } from '../../src/state/useActionPerformer.helpers';
 import type { TranslationContext } from '../../src/translation/context';
 import type { TranslationDiffContext } from '../../src/translation/log/resourceSources/context';
@@ -9,8 +9,8 @@ const resolveActionEffectsMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn());
 const diffStepSnapshotsMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@kingdom-builder/protocol', async () => {
-	const actual = await vi.importActual('@kingdom-builder/protocol');
+vi.mock('@boardsmith/protocol', async () => {
+	const actual = await vi.importActual('@boardsmith/protocol');
 	return {
 		...(actual as Record<string, unknown>),
 		resolveActionEffects: resolveActionEffectsMock,

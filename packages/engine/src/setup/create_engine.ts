@@ -25,7 +25,7 @@ import {
 	type PhaseConfig,
 	Registry,
 	type ResourceCatalogSnapshot,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import {
 	createRuntimeResourceCatalog,
 	type RuntimeResourceCatalog,
@@ -36,10 +36,7 @@ import {
 	runInitialPoolFills,
 } from './player_setup';
 import { snapshotPlayer, type ActionTrace } from '../log';
-import {
-	SystemRole,
-	type SystemRoleValue,
-} from '@kingdom-builder/contents-sdk';
+import { SystemRole, type SystemRoleValue } from '@boardsmith/contents-sdk';
 
 export interface EngineCreationOptions {
 	actions: Registry<ActionDef>;

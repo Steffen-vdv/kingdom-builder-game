@@ -55,6 +55,6 @@ describe('useTimeScale', () => {
 		}).not.toThrow();
 		expect(result.current.timeScale).toBe(2);
 		expect(result.current.timeScaleRef.current).toBe(2);
-		expect(setItemSpy).toHaveBeenCalledWith('kingdom-builder:time-scale', '2');
+		expect(setItemSpy).toHaveBeenCalledWith('boardsmith:time-scale', '2');
 	});
 });

@@ -9,7 +9,7 @@ function joinGradient(parts: readonly string[]): string {
 /**
  * Focus gradients for action cards.
  * Presentation-layer styling based on focus type.
- * Semantic focus data (id, label, color) lives in @kingdom-builder/contents.
+ * Semantic focus data (id, label, color) lives in @boardsmith/contents.
  *
  * Mapping from old focus names:
  * - economy → economy (emerald/green)

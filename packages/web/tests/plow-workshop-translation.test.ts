@@ -14,11 +14,11 @@ import {
 	splitSummary,
 	type Summary,
 } from '../src/translation/content';
-import { createEngine, runEffects } from '@kingdom-builder/engine';
+import { createEngine, runEffects } from '@boardsmith/engine';
 import { createTranslationContext } from '../src/translation/context';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('@boardsmith/engine', async () => {
 	return await import('../../engine/src');
 });
 

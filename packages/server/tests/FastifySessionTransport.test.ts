@@ -6,7 +6,7 @@ import type {
 	SessionRuntimeConfigResponse,
 	SessionMetadataSnapshotResponse,
 	SessionRegistriesPayload,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import {
 	createSessionTransportPlugin,

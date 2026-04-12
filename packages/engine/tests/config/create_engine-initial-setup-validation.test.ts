@@ -10,10 +10,10 @@ import {
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
 	RESOURCE_CATEGORY_REGISTRY,
-} from '@kingdom-builder/contents';
-import { SystemRole } from '@kingdom-builder/contents-sdk';
-import { Registry, actionSchema } from '@kingdom-builder/protocol';
-import type { ActionConfig } from '@kingdom-builder/protocol';
+} from '@boardsmith/contents';
+import { SystemRole } from '@boardsmith/contents-sdk';
+import { Registry, actionSchema } from '@boardsmith/protocol';
+import type { ActionConfig } from '@boardsmith/protocol';
 
 /**
  * Tests for initial setup system action validation.

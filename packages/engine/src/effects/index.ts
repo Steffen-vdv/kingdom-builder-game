@@ -1,5 +1,5 @@
-import { Registry } from '@kingdom-builder/protocol';
-import type { EffectDef } from '@kingdom-builder/protocol';
+import { Registry } from '@boardsmith/protocol';
+import type { EffectDef } from '@boardsmith/protocol';
 import type { EngineContext } from '../context';
 import { EVALUATORS } from '../evaluators';
 import type { CostBag } from '../services';
@@ -136,4 +136,4 @@ export {
 	actionPoolAdd,
 	actionPoolRemove,
 };
-export type { EffectDef } from '@kingdom-builder/protocol';
+export type { EffectDef } from '@boardsmith/protocol';

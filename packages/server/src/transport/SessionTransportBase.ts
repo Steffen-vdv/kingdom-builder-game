@@ -3,7 +3,7 @@ import {
 	sessionIdSchema,
 	sessionStateResponseSchema,
 	runtimeConfigResponseSchema,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type {
 	ActionExecuteErrorResponse,
 	ActionExecuteSuccessResponse,
@@ -13,8 +13,8 @@ import type {
 	SessionSnapshot,
 	SessionUpdatePlayerNameResponse,
 	SessionRuntimeConfigResponse,
-} from '@kingdom-builder/protocol';
-import type { EngineSession } from '@kingdom-builder/engine';
+} from '@boardsmith/protocol';
+import type { EngineSession } from '@boardsmith/engine';
 import type { SessionManager } from '../session/SessionManager.js';
 import { mergeSessionMetadata } from '../session/mergeSessionMetadata.js';
 import type { AuthContext, AuthRole } from '../auth/AuthContext.js';

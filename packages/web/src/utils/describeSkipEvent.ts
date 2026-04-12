@@ -1,4 +1,4 @@
-import type { SessionAdvanceSkipSnapshot } from '@kingdom-builder/protocol/session';
+import type { SessionAdvanceSkipSnapshot } from '@boardsmith/protocol/session';
 import {
 	hasTierSummaryTranslation,
 	translateTierSummary,

@@ -2,8 +2,8 @@ import type {
 	AttackCalcOptions,
 	AttackEvaluationLog,
 	AttackTarget,
-} from '@kingdom-builder/protocol';
-import { Resource } from '@kingdom-builder/contents';
+} from '@boardsmith/protocol';
+import { Resource } from '@boardsmith/contents';
 import { runEffects } from '..';
 import type { EngineContext } from '../../context';
 import { withResourceSourceFrames } from '../../resource_sources';

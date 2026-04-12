@@ -4,7 +4,7 @@ import type { ActionTrace, PlayerSnapshot } from '../log';
 import type { Land, PlayerId, PlayerState } from '../state';
 import type { PassiveSummary } from '../services';
 import type { LandSnapshot, PlayerStateSnapshot } from './types';
-import type { SessionResourceBounds } from '@kingdom-builder/protocol';
+import type { SessionResourceBounds } from '@boardsmith/protocol';
 import type { RuntimeResourceCatalog } from '../resource';
 import {
 	isBoundReference,

@@ -1,4 +1,4 @@
-import type { ActionExecuteRequest } from '@kingdom-builder/protocol/actions';
+import type { ActionExecuteRequest } from '@boardsmith/protocol/actions';
 
 export interface ActionErrorMetadata {
 	request: ActionExecuteRequest;

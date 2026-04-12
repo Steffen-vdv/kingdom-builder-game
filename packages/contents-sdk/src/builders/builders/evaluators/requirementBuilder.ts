@@ -1,4 +1,4 @@
-import type { RequirementConfig } from '@kingdom-builder/protocol';
+import type { RequirementConfig } from '@boardsmith/protocol';
 import { RequirementTypes } from '../../builderShared';
 import type { Params } from '../../builderShared';
 import { EvaluatorBuilder, type CompareValue } from './evaluatorBuilder';

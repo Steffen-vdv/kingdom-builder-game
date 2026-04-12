@@ -1,5 +1,5 @@
 import { describe, it, expectTypeOf } from 'vitest';
-import type { ActionEffectGroupChoiceMap } from '@kingdom-builder/protocol';
+import type { ActionEffectGroupChoiceMap } from '@boardsmith/protocol';
 import type { ActionParameters } from '../../src/actions/action_parameters';
 
 type DevelopmentActionId = 'develop_alpha' | 'develop_beta';

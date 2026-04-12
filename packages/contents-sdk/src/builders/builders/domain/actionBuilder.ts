@@ -3,7 +3,7 @@ import type {
 	ActionTiersConfig,
 	EffectConfig,
 	RequirementConfig,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { ActionDef, FocusValue, ResourceKey } from '../../../types';
 import { ActionEffectGroupBuilder } from '../actionEffectGroups';
 import type { ActionEffectGroupDef } from '../actionEffectGroups';

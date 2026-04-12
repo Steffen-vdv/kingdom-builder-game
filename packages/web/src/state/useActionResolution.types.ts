@@ -1,4 +1,4 @@
-import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
+import type { SessionPlayerStateSnapshot } from '@boardsmith/protocol';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 
 interface ResolutionActionMeta {

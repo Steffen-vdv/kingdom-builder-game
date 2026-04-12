@@ -19,13 +19,13 @@ import {
 	RULES,
 	PhaseId,
 	getResourceId,
-} from '@kingdom-builder/contents';
+} from '@boardsmith/contents';
 import {
 	Registry,
 	type ActionConfig,
 	type ActionMetaCategoryConfig,
 	type EffectConfig,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 // ============================================================================
 // CONTENT-DERIVED VALUES

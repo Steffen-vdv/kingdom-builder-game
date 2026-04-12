@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { applyParamsToEffects } from '@kingdom-builder/protocol';
-import { Resource } from '@kingdom-builder/contents';
+import { applyParamsToEffects } from '@boardsmith/protocol';
+import { Resource } from '@boardsmith/contents';
 
 describe('applyParamsToEffects', () => {
 	it('replaces placeholders in params, evaluator and nested effects', () => {

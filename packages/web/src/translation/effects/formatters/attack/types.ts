@@ -2,7 +2,7 @@ import {
 	type AttackLog,
 	type AttackPlayerDiff,
 	type EffectDef,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import type { TranslationContext } from '../../../context';
 import type { SummaryEntry } from '../../../content';
 

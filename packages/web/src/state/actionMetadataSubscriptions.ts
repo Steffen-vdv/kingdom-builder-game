@@ -1,6 +1,6 @@
-import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
+import type { ActionParametersPayload } from '@boardsmith/protocol/actions';
 import type { SessionActionMetadataSnapshot } from './sessionTypes';
-import type { SessionPlayerId } from '@kingdom-builder/protocol/session';
+import type { SessionPlayerId } from '@boardsmith/protocol/session';
 import { createMetadataKey } from './actionMetadataKey';
 
 type MetadataListener = (snapshot: SessionActionMetadataSnapshot) => void;

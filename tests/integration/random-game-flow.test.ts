@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-	performAction,
-	advance,
-	getActionCosts,
-} from '@kingdom-builder/engine';
+import { performAction, advance, getActionCosts } from '@boardsmith/engine';
 import { createSyntheticContext } from './synthetic';
 
 function createRng(seed: number) {

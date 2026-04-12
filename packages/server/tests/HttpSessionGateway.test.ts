@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { SessionRegistriesPayload } from '@kingdom-builder/protocol';
+import type { SessionRegistriesPayload } from '@boardsmith/protocol';
 import {
 	HttpSessionGateway,
 	type HttpSessionGatewayOptions,

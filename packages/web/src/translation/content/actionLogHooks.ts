@@ -3,7 +3,7 @@ import type {
 	ActionEffect,
 	ActionEffectGroup,
 	EffectDef,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { logContent } from './factory';
 import type { TranslationContext } from '../context';
 

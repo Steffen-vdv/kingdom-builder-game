@@ -3,7 +3,7 @@ import React from 'react';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
+import type { SessionSnapshot } from '@boardsmith/protocol/session';
 import type { ActionResolution } from '../../src/state/useActionResolution';
 import type { PhaseProgressState } from '../../src/state/usePhaseProgress';
 import { GameProviderInner } from '../../src/state/GameProviderInner';

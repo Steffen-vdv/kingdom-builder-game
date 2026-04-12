@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { performAction, getActionCosts } from '@kingdom-builder/engine';
+import { performAction, getActionCosts } from '@boardsmith/engine';
 import {
 	createTestContext,
 	getActionOutcome,

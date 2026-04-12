@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { resolveAttack, runEffects, type EffectDef } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
-import { Resource as CResource } from '@kingdom-builder/contents';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { Resource as CResource } from '@boardsmith/contents';
+import { createContentFactory } from '@boardsmith/testing';
 
 function makeAbsorptionEffect(amount: number): EffectDef {
 	return {

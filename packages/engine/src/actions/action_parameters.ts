@@ -1,4 +1,4 @@
-import type { ActionEffectGroupChoiceMap } from '@kingdom-builder/protocol';
+import type { ActionEffectGroupChoiceMap } from '@boardsmith/protocol';
 
 type DemolishActionParameters = { id: string };
 type DevelopmentActionParameters = { landId: string };

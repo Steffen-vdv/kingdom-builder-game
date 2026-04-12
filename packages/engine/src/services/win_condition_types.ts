@@ -4,7 +4,7 @@ import type {
 	WinConditionTrigger as ProtocolWinConditionTrigger,
 	WinConditionResult as ProtocolWinConditionResult,
 	WinConditionTurnLimitTrigger as ProtocolWinConditionTurnLimitTrigger,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 export type WinConditionDefinition = ProtocolWinConditionDefinition;
 export type WinConditionDisplay = ProtocolWinConditionDisplay;

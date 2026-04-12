@@ -1,4 +1,4 @@
-import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
+import type { SessionSnapshot } from '@boardsmith/protocol/session';
 import type { SessionRegistries } from '../../../src/state/sessionRegistries';
 
 export interface ResourceSelectionContext {

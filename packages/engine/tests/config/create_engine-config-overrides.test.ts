@@ -9,9 +9,9 @@ import {
 	RULES,
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents';
-import { getActionTierConfig } from '@kingdom-builder/protocol';
-import { createContentFactory } from '@kingdom-builder/testing';
+} from '@boardsmith/contents';
+import { getActionTierConfig } from '@boardsmith/protocol';
+import { createContentFactory } from '@boardsmith/testing';
 import { createEngine } from '../../src/index.ts';
 
 const resourceCatalog = {

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { createContentFactory } from '@kingdom-builder/testing';
+import { createContentFactory } from '@boardsmith/testing';
 import type {
 	PhaseConfig,
 	SerializedRegistry,
 	SessionResourceDefinition,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 import { buildSessionMetadata } from '../../src/session/buildSessionMetadata.js';
 
 describe('buildSessionMetadata', () => {

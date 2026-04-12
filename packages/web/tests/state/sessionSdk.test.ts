@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ActionExecuteSuccessResponse } from '@kingdom-builder/protocol/actions';
+import type { ActionExecuteSuccessResponse } from '@boardsmith/protocol/actions';
 import type {
 	SessionAdvanceResult,
 	SessionResourceDefinition,
 	SessionRunAiResponse,
 	SessionSimulateResponse,
-} from '@kingdom-builder/protocol/session';
+} from '@boardsmith/protocol/session';
 import {
 	advanceSessionPhase,
 	createSession,

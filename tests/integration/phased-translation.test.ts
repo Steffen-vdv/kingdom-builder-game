@@ -3,15 +3,15 @@ import { describe, it, expect } from 'vitest';
 import {
 	summarizeContent,
 	describeContent,
-} from '@kingdom-builder/web/translation/content';
+} from '@boardsmith/web/translation/content';
 // prettier-ignore
 import type {
         PhasedDef,
-} from '@kingdom-builder/web/translation/content/phased';
+} from '@boardsmith/web/translation/content/phased';
 // prettier-ignore
 import {
         createContentFactory,
-} from '@kingdom-builder/testing';
+} from '@boardsmith/testing';
 import { buildSyntheticTranslationContext } from '../../packages/web/tests/helpers/createSyntheticTranslationContext';
 
 type Entry = string | { title: string; items: Entry[] };

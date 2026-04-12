@@ -12,7 +12,7 @@ import type {
 	SessionPlayerStateSnapshot,
 	SessionResourceCategoryDefinition,
 	SessionResourceGroupDefinition,
-} from '@kingdom-builder/protocol';
+} from '@boardsmith/protocol';
 
 const {
 	activePlayer: activePlayerSnapshot,
