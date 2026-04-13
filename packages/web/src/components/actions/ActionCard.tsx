@@ -11,7 +11,11 @@ import { type ActionCardOption } from './OptionCard';
 import { getFocusGradient } from './focusGradients';
 import { stripSummary } from './stripSummary';
 import type { ActionFocus } from './types';
-import { TIER_BADGE_CLASSES } from './actionsPanelStyles';
+import {
+	TIER_BADGE_CLASSES,
+	EXHAUSTED_BADGE_CLASSES,
+	USES_BADGE_CLASSES,
+} from './actionsPanelStyles';
 
 export type { ActionCardOption } from './OptionCard';
 
@@ -49,6 +53,10 @@ export interface ActionCardProps {
 	currentTier?: number | undefined;
 	/** Max tier for multi-tier actions */
 	maxTier?: number | undefined;
+	/** True when a one-time action is permanently spent */
+	exhausted?: boolean | undefined;
+	/** Per-turn usage info: used count and maximum allowed */
+	usesInfo?: { used: number; max: number } | undefined;
 }
 
 export default function ActionCard({
@@ -81,6 +89,8 @@ export default function ActionCard({
 	resourceMetadata,
 	currentTier,
 	maxTier,
+	exhausted,
+	usesInfo,
 }: ActionCardProps): ReactElement {
 	const focusClass = getFocusGradient(focus);
 	const isBack = variant === 'back';
@@ -172,6 +182,17 @@ export default function ActionCard({
 			Tier {currentTier}/{maxTier}
 		</span>
 	) : null;
+	const exhaustedBadge =
+		variant === 'front' && exhausted ? (
+			<span className={EXHAUSTED_BADGE_CLASSES}>Exhausted</span>
+		) : null;
+	const atLimit = usesInfo !== undefined && usesInfo.used >= usesInfo.max;
+	const usesBadge =
+		variant === 'front' && usesInfo !== undefined ? (
+			<span className={atLimit ? EXHAUSTED_BADGE_CLASSES : USES_BADGE_CLASSES}>
+				{usesInfo.used}/{usesInfo.max} uses
+			</span>
+		) : null;
 
 	return (
 		<div
@@ -195,6 +216,8 @@ export default function ActionCard({
 								{frontMultiStepBadge}
 								<span className="text-base font-medium">{title}</span>
 								{tierBadge}
+								{exhaustedBadge}
+								{usesBadge}
 							</div>
 							<div className={costBlockClass}>
 								{renderCosts(

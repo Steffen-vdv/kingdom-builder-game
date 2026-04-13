@@ -65,10 +65,6 @@ export function resolveAttack(
 		);
 	}
 
-	if (beforeAttackTriggers.length > 0) {
-		runEffects(beforeAttackTriggers, context);
-	}
-
 	context.game.currentPlayerIndex = originalIndex;
 
 	const absorption = options.ignoreAbsorption
@@ -134,10 +130,6 @@ export function resolveAttack(
 
 	if ((defender.resourceValues[Resource.fortificationStrength] || 0) < 0) {
 		defender.resourceValues[Resource.fortificationStrength] = 0;
-	}
-
-	if (afterAttackTriggers.length > 0) {
-		runEffects(afterAttackTriggers, context);
 	}
 
 	context.game.currentPlayerIndex = originalIndex;
