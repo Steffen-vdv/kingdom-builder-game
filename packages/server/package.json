@@ -20,7 +20,7 @@
 	"devDependencies": {
 		"@boardsmith/contents-sdk": "workspace:*",
 		"@types/better-sqlite3": "^7.6.13",
-		"tsx": "^4.21.0",
+		"tsx": "^4.22.5",
 		"typescript": "6.0.2"
 	}
 }
