@@ -21,7 +21,7 @@
 		"@boardsmith/contents": "workspace:*",
 		"@boardsmith/engine": "workspace:*",
 		"@boardsmith/server": "workspace:*",
-		"fastify": "^5.8.4",
+		"fastify": "^5.9.0",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
 		"@typescript-eslint/eslint-plugin": "^8.58.1",
